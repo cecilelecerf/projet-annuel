@@ -1,0 +1,319 @@
+model ClientPet {
+  id          String   @id @default(cuid())
+  name        String
+  dateOfBirth DateTime
+  description String?
+  activity    Int?
+
+  attendingVeterinarianId String?
+  attendingVeterinarian   VeterinarianProfile? @relation(fields: [attendingVeterinarianId], references: [id])
+
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id])
+
+  raceId String
+  race   Race   @relation(fields: [raceId], references: [id])
+
+  personalPetVaccine PersonalPetVaccine[]
+  metting            Metting[]
+  foodPets           FoodPet[]
+
+  @@map("client_pet")
+}
+
+model Pet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  name      String
+  picture   String?
+
+  races   Race[]
+  vaccine Vaccine[]
+
+  @@map("pets")
+}
+
+model Race {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  name      String
+  picture   String?
+
+  petId     String
+  pet       Pet         @relation(fields: [petId], references: [id])
+  clientPet ClientPet[]
+
+  @@map("races")
+}
+
+model Vaccine {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now())
+  name               String
+  description        String?
+  recommendedAge     Int
+  boosterInterval    Int
+  mandatoryCountry   Json?
+  recommendedCountry Json?
+
+  petId              String
+  pet                Pet                  @relation(fields: [petId], references: [id])
+  personalPetVaccine PersonalPetVaccine[]
+
+  @@map("vaccines")
+}
+
+model PersonalPetVaccine {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  clientPetId String
+  clientPet   ClientPet @relation(fields: [clientPetId], references: [id])
+
+  vaccineId String
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
+
+  mettingId String?
+  metting   Metting? @relation(fields: [mettingId], references: [id])
+
+  @@map("personal_pet_vaccine")
+}
+
+model Metting {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  date        DateTime
+  duration    Decimal
+  description String?
+  petWeight   Int?
+  petSize     Int?
+
+  clientPetId String
+  clientPet   ClientPet @relation(fields: [clientPetId], references: [id])
+
+  veterinarianId     String
+  veterinarian       VeterinarianProfile  @relation(fields: [veterinarianId], references: [id])
+  personalPetVaccine PersonalPetVaccine[]
+
+  @@map("mettings")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  name        String
+  description String?
+  qrCode      String
+  websiteUrl  String?
+  picture     String?
+
+  brandId        String
+  brand          Brand           @relation(fields: [brandId], references: [id])
+  clinicProducts ClinicProduct[]
+
+  Food Food?
+
+  @@map("products")
+}
+
+enum FoodType {
+  KIBBLE
+  WET
+}
+
+model Food {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  caloriesPer100     Decimal?
+  proteinPer100      Decimal?
+  fatPercentage      Decimal?
+  fiberPercentage    Decimal?
+  moisturePercentage Decimal?
+  type               FoodType
+
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  foodPets FoodPet[]
+
+  @@map("food")
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  name      String
+  logo      String?
+
+  product Product[]
+
+  @@map("brands")
+}
+
+model ClinicProduct {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  stock           Int @default(0)
+  minimumRequired Int
+
+  clinicId String
+  clinic   ClientProfile @relation(fields: [clinicId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("clinic_products")
+}
+
+enum FoodPetDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model FoodPet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  type      FoodPetDay
+  dateStart DateTime
+  dateEnd   DateTime?
+  quantity  Decimal
+  hours     DateTime
+
+  foodId String
+  food   Food   @relation(fields: [foodId], references: [id])
+
+  clientPetId String
+  clientPet   ClientPet @relation(fields: [clientPetId], references: [id])
+
+  @@map("food_pet")
+}
+
+enum UserRole {
+  CLIENT
+  ADMIN
+  SECRETARY
+  VETERINARIAN
+  CLINIC
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  firstname String
+  lastname  String
+  password  String
+  picture   String?
+
+  clientProfile       ClientProfile?
+  veterinarianProfile VeterinarianProfile?
+  clinicProfile       ClinicProfile?
+  secretaryProfile    SecretaryProfile?
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model ClientProfile {
+  id          String   @id @default(cuid())
+  dateOfBirth DateTime
+  address     String?
+  phone       String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // appointments  Appointment[]
+  secretaryProfile    SecretaryProfile?
+  veterinarianProfile VeterinarianProfile?
+  clientPet           ClientPet[]
+  clinicProducts      ClinicProduct[]
+
+  @@map("client_profiles")
+}
+
+model VeterinarianProfile {
+  id              String  @id @default(cuid())
+  licenseNumber   String  @unique
+  specialty       String
+  yearsExperience Int
+  bio             String?
+
+  clinicId String        @unique
+  clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clinicProfiles ClinicProfile[]
+  clientPet      ClientPet[]
+  metting        Metting[]
+
+  @@map("veterinarian_profiles")
+}
+
+model ClinicProfile {
+  id          String  @id @default(cuid())
+  name        String
+  address     String
+  siret       String  @unique
+  phone       String
+  description String?
+  website     String
+
+  userId                String               @unique
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  veterinarianProfile   VeterinarianProfile? @relation(fields: [veterinarianProfileId], references: [id])
+  veterinarianProfileId String?
+
+  @@map("clinic_profiles")
+}
+
+model SecretaryProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clinicId String        @unique
+  clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("secretary_profiles")
+}
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

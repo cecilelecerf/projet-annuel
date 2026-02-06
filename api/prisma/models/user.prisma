@@ -1,0 +1,95 @@
+enum UserRole {
+  CLIENT
+  ADMIN
+  SECRETARY
+  VETERINARIAN
+  CLINIC
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  firstname String
+  lastname  String
+  password  String
+  picture   String?
+
+  clientProfile       ClientProfile?
+  veterinarianProfile VeterinarianProfile?
+  clinicProfile       ClinicProfile?
+  secretaryProfile    SecretaryProfile?
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model ClientProfile {
+  id          String   @id @default(cuid())
+  dateOfBirth DateTime
+  address     String?
+  phone       String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // appointments  Appointment[]
+  secretaryProfile    SecretaryProfile?
+  veterinarianProfile VeterinarianProfile?
+  clientPet           ClientPet[]
+  clinicProducts      ClinicProduct[]
+
+  @@map("client_profiles")
+}
+
+model VeterinarianProfile {
+  id              String  @id @default(cuid())
+  licenseNumber   String  @unique
+  specialty       String
+  yearsExperience Int
+  bio             String?
+
+  clinicId String        @unique
+  clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clinicProfiles ClinicProfile[]
+  clientPet      ClientPet[]
+  metting        Metting[]
+
+  @@map("veterinarian_profiles")
+}
+
+model ClinicProfile {
+  id          String  @id @default(cuid())
+  name        String
+  address     String
+  siret       String  @unique
+  phone       String
+  description String?
+  website     String
+
+  userId                String               @unique
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  veterinarianProfile   VeterinarianProfile? @relation(fields: [veterinarianProfileId], references: [id])
+  veterinarianProfileId String?
+
+  @@map("clinic_profiles")
+}
+
+model SecretaryProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clinicId String        @unique
+  clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("secretary_profiles")
+}

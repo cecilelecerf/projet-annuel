@@ -13,7 +13,8 @@
     "baseUrl": ".",
     "paths": {
       "@api/*": ["./api/src/*"],
-      "@app/*": ["./app/src/*"]
+      "@web/*": ["./web/src/*"],
+      "@mobile/*": ["./mobile/src/*"]
     }
   }
 }

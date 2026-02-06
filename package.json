@@ -2,10 +2,13 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "dev:web": "pnpm --filter app-next dev"
+  },
   "workspaces": [
     "api",
-    "app"
+    "web",
+    "mobile"
   ],
   "devDependencies": {
     "typescript": "^5.9.3"

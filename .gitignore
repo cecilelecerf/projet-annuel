@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+/api/node_modules
+/web/node_modules
+/mobile/node_modules
 /.pnp
 .pnp.*
 .yarn/*

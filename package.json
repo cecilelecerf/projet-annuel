@@ -5,7 +5,9 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
-    "db:view": "pnpm --filter api studio"
+    "db:view": "pnpm --filter api studio",
+    "db:seed": "pnpm --filter api seed",
+    "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view"
   },
   "workspaces": [
     "api",

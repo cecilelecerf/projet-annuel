@@ -1,12 +1,12 @@
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
+import { hash } from "bcryptjs";
 import {
+  FoodPetDay,
+  FoodType,
   PrismaClient,
   UserRole,
-  FoodType,
-  FoodPetDay,
-} from "../../web/src/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-
-import { hash } from "bcryptjs";
+} from "./generated/prisma/client";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,

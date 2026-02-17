@@ -1,15 +1,19 @@
-import "dotenv/config";
-import { Prisma, PrismaClient } from "../prisma/generated/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "api/prisma/generated/prisma/client";
+import "dotenv/config";
 import express from "express";
-
-const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter: pool });
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+});
+const prisma = new PrismaClient({ adapter });
 
 const app = express();
 
 app.use(express.json());
-
+app.get("/test", async (req, res) => {
+  console.log("test");
+  res.json("test");
+});
 // app.post(`/signup`, async (req, res) => {
 //   const { name, email, posts } = req.body;
 

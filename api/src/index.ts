@@ -1,18 +1,19 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "api/prisma/generated/prisma/client";
-import "dotenv/config";
 import express from "express";
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
-const prisma = new PrismaClient({ adapter });
+import { prisma } from "./lib/prisma";
 
 const app = express();
 
 app.use(express.json());
 app.get("/test", async (req, res) => {
-  console.log("test");
-  res.json("test");
+  const users = await prisma.user.findMany({
+    include: {
+      clientProfile: true,
+      veterinarianProfile: true,
+      clinicProfile: true,
+      secretaryProfile: true,
+    },
+  });
+  res.json(users);
 });
 // app.post(`/signup`, async (req, res) => {
 //   const { name, email, posts } = req.body;

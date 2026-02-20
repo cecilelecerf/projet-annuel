@@ -11,18 +11,21 @@ model User {
   email     String   @unique
   role      UserRole @default(CLIENT)
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
   firstname String
   lastname  String
   password  String
   picture   String?
 
-  clientProfile       ClientProfile?
-  veterinarianProfile VeterinarianProfile?
-  clinicProfile       ClinicProfile?
-  secretaryProfile    SecretaryProfile?
+  clientProfile         ClientProfile?
+  veterinarianProfile   VeterinarianProfile?
+  secretaryProfile      SecretaryProfile?
+  directorClinicProfile DirectorClinicProfile?
+  referentClinicProfile ReferentClinicProfile?
 
-  refreshTokens RefreshToken[] 
+  refreshTokens            RefreshToken[]
+  ownedPetConditionHealths OwnedPetHealthCondition[]
+  conversationMembers      ConversationMember[]
 
   @@index([email])
   @@index([role])
@@ -41,8 +44,9 @@ model ClientProfile {
   // appointments  Appointment[]
   secretaryProfile    SecretaryProfile?
   veterinarianProfile VeterinarianProfile?
-  clientPet           ClientPet[]
+  ownedPet            OwnedPet[]
   clinicProducts      ClinicProduct[]
+  order               Orders[]
 
   @@map("client_profiles")
 }
@@ -50,7 +54,6 @@ model ClientProfile {
 model VeterinarianProfile {
   id              String  @id @default(cuid())
   licenseNumber   String  @unique
-  specialty       String
   yearsExperience Int
   bio             String?
 
@@ -60,28 +63,13 @@ model VeterinarianProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  clinicProfiles ClinicProfile[]
-  clientPet      ClientPet[]
-  metting        Metting[]
+  ownedPet           OwnedPet[]
+  metting            Metting[]
+  speciality         Speciality[]
+  veterinarianClinic VeterinarianClinic[]
+  pet                Pet[]
 
   @@map("veterinarian_profiles")
-}
-
-model ClinicProfile {
-  id          String  @id @default(cuid())
-  name        String
-  address     String
-  siret       String  @unique
-  phone       String
-  description String?
-  website     String
-
-  userId                String               @unique
-  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  veterinarianProfile   VeterinarianProfile? @relation(fields: [veterinarianProfileId], references: [id])
-  veterinarianProfileId String?
-
-  @@map("clinic_profiles")
 }
 
 model SecretaryProfile {
@@ -96,6 +84,23 @@ model SecretaryProfile {
   @@map("secretary_profiles")
 }
 
+model DirectorClinicProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("director_clinic_profiles")
+}
+
+model ReferentClinicProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("referent_clinic_profiles")
+}
 
 model RefreshToken {
   id        String   @id @default(cuid())

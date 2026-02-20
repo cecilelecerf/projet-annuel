@@ -7,7 +7,7 @@ import { resolve } from "path";
 config({ path: resolve(process.cwd(), ".env") });
 
 export default defineConfig({
-  schema: "prisma/schema",
+  schema: "prisma/schemas",
   migrations: {
     path: "prisma/migrations",
   },

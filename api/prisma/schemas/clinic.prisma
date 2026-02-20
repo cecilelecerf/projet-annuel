@@ -1,0 +1,71 @@
+model Clinic {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String
+  address     String
+  siret       String   @unique
+  phone       String
+  description String?
+  website     String
+
+  speciality         Speciality[]
+  veterinarianClinic VeterinarianClinic[]
+  clinicPet          Pet[]
+  order              Orders[]
+  clinicProducts     ClinicProduct[]
+
+  @@map("clinic")
+}
+
+model Speciality {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String   @unique
+  description String
+
+  veterinarianSpeciality VeterinarianProfile[]
+  clinicSpeciality       Clinic[]
+  mettings               Metting[]
+
+  @@map("speciality")
+}
+
+model VeterinarianClinic {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  veterinarian_id String              @unique
+  veterinarian    VeterinarianProfile @relation(fields: [veterinarian_id], references: [userId], onDelete: Cascade)
+  clinic_id       String              @unique
+  clinic          Clinic              @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+
+  veterinarianClinicAverage VeterinarianClinicAverage[]
+
+  @@map("veterinarian_clinic")
+}
+
+enum VeterinarianClinicType {
+  RECURRING
+  SPECIFIED
+  EXECPTION
+}
+
+model VeterinarianClinicAverage {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  type          VeterinarianClinicType
+  day_of_week   Int?                   @db.SmallInt
+  specific_date DateTime?              @db.Date
+  start_time    DateTime               @db.Time(0)
+  end_time      DateTime               @db.Time(0)
+
+  veterinarian_clinic_id String             @unique
+  vererinarianClinic     VeterinarianClinic @relation(fields: [veterinarian_clinic_id], references: [id], onDelete: Cascade)
+
+  @@map("veterinarian_clinic_average")
+}

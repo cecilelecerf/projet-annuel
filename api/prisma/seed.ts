@@ -334,7 +334,7 @@ async function main() {
   // ============================================
   const vet1User = await prisma.user.create({
     data: {
-      email: "dr.smith@vetclinic.com",
+      email: "veterinarian@vetclinic.com",
       firstname: "Jane",
       lastname: "Smith",
       password,
@@ -434,9 +434,9 @@ async function main() {
   // ============================================
   const client1User = await prisma.user.create({
     data: {
-      email: "john.doe@email.com",
-      firstname: "John",
-      lastname: "Doe",
+      email: "client@email.com",
+      firstname: "Client",
+      lastname: "Client",
       password,
       role: UserRole.CLIENT,
       picture: "https://picsum.photos/seed/client1/200",
@@ -758,8 +758,8 @@ async function main() {
   console.log("  - 5 Food Plans");
   console.log("\n🔑 Login credentials:");
   console.log("  Email: admin@vetclinic.com");
-  console.log("  Email: dr.smith@vetclinic.com");
-  console.log("  Email: john.doe@email.com");
+  console.log("  Email: veterinarian@vetclinic.com");
+  console.log("  Email: client@email.com");
   console.log("  Password (all): password123");
 }
 

@@ -22,6 +22,8 @@ model User {
   clinicProfile       ClinicProfile?
   secretaryProfile    SecretaryProfile?
 
+  refreshTokens RefreshToken[] 
+
   @@index([email])
   @@index([role])
   @@map("users")
@@ -92,4 +94,19 @@ model SecretaryProfile {
   clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("secretary_profiles")
+}
+
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
 }

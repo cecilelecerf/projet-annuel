@@ -1,0 +1,90 @@
+model OwnedPet {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String
+  dateOfBirth DateTime
+  description String?
+  activity    Int?
+
+  attendingVeterinarianId String?
+  attendingVeterinarian   VeterinarianProfile? @relation(fields: [attendingVeterinarianId], references: [id])
+
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id])
+
+  raceId String
+  race   Race   @relation(fields: [raceId], references: [id])
+
+  ownedPetVaccine          OwnedPetVaccine[]
+  meeting                  Meeting[]
+  foodPets                 FoodPet[]
+  ownedPetConditionHealths OwnedPetHealthCondition[]
+
+  @@map("owned_pets")
+}
+
+model Pet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  name      String
+  picture   String?
+
+  races            Race[]
+  vaccine          Vaccine[]
+  clinic           Clinic[]
+  veterinarian     VeterinarianProfile[]
+  healthConditions HealthCondition[]
+
+  @@map("pets")
+}
+
+model Race {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  name      String
+  picture   String?
+
+  petId    String
+  pet      Pet        @relation(fields: [petId], references: [id])
+  ownedPet OwnedPet[]
+
+  @@map("races")
+}
+
+model Vaccine {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+  name               String
+  description        String?
+  recommendedAge     Int
+  boosterInterval    Int
+  mandatoryCountry   Json?
+  recommendedCountry Json?
+
+  petId           String
+  pet             Pet               @relation(fields: [petId], references: [id])
+  ownedPetVaccine OwnedPetVaccine[]
+
+  @@map("vaccines")
+}
+
+model OwnedPetVaccine {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  ownedPetId String
+  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
+
+  vaccineId String
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
+
+  meetingId String?
+  meeting   Meeting? @relation(fields: [meetingId], references: [id])
+
+  @@map("owned_pet_vaccines")
+}

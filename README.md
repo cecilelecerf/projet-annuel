@@ -114,3 +114,8 @@ api/
 ├── .env                  # Variables d'environnement
 └── package.json
 ```
+
+## 📂 Prisma commande
+
+npx prisma format -> Format les schemas prisma
+npx prisma migrate dev --name init -> créer une nouvelle migration est met à jour la db

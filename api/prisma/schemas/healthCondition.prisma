@@ -35,10 +35,17 @@ model OwnedPetHealthCondition {
   @@map("owned_pet_health_condition")
 }
 
+enum FoodHealthConditionRecommendation {
+  RECOMMENDED
+  AVOID
+}
+
 model FoodHealthCondition {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+  recommendation FoodHealthConditionRecommendation
 
   foodId            String
   food              Foods           @relation(fields: [foodId], references: [id])

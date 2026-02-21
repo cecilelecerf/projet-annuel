@@ -1,9 +1,10 @@
 enum UserRole {
   CLIENT
-  ADMIN
   SECRETARY
   VETERINARIAN
-  CLINIC
+  DIRECTOR
+  REFERANT
+  ADMIN
 }
 
 model User {
@@ -42,11 +43,10 @@ model ClientProfile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // appointments  Appointment[]
-  secretaryProfile    SecretaryProfile?
-  veterinarianProfile VeterinarianProfile?
-  ownedPet            OwnedPet[]
-  clinicProducts      ClinicProduct[]
-  order               Orders[]
+  ownedPet           OwnedPet[]
+  clinicProducts     ClinicProduct[]
+  order              Orders[]
+  secretaryProfileId String?
 
   @@map("client_profiles")
 }
@@ -56,9 +56,6 @@ model VeterinarianProfile {
   licenseNumber   String  @unique
   yearsExperience Int
   bio             String?
-
-  clinicId String        @unique
-  clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -78,8 +75,8 @@ model SecretaryProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  clinicId String        @unique
-  clinic   ClientProfile @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("secretary_profiles")
 }
@@ -87,8 +84,10 @@ model SecretaryProfile {
 model DirectorClinicProfile {
   id String @id @default(cuid())
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("director_clinic_profiles")
 }
@@ -96,8 +95,10 @@ model DirectorClinicProfile {
 model ReferentClinicProfile {
   id String @id @default(cuid())
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("referent_clinic_profiles")
 }

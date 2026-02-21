@@ -2,10 +2,13 @@
 CREATE TYPE "VeterinarianClinicType" AS ENUM ('RECURRING', 'SPECIFIED', 'EXECPTION');
 
 -- CreateEnum
-CREATE TYPE "FoodType" AS ENUM ('KIBBLE', 'WET');
+CREATE TYPE "ConversationMemberRole" AS ENUM ('ADMIN', 'MEMBER');
 
 -- CreateEnum
-CREATE TYPE "FoodPetDay" AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY');
+CREATE TYPE "MettingStatus" AS ENUM ('PENDING', 'DONE', 'CONFIRMED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "FoodType" AS ENUM ('KIBBLE', 'WET');
 
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CONFIRMED', 'READY', 'PICKED_UP', 'CANCELLED');
@@ -40,28 +43,6 @@ CREATE TABLE "speciality" (
 );
 
 -- CreateTable
-CREATE TABLE "veterinarian_speciality" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "veterinarian_id" TEXT NOT NULL,
-    "speciality_id" TEXT NOT NULL,
-
-    CONSTRAINT "veterinarian_speciality_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "clinic_speciality" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "clinic_id" TEXT NOT NULL,
-    "speciality_id" TEXT NOT NULL,
-
-    CONSTRAINT "clinic_speciality_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "veterinarian_clinic" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -70,28 +51,6 @@ CREATE TABLE "veterinarian_clinic" (
     "clinic_id" TEXT NOT NULL,
 
     CONSTRAINT "veterinarian_clinic_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "clinic_pet" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "pet_id" TEXT NOT NULL,
-    "clinic_id" TEXT NOT NULL,
-
-    CONSTRAINT "clinic_pet_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "veterinarian_pet" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "pet_id" TEXT NOT NULL,
-    "veterinarian_id" TEXT NOT NULL,
-
-    CONSTRAINT "veterinarian_pet_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -107,6 +66,90 @@ CREATE TABLE "veterinarian_clinic_average" (
     "veterinarian_clinic_id" TEXT NOT NULL,
 
     CONSTRAINT "veterinarian_clinic_average_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "conversation" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "name" TEXT NOT NULL,
+
+    CONSTRAINT "conversation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "conversation_member" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "role" "ConversationMemberRole" NOT NULL,
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "userId" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+
+    CONSTRAINT "conversation_member_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "message" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "content" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+
+    CONSTRAINT "message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "message_read" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "readAt" TIMESTAMP(3) NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "readById" TEXT NOT NULL,
+
+    CONSTRAINT "message_read_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "health_condition" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "name" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "petId" TEXT NOT NULL,
+
+    CONSTRAINT "health_condition_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "owned_pet_health_condition" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "notes" TEXT NOT NULL,
+    "diagnosedAt" TIMESTAMP(3) NOT NULL,
+    "healthConditionId" TEXT NOT NULL,
+    "ownedPetId" TEXT NOT NULL,
+    "mettingId" TEXT,
+    "addedById" TEXT NOT NULL,
+
+    CONSTRAINT "owned_pet_health_condition_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "food_health_condition" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "foodId" TEXT NOT NULL,
+    "healthConditionId" TEXT NOT NULL,
+
+    CONSTRAINT "food_health_condition_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -165,7 +208,7 @@ CREATE TABLE "vaccines" (
 );
 
 -- CreateTable
-CREATE TABLE "personal_pet_vaccine" (
+CREATE TABLE "owned_pet_vaccine" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -173,7 +216,7 @@ CREATE TABLE "personal_pet_vaccine" (
     "vaccineId" TEXT NOT NULL,
     "mettingId" TEXT,
 
-    CONSTRAINT "personal_pet_vaccine_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "owned_pet_vaccine_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -186,6 +229,8 @@ CREATE TABLE "mettings" (
     "description" TEXT,
     "petWeight" INTEGER,
     "petSize" INTEGER,
+    "report" TEXT,
+    "specialityId" TEXT NOT NULL,
     "ownedPetId" TEXT NOT NULL,
     "veterinarianId" TEXT NOT NULL,
 
@@ -208,7 +253,7 @@ CREATE TABLE "products" (
 );
 
 -- CreateTable
-CREATE TABLE "food" (
+CREATE TABLE "foods" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -220,7 +265,7 @@ CREATE TABLE "food" (
     "type" "FoodType" NOT NULL,
     "productId" TEXT NOT NULL,
 
-    CONSTRAINT "food_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "foods_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -254,7 +299,7 @@ CREATE TABLE "food_pet" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "type" "FoodPetDay" NOT NULL,
+    "day" SMALLINT NOT NULL,
     "dateStart" TIMESTAMP(3) NOT NULL,
     "dateEnd" TIMESTAMP(3),
     "quantity" DECIMAL(65,30) NOT NULL,
@@ -342,6 +387,7 @@ CREATE TABLE "secretary_profiles" (
 CREATE TABLE "director_clinic_profiles" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "director_clinic_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -350,6 +396,7 @@ CREATE TABLE "director_clinic_profiles" (
 CREATE TABLE "referent_clinic_profiles" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "referent_clinic_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -365,17 +412,43 @@ CREATE TABLE "refresh_tokens" (
     CONSTRAINT "refresh_tokens_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "_ClinicToSpeciality" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_ClinicToSpeciality_AB_pkey" PRIMARY KEY ("A","B")
+);
+
+-- CreateTable
+CREATE TABLE "_ClinicToPet" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_ClinicToPet_AB_pkey" PRIMARY KEY ("A","B")
+);
+
+-- CreateTable
+CREATE TABLE "_SpecialityToVeterinarianProfile" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_SpecialityToVeterinarianProfile_AB_pkey" PRIMARY KEY ("A","B")
+);
+
+-- CreateTable
+CREATE TABLE "_PetToVeterinarianProfile" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_PetToVeterinarianProfile_AB_pkey" PRIMARY KEY ("A","B")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "clinic_siret_key" ON "clinic"("siret");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "speciality_name_key" ON "speciality"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "veterinarian_speciality_veterinarian_id_key" ON "veterinarian_speciality"("veterinarian_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "clinic_speciality_clinic_id_key" ON "clinic_speciality"("clinic_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "veterinarian_clinic_veterinarian_id_key" ON "veterinarian_clinic"("veterinarian_id");
@@ -384,22 +457,10 @@ CREATE UNIQUE INDEX "veterinarian_clinic_veterinarian_id_key" ON "veterinarian_c
 CREATE UNIQUE INDEX "veterinarian_clinic_clinic_id_key" ON "veterinarian_clinic"("clinic_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "clinic_pet_pet_id_key" ON "clinic_pet"("pet_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "clinic_pet_clinic_id_key" ON "clinic_pet"("clinic_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "veterinarian_pet_pet_id_key" ON "veterinarian_pet"("pet_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "veterinarian_pet_veterinarian_id_key" ON "veterinarian_pet"("veterinarian_id");
-
--- CreateIndex
 CREATE UNIQUE INDEX "veterinarian_clinic_average_veterinarian_clinic_id_key" ON "veterinarian_clinic_average"("veterinarian_clinic_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "food_productId_key" ON "food"("productId");
+CREATE UNIQUE INDEX "foods_productId_key" ON "foods"("productId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -443,17 +504,17 @@ CREATE INDEX "refresh_tokens_userId_idx" ON "refresh_tokens"("userId");
 -- CreateIndex
 CREATE INDEX "refresh_tokens_token_idx" ON "refresh_tokens"("token");
 
--- AddForeignKey
-ALTER TABLE "veterinarian_speciality" ADD CONSTRAINT "veterinarian_speciality_veterinarian_id_fkey" FOREIGN KEY ("veterinarian_id") REFERENCES "veterinarian_profiles"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE INDEX "_ClinicToSpeciality_B_index" ON "_ClinicToSpeciality"("B");
 
--- AddForeignKey
-ALTER TABLE "veterinarian_speciality" ADD CONSTRAINT "veterinarian_speciality_speciality_id_fkey" FOREIGN KEY ("speciality_id") REFERENCES "speciality"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE INDEX "_ClinicToPet_B_index" ON "_ClinicToPet"("B");
 
--- AddForeignKey
-ALTER TABLE "clinic_speciality" ADD CONSTRAINT "clinic_speciality_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE INDEX "_SpecialityToVeterinarianProfile_B_index" ON "_SpecialityToVeterinarianProfile"("B");
 
--- AddForeignKey
-ALTER TABLE "clinic_speciality" ADD CONSTRAINT "clinic_speciality_speciality_id_fkey" FOREIGN KEY ("speciality_id") REFERENCES "speciality"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- CreateIndex
+CREATE INDEX "_PetToVeterinarianProfile_B_index" ON "_PetToVeterinarianProfile"("B");
 
 -- AddForeignKey
 ALTER TABLE "veterinarian_clinic" ADD CONSTRAINT "veterinarian_clinic_veterinarian_id_fkey" FOREIGN KEY ("veterinarian_id") REFERENCES "veterinarian_profiles"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -462,19 +523,43 @@ ALTER TABLE "veterinarian_clinic" ADD CONSTRAINT "veterinarian_clinic_veterinari
 ALTER TABLE "veterinarian_clinic" ADD CONSTRAINT "veterinarian_clinic_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clinic_pet" ADD CONSTRAINT "clinic_pet_pet_id_fkey" FOREIGN KEY ("pet_id") REFERENCES "pets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "clinic_pet" ADD CONSTRAINT "clinic_pet_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "clinic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "veterinarian_pet" ADD CONSTRAINT "veterinarian_pet_pet_id_fkey" FOREIGN KEY ("pet_id") REFERENCES "pets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "veterinarian_pet" ADD CONSTRAINT "veterinarian_pet_veterinarian_id_fkey" FOREIGN KEY ("veterinarian_id") REFERENCES "veterinarian_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "veterinarian_clinic_average" ADD CONSTRAINT "veterinarian_clinic_average_veterinarian_clinic_id_fkey" FOREIGN KEY ("veterinarian_clinic_id") REFERENCES "veterinarian_clinic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "conversation_member" ADD CONSTRAINT "conversation_member_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "conversation_member" ADD CONSTRAINT "conversation_member_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "conversation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "message" ADD CONSTRAINT "message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "conversation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "message_read" ADD CONSTRAINT "message_read_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "message"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "message_read" ADD CONSTRAINT "message_read_readById_fkey" FOREIGN KEY ("readById") REFERENCES "conversation_member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "health_condition" ADD CONSTRAINT "health_condition_petId_fkey" FOREIGN KEY ("petId") REFERENCES "pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "owned_pet_health_condition" ADD CONSTRAINT "owned_pet_health_condition_healthConditionId_fkey" FOREIGN KEY ("healthConditionId") REFERENCES "health_condition"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "owned_pet_health_condition" ADD CONSTRAINT "owned_pet_health_condition_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "owned_pet_health_condition" ADD CONSTRAINT "owned_pet_health_condition_mettingId_fkey" FOREIGN KEY ("mettingId") REFERENCES "mettings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "owned_pet_health_condition" ADD CONSTRAINT "owned_pet_health_condition_addedById_fkey" FOREIGN KEY ("addedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "food_health_condition" ADD CONSTRAINT "food_health_condition_foodId_fkey" FOREIGN KEY ("foodId") REFERENCES "foods"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "food_health_condition" ADD CONSTRAINT "food_health_condition_healthConditionId_fkey" FOREIGN KEY ("healthConditionId") REFERENCES "health_condition"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "owned_pet" ADD CONSTRAINT "owned_pet_attendingVeterinarianId_fkey" FOREIGN KEY ("attendingVeterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -492,13 +577,16 @@ ALTER TABLE "races" ADD CONSTRAINT "races_petId_fkey" FOREIGN KEY ("petId") REFE
 ALTER TABLE "vaccines" ADD CONSTRAINT "vaccines_petId_fkey" FOREIGN KEY ("petId") REFERENCES "pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "personal_pet_vaccine" ADD CONSTRAINT "personal_pet_vaccine_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_vaccine" ADD CONSTRAINT "owned_pet_vaccine_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "personal_pet_vaccine" ADD CONSTRAINT "personal_pet_vaccine_vaccineId_fkey" FOREIGN KEY ("vaccineId") REFERENCES "vaccines"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_vaccine" ADD CONSTRAINT "owned_pet_vaccine_vaccineId_fkey" FOREIGN KEY ("vaccineId") REFERENCES "vaccines"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "personal_pet_vaccine" ADD CONSTRAINT "personal_pet_vaccine_mettingId_fkey" FOREIGN KEY ("mettingId") REFERENCES "mettings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_vaccine" ADD CONSTRAINT "owned_pet_vaccine_mettingId_fkey" FOREIGN KEY ("mettingId") REFERENCES "mettings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "mettings" ADD CONSTRAINT "mettings_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "speciality"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "mettings" ADD CONSTRAINT "mettings_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -510,7 +598,7 @@ ALTER TABLE "mettings" ADD CONSTRAINT "mettings_veterinarianId_fkey" FOREIGN KEY
 ALTER TABLE "products" ADD CONSTRAINT "products_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "food" ADD CONSTRAINT "food_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "foods" ADD CONSTRAINT "foods_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clinic_products" ADD CONSTRAINT "clinic_products_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinic"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -522,7 +610,7 @@ ALTER TABLE "clinic_products" ADD CONSTRAINT "clinic_products_productId_fkey" FO
 ALTER TABLE "clinic_products" ADD CONSTRAINT "clinic_products_clientProfileId_fkey" FOREIGN KEY ("clientProfileId") REFERENCES "client_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "food_pet" ADD CONSTRAINT "food_pet_foodId_fkey" FOREIGN KEY ("foodId") REFERENCES "food"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "food_pet" ADD CONSTRAINT "food_pet_foodId_fkey" FOREIGN KEY ("foodId") REFERENCES "foods"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "food_pet" ADD CONSTRAINT "food_pet_clientPetId_fkey" FOREIGN KEY ("clientPetId") REFERENCES "owned_pet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -558,7 +646,37 @@ ALTER TABLE "secretary_profiles" ADD CONSTRAINT "secretary_profiles_clinicId_fke
 ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "client_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "referent_clinic_profiles" ADD CONSTRAINT "referent_clinic_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "referent_clinic_profiles" ADD CONSTRAINT "referent_clinic_profiles_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "client_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_ClinicToSpeciality" ADD CONSTRAINT "_ClinicToSpeciality_A_fkey" FOREIGN KEY ("A") REFERENCES "clinic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_ClinicToSpeciality" ADD CONSTRAINT "_ClinicToSpeciality_B_fkey" FOREIGN KEY ("B") REFERENCES "speciality"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_ClinicToPet" ADD CONSTRAINT "_ClinicToPet_A_fkey" FOREIGN KEY ("A") REFERENCES "clinic"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_ClinicToPet" ADD CONSTRAINT "_ClinicToPet_B_fkey" FOREIGN KEY ("B") REFERENCES "pets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_SpecialityToVeterinarianProfile" ADD CONSTRAINT "_SpecialityToVeterinarianProfile_A_fkey" FOREIGN KEY ("A") REFERENCES "speciality"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_SpecialityToVeterinarianProfile" ADD CONSTRAINT "_SpecialityToVeterinarianProfile_B_fkey" FOREIGN KEY ("B") REFERENCES "veterinarian_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_PetToVeterinarianProfile" ADD CONSTRAINT "_PetToVeterinarianProfile_A_fkey" FOREIGN KEY ("A") REFERENCES "pets"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_PetToVeterinarianProfile" ADD CONSTRAINT "_PetToVeterinarianProfile_B_fkey" FOREIGN KEY ("B") REFERENCES "veterinarian_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;

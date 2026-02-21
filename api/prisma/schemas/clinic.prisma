@@ -9,11 +9,14 @@ model Clinic {
   description String?
   website     String
 
-  speciality         Speciality[]
-  veterinarianClinic VeterinarianClinic[]
-  clinicPet          Pet[]
-  order              Orders[]
-  clinicProducts     ClinicProduct[]
+  speciality             Speciality[]
+  veterinarianClinic     VeterinarianClinic[]
+  clinicPet              Pet[]
+  order                  Orders[]
+  clinicProducts         ClinicProduct[]
+  secretaryProfile       SecretaryProfile[]
+  directorClinicProfiles DirectorClinicProfile[]
+  referentClinicProfiles ReferentClinicProfile[]
 
   @@map("clinic")
 }
@@ -37,10 +40,10 @@ model VeterinarianClinic {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  veterinarian_id String              @unique
-  veterinarian    VeterinarianProfile @relation(fields: [veterinarian_id], references: [userId], onDelete: Cascade)
-  clinic_id       String              @unique
-  clinic          Clinic              @relation(fields: [clinic_id], references: [id], onDelete: Cascade)
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id], onDelete: Cascade)
+  clinicId       String
+  clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   veterinarianClinicAverage VeterinarianClinicAverage[]
 
@@ -58,14 +61,14 @@ model VeterinarianClinicAverage {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  type          VeterinarianClinicType
-  day_of_week   Int?                   @db.SmallInt
-  specific_date DateTime?              @db.Date
-  start_time    DateTime               @db.Time(0)
-  end_time      DateTime               @db.Time(0)
+  type         VeterinarianClinicType
+  dayOfWeek    Int?                   @db.SmallInt
+  specificDate DateTime?              @db.Date
+  startTime    DateTime               @db.Time(0)
+  endTime      DateTime               @db.Time(0)
 
-  veterinarian_clinic_id String             @unique
-  vererinarianClinic     VeterinarianClinic @relation(fields: [veterinarian_clinic_id], references: [id], onDelete: Cascade)
+  veterinarianClinicId String
+  vererinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
 
   @@map("veterinarian_clinic_average")
 }

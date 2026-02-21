@@ -16,7 +16,6 @@ app.get("/test", async (req, res) => {
     include: {
       clientProfile: true,
       veterinarianProfile: true,
-      clinicProfile: true,
       secretaryProfile: true,
     },
   });

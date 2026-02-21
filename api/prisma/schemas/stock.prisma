@@ -90,8 +90,8 @@ model FoodPet {
   foodId String
   food   Foods  @relation(fields: [foodId], references: [id])
 
-  clientPetId String
-  clientPet   OwnedPet @relation(fields: [clientPetId], references: [id])
+  ownedPetId String
+  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
 
   @@map("food_pet")
 }
@@ -109,12 +109,12 @@ model Orders {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @default(now()) @updatedAt
   status    OrderStatus @default(PENDING)
-  pickup_at DateTime?
+  pickupAt  DateTime?
 
-  client_id String
-  client    ClientProfile @relation(fields: [client_id], references: [id])
-  clinic_id String
-  clinic    Clinic        @relation(fields: [clinic_id], references: [id])
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id])
+  clinicId String
+  clinic   Clinic        @relation(fields: [clinicId], references: [id])
 
   orderItems OrderItem[]
 
@@ -126,14 +126,14 @@ model OrderItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  quantity   Int
-  unit_price Decimal
+  quantity  Int
+  unitPrice Decimal
 
-  product_clinic_id String
-  productClinic     ClinicProduct @relation(fields: [product_clinic_id], references: [id])
+  productClinicId String
+  productClinic   ClinicProduct @relation(fields: [productClinicId], references: [id])
 
-  order_id String
-  order    Orders @relation(fields: [order_id], references: [id])
+  orderId String
+  order   Orders @relation(fields: [orderId], references: [id])
 
   @@map("order_item")
 }

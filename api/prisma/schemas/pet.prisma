@@ -109,7 +109,7 @@ model Metting {
   report      String?  @db.Text
 
   specialityId             String
-  speciality_id            Speciality                @relation(fields: [specialityId], references: [id])
+  speciality               Speciality                @relation(fields: [specialityId], references: [id])
   ownedPetId               String
   ownedPet                 OwnedPet                  @relation(fields: [ownedPetId], references: [id])
   veterinarianId           String

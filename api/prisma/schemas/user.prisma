@@ -45,7 +45,7 @@ model ClientProfile {
   // appointments  Appointment[]
   ownedPet           OwnedPet[]
   clinicProducts     ClinicProduct[]
-  order              Orders[]
+  order              Order[]
   secretaryProfileId String?
 
   @@map("client_profiles")
@@ -61,7 +61,7 @@ model VeterinarianProfile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   ownedPet           OwnedPet[]
-  metting            Metting[]
+  meeting            Meeting[]
   speciality         Speciality[]
   veterinarianClinic VeterinarianClinic[]
   pet                Pet[]

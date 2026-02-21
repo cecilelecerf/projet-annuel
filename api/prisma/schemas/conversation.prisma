@@ -8,7 +8,7 @@ model Conversation {
   messages            Message[]
   conversationMembers ConversationMember[]
 
-  @@map("conversation")
+  @@map("conversations")
 }
 
 enum ConversationMemberRole {
@@ -31,7 +31,7 @@ model ConversationMember {
 
   messageReads MessageRead[]
 
-  @@map("conversation_member")
+  @@map("conversation_members")
 }
 
 model Message {
@@ -46,7 +46,7 @@ model Message {
 
   messageReads MessageRead[]
 
-  @@map("message")
+  @@map("messages")
 }
 
 model MessageRead {
@@ -61,5 +61,5 @@ model MessageRead {
   readById  String
   readBy    ConversationMember @relation(fields: [readById], references: [id])
 
-  @@map("message_read")
+  @@map("message_reads")
 }

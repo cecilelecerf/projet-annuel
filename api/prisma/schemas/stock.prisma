@@ -9,10 +9,10 @@ model Product {
   picture     String?
 
   brandId        String
-  brand          Brands          @relation(fields: [brandId], references: [id])
+  brand          Brand           @relation(fields: [brandId], references: [id])
   clinicProducts ClinicProduct[]
 
-  Food Foods?
+  Food Food?
 
   @@map("products")
 }
@@ -22,7 +22,7 @@ enum FoodType {
   WET
 }
 
-model Foods {
+model Food {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -43,7 +43,7 @@ model Foods {
   @@map("foods")
 }
 
-model Brands {
+model Brand {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -88,12 +88,12 @@ model FoodPet {
   hours     DateTime
 
   foodId String
-  food   Foods  @relation(fields: [foodId], references: [id])
+  food   Food   @relation(fields: [foodId], references: [id])
 
   ownedPetId String
   ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
 
-  @@map("food_pet")
+  @@map("food_pets")
 }
 
 enum OrderStatus {
@@ -104,7 +104,7 @@ enum OrderStatus {
   CANCELLED
 }
 
-model Orders {
+model Order {
   id        String      @id @default(cuid())
   createdAt DateTime    @default(now())
   updatedAt DateTime    @default(now()) @updatedAt
@@ -118,7 +118,7 @@ model Orders {
 
   orderItems OrderItem[]
 
-  @@map("order")
+  @@map("orders")
 }
 
 model OrderItem {
@@ -133,7 +133,7 @@ model OrderItem {
   productClinic   ClinicProduct @relation(fields: [productClinicId], references: [id])
 
   orderId String
-  order   Orders @relation(fields: [orderId], references: [id])
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  @@map("order_item")
+  @@map("order_items")
 }

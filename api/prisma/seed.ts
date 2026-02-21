@@ -26,12 +26,12 @@ async function main() {
   await prisma.ownedPetVaccine.deleteMany();
   await prisma.foodPet.deleteMany();
   await prisma.orderItem.deleteMany();
-  await prisma.orders.deleteMany();
+  await prisma.order.deleteMany();
   await prisma.clinicProduct.deleteMany();
-  await prisma.foods.deleteMany();
+  await prisma.food.deleteMany();
   await prisma.product.deleteMany();
-  await prisma.brands.deleteMany();
-  await prisma.metting.deleteMany();
+  await prisma.brand.deleteMany();
+  await prisma.meeting.deleteMany();
   await prisma.ownedPet.deleteMany();
   await prisma.veterinarianClinicAverage.deleteMany();
   await prisma.veterinarianClinic.deleteMany();
@@ -520,7 +520,7 @@ async function main() {
   // ============================================================
   // MEETINGS
   // ============================================================
-  const meeting1 = await prisma.metting.create({
+  const meeting1 = await prisma.meeting.create({
     data: {
       id: "meeting-1",
       date: new Date("2026-02-10T09:00:00"),
@@ -536,7 +536,7 @@ async function main() {
     },
   });
 
-  const meeting2 = await prisma.metting.create({
+  const meeting2 = await prisma.meeting.create({
     data: {
       id: "meeting-2",
       date: new Date("2026-03-05T14:00:00"),
@@ -550,7 +550,7 @@ async function main() {
     },
   });
 
-  const meeting3 = await prisma.metting.create({
+  const meeting3 = await prisma.meeting.create({
     data: {
       id: "meeting-3",
       date: new Date("2026-04-01T10:00:00"),
@@ -571,7 +571,7 @@ async function main() {
       diagnosedAt: new Date("2026-02-10"),
       healthConditionId: conditionCardio.id,
       ownedPetId: ownedPet1.id,
-      mettingId: meeting1.id,
+      meetingId: meeting1.id,
       addedById: vetoUser1.id,
     },
   });
@@ -596,7 +596,7 @@ async function main() {
         id: "opv-1",
         ownedPetId: ownedPet1.id,
         vaccineId: vaccineRage.id,
-        mettingId: meeting1.id,
+        meetingId: meeting1.id,
       },
       { id: "opv-2", ownedPetId: ownedPet1.id, vaccineId: vaccineCHPPi.id },
       { id: "opv-3", ownedPetId: ownedPet2.id, vaccineId: vaccineTyphus.id },
@@ -606,7 +606,7 @@ async function main() {
   // ============================================================
   // BRANDS & PRODUCTS & FOOD
   // ============================================================
-  const brandRoyal = await prisma.brands.create({
+  const brandRoyal = await prisma.brand.create({
     data: {
       id: "brand-1",
       name: "Royal Canin",
@@ -614,7 +614,7 @@ async function main() {
     },
   });
 
-  const brandHills = await prisma.brands.create({
+  const brandHills = await prisma.brand.create({
     data: {
       id: "brand-2",
       name: "Hill's",
@@ -652,7 +652,7 @@ async function main() {
     },
   });
 
-  const food1 = await prisma.foods.create({
+  const food1 = await prisma.food.create({
     data: {
       id: "food-1",
       caloriesPer100: 370,
@@ -665,7 +665,7 @@ async function main() {
     },
   });
 
-  const food2 = await prisma.foods.create({
+  const food2 = await prisma.food.create({
     data: {
       id: "food-2",
       caloriesPer100: 340,
@@ -678,7 +678,7 @@ async function main() {
     },
   });
 
-  const food3 = await prisma.foods.create({
+  const food3 = await prisma.food.create({
     data: {
       id: "food-3",
       caloriesPer100: 385,
@@ -785,7 +785,7 @@ async function main() {
   // ============================================================
   // ORDERS
   // ============================================================
-  const order1 = await prisma.orders.create({
+  const order1 = await prisma.order.create({
     data: {
       id: "order-1",
       status: "CONFIRMED",

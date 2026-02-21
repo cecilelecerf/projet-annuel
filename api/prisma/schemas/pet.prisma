@@ -17,11 +17,11 @@ model OwnedPet {
   race   Race   @relation(fields: [raceId], references: [id])
 
   ownedPetVaccine          OwnedPetVaccine[]
-  metting                  Metting[]
+  meeting                  Meeting[]
   foodPets                 FoodPet[]
   ownedPetConditionHealths OwnedPetHealthCondition[]
 
-  @@map("owned_pet")
+  @@map("owned_pets")
 }
 
 model Pet {
@@ -83,39 +83,8 @@ model OwnedPetVaccine {
   vaccineId String
   vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
 
-  mettingId String?
-  metting   Metting? @relation(fields: [mettingId], references: [id])
+  meetingId String?
+  meeting   Meeting? @relation(fields: [meetingId], references: [id])
 
-  @@map("owned_pet_vaccine")
-}
-
-enum MettingStatus {
-  PENDING
-  DONE
-  CONFIRMED
-  CANCELLED
-}
-
-model Metting {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  date        DateTime
-  duration    Decimal
-  description String?  @db.Text
-  petWeight   Int?
-  petSize     Int?
-  report      String?  @db.Text
-
-  specialityId             String
-  speciality               Speciality                @relation(fields: [specialityId], references: [id])
-  ownedPetId               String
-  ownedPet                 OwnedPet                  @relation(fields: [ownedPetId], references: [id])
-  veterinarianId           String
-  veterinarian             VeterinarianProfile       @relation(fields: [veterinarianId], references: [id])
-  ownedPetVaccine          OwnedPetVaccine[]
-  ownedPetConditionHealths OwnedPetHealthCondition[]
-
-  @@map("mettings")
+  @@map("owned_pet_vaccines")
 }

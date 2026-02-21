@@ -12,7 +12,7 @@ model HealthCondition {
   ownedPetConditionHealths OwnedPetHealthCondition[]
   foodHealthConditions     FoodHealthCondition[]
 
-  @@map("health_condition")
+  @@map("health_conditions")
 }
 
 model OwnedPetHealthCondition {
@@ -27,12 +27,12 @@ model OwnedPetHealthCondition {
   healthCondition   HealthCondition @relation(fields: [healthConditionId], references: [id])
   ownedPetId        String
   ownedPet          OwnedPet        @relation(fields: [ownedPetId], references: [id])
-  mettingId         String?
-  metting           Metting?        @relation(fields: [mettingId], references: [id])
+  meetingId         String?
+  meeting           Meeting?        @relation(fields: [meetingId], references: [id])
   addedById         String
   addedBy           User            @relation(fields: [addedById], references: [id])
 
-  @@map("owned_pet_health_condition")
+  @@map("owned_pet_health_conditions")
 }
 
 enum FoodHealthConditionRecommendation {
@@ -48,9 +48,9 @@ model FoodHealthCondition {
   recommendation FoodHealthConditionRecommendation
 
   foodId            String
-  food              Foods           @relation(fields: [foodId], references: [id])
+  food              Food            @relation(fields: [foodId], references: [id])
   healthConditionId String
   healthContdition  HealthCondition @relation(fields: [healthConditionId], references: [id])
 
-  @@map("food_health_condition")
+  @@map("food_health_conditions")
 }

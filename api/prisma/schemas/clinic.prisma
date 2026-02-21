@@ -12,13 +12,13 @@ model Clinic {
   speciality             Speciality[]
   veterinarianClinic     VeterinarianClinic[]
   clinicPet              Pet[]
-  order                  Orders[]
+  order                  Order[]
   clinicProducts         ClinicProduct[]
   secretaryProfile       SecretaryProfile[]
   directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]
 
-  @@map("clinic")
+  @@map("clinics")
 }
 
 model Speciality {
@@ -30,9 +30,9 @@ model Speciality {
 
   veterinarianSpeciality VeterinarianProfile[]
   clinicSpeciality       Clinic[]
-  mettings               Metting[]
+  meetings               Meeting[]
 
-  @@map("speciality")
+  @@map("specialities")
 }
 
 model VeterinarianClinic {
@@ -47,7 +47,7 @@ model VeterinarianClinic {
 
   veterinarianClinicAverage VeterinarianClinicAverage[]
 
-  @@map("veterinarian_clinic")
+  @@map("veterinarian_clinics")
 }
 
 enum VeterinarianClinicType {
@@ -70,5 +70,36 @@ model VeterinarianClinicAverage {
   veterinarianClinicId String
   vererinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
 
-  @@map("veterinarian_clinic_average")
+  @@map("veterinarian_clinic_availabilities")
+}
+
+enum MeetingStatus {
+  PENDING
+  DONE
+  CONFIRMED
+  CANCELLED
+}
+
+model Meeting {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  date        DateTime
+  duration    Decimal
+  description String?  @db.Text
+  petWeight   Int?
+  petSize     Int?
+  report      String?  @db.Text
+
+  specialityId             String
+  speciality               Speciality                @relation(fields: [specialityId], references: [id])
+  ownedPetId               String
+  ownedPet                 OwnedPet                  @relation(fields: [ownedPetId], references: [id])
+  veterinarianId           String
+  veterinarian             VeterinarianProfile       @relation(fields: [veterinarianId], references: [id])
+  ownedPetVaccine          OwnedPetVaccine[]
+  ownedPetConditionHealths OwnedPetHealthCondition[]
+
+  @@map("meetings")
 }

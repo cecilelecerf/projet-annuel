@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 const handleLogin = async ({ email }: { email: string }) => {
-  await authStore.login(email, 'password123')
+  await authStore.login(email, 'Password123!')
   console.log('connecté:', user)
 }
 </script>
@@ -14,12 +14,14 @@ const handleLogin = async ({ email }: { email: string }) => {
   <title>Connexion (dev section)</title>
   <div v-if="user">
     <p>Bonjour, {{ user.firstname }}</p>
-    <button @click="authStore.logout()">Deconnexion</button>
+    <el-button @click="authStore.logout()">Deconnexion</el-button>
   </div>
   <div v-else>
-    <button @click="handleLogin({ email: 'client@email.com' })">Client</button>
-    <button @click="handleLogin({ email: 'veterinarian@vetclinic.com' })">Vétérinaire</button>
-    <button @click="handleLogin({ email: 'admin@vetclinic.com' })">Admin</button>
+    <el-button @click="handleLogin({ email: 'client@gmail.com' })">Client</el-button>
+    <el-button @click="handleLogin({ email: 'veto@gmail.com' })">Veto</el-button>
+    <el-button @click="handleLogin({ email: 'directeur@gmail.com' })">Directeur</el-button>
+    <el-button @click="handleLogin({ email: 'referent@gmail.com' })">Referant</el-button>
+    <el-button @click="handleLogin({ email: 'admin@gmail.com' })">Admin</el-button>
   </div>
 </template>
 

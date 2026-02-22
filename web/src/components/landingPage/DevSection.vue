@@ -11,6 +11,7 @@ interface Role {
   emoji: string
   description: string
   email: string
+  path: string
 }
 
 const roles: Role[] = [
@@ -20,6 +21,7 @@ const roles: Role[] = [
     emoji: '👤',
     description: "Propriétaire d'animaux, gestion des RDV",
     email: 'client@gmail.com',
+    path: 'Client',
   },
   {
     key: 'veterinaire',
@@ -27,6 +29,7 @@ const roles: Role[] = [
     emoji: '🩺',
     description: 'Consultation, agenda et dossiers patients',
     email: 'veto@gmail.com',
+    path: 'Veto',
   },
   {
     key: 'secretaire',
@@ -34,6 +37,7 @@ const roles: Role[] = [
     emoji: '📋',
     description: 'Gestion des plannings et accueil',
     email: 'secretaire@gmail.com',
+    path: 'Secretary',
   },
   {
     key: 'directeur',
@@ -41,6 +45,7 @@ const roles: Role[] = [
     emoji: '🏥',
     description: 'Supervision de la clinique et équipes',
     email: 'directeur@gmail.com',
+    path: 'Director',
   },
   {
     key: 'referent',
@@ -48,14 +53,16 @@ const roles: Role[] = [
     emoji: '⭐',
     description: 'Coordination inter-cliniques et spécialités',
     email: 'referent@gmail.com',
+    path: 'Referant',
   },
-  {
-    key: 'superadmin',
-    label: 'Super Admin',
-    emoji: '🔐',
-    description: 'Accès complet à toute la plateforme',
-    email: 'admin@gmail.com',
-  },
+  // {
+  //   key: 'superadmin',
+  //   label: 'Super Admin',
+  //   emoji: '🔐',
+  //   description: 'Accès complet à toute la plateforme',
+  //   email: 'admin@gmail.com',
+
+  // },
 ]
 const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)
@@ -70,7 +77,7 @@ const loginAs = async (role: Role) => {
     type: 'success',
     duration: 2000,
   })
-  router.push('/mon-espace')
+  router.push({ name: `${role.path}.Home` })
 }
 </script>
 
@@ -87,7 +94,7 @@ const loginAs = async (role: Role) => {
       <p class="dev-section__subtitle">Connectez-vous directement avec un compte de test</p>
     </div>
     <div v-if="isAuthenticated" class="dev-section__grid">
-      <RouterLink :to="{ name: 'Client.MonEspace' }"> Allez sur mon espace</RouterLink>
+      <RouterLink :to="{ name: 'Client.Home' }"> Allez sur mon espace</RouterLink>
       <el-button @click="authStore.logout()">Déconnexion</el-button>
     </div>
     <div v-else class="dev-section__grid">

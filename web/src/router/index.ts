@@ -2,6 +2,8 @@ import { useAuthStore, type UserStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { clientRouter } from './clientRouter'
+import { veterinarianRouter } from './veterinarianRouter'
+import { directorRouter } from './directorRouter'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
   DIRECTOR: '/directeur',
@@ -22,6 +24,8 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   ...clientRouter,
+  ...veterinarianRouter,
+  ...directorRouter,
 
   // // ══════════════════════════════════════════════════════════════
   // // 🔓 AUTH (public)

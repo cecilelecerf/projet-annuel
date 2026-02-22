@@ -9,7 +9,7 @@ export const clientRouter: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        name: 'Client.MonEspace',
+        name: 'Client.Home',
         component: () => import('@/views/client/MySpace.vue'),
       },
 

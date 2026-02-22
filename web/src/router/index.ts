@@ -1,13 +1,14 @@
 import { useAuthStore, type UserStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { clientRouter } from './clientRouter'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
-  director: '/directeur',
-  veterinarian: '/veto',
-  secretary: '/secretaire',
-  referant: '/referent',
-  client: '/',
+  DIRECTOR: '/directeur',
+  VETERINARIAN: '/veto',
+  SECRETARY: '/secretaire',
+  REFERANT: '/referent',
+  CLIENT: '/',
 } as const
 
 const routes: RouteRecordRaw[] = [
@@ -20,28 +21,29 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LandingPage.vue'),
     meta: { public: true },
   },
+  ...clientRouter,
 
   // // ══════════════════════════════════════════════════════════════
   // // 🔓 AUTH (public)
   // // ══════════════════════════════════════════════════════════════
-  // {
-  //   path: '/login',
-  //   name: 'Login',
-  //   //  component: () => import('@/views/auth/Login.vue'),
-  //   meta: { public: true },
-  // },
-  // {
-  //   path: '/register',
-  //   name: 'Register',
-  //   //    component: () => import('@/views/auth/Register.vue'),
-  //   meta: { public: true },
-  // },
-  // {
-  //   path: '/unauthorized',
-  //   name: 'Unauthorized',
-  //   //    component: () => import('@/views/auth/Unauthorized.vue'),
-  //   meta: { public: true },
-  // },
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/auth/Login.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/auth/Register.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/unauthorized',
+    name: 'Unauthorized',
+    component: () => import('@/views/auth/Unauthorized.vue'),
+    meta: { public: true },
+  },
 
   // ══════════════════════════════════════════════════════════════
   // 🔀 REDIRECTIONS
@@ -63,18 +65,11 @@ const router = createRouter({
 // ─────────────────────────────────────────────────────────────────────────────
 router.beforeEach((to, from, next) => {
   const { user } = storeToRefs(useAuthStore())
-
   const role = user.value?.role
   const publicRoutes = ['Login', 'Register', 'Unauthorized', 'NotFound']
   if (publicRoutes.includes(to.name as string) || to.meta?.public) return next()
-
   if (!role) return next({ name: 'Login' })
 
-  // Redirection si role non-client accède à '/' ou '/mon-espace'
-  const clientlessRedirect = ['/', '/mon-espace']
-  if (clientlessRedirect.includes(to.path) && role !== 'client' && roleHomeMap[role]) {
-    return next(roleHomeMap[role])
-  }
   next()
 })
 

@@ -2,14 +2,8 @@
 import { useAuthStore } from '@/stores/authStore'
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
-
-const authStore = useAuthStore()
-const { user } = storeToRefs(authStore)
-
-const handleLogin = async ({ email }: { email: string }) => {
-  await authStore.login(email, 'Password123!')
-  console.log('connecté:', user)
-}
+import { RouterLink, useRouter } from 'vue-router'
+const router = useRouter()
 
 interface Role {
   key: string
@@ -25,52 +19,58 @@ const roles: Role[] = [
     label: 'Client',
     emoji: '👤',
     description: "Propriétaire d'animaux, gestion des RDV",
-    email: 'client@cecoule.dev',
+    email: 'client@gmail.com',
   },
   {
     key: 'veterinaire',
     label: 'Vétérinaire',
     emoji: '🩺',
     description: 'Consultation, agenda et dossiers patients',
-    email: 'vet@cecoule.dev',
+    email: 'veto@gmail.com',
   },
   {
     key: 'secretaire',
     label: 'Secrétaire',
     emoji: '📋',
     description: 'Gestion des plannings et accueil',
-    email: 'secretaire@cecoule.dev',
+    email: 'secretaire@gmail.com',
   },
   {
     key: 'directeur',
     label: 'Directeur de clinique',
     emoji: '🏥',
     description: 'Supervision de la clinique et équipes',
-    email: 'directeur@cecoule.dev',
+    email: 'directeur@gmail.com',
   },
   {
     key: 'referent',
     label: 'Référent',
     emoji: '⭐',
     description: 'Coordination inter-cliniques et spécialités',
-    email: 'referent@cecoule.dev',
+    email: 'referent@gmail.com',
   },
   {
     key: 'superadmin',
     label: 'Super Admin',
     emoji: '🔐',
     description: 'Accès complet à toute la plateforme',
-    email: 'admin@cecoule.dev',
+    email: 'admin@gmail.com',
   },
 ]
+const authStore = useAuthStore()
+const { isAuthenticated } = storeToRefs(authStore)
 
-const loginAs = (role: Role) => {
-  handleLogin({ email: role.email })
+const handleLogin = async ({ email }: { email: string }) => {
+  await authStore.login(email, 'Password123!')
+}
+const loginAs = async (role: Role) => {
+  await handleLogin({ email: role.email })
   ElMessage({
     message: `Connexion en tant que ${role.label}...`,
     type: 'success',
     duration: 2000,
   })
+  router.push('/mon-espace')
 }
 </script>
 
@@ -86,8 +86,11 @@ const loginAs = (role: Role) => {
       <h2 class="dev-section__title">Accès rapide par rôle</h2>
       <p class="dev-section__subtitle">Connectez-vous directement avec un compte de test</p>
     </div>
-
-    <div class="dev-section__grid">
+    <div v-if="isAuthenticated" class="dev-section__grid">
+      <RouterLink :to="{ name: 'Client.MonEspace' }"> Allez sur mon espace</RouterLink>
+      <el-button @click="authStore.logout()">Déconnexion</el-button>
+    </div>
+    <div v-else class="dev-section__grid">
       <div
         v-for="role in roles"
         :key="role.key"

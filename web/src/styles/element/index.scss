@@ -1,18 +1,13 @@
 @forward 'element-plus/theme-chalk/src/common/var.scss' with (
   $colors: (
     'primary': (
-      'base': #11aa11,
+      'base': #256cab,
     ),
   )
 );
-
-@use 'element-plus/theme-chalk/src/index.scss';
-
 .el-button--primary {
   color: var(--el-color-primary-light-9);
   letter-spacing: 0.1em;
-
-  //   color: #aa11aa;
 }
 :root {
   --el-color-primary-dark-9: #0d2438;

@@ -46,7 +46,7 @@ export type UpdateUser = z.infer<typeof updateUserSchema>;
 export const clientSchema = baseUserSchema.extend({
   id: clientIdSchema,
   dateOfBirth: z.string().date().nullable().optional(),
-  role: z.literal("client"),
+  role: z.literal("CLIENT"),
 });
 
 export const createClientSchema = clientSchema.omit({ id: true });
@@ -59,7 +59,7 @@ export type UpdateClient = z.infer<typeof updateClientSchema>;
 // ── Veterinarian ──────────────────────────────────────────────────────────────
 export const veterinarianSchema = baseUserSchema.extend({
   id: veterinarianIdSchema,
-  role: z.literal("veterinarian"),
+  role: z.literal("VETERINARIAN"),
 });
 
 export type Veterinarian = z.infer<typeof veterinarianSchema>;
@@ -68,7 +68,7 @@ export type Veterinarian = z.infer<typeof veterinarianSchema>;
 export const secretarySchema = baseUserSchema.extend({
   id: secretaryIdSchema,
   clinicId: clinicIdSchema,
-  role: z.literal("secretary"),
+  role: z.literal("SECRETARY"),
 });
 
 export const createSecretarySchema = secretarySchema.omit({ id: true });
@@ -80,7 +80,7 @@ export type CreateSecretary = z.infer<typeof createSecretarySchema>;
 export const directorClinicSchema = baseUserSchema.extend({
   id: directorClinicIdSchema,
   clinicId: clinicIdSchema,
-  role: z.literal("director"),
+  role: z.literal("DIRECTOR"),
 });
 
 export const createDirectorClinicSchema = directorClinicSchema.omit({
@@ -94,7 +94,7 @@ export type CreateDirectorClinic = z.infer<typeof createDirectorClinicSchema>;
 export const referantClinicSchema = baseUserSchema.extend({
   id: referantClinicIdSchema,
   clinicId: clinicIdSchema.nullable().optional(),
-  role: z.literal("referant"),
+  role: z.literal("REFERANT"),
 });
 
 export const createReferantClinicSchema = referantClinicSchema.omit({

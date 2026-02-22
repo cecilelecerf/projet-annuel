@@ -2,7 +2,6 @@ const BASE_URL = 'http://localhost:3000'
 
 export const api = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('accessToken')
-
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {

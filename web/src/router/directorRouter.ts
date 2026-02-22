@@ -4,7 +4,7 @@ export const directorRouter = [
   {
     path: '/directeur',
     component: () => import('@/layouts/DirectorLayout.vue'),
-    beforeEnter: requireRole('director'),
+    beforeEnter: requireRole('DIRECTOR'),
     children: [
       {
         path: '',

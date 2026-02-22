@@ -4,7 +4,7 @@ const referantRouter = [
   {
     path: '/referent',
     component: () => import('@/layouts/ReferentLayout.vue'),
-    beforeEnter: requireRole('referant'),
+    beforeEnter: requireRole('REFERANT'),
     children: [
       {
         path: '',

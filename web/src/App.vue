@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import DevSection from './components/DevSection.vue'
+import Hero from './components/landingPage/Hero.vue'
+import DevSection from './components/landingPage/DevSection.vue'
 </script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
-  <DevSection />
+  <div class="home">
+    <hero />
+    <dev-section />
+    <!-- Dev Section -->
+  </div>
 </template>
-
-<style scoped></style>

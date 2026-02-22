@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import { resolve } from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,15 +14,24 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     AutoImport({
-      resolvers: [ElementPlusResolver()],
+      resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
     }),
     Components({
       resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
     }),
   ],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@use "@/styles/mixins.scss" as *;`,
+      },
+    },
+  },
+
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@schema': resolve(__dirname, '../packages/schemas/src/index.ts'),
     },
   },
 })

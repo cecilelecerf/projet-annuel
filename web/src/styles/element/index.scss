@@ -1,0 +1,39 @@
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': #256cab,
+    ),
+  )
+);
+
+@use 'element-plus/theme-chalk/src/index.scss';
+
+.el-button--primary {
+  color: var(--el-color-primary-light-9);
+  letter-spacing: 0.1em;
+
+  //   color: #aa11aa;
+}
+:root {
+  --el-color-primary-dark-9: #0d2438;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+}

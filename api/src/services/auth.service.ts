@@ -4,6 +4,7 @@ import { LoginInput, RegisterInput } from "@api/schemas/auth.schema";
 import {
   generateAccessToken,
   generateRefreshToken,
+  verifyAccessToken,
   verifyRefreshToken,
 } from "@api/utils/jwt";
 import { prisma } from "@api/lib/prisma";
@@ -121,5 +122,12 @@ export class AuthService {
 
   async logout(refreshToken: string) {
     await prisma.refreshToken.delete({ where: { token: refreshToken } });
+  }
+
+  async me(accessToken: string) {
+    const payload = verifyAccessToken(accessToken);
+    if (!payload) throw new Error("Refresh token invalide");
+    const user = prisma.user.findUnique({ where: { id: payload.id } });
+    return user;
   }
 }

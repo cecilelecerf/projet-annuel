@@ -5,7 +5,16 @@ export const registerSchema = z.object({
   password: z.string().min(8, "Minimum 8 caractères"),
   firstname: z.string().min(1, "Prénom requis"),
   lastname: z.string().min(1, "Nom requis"),
-  role: z.enum(["CLIENT", "VETERINARIAN", "CLINIC", "SECRETARY"]).optional(),
+  role: z
+    .enum([
+      "CLIENT",
+      "VETERINARIAN",
+      "ADMIN",
+      "DIRECTOR",
+      "REFERANT",
+      "SECRETARY",
+    ])
+    .optional(),
 });
 
 export const loginSchema = z.object({

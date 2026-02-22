@@ -1,0 +1,35 @@
+@font-face {
+  font-family: 'Blue Winter';
+  src: url('@/assets/fonts/BlueWinter.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('@/assets/fonts/Nunito-VariableFont_wght.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('@/assets/fonts/DMSans-VariableFont.ttf') format('truetype');
+}
+
+* {
+  font-family: 'DM Sans', sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+}
+.brand,
+button,
+button * {
+  font-family: 'Blue Winter', sans-serif;
+}

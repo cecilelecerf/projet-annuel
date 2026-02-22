@@ -12,7 +12,8 @@
   "workspaces": [
     "api",
     "web",
-    "mobile"
+    "mobile",
+    "packages/*"
   ],
   "devDependencies": {
     "typescript": "^5.9.3"

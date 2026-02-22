@@ -17,7 +17,6 @@ export class AuthController {
   }
 
   async login(req: Request, res: Response) {
-    console.log(req.body);
     const { email, password } = req.body;
     const result = await authService.login({ email, password });
     res.json(result);
@@ -27,5 +26,17 @@ export class AuthController {
     const { refreshToken } = req.body;
     await authService.logout(refreshToken);
     res.status(204).json();
+  }
+
+  async me(req: Request, res: Response) {
+    const authorization = req.headers.authorization;
+
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      res.status(401).json({ message: "Token manquant" });
+      return;
+    }
+    const token = authorization.split(" ")[1];
+    const user = await authService.me(token);
+    res.status(200).json(user);
   }
 }

@@ -1,21 +1,35 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../lib/api'
-
-interface User {
-  id: string
-  email: string
-  firstname: string
-  lastname: string
-  role: string
-}
+import { type User } from '@schema'
+export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'>
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
+  const user = ref<UserStore | null>(null)
   const accessToken = ref<string | null>(localStorage.getItem('accessToken'))
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
-
   const isAuthenticated = computed(() => !!accessToken.value)
+
+  const init = async () => {
+    if (!isAuthenticated) return
+    try {
+      const data = await api('/auth/me')
+      const userData: UserStore = {
+        id: data.id,
+        email: data.email,
+        firstname: data.firstname,
+        lastname: data.lastname,
+        role: data.role,
+      }
+      user.value = userData
+    } catch {
+      user.value = null
+      accessToken.value = null
+      refreshToken.value = null
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
+    }
+  }
 
   const login = async (email: string, password: string) => {
     const data = await api('/auth/login', {
@@ -43,5 +57,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refreshToken')
   }
 
-  return { user, accessToken, isAuthenticated, login, logout }
+  return { user, accessToken, isAuthenticated, login, logout, init }
 })

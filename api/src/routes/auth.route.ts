@@ -20,11 +20,6 @@ authRouter.post(
 );
 authRouter.post("/logout", authMiddleware, controller.logout.bind(controller));
 
-// router.get(
-//   "/users",
-//   authMiddleware,
-//   roleMiddleware("ADMIN"),
-//   controller.getUsers.bind(controller),
-// );
+authRouter.get("/me", authMiddleware, controller.me.bind(controller));
 
 export default authRouter;

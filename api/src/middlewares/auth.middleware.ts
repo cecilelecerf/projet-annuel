@@ -16,7 +16,6 @@ export const authMiddleware = (
   next: NextFunction,
 ) => {
   const authorization = req.headers.authorization;
-
   if (!authorization || !authorization.startsWith("Bearer ")) {
     res.status(401).json({ message: "Token manquant" });
     return;

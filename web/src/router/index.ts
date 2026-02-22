@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Landing',
-    component: () => import('@/App.vue'),
+    component: () => import('@/views/LandingPage.vue'),
     meta: { public: true },
   },
 

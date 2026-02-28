@@ -1,10 +1,4 @@
-import { prisma } from "@api/lib/prisma";
 import { MettingService } from "@api/services/metting.service";
-import {
-  meetingSchema,
-  mettingBaseSchema,
-  mettingWithExceptionSchema,
-} from "@schemas";
 import type { Request, Response } from "express";
 import { z } from "zod";
 
@@ -29,98 +23,20 @@ export class MettingController {
     const { startDate: start, endDate: end } = result.data;
     const { role, id } = req.user;
 
-    if (role === "VETERINARIAN") {
-      const profile = await prisma.veterinarianProfile.findUnique({
-        where: { id },
-        include: {
-          animalMeeting: {
-            where: {
-              base: {
-                OR: [
-                  { type: "SPECIFIED", specificDate: { gte: start, lte: end } },
-                  {
-                    type: "RECURRING",
-                    dateStart: { lte: end },
-                    dateEnd: { gte: start },
-                  },
-                ],
-              },
-            },
-            include: {
-              base: {
-                include: { exceptions: true },
-              },
-            },
-          },
-          user: {
-            include: {
-              internalMettingParticipants: {
-                where: {
-                  metting: {
-                    base: {
-                      OR: [
-                        {
-                          type: "SPECIFIED",
-                          specificDate: { gte: start, lte: end },
-                        },
-                        {
-                          type: "RECURRING",
-                          dateStart: { lte: end },
-                          dateEnd: { gte: start },
-                        },
-                      ],
-                    },
-                  },
-                },
-                include: {
-                  metting: {
-                    include: {
-                      base: {
-                        include: { exceptions: true },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
+    const handlers: Partial<Record<typeof role, () => Promise<any[] | null>>> =
+      {
+        VETERINARIAN: () =>
+          mettingService.getCalendarForVeterinarian(id, start, end),
+        SECRETARY: () => mettingService.getCalendarForSecretary(id, start, end),
+        REFERANT: () => mettingService.getCalendarForReferant(id, start, end),
+      };
 
-      if (!profile) return res.status(404).json();
+    const handler = handlers[role];
+    if (!handler) return res.status(200).json([]);
 
-      const animalMeetings = profile.animalMeeting.map(
-        ({ base, ...meeting }) => ({
-          ...base,
-          ...meeting,
-        }),
-      );
+    const meetings = await handler();
+    if (!meetings) return res.status(404).json();
 
-      const internalMeetings = profile.user.internalMettingParticipants
-        .filter((p) => p.metting)
-        .map(({ metting: { base, ...meeting } }) => ({
-          ...base,
-          ...meeting,
-        }));
-
-      const parsed = z
-        .array(mettingWithExceptionSchema)
-        .parse([...animalMeetings, ...internalMeetings]);
-      console.log(parsed);
-      const recurring = parsed.filter((m) => m.type === "RECURRING");
-      const nonRecurring = parsed
-        .filter((m) => m.type !== "RECURRING")
-        .map(({ exceptions, ...recurring }) => recurring);
-
-      const expandedRecurring = recurring
-        .flatMap((metting) =>
-          mettingService.expandRecurring({ metting, start, end }),
-        )
-        .map(({ exceptions, ...recurring }) => recurring);
-
-      return res.status(200).json([...nonRecurring, ...expandedRecurring]);
-    }
-
-    return res.status(200).json([]);
+    return res.status(200).json(meetings);
   }
 }

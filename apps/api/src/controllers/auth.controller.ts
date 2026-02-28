@@ -5,13 +5,13 @@ const authService = new AuthService();
 
 export class AuthController {
   async register(req: Request, res: Response) {
-    const { email, password, firstname, lastname, role } = req.body;
+    const { email, password, firstname, lastname } = req.body;
+
     const result = await authService.register({
       email,
       password,
       firstname,
       lastname,
-      role,
     });
     res.status(201).json(result);
   }

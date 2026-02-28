@@ -1,6 +1,5 @@
 import { hash, compare } from "bcryptjs";
-
-import { LoginInput, RegisterInput } from "@api/schemas/auth.schema";
+import { Login, Register, userSchema } from "@schemas";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -10,7 +9,7 @@ import {
 import { prisma } from "@api/lib/prisma";
 
 export class AuthService {
-  async register(data: RegisterInput) {
+  async register(data: Register) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -26,9 +25,10 @@ export class AuthService {
         password: hashedPassword,
       },
     });
+    const parsedUser = userSchema.parse(user);
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const accessToken = generateAccessToken(parsedUser);
+    const refreshToken = generateRefreshToken(parsedUser);
 
     await prisma.refreshToken.create({
       data: {
@@ -47,19 +47,23 @@ export class AuthService {
     };
   }
 
-  async login(data: LoginInput) {
+  async login(data: Login) {
     const user = await prisma.user.findUnique({ where: { email: data.email } });
     if (!user) {
       throw new Error("Email ou mot de passe incorrect");
     }
+    console.log("test");
+    console.log(user);
+    const parsedUser = userSchema.parse(user);
+    console.log(parsedUser);
 
     const isPasswordValid = await compare(data.password, user.password);
     if (!isPasswordValid) {
       throw new Error("Email ou mot de passe incorrect");
     }
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    const accessToken = generateAccessToken(parsedUser);
+    const refreshToken = generateRefreshToken(parsedUser);
 
     await prisma.refreshToken.create({
       data: {
@@ -102,9 +106,10 @@ export class AuthService {
     }
 
     await prisma.refreshToken.delete({ where: { id: refreshToken } });
+    const parsedUser = userSchema.parse(user);
 
-    const newAccessToken = generateAccessToken(user);
-    const newRefreshToken = generateRefreshToken(user);
+    const newAccessToken = generateAccessToken(parsedUser);
+    const newRefreshToken = generateRefreshToken(parsedUser);
 
     await prisma.refreshToken.create({
       data: {

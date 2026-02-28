@@ -7,10 +7,10 @@
     "strict": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": ".",
     "composite": true,
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts"]
+  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts"],
+  "references": [{ "path": "../../packages/schemas" }]
 }

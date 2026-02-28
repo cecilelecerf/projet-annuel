@@ -10,29 +10,30 @@ import {
 } from "./ids";
 
 export const userRoleSchema = z.enum([
-  "client",
-  "secretary",
-  "director",
-  "referant",
-  "veterinarian",
+  "CLIENT",
+  "SECRETARY",
+  "DIRECTOR",
+  "REFERANT",
+  "VETERINARIAN",
 ]);
+export type UserRole = z.infer<typeof userRoleSchema>;
 
 // ── User (base) ───────────────────────────────────────────────────────────────
 export const baseUserSchema = z.object({
   id: userIdSchema,
-  createdAt: z.string().datetime(),
-  modifiedAt: z.string().datetime(),
-  email: z.string().email().max(255),
-  lastname: z.string().min(1).max(255),
-  firstname: z.string().min(1).max(255),
-  picture: z.string().url().max(255).nullable().optional(),
-  password: z.string().min(8).max(255),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  email: z.string().email("Email invalide").max(255),
+  lastname: z.string().min(1, "Nom requis").max(255),
+  firstname: z.string().min(1, "Prénom requis").max(255),
+  picture: z.url().max(255).nullable().optional(),
+  password: z.string().min(8, "Minimum 8 caractères").max(255),
 });
 
 export const createUserSchema = baseUserSchema.omit({
   id: true,
   createdAt: true,
-  modifiedAt: true,
+  updatedAt: true,
 });
 export const updateUserSchema = createUserSchema
   .partial()
@@ -112,3 +113,13 @@ export const userSchema = z.discriminatedUnion("role", [
   veterinarianSchema,
 ]);
 export type User = z.infer<typeof userSchema>;
+
+export const loginSchema = baseUserSchema.pick({ email: true, password: true });
+export type Login = z.infer<typeof loginSchema>;
+export const registerSchema = baseUserSchema.pick({
+  email: true,
+  password: true,
+  firstname: true,
+  lastname: true,
+});
+export type Register = z.infer<typeof registerSchema>;

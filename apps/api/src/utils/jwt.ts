@@ -1,4 +1,4 @@
-import { User, UserRole } from "apps/api/prisma/generated/prisma/client";
+import { User, UserRole } from "@schemas";
 import jwt from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;

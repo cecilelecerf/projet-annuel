@@ -1,66 +1,84 @@
-import { z } from 'zod'
+import { z } from "zod";
 
 // ── Branded IDs ───────────────────────────────────────────────────────────────
-export const userIdSchema               = z.string().uuid().brand('UserId')
-export const clientIdSchema             = z.string().uuid().brand('ClientId')
-export const veterinarianIdSchema       = z.string().uuid().brand('VeterinarianId')
-export const secretaryIdSchema          = z.string().uuid().brand('SecretaryId')
-export const directorClinicIdSchema     = z.string().uuid().brand('DirectorClinicId')
-export const referantClinicIdSchema     = z.string().uuid().brand('ReferantClinicId')
-export const clinicIdSchema             = z.string().uuid().brand('ClinicId')
-export const petIdSchema                = z.string().uuid().brand('PetId')
-export const ownedPetIdSchema           = z.string().uuid().brand('OwnedPetId')
-export const raceIdSchema               = z.string().uuid().brand('RaceId')
-export const meetingIdSchema            = z.string().uuid().brand('MeetingId')
-export const vaccineIdSchema            = z.string().uuid().brand('VaccineId')
-export const petVaccineIdSchema         = z.string().uuid().brand('PetVaccineId')
-export const brandIdSchema              = z.string().uuid().brand('BrandId')
-export const productIdSchema            = z.string().uuid().brand('ProductId')
-export const foodIdSchema               = z.string().uuid().brand('FoodId')
-export const productClinicIdSchema      = z.string().uuid().brand('ProductClinicId')
-export const reviewIdSchema             = z.string().uuid().brand('ReviewId')
-export const petFoodIdSchema            = z.number().int().brand('PetFoodId')
-export const veterinarianClinicIdSchema = z.string().uuid().brand('VeterinarianClinicId')
-export const availabilityIdSchema       = z.string().uuid().brand('AvailabilityId')
-export const specialityIdSchema         = z.string().uuid().brand('SpecialityId')
-export const clinicPetIdSchema          = z.string().uuid().brand('ClinicPetId')
-export const veterinarianPetIdSchema    = z.string().uuid().brand('VeterinarianPetId')
-export const orderIdSchema              = z.string().uuid().brand('OrderId')
-export const orderItemIdSchema          = z.string().uuid().brand('OrderItemId')
-export const conversationIdSchema       = z.string().uuid().brand('ConversationId')
-export const conversationMemberIdSchema = z.string().uuid().brand('ConversationMemberId')
-export const messageIdSchema            = z.string().uuid().brand('MessageId')
-export const messageReadIdSchema        = z.string().uuid().brand('MessageReadId')
-export const healthConditionIdSchema    = z.string().uuid().brand('HealthConditionId')
+export const userIdSchema = z.uuid().brand("UserId");
+export const clientIdSchema = z.uuid().brand("ClientId");
+export const veterinarianIdSchema = z.uuid().brand("VeterinarianId");
+export const secretaryIdSchema = z.uuid().brand("SecretaryId");
+export const directorClinicIdSchema = z
+  .string()
+  .uuid()
+  .brand("DirectorClinicId");
+export const referantClinicIdSchema = z
+  .string()
+  .uuid()
+  .brand("ReferantClinicId");
+export const clinicIdSchema = z.uuid().brand("ClinicId");
+export const petIdSchema = z.uuid().brand("PetId");
+export const ownedPetIdSchema = z.uuid().brand("OwnedPetId");
+export const raceIdSchema = z.uuid().brand("RaceId");
+export const meetingIdSchema = z.uuid().brand("MeetingId");
+export const vaccineIdSchema = z.uuid().brand("VaccineId");
+export const petVaccineIdSchema = z.uuid().brand("PetVaccineId");
+export const brandIdSchema = z.uuid().brand("BrandId");
+export const productIdSchema = z.uuid().brand("ProductId");
+export const foodIdSchema = z.uuid().brand("FoodId");
+export const productClinicIdSchema = z.uuid().brand("ProductClinicId");
+export const reviewIdSchema = z.uuid().brand("ReviewId");
+export const petFoodIdSchema = z.number().int().brand("PetFoodId");
+export const veterinarianClinicIdSchema = z
+  .string()
+  .uuid()
+  .brand("VeterinarianClinicId");
+export const availabilityIdSchema = z.uuid().brand("AvailabilityId");
+export const specialityIdSchema = z.uuid().brand("SpecialityId");
+export const clinicPetIdSchema = z.uuid().brand("ClinicPetId");
+export const veterinarianPetIdSchema = z
+  .string()
+  .uuid()
+  .brand("VeterinarianPetId");
+export const orderIdSchema = z.uuid().brand("OrderId");
+export const orderItemIdSchema = z.uuid().brand("OrderItemId");
+export const conversationIdSchema = z.uuid().brand("ConversationId");
+export const conversationMemberIdSchema = z
+  .string()
+  .uuid()
+  .brand("ConversationMemberId");
+export const messageIdSchema = z.uuid().brand("MessageId");
+export const messageReadIdSchema = z.uuid().brand("MessageReadId");
+export const healthConditionIdSchema = z
+  .string()
+  .uuid()
+  .brand("HealthConditionId");
 
-export type UserId               = z.infer<typeof userIdSchema>
-export type ClientId             = z.infer<typeof clientIdSchema>
-export type VeterinarianId       = z.infer<typeof veterinarianIdSchema>
-export type SecretaryId          = z.infer<typeof secretaryIdSchema>
-export type DirectorClinicId     = z.infer<typeof directorClinicIdSchema>
-export type ReferantClinicId     = z.infer<typeof referantClinicIdSchema>
-export type ClinicId             = z.infer<typeof clinicIdSchema>
-export type PetId                = z.infer<typeof petIdSchema>
-export type OwnedPetId           = z.infer<typeof ownedPetIdSchema>
-export type RaceId               = z.infer<typeof raceIdSchema>
-export type MeetingId            = z.infer<typeof meetingIdSchema>
-export type VaccineId            = z.infer<typeof vaccineIdSchema>
-export type PetVaccineId         = z.infer<typeof petVaccineIdSchema>
-export type BrandId              = z.infer<typeof brandIdSchema>
-export type ProductId            = z.infer<typeof productIdSchema>
-export type FoodId               = z.infer<typeof foodIdSchema>
-export type ProductClinicId      = z.infer<typeof productClinicIdSchema>
-export type ReviewId             = z.infer<typeof reviewIdSchema>
-export type PetFoodId            = z.infer<typeof petFoodIdSchema>
-export type VeterinarianClinicId = z.infer<typeof veterinarianClinicIdSchema>
-export type AvailabilityId       = z.infer<typeof availabilityIdSchema>
-export type SpecialityId         = z.infer<typeof specialityIdSchema>
-export type ClinicPetId          = z.infer<typeof clinicPetIdSchema>
-export type VeterinarianPetId    = z.infer<typeof veterinarianPetIdSchema>
-export type OrderId              = z.infer<typeof orderIdSchema>
-export type OrderItemId          = z.infer<typeof orderItemIdSchema>
-export type ConversationId       = z.infer<typeof conversationIdSchema>
-export type ConversationMemberId = z.infer<typeof conversationMemberIdSchema>
-export type MessageId            = z.infer<typeof messageIdSchema>
-export type MessageReadId        = z.infer<typeof messageReadIdSchema>
-export type HealthConditionId    = z.infer<typeof healthConditionIdSchema>
+export type UserId = z.infer<typeof userIdSchema>;
+export type ClientId = z.infer<typeof clientIdSchema>;
+export type VeterinarianId = z.infer<typeof veterinarianIdSchema>;
+export type SecretaryId = z.infer<typeof secretaryIdSchema>;
+export type DirectorClinicId = z.infer<typeof directorClinicIdSchema>;
+export type ReferantClinicId = z.infer<typeof referantClinicIdSchema>;
+export type ClinicId = z.infer<typeof clinicIdSchema>;
+export type PetId = z.infer<typeof petIdSchema>;
+export type OwnedPetId = z.infer<typeof ownedPetIdSchema>;
+export type RaceId = z.infer<typeof raceIdSchema>;
+export type MeetingId = z.infer<typeof meetingIdSchema>;
+export type VaccineId = z.infer<typeof vaccineIdSchema>;
+export type PetVaccineId = z.infer<typeof petVaccineIdSchema>;
+export type BrandId = z.infer<typeof brandIdSchema>;
+export type ProductId = z.infer<typeof productIdSchema>;
+export type FoodId = z.infer<typeof foodIdSchema>;
+export type ProductClinicId = z.infer<typeof productClinicIdSchema>;
+export type ReviewId = z.infer<typeof reviewIdSchema>;
+export type PetFoodId = z.infer<typeof petFoodIdSchema>;
+export type VeterinarianClinicId = z.infer<typeof veterinarianClinicIdSchema>;
+export type AvailabilityId = z.infer<typeof availabilityIdSchema>;
+export type SpecialityId = z.infer<typeof specialityIdSchema>;
+export type ClinicPetId = z.infer<typeof clinicPetIdSchema>;
+export type VeterinarianPetId = z.infer<typeof veterinarianPetIdSchema>;
+export type OrderId = z.infer<typeof orderIdSchema>;
+export type OrderItemId = z.infer<typeof orderItemIdSchema>;
+export type ConversationId = z.infer<typeof conversationIdSchema>;
+export type ConversationMemberId = z.infer<typeof conversationMemberIdSchema>;
+export type MessageId = z.infer<typeof messageIdSchema>;
+export type MessageReadId = z.infer<typeof messageReadIdSchema>;
+export type HealthConditionId = z.infer<typeof healthConditionIdSchema>;

@@ -1,14 +1,17 @@
 -- CreateEnum
-CREATE TYPE "VeterinarianClinicType" AS ENUM ('RECURRING', 'SPECIFIED', 'EXECPTION');
-
--- CreateEnum
-CREATE TYPE "MettingStatus" AS ENUM ('PENDING', 'DONE', 'CONFIRMED', 'CANCELLED');
-
--- CreateEnum
 CREATE TYPE "ConversationMemberRole" AS ENUM ('ADMIN', 'MEMBER');
 
 -- CreateEnum
 CREATE TYPE "FoodHealthConditionRecommendation" AS ENUM ('RECOMMENDED', 'AVOID');
+
+-- CreateEnum
+CREATE TYPE "ScheduleType" AS ENUM ('RECURRING', 'SPECIFIED', 'EXCEPTION');
+
+-- CreateEnum
+CREATE TYPE "MettingKind" AS ENUM ('AVAILABILITY', 'INTERNAL', 'ANIMAL');
+
+-- CreateEnum
+CREATE TYPE "MeetingStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED');
 
 -- CreateEnum
 CREATE TYPE "FoodType" AS ENUM ('KIBBLE', 'WET');
@@ -54,39 +57,6 @@ CREATE TABLE "veterinarian_clinics" (
     "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "veterinarian_clinics_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "veterinarian_clinic_availabilities" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "type" "VeterinarianClinicType" NOT NULL,
-    "dayOfWeek" SMALLINT,
-    "specificDate" DATE,
-    "startTime" TIME(0) NOT NULL,
-    "endTime" TIME(0) NOT NULL,
-    "veterinarianClinicId" TEXT NOT NULL,
-
-    CONSTRAINT "veterinarian_clinic_availabilities_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "meetings" (
-    "id" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "date" TIMESTAMP(3) NOT NULL,
-    "duration" DECIMAL(65,30) NOT NULL,
-    "description" TEXT,
-    "petWeight" INTEGER,
-    "petSize" INTEGER,
-    "report" TEXT,
-    "specialityId" TEXT NOT NULL,
-    "ownedPetId" TEXT NOT NULL,
-    "veterinarianId" TEXT NOT NULL,
-
-    CONSTRAINT "meetings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -156,7 +126,7 @@ CREATE TABLE "owned_pet_health_conditions" (
     "diagnosedAt" TIMESTAMP(3) NOT NULL,
     "healthConditionId" TEXT NOT NULL,
     "ownedPetId" TEXT NOT NULL,
-    "mettingId" TEXT,
+    "meetingId" TEXT,
     "addedById" TEXT NOT NULL,
 
     CONSTRAINT "owned_pet_health_conditions_pkey" PRIMARY KEY ("id")
@@ -172,6 +142,68 @@ CREATE TABLE "food_health_conditions" (
     "healthConditionId" TEXT NOT NULL,
 
     CONSTRAINT "food_health_conditions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "metting_bases" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "type" "ScheduleType" NOT NULL,
+    "dayOfWeek" SMALLINT,
+    "dateStart" DATE,
+    "dateEnd" DATE,
+    "startTime" TIME(0),
+    "endTime" TIME(0),
+    "specificDate" DATE,
+    "parentId" TEXT,
+    "kind" "MettingKind" NOT NULL,
+
+    CONSTRAINT "metting_bases_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "veterinarian_clinic_availabilities" (
+    "id" TEXT NOT NULL,
+    "veterinarianClinicId" TEXT NOT NULL,
+
+    CONSTRAINT "veterinarian_clinic_availabilities_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "internal_metting_participants" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "mettingId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "status" "MeetingStatus" NOT NULL,
+
+    CONSTRAINT "internal_metting_participants_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "internal_mettings" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "clinicId" TEXT NOT NULL,
+
+    CONSTRAINT "internal_mettings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "animal_mettings" (
+    "id" TEXT NOT NULL,
+    "description" TEXT,
+    "petWeight" DECIMAL(5,2),
+    "petSize" DECIMAL(5,2),
+    "report" TEXT,
+    "specialityId" TEXT,
+    "ownedPetId" TEXT NOT NULL,
+    "veterinarianId" TEXT NOT NULL,
+
+    CONSTRAINT "animal_mettings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -236,7 +268,7 @@ CREATE TABLE "owned_pet_vaccines" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "ownedPetId" TEXT NOT NULL,
     "vaccineId" TEXT NOT NULL,
-    "mettingId" TEXT,
+    "meetingId" TEXT,
 
     CONSTRAINT "owned_pet_vaccines_pkey" PRIMARY KEY ("id")
 );
@@ -362,6 +394,7 @@ CREATE TABLE "client_profiles" (
     "address" TEXT,
     "phone" TEXT,
     "userId" TEXT NOT NULL,
+    "secretaryProfileId" TEXT,
 
     CONSTRAINT "client_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -511,18 +544,6 @@ ALTER TABLE "veterinarian_clinics" ADD CONSTRAINT "veterinarian_clinics_veterina
 ALTER TABLE "veterinarian_clinics" ADD CONSTRAINT "veterinarian_clinics_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "veterinarian_clinic_availabilities" ADD CONSTRAINT "veterinarian_clinic_availabilities_veterinarianClinicId_fkey" FOREIGN KEY ("veterinarianClinicId") REFERENCES "veterinarian_clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "meetings" ADD CONSTRAINT "meetings_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "specialities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "meetings" ADD CONSTRAINT "meetings_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "meetings" ADD CONSTRAINT "meetings_veterinarianId_fkey" FOREIGN KEY ("veterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "conversation_members" ADD CONSTRAINT "conversation_members_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -547,7 +568,7 @@ ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_condi
 ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_mettingId_fkey" FOREIGN KEY ("mettingId") REFERENCES "meetings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "animal_mettings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_addedById_fkey" FOREIGN KEY ("addedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -557,6 +578,39 @@ ALTER TABLE "food_health_conditions" ADD CONSTRAINT "food_health_conditions_food
 
 -- AddForeignKey
 ALTER TABLE "food_health_conditions" ADD CONSTRAINT "food_health_conditions_healthConditionId_fkey" FOREIGN KEY ("healthConditionId") REFERENCES "health_conditions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "metting_bases" ADD CONSTRAINT "metting_bases_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "metting_bases"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "veterinarian_clinic_availabilities" ADD CONSTRAINT "veterinarian_clinic_availabilities_id_fkey" FOREIGN KEY ("id") REFERENCES "metting_bases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "veterinarian_clinic_availabilities" ADD CONSTRAINT "veterinarian_clinic_availabilities_veterinarianClinicId_fkey" FOREIGN KEY ("veterinarianClinicId") REFERENCES "veterinarian_clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "internal_metting_participants" ADD CONSTRAINT "internal_metting_participants_mettingId_fkey" FOREIGN KEY ("mettingId") REFERENCES "internal_mettings"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "internal_metting_participants" ADD CONSTRAINT "internal_metting_participants_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "internal_mettings" ADD CONSTRAINT "internal_mettings_id_fkey" FOREIGN KEY ("id") REFERENCES "metting_bases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "internal_mettings" ADD CONSTRAINT "internal_mettings_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "animal_mettings" ADD CONSTRAINT "animal_mettings_id_fkey" FOREIGN KEY ("id") REFERENCES "metting_bases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "animal_mettings" ADD CONSTRAINT "animal_mettings_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "specialities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "animal_mettings" ADD CONSTRAINT "animal_mettings_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "animal_mettings" ADD CONSTRAINT "animal_mettings_veterinarianId_fkey" FOREIGN KEY ("veterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "owned_pets" ADD CONSTRAINT "owned_pets_attendingVeterinarianId_fkey" FOREIGN KEY ("attendingVeterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -580,7 +634,7 @@ ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_ownedPetId_f
 ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_vaccineId_fkey" FOREIGN KEY ("vaccineId") REFERENCES "vaccines"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_mettingId_fkey" FOREIGN KEY ("mettingId") REFERENCES "meetings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "animal_mettings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

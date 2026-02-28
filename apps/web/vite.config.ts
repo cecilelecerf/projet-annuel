@@ -31,7 +31,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@schema': resolve(__dirname, '../packages/schemas/src/index.ts'),
+      '@schemas': resolve(__dirname, '../../packages/schemas/src/index.ts'),
     },
   },
 })

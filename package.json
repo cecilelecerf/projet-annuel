@@ -10,9 +10,7 @@
     "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view"
   },
   "workspaces": [
-    "api",
-    "web",
-    "mobile",
+    "apps/*",
     "packages/*"
   ],
   "devDependencies": {

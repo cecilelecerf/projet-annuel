@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '../lib/api'
-import { type User } from '@schema'
+import { type User } from '@schemas'
 export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'>
 
 export const useAuthStore = defineStore('auth', () => {

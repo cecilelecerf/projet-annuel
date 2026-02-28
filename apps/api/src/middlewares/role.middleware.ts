@@ -1,4 +1,4 @@
-import { UserRole } from "api/prisma/generated/prisma/enums";
+import { UserRole } from "apps/api/prisma/generated/prisma/enums";
 import type { Request, Response, NextFunction } from "express";
 
 export const roleMiddleware = (...roles: UserRole[]) => {

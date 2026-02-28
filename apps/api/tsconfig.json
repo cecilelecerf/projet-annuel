@@ -1,8 +1,8 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "target": "es2023",
     "strict": true,
     "esModuleInterop": true,
@@ -12,5 +12,5 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": ["src/**/*", "prisma/**/*"]
+  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts"]
 }

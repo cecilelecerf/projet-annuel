@@ -1,5 +1,4 @@
-import { User } from "api/prisma/generated/prisma/client";
-import { UserRole } from "api/prisma/generated/prisma/enums";
+import { User, UserRole } from "apps/api/prisma/generated/prisma/client";
 import jwt from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;

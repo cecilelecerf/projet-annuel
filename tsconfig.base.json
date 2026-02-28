@@ -12,9 +12,11 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@api/*": ["./api/src/*"],
-      "@web/*": ["./web/src/*"],
-      "@mobile/*": ["./mobile/src/*"]
+      "@api/*": ["./apps/api/src/*"],
+      "@web/*": ["./apps/web/src/*"],
+      "@mobile/*": ["./apps/mobile/src/*"],
+      "@schemas": ["./packages/schemas/src/index.ts"],
+      "@schemas/*": ["./packages/schemas/src/*"]
     }
   }
 }

@@ -8,10 +8,13 @@ Monorepo fullstack composé d'une application web (Vue), d'une API REST (Express
 
 ```
 projet-annuel/
-├── api/          # API REST — Express + Prisma + PostgreSQL
-├── web/          # Frontend — Vue.js
-├── mobile/       # Application mobile
-├── package.json  # Workspace racine
+├── apps/
+│   ├── api/          # API REST — Express + Prisma + PostgreSQL
+│   ├── web/          # Frontend — Vue.js
+│   └── mobile/       # Application mobile
+├── packages/
+│   └── schemas/      # Schemas Zod partagés
+├── package.json      # Workspace racine
 └── README.md
 ```
 
@@ -19,20 +22,17 @@ projet-annuel/
 
 ## 🚀 Prérequis
 
-- [Node.js](https://nodejs.org/) **v22.12+** (requis par Prisma 7)
+- [Node.js](https://nodejs.org/) **v22.12+**
 - [pnpm](https://pnpm.io/) **v8+**
-- [PostgreSQL](https://www.postgresql.org/) en local ou via Docker
+- [Docker](https://www.docker.com/) & Docker Compose
 
 ---
 
 ## ⚙️ Installation
 
 ```bash
-# Cloner le projet
 git clone <url-du-repo>
 cd projet-annuel
-
-# Installer toutes les dépendances
 pnpm install
 ```
 
@@ -40,10 +40,20 @@ pnpm install
 
 ## 🔧 Configuration
 
-Crée un fichier `.env` dans le dossier `api/` :
+Crée un fichier `.env` dans `apps/api/` :
 
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+```
+
+Crée un fichier `.env` à la racine :
+
+```env
+DB_USER=user
+DB_PASSWORD=password
+DB_NAME=mydb
+JWT_ACCESS_SECRET=changeme
+JWT_REFRESH_SECRET=changeme
 ```
 
 ---
@@ -52,70 +62,98 @@ DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
 
 ```bash
 # Appliquer les migrations
-cd api && npx prisma migrate dev
+pnpm --filter api run migrate
 
 # Peupler la base avec les données de test
-cd api && npx prisma db seed
+pnpm --filter api run seed
 
 # Voir la base dans Prisma Studio
-pnpm db:view
+pnpm --filter api run studio
 ```
 
 ---
 
-## 💻 Lancer le projet
+## 💻 Lancer le projet en développement
 
 ```bash
 # Lancer l'API (http://localhost:3000)
-pnpm dev:api
+pnpm --filter api dev
 
 # Lancer le web (http://localhost:5173)
-pnpm dev:web
-
-# Lancer Prisma Studio (http://localhost:5555)
-pnpm db:view
+pnpm --filter web dev
 ```
 
 ---
 
 ## 📜 Scripts disponibles
 
-| Commande       | Description                                   |
-| -------------- | --------------------------------------------- |
-| `pnpm dev:api` | Lance l'API Express en mode développement     |
-| `pnpm dev:web` | Lance l'application Vue en mode développement |
-| `pnpm db:view` | Ouvre Prisma Studio                           |
-| `pnpm dev`     | Lance l'API Express, l'app Vue, Prisma Studio |
+| Commande                        | Description                       |
+| ------------------------------- | --------------------------------- |
+| `pnpm --filter api dev`         | Lance l'API en mode développement |
+| `pnpm --filter web dev`         | Lance le frontend Vue             |
+| `pnpm --filter api run studio`  | Ouvre Prisma Studio               |
+| `pnpm --filter api run migrate` | Applique les migrations           |
+| `pnpm --filter api run seed`    | Peuple la base de données         |
 
 ---
 
 ## 🛠️ Stack technique
 
-| Couche       | Technologie                         |
-| ------------ | ----------------------------------- |
-| **API**      | Node.js, Express 5, TypeScript, tsx |
-| **ORM**      | Prisma 7 + PostgreSQL               |
-| **Frontend** | Vue.js                              |
-| **Monorepo** | pnpm workspaces                     |
+| Couche       | Technologie                    |
+| ------------ | ------------------------------ |
+| **API**      | Node.js, Express 5, TypeScript |
+| **ORM**      | Prisma 7 + PostgreSQL          |
+| **Frontend** | Vue.js + Element Plus          |
+| **Monorepo** | pnpm workspaces                |
 
 ---
 
 ## 📂 API — Structure
 
 ```
-api/
+apps/api/
 ├── src/
-│   ├── index.ts          # Point d'entrée Express
+│   ├── index.ts              # Point d'entrée Express
+│   ├── routes/               # Définition des routes
+│   ├── controllers/          # Logique des endpoints
+│   ├── services/             # Logique métier
+│   └── lib/
+│       └── prisma.ts         # Instance Prisma
 ├── prisma/
-│   ├── schema/           # Schémas Prisma (multi-fichiers)
-│   ├── migrations/       # Migrations générées
-│   └── seed.ts           # Données de test
-├── prisma.config.ts      # Configuration Prisma
-├── .env                  # Variables d'environnement
+│   ├── schemas/              # Schémas Prisma (multi-fichiers)
+│   ├── migrations/           # Migrations générées
+│   └── seed.ts               # Données de test
+├── prisma.config.ts          # Configuration Prisma
 └── package.json
 ```
 
-## 📂 Prisma commande
+---
 
-npx prisma format -> Format les schemas prisma
-npx prisma migrate dev --name init -> créer une nouvelle migration est met à jour la db
+## 📂 Commandes Prisma
+
+```bash
+# Formater les schemas
+pnpm --filter api exec prisma format
+
+# Créer une nouvelle migration
+pnpm --filter api exec prisma migrate dev --name <nom>
+
+```
+
+---
+
+## 🐳 Production (Docker)
+
+```bash
+# Build
+docker compose build
+
+# Démarrer (migrations automatiques au démarrage de l'API)
+docker compose up -d
+
+# Vérifier les logs
+docker compose logs -f api
+
+# Seed (une seule fois après le premier déploiement)
+docker compose run --rm api node /app/apps/api/dist/prisma/seed.js
+```

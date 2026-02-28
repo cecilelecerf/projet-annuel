@@ -18,11 +18,19 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
+    "@fullcalendar/vue3": "^6.1.20",
+    "dayjs": "^1.11.19",
     "element-plus": "^2.13.2",
     "pinia": "^3.0.4",
     "schemas": "^1.0.0",
+    "ts-pattern": "^5.9.0",
     "vue": "^3.5.27",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.1",

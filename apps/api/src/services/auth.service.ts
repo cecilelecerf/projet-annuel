@@ -52,10 +52,7 @@ export class AuthService {
     if (!user) {
       throw new Error("Email ou mot de passe incorrect");
     }
-    console.log("test");
-    console.log(user);
     const parsedUser = userSchema.parse(user);
-    console.log(parsedUser);
 
     const isPasswordValid = await compare(data.password, user.password);
     if (!isPasswordValid) {

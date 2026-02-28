@@ -2,6 +2,7 @@ import express from "express";
 import { prisma } from "./lib/prisma";
 import authRouter from "./routes/auth.route";
 import cors from "cors";
+import meetingRouter from "./routes/metting.route";
 const app = express();
 app.use(
   cors({
@@ -22,6 +23,7 @@ app.get("/test", async (req, res) => {
   res.json(users);
 });
 app.use("/auth", authRouter);
+app.use("/meetings", meetingRouter);
 // app.post(`/signup`, async (req, res) => {
 //   const { name, email, posts } = req.body;
 

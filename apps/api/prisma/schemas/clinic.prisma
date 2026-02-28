@@ -1,0 +1,105 @@
+model Clinic {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String
+  address     String
+  siret       String   @unique
+  phone       String
+  description String?
+  website     String
+
+  speciality             Speciality[]
+  veterinarianClinic     VeterinarianClinic[]
+  clinicPet              Pet[]
+  order                  Order[]
+  clinicProducts         ClinicProduct[]
+  secretaryProfile       SecretaryProfile[]
+  directorClinicProfiles DirectorClinicProfile[]
+  referentClinicProfiles ReferentClinicProfile[]
+
+  @@map("clinics")
+}
+
+model Speciality {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String   @unique
+  description String
+
+  veterinarianSpeciality VeterinarianProfile[]
+  clinicSpeciality       Clinic[]
+  meetings               Meeting[]
+
+  @@map("specialities")
+}
+
+model VeterinarianClinic {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id], onDelete: Cascade)
+  clinicId       String
+  clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  veterinarianClinicAverage VeterinarianClinicAverage[]
+
+  @@map("veterinarian_clinics")
+}
+
+enum VeterinarianClinicType {
+  RECURRING
+  SPECIFIED
+  EXECPTION
+}
+
+model VeterinarianClinicAverage {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  type         VeterinarianClinicType
+  dayOfWeek    Int?                   @db.SmallInt
+  specificDate DateTime?              @db.Date
+  startTime    DateTime               @db.Time(0)
+  endTime      DateTime               @db.Time(0)
+
+  veterinarianClinicId String
+  vererinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
+
+  @@map("veterinarian_clinic_availabilities")
+}
+
+enum MeetingStatus {
+  PENDING
+  DONE
+  CONFIRMED
+  CANCELLED
+}
+
+model Meeting {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  date        DateTime
+  duration    Decimal
+  description String?  @db.Text
+  petWeight   Int?
+  petSize     Int?
+  report      String?  @db.Text
+
+  specialityId             String
+  speciality               Speciality                @relation(fields: [specialityId], references: [id])
+  ownedPetId               String
+  ownedPet                 OwnedPet                  @relation(fields: [ownedPetId], references: [id])
+  veterinarianId           String
+  veterinarian             VeterinarianProfile       @relation(fields: [veterinarianId], references: [id])
+  ownedPetVaccine          OwnedPetVaccine[]
+  ownedPetConditionHealths OwnedPetHealthCondition[]
+
+  @@map("meetings")
+}

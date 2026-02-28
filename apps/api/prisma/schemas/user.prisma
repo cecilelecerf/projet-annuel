@@ -1,0 +1,118 @@
+enum UserRole {
+  CLIENT
+  SECRETARY
+  VETERINARIAN
+  DIRECTOR
+  REFERANT
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  firstname String
+  lastname  String
+  password  String
+  picture   String?
+
+  clientProfile         ClientProfile?
+  veterinarianProfile   VeterinarianProfile?
+  secretaryProfile      SecretaryProfile?
+  directorClinicProfile DirectorClinicProfile?
+  referentClinicProfile ReferentClinicProfile?
+
+  refreshTokens            RefreshToken[]
+  ownedPetConditionHealths OwnedPetHealthCondition[]
+  conversationMembers      ConversationMember[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model ClientProfile {
+  id          String   @id @default(cuid())
+  dateOfBirth DateTime
+  address     String?
+  phone       String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // appointments  Appointment[]
+  ownedPet           OwnedPet[]
+  clinicProducts     ClinicProduct[]
+  order              Order[]
+  secretaryProfileId String?
+
+  @@map("client_profiles")
+}
+
+model VeterinarianProfile {
+  id              String  @id @default(cuid())
+  licenseNumber   String  @unique
+  yearsExperience Int
+  bio             String?
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  ownedPet           OwnedPet[]
+  meeting            Meeting[]
+  speciality         Speciality[]
+  veterinarianClinic VeterinarianClinic[]
+  pet                Pet[]
+
+  @@map("veterinarian_profiles")
+}
+
+model SecretaryProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("secretary_profiles")
+}
+
+model DirectorClinicProfile {
+  id String @id @default(cuid())
+
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("director_clinic_profiles")
+}
+
+model ReferentClinicProfile {
+  id String @id @default(cuid())
+
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("referent_clinic_profiles")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}

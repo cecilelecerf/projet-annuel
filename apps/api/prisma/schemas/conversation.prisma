@@ -1,0 +1,65 @@
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  name String
+
+  messages            Message[]
+  conversationMembers ConversationMember[]
+
+  @@map("conversations")
+}
+
+enum ConversationMemberRole {
+  ADMIN
+  MEMBER
+}
+
+model ConversationMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  role     ConversationMemberRole
+  joinedAt DateTime               @default(now())
+
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  messageReads MessageRead[]
+
+  @@map("conversation_members")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  content String @db.Text
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  messageReads MessageRead[]
+
+  @@map("messages")
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  readAt DateTime
+
+  messageId String
+  message   Message            @relation(fields: [messageId], references: [id])
+  readById  String
+  readBy    ConversationMember @relation(fields: [readById], references: [id])
+
+  @@map("message_reads")
+}

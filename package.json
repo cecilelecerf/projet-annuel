@@ -10,9 +10,8 @@
     "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view"
   },
   "workspaces": [
-    "api",
-    "web",
-    "mobile"
+    "apps/*",
+    "packages/*"
   ],
   "devDependencies": {
     "typescript": "^5.9.3"

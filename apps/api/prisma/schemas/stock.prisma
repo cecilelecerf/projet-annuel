@@ -1,0 +1,139 @@
+model Product {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String
+  description String?
+  qrCode      String
+  websiteUrl  String?
+  picture     String?
+
+  brandId        String
+  brand          Brand           @relation(fields: [brandId], references: [id])
+  clinicProducts ClinicProduct[]
+
+  Food Food?
+
+  @@map("products")
+}
+
+enum FoodType {
+  KIBBLE
+  WET
+}
+
+model Food {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  caloriesPer100     Decimal?
+  proteinPer100      Decimal?
+  fatPercentage      Decimal?
+  fiberPercentage    Decimal?
+  moisturePercentage Decimal?
+  type               FoodType
+
+  productId String  @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  foodPets             FoodPet[]
+  foodHealthConditions FoodHealthCondition[]
+
+  @@map("foods")
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  name      String
+  logo      String?
+
+  product Product[]
+
+  @@map("brands")
+}
+
+model ClinicProduct {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  stock           Int     @default(0)
+  minimumRequired Int
+  price           Decimal @default(0) @db.Decimal(10, 2)
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id])
+  orderItems      OrderItem[]
+  clientProfile   ClientProfile? @relation(fields: [clientProfileId], references: [id])
+  clientProfileId String?
+
+  @@map("clinic_products")
+}
+
+model FoodPet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  day       Int       @db.SmallInt
+  dateStart DateTime
+  dateEnd   DateTime?
+  quantity  Decimal
+  hours     DateTime
+
+  foodId String
+  food   Food   @relation(fields: [foodId], references: [id])
+
+  ownedPetId String
+  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
+
+  @@map("food_pets")
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  READY
+  PICKED_UP
+  CANCELLED
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @default(now()) @updatedAt
+  status    OrderStatus @default(PENDING)
+  pickupAt  DateTime?
+
+  clientId String
+  client   ClientProfile @relation(fields: [clientId], references: [id])
+  clinicId String
+  clinic   Clinic        @relation(fields: [clinicId], references: [id])
+
+  orderItems OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  quantity  Int
+  unitPrice Decimal
+
+  productClinicId String
+  productClinic   ClinicProduct @relation(fields: [productClinicId], references: [id])
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id])
+
+  @@map("order_items")
+}

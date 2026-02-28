@@ -14,6 +14,9 @@ projet-annuel/
 │   └── mobile/       # Application mobile
 ├── packages/
 │   └── schemas/      # Schemas Zod partagés
+├── nginx/            # Configuration nginx
+├── compose.yaml      # Docker Compose développement
+├── compose.prod.yaml # Docker Compose production
 ├── package.json      # Workspace racine
 └── README.md
 ```
@@ -40,13 +43,19 @@ pnpm install
 
 ## 🔧 Configuration
 
-Crée un fichier `.env` dans `apps/api/` :
+### Développement
+
+Crée `apps/api/.env.dev` (copie depuis `apps/api/.env.dev.sample`) :
 
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
+JWT_ACCESS_SECRET="changeme"
+JWT_REFRESH_SECRET="changeme"
 ```
 
-Crée un fichier `.env` à la racine :
+### Production
+
+Crée `.env.prod` à la racine (copie depuis `.env.prod.sample`) :
 
 ```env
 DB_USER=user
@@ -73,7 +82,7 @@ pnpm --filter api run studio
 
 ---
 
-## 💻 Lancer le projet en développement
+## 💻 Développement
 
 ```bash
 # Lancer l'API (http://localhost:3000)
@@ -124,6 +133,24 @@ apps/api/
 │   ├── migrations/           # Migrations générées
 │   └── seed.ts               # Données de test
 ├── prisma.config.ts          # Configuration Prisma
+├── .env.dev                  # Variables d'environnement (dev)
+└── package.json
+```
+
+---
+
+## 📂 Web — Structure
+
+```
+apps/web/
+├── src/
+│   ├── main.ts               # Point d'entrée Vue
+│   ├── router/               # Vue Router
+│   ├── stores/               # Pinia stores
+│   ├── views/                # Pages
+│   ├── layouts/              # Layouts par rôle
+│   └── components/           # Composants réutilisables
+├── nginx.conf                # Config nginx (prod)
 └── package.json
 ```
 
@@ -146,14 +173,14 @@ pnpm --filter api exec prisma migrate dev --name <nom>
 
 ```bash
 # Build
-docker compose build
+docker compose -f compose.prod.yaml build
 
 # Démarrer (migrations automatiques au démarrage de l'API)
-docker compose up -d
+docker compose -f compose.prod.yaml up -d
 
 # Vérifier les logs
-docker compose logs -f api
+docker compose -f compose.prod.yaml logs -f api
 
-# Seed (une seule fois après le premier déploiement)
-docker compose run --rm api node /app/apps/api/dist/prisma/seed.js
+# Seed — une seule fois après le premier déploiement
+docker compose -f compose.prod.yaml run --rm api node /app/apps/api/dist/prisma/seed.js
 ```

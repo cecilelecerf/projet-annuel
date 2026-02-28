@@ -24,9 +24,10 @@ model User {
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
-  refreshTokens            RefreshToken[]
-  ownedPetConditionHealths OwnedPetHealthCondition[]
-  conversationMembers      ConversationMember[]
+  refreshTokens               RefreshToken[]
+  ownedPetConditionHealths    OwnedPetHealthCondition[]
+  conversationMembers         ConversationMember[]
+  internalMettingParticipants InternalMettingParticipant[]
 
   @@index([email])
   @@index([role])
@@ -61,7 +62,7 @@ model VeterinarianProfile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   ownedPet           OwnedPet[]
-  meeting            Meeting[]
+  animalMeeting      AnimalMetting[]
   speciality         Speciality[]
   veterinarianClinic VeterinarianClinic[]
   pet                Pet[]

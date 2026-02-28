@@ -28,7 +28,7 @@ model OwnedPetHealthCondition {
   ownedPetId        String
   ownedPet          OwnedPet        @relation(fields: [ownedPetId], references: [id])
   meetingId         String?
-  meeting           Meeting?        @relation(fields: [meetingId], references: [id])
+  animalMeeting     AnimalMetting?  @relation(fields: [meetingId], references: [id])
   addedById         String
   addedBy           User            @relation(fields: [addedById], references: [id])
 

@@ -10,29 +10,31 @@ import {
 } from "./ids";
 
 export const userRoleSchema = z.enum([
-  "client",
-  "secretary",
-  "director",
-  "referant",
-  "veterinarian",
+  "CLIENT",
+  "SECRETARY",
+  "DIRECTOR",
+  "REFERANT",
+  "VETERINARIAN",
+  "ADMIN",
 ]);
+export type UserRole = z.infer<typeof userRoleSchema>;
 
 // ── User (base) ───────────────────────────────────────────────────────────────
 export const baseUserSchema = z.object({
   id: userIdSchema,
-  createdAt: z.string().datetime(),
-  modifiedAt: z.string().datetime(),
-  email: z.string().email().max(255),
-  lastname: z.string().min(1).max(255),
-  firstname: z.string().min(1).max(255),
-  picture: z.string().url().max(255).nullable().optional(),
-  password: z.string().min(8).max(255),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  email: z.email("Email invalide").max(255),
+  lastname: z.string().min(1, "Nom requis").max(255),
+  firstname: z.string().min(1, "Prénom requis").max(255),
+  picture: z.url().max(255).nullable().optional(),
+  role: userRoleSchema,
 });
 
 export const createUserSchema = baseUserSchema.omit({
   id: true,
   createdAt: true,
-  modifiedAt: true,
+  updatedAt: true,
 });
 export const updateUserSchema = createUserSchema
   .partial()
@@ -45,7 +47,7 @@ export type UpdateUser = z.infer<typeof updateUserSchema>;
 // ── Client ────────────────────────────────────────────────────────────────────
 export const clientSchema = baseUserSchema.extend({
   id: clientIdSchema,
-  dateOfBirth: z.string().date().nullable().optional(),
+  dateOfBirth: z.coerce.date().nullable().optional(),
   role: z.literal("CLIENT"),
 });
 
@@ -112,3 +114,16 @@ export const userSchema = z.discriminatedUnion("role", [
   veterinarianSchema,
 ]);
 export type User = z.infer<typeof userSchema>;
+const userPasswordSchema = z.string().min(8, "Minimum 8 caractères").max(255);
+export const loginSchema = baseUserSchema
+  .pick({ email: true })
+  .extend({ password: userPasswordSchema });
+export type Login = z.infer<typeof loginSchema>;
+export const registerSchema = baseUserSchema
+  .pick({
+    email: true,
+    firstname: true,
+    lastname: true,
+  })
+  .extend({ password: userPasswordSchema });
+export type Register = z.infer<typeof registerSchema>;

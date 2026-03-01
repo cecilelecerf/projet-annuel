@@ -3,7 +3,7 @@ import { requireRole } from './utils'
 
 export const directorRouter: RouteRecordRaw[] = [
   {
-    path: '/directeur',
+    path: '/director',
     component: () => import('@/layouts/DirectorLayout.vue'),
     beforeEnter: requireRole('DIRECTOR'),
     children: [

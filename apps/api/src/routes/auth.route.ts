@@ -1,9 +1,9 @@
 import { validate } from "@api/middlewares/validate.middleware";
-import { loginSchema, registerSchema } from "@api/schemas/auth.schema";
 import { AuthController } from "@api/controllers/auth.controller";
 import { Router } from "express";
 import type { Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
+import { loginSchema, registerSchema } from "@schemas";
 
 const authRouter: RouterType = Router();
 const controller = new AuthController();

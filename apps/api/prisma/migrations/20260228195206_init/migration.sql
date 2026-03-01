@@ -393,7 +393,6 @@ CREATE TABLE "client_profiles" (
     "dateOfBirth" TIMESTAMP(3) NOT NULL,
     "address" TEXT,
     "phone" TEXT,
-    "userId" TEXT NOT NULL,
     "secretaryProfileId" TEXT,
 
     CONSTRAINT "client_profiles_pkey" PRIMARY KEY ("id")
@@ -405,7 +404,6 @@ CREATE TABLE "veterinarian_profiles" (
     "licenseNumber" TEXT NOT NULL,
     "yearsExperience" INTEGER NOT NULL,
     "bio" TEXT,
-    "userId" TEXT NOT NULL,
 
     CONSTRAINT "veterinarian_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -413,7 +411,6 @@ CREATE TABLE "veterinarian_profiles" (
 -- CreateTable
 CREATE TABLE "secretary_profiles" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
     "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "secretary_profiles_pkey" PRIMARY KEY ("id")
@@ -422,7 +419,6 @@ CREATE TABLE "secretary_profiles" (
 -- CreateTable
 CREATE TABLE "director_clinic_profiles" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
     "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "director_clinic_profiles_pkey" PRIMARY KEY ("id")
@@ -431,7 +427,6 @@ CREATE TABLE "director_clinic_profiles" (
 -- CreateTable
 CREATE TABLE "referent_clinic_profiles" (
     "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
     "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "referent_clinic_profiles_pkey" PRIMARY KEY ("id")
@@ -499,22 +494,7 @@ CREATE INDEX "users_email_idx" ON "users"("email");
 CREATE INDEX "users_role_idx" ON "users"("role");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "client_profiles_userId_key" ON "client_profiles"("userId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "veterinarian_profiles_licenseNumber_key" ON "veterinarian_profiles"("licenseNumber");
-
--- CreateIndex
-CREATE UNIQUE INDEX "veterinarian_profiles_userId_key" ON "veterinarian_profiles"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "secretary_profiles_userId_key" ON "secretary_profiles"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "director_clinic_profiles_userId_key" ON "director_clinic_profiles"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "referent_clinic_profiles_userId_key" ON "referent_clinic_profiles"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "refresh_tokens_token_key" ON "refresh_tokens"("token");
@@ -670,25 +650,25 @@ ALTER TABLE "order_items" ADD CONSTRAINT "order_items_productClinicId_fkey" FORE
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "client_profiles" ADD CONSTRAINT "client_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "client_profiles" ADD CONSTRAINT "client_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "veterinarian_profiles" ADD CONSTRAINT "veterinarian_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "veterinarian_profiles" ADD CONSTRAINT "veterinarian_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "secretary_profiles" ADD CONSTRAINT "secretary_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "secretary_profiles" ADD CONSTRAINT "secretary_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "secretary_profiles" ADD CONSTRAINT "secretary_profiles_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "referent_clinic_profiles" ADD CONSTRAINT "referent_clinic_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "referent_clinic_profiles" ADD CONSTRAINT "referent_clinic_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "referent_clinic_profiles" ADD CONSTRAINT "referent_clinic_profiles_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;

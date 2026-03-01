@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt";
 import type { JwtPayload } from "../utils/jwt";
+export type AuthenticatedRequest = Request & { user: JwtPayload };
 
 declare global {
   namespace Express {

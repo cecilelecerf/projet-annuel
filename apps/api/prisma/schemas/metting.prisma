@@ -14,7 +14,7 @@ enum MettingKind {
 }
 
 model MettingBase {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -64,7 +64,7 @@ enum MeetingStatus {
 }
 
 model InternalMettingParticipant {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

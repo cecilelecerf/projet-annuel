@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import Sidebar, { type MenuItem } from './Sidebar.vue'
+import { getStringRole } from '@/utils/getStringRole'
 
 defineProps<{ menuItems: MenuItem[] }>()
 
@@ -27,7 +28,7 @@ const handleLogout = () => {
   <header class="navbar">
     <div class="navbar__left">
       <Sidebar :menu-items="menuItems" />
-      <h1 class="navbar__title">{{ route.meta?.title ?? 'Espace vétérinaire' }}</h1>
+      <h1 class="navbar__title">Espace {{ user && getStringRole(user.role) }}</h1>
     </div>
     <div class="navbar__right">
       <el-badge :value="3" class="navbar__badge">
@@ -42,7 +43,7 @@ const handleLogout = () => {
           <Transition name="fade">
             <div v-if="user" class="navbar__user-info">
               <span class="navbar__user-name">{{ user.firstname }} {{ user.lastname }}</span>
-              <span class="navbar__user-role">{{ user.role }}</span>
+              <span class="navbar__user-role">{{ user && getStringRole(user.role) }}</span>
             </div>
           </Transition>
           <el-icon class="navbar__chevron"><ArrowDown /></el-icon>
@@ -56,7 +57,7 @@ const handleLogout = () => {
             </el-dropdown-item>
             <el-dropdown-item @click="router.push({ name: 'Veto.Profil.FicheVeterinaire' })">
               <el-icon><Document /></el-icon>
-              Fiche {{ user?.role }}
+              Fiche {{ user && getStringRole(user.role) }}
             </el-dropdown-item>
             <el-dropdown-item divided @click="handleLogout()">
               <el-icon><SwitchButton /></el-icon>

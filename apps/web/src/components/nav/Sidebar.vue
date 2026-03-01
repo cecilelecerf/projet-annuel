@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
-import type { IconInstance } from 'element-plus'
+import { Menu } from '@element-plus/icons-vue'
 import { ref, computed, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -22,6 +21,8 @@ defineProps<{ menuItems: MenuItem[] }>()
 const activeMenu = computed(() => route.name as string)
 
 const handleMenuSelect = (index: string) => {
+  console.log('handle')
+  console.log(index)
   router.push({ name: index })
 }
 </script>

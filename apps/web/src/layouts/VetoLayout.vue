@@ -5,14 +5,9 @@ import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'agenda',
+    index: 'Veto.Calendar',
     label: 'Agenda',
     icon: Calendar,
-    children: [
-      { index: 'Veto.Agenda.Journalier', label: 'Vue journalière' },
-      { index: 'Veto.Agenda.Hebdomadaire', label: 'Vue hebdomadaire' },
-      { index: 'Veto.Agenda.Mensuel', label: 'Vue mensuelle' },
-    ],
   },
   {
     index: 'animaux',

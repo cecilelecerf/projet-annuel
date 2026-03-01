@@ -1,7 +1,7 @@
-import { UserRole } from "apps/api/prisma/generated/prisma/enums";
+import { UserRole } from "@schemas";
 import type { Request, Response, NextFunction } from "express";
 
-export const roleMiddleware = (...roles: UserRole[]) => {
+export const roleMiddleware = (roles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       res.status(401).json({ message: "Non authentifié" });

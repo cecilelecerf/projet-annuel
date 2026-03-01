@@ -4,7 +4,7 @@ import { PrismaClient } from "./generated/prisma/client";
 
 import { config } from "dotenv";
 import { resolve } from "path";
-config({ path: resolve(process.cwd(), ".env.dev") });
+config({ path: resolve(process.cwd(), ".env") });
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
@@ -59,7 +59,6 @@ async function main() {
   // ============================================================
   const clinic1 = await prisma.clinic.create({
     data: {
-      id: "clinic-1",
       name: "Clinique Vétérinaire du Parc",
       address: "12 Avenue du Parc",
       siret: "12345678901234",
@@ -71,7 +70,6 @@ async function main() {
 
   const clinic2 = await prisma.clinic.create({
     data: {
-      id: "clinic-2",
       name: "Cabinet Vétérinaire Saint-Michel",
       address: "5 Rue Saint-Michel",
       siret: "98765432109876",
@@ -86,7 +84,6 @@ async function main() {
   // ============================================================
   const adminUser = await prisma.user.create({
     data: {
-      id: "user-admin",
       email: "admin@gmail.com",
       firstname: "Super",
       lastname: "Admin",
@@ -97,7 +94,6 @@ async function main() {
 
   const directorUser1 = await prisma.user.create({
     data: {
-      id: "user-director-1",
       email: "directeur@gmail.com",
       firstname: "Jean",
       lastname: "Martin",
@@ -108,7 +104,6 @@ async function main() {
 
   const directorUser2 = await prisma.user.create({
     data: {
-      id: "user-director-2",
       email: "directeur@vetsaintmichel.fr",
       firstname: "Marie",
       lastname: "Dupont",
@@ -119,7 +114,6 @@ async function main() {
 
   const referentUser1 = await prisma.user.create({
     data: {
-      id: "user-referent-1",
       email: "referent@gmail.com",
       firstname: "Sophie",
       lastname: "Bernard",
@@ -130,7 +124,6 @@ async function main() {
 
   const vetoUser1 = await prisma.user.create({
     data: {
-      id: "user-veto-1",
       email: "veto@gmail.com",
       firstname: "Pierre",
       lastname: "Leroy",
@@ -141,7 +134,6 @@ async function main() {
 
   const vetoUser2 = await prisma.user.create({
     data: {
-      id: "user-veto-2",
       email: "dr.moreau@vetparc.fr",
       firstname: "Claire",
       lastname: "Moreau",
@@ -152,7 +144,6 @@ async function main() {
 
   const vetoUser3 = await prisma.user.create({
     data: {
-      id: "user-veto-3",
       email: "dr.garcia@vetsaintmichel.fr",
       firstname: "Lucas",
       lastname: "Garcia",
@@ -163,7 +154,6 @@ async function main() {
 
   const secretaryUser1 = await prisma.user.create({
     data: {
-      id: "user-secretary-1",
       email: "secretaire@gmail.com",
       firstname: "Lucie",
       lastname: "Petit",
@@ -174,7 +164,6 @@ async function main() {
 
   const clientUser1 = await prisma.user.create({
     data: {
-      id: "user-client-1",
       email: "client@gmail.com",
       firstname: "Alice",
       lastname: "Durand",
@@ -185,7 +174,6 @@ async function main() {
 
   const clientUser2 = await prisma.user.create({
     data: {
-      id: "user-client-2",
       email: "thomas.blanc@email.fr",
       firstname: "Thomas",
       lastname: "Blanc",
@@ -198,72 +186,66 @@ async function main() {
   // PROFILES
   // ============================================================
   await prisma.directorClinicProfile.create({
-    data: { id: "director-1", userId: directorUser1.id, clinicId: clinic1.id },
+    data: { clinicId: clinic1.id, id: directorUser1.id },
   });
 
   await prisma.directorClinicProfile.create({
-    data: { id: "director-2", userId: directorUser2.id, clinicId: clinic2.id },
+    data: { clinicId: clinic2.id, id: directorUser2.id },
   });
 
   await prisma.referentClinicProfile.create({
-    data: { id: "referent-1", userId: referentUser1.id, clinicId: clinic1.id },
+    data: { clinicId: clinic1.id, id: referentUser1.id },
   });
 
   const vetProfile1 = await prisma.veterinarianProfile.create({
     data: {
-      id: "veto-profile-1",
       licenseNumber: "VET-001",
       yearsExperience: 10,
       bio: "Spécialiste en cardiologie animale",
-      userId: vetoUser1.id,
+      id: vetoUser1.id,
     },
   });
 
   const vetProfile2 = await prisma.veterinarianProfile.create({
     data: {
-      id: "veto-profile-2",
       licenseNumber: "VET-002",
       yearsExperience: 5,
       bio: "Généraliste avec expertise en dermatologie",
-      userId: vetoUser2.id,
+      id: vetoUser2.id,
     },
   });
 
   const vetProfile3 = await prisma.veterinarianProfile.create({
     data: {
-      id: "veto-profile-3",
       licenseNumber: "VET-003",
       yearsExperience: 8,
       bio: "Généraliste",
-      userId: vetoUser3.id,
+      id: vetoUser3.id,
     },
   });
 
   await prisma.secretaryProfile.create({
     data: {
-      id: "secretary-1",
-      userId: secretaryUser1.id,
       clinicId: clinic1.id,
+      id: secretaryUser1.id,
     },
   });
 
   const clientProfile1 = await prisma.clientProfile.create({
     data: {
-      id: "client-1",
       dateOfBirth: new Date("1990-05-15"),
       address: "3 Rue des Lilas, Paris",
       phone: "06 12 34 56 78",
-      userId: clientUser1.id,
+      id: clientUser1.id,
     },
   });
 
   const clientProfile2 = await prisma.clientProfile.create({
     data: {
-      id: "client-2",
       dateOfBirth: new Date("1985-11-20"),
       address: "8 Boulevard Victor Hugo, Lyon",
       phone: "07 98 76 54 32",
-      userId: clientUser2.id,
+      id: clientUser2.id,
     },
   });
 
@@ -271,26 +253,26 @@ async function main() {
   // PETS & RACES
   // ============================================================
   const petDog = await prisma.pet.create({
-    data: { id: "pet-dog", name: "Chien" },
+    data: { name: "Chien" },
   });
   const petCat = await prisma.pet.create({
-    data: { id: "pet-cat", name: "Chat" },
+    data: { name: "Chat" },
   });
   const petRabbit = await prisma.pet.create({
-    data: { id: "pet-rabbit", name: "Lapin" },
+    data: { name: "Lapin" },
   });
 
   const raceLab = await prisma.race.create({
-    data: { id: "race-labrador", name: "Labrador", petId: petDog.id },
+    data: { name: "Labrador", petId: petDog.id },
   });
   const raceGolden = await prisma.race.create({
-    data: { id: "race-golden", name: "Golden Retriever", petId: petDog.id },
+    data: { name: "Golden Retriever", petId: petDog.id },
   });
   const racePersan = await prisma.race.create({
-    data: { id: "race-persan", name: "Persan", petId: petCat.id },
+    data: { name: "Persan", petId: petCat.id },
   });
   await prisma.race.create({
-    data: { id: "race-europeen", name: "Européen", petId: petCat.id },
+    data: { name: "Européen", petId: petCat.id },
   });
 
   // ============================================================
@@ -298,7 +280,6 @@ async function main() {
   // ============================================================
   const specCardio = await prisma.speciality.create({
     data: {
-      id: "spec-cardio",
       name: "Cardiologie",
       description: "Maladies cardiaques et vasculaires",
     },
@@ -306,7 +287,6 @@ async function main() {
 
   const specDerma = await prisma.speciality.create({
     data: {
-      id: "spec-derma",
       name: "Dermatologie",
       description: "Maladies de la peau et du pelage",
     },
@@ -314,7 +294,6 @@ async function main() {
 
   await prisma.speciality.create({
     data: {
-      id: "spec-chirurgie",
       name: "Chirurgie",
       description: "Interventions chirurgicales",
     },
@@ -324,19 +303,19 @@ async function main() {
   // VETERINARIAN <-> CLINIC
   // ============================================================
   const vetoClinic1 = await prisma.veterinarianClinic.create({
-    data: { id: "vc-1", veterinarianId: vetProfile1.id, clinicId: clinic1.id },
+    data: { veterinarianId: vetProfile1.id, clinicId: clinic1.id },
   });
 
   const vetoClinic2 = await prisma.veterinarianClinic.create({
-    data: { id: "vc-2", veterinarianId: vetProfile2.id, clinicId: clinic1.id },
+    data: { veterinarianId: vetProfile2.id, clinicId: clinic1.id },
   });
 
   await prisma.veterinarianClinic.create({
-    data: { id: "vc-3", veterinarianId: vetProfile1.id, clinicId: clinic2.id },
+    data: { veterinarianId: vetProfile1.id, clinicId: clinic2.id },
   });
 
   await prisma.veterinarianClinic.create({
-    data: { id: "vc-4", veterinarianId: vetProfile3.id, clinicId: clinic2.id },
+    data: { veterinarianId: vetProfile3.id, clinicId: clinic2.id },
   });
 
   // ============================================================
@@ -346,7 +325,6 @@ async function main() {
   // Veto1 clinic1 — RECURRING lundi matin
   const baseAvail1 = await prisma.mettingBase.create({
     data: {
-      id: "base-avail-1",
       type: "RECURRING",
       dayOfWeek: 1,
       startTime: new Date("1970-01-01T08:00:00Z"),
@@ -361,7 +339,6 @@ async function main() {
   // Veto1 clinic1 — RECURRING mercredi après-midi
   await prisma.mettingBase.create({
     data: {
-      id: "base-avail-2",
       type: "RECURRING",
       dayOfWeek: 3,
       startTime: new Date("1970-01-01T14:00:00Z"),
@@ -376,7 +353,6 @@ async function main() {
   // Veto1 clinic1 — EXCEPTION : absent le lundi 9 mars (annule base-avail-1)
   await prisma.mettingBase.create({
     data: {
-      id: "base-avail-exception-1",
       type: "EXCEPTION",
       specificDate: new Date("2026-03-09"),
       parentId: baseAvail1.id,
@@ -392,7 +368,6 @@ async function main() {
   // Veto1 clinic1 — SPECIFIED : dispo exceptionnellement le 15 mars
   await prisma.mettingBase.create({
     data: {
-      id: "base-avail-3",
       type: "SPECIFIED",
       specificDate: new Date("2026-03-15"),
       startTime: new Date("1970-01-01T09:00:00Z"),
@@ -407,7 +382,6 @@ async function main() {
   // Veto2 clinic1 — RECURRING mardi matin
   await prisma.mettingBase.create({
     data: {
-      id: "base-avail-4",
       type: "RECURRING",
       dayOfWeek: 2,
       startTime: new Date("1970-01-01T09:00:00Z"),
@@ -422,7 +396,6 @@ async function main() {
   // Veto2 clinic1 — RECURRING jeudi journée
   await prisma.mettingBase.create({
     data: {
-      id: "base-avail-5",
       type: "RECURRING",
       dayOfWeek: 4,
       startTime: new Date("1970-01-01T09:00:00Z"),
@@ -439,7 +412,6 @@ async function main() {
   // ============================================================
   const ownedPet1 = await prisma.ownedPet.create({
     data: {
-      id: "op-1",
       name: "Rex",
       dateOfBirth: new Date("2020-03-10"),
       activity: 8,
@@ -451,7 +423,6 @@ async function main() {
 
   const ownedPet2 = await prisma.ownedPet.create({
     data: {
-      id: "op-2",
       name: "Luna",
       dateOfBirth: new Date("2021-07-22"),
       activity: 5,
@@ -462,7 +433,6 @@ async function main() {
 
   const ownedPet3 = await prisma.ownedPet.create({
     data: {
-      id: "op-3",
       name: "Max",
       dateOfBirth: new Date("2019-01-15"),
       activity: 6,
@@ -477,7 +447,6 @@ async function main() {
   // ============================================================
   const vaccineRage = await prisma.vaccine.create({
     data: {
-      id: "vacc-rage",
       name: "Rage",
       description: "Vaccin antirabique obligatoire",
       recommendedAge: 12,
@@ -489,7 +458,6 @@ async function main() {
 
   const vaccineCHPPi = await prisma.vaccine.create({
     data: {
-      id: "vacc-chppi",
       name: "CHPPi",
       description: "Maladie de Carré, Hépatite, Parvovirose, Parainfluenza",
       recommendedAge: 8,
@@ -500,7 +468,6 @@ async function main() {
 
   const vaccineTyphus = await prisma.vaccine.create({
     data: {
-      id: "vacc-typhus",
       name: "Typhus",
       description: "Panleucopénie féline",
       recommendedAge: 8,
@@ -514,7 +481,6 @@ async function main() {
   // ============================================================
   const conditionRenal = await prisma.healthCondition.create({
     data: {
-      id: "hc-1",
       name: "Insuffisance rénale",
       description: "Réduction de la fonction rénale",
       petId: petDog.id,
@@ -523,7 +489,6 @@ async function main() {
 
   await prisma.healthCondition.create({
     data: {
-      id: "hc-2",
       name: "Diabète",
       description: "Trouble de la régulation du glucose",
       petId: petDog.id,
@@ -532,7 +497,6 @@ async function main() {
 
   const conditionCardio = await prisma.healthCondition.create({
     data: {
-      id: "hc-3",
       name: "Insuffisance cardiaque",
       description: "Réduction de la fonction cardiaque",
       petId: petDog.id,
@@ -546,7 +510,6 @@ async function main() {
   // RDV 1 — Consultation cardiologie Rex
   const animalMeeting1 = await prisma.mettingBase.create({
     data: {
-      id: "base-meeting-1",
       type: "SPECIFIED",
       specificDate: new Date("2026-02-10"),
       startTime: new Date("1970-01-01T09:00:00Z"),
@@ -570,7 +533,6 @@ async function main() {
   // RDV 2 — Consultation dermatologie Luna
   const animalMeeting2 = await prisma.mettingBase.create({
     data: {
-      id: "base-meeting-2",
       type: "SPECIFIED",
       specificDate: new Date("2026-03-05"),
       startTime: new Date("1970-01-01T14:00:00Z"),
@@ -592,7 +554,6 @@ async function main() {
   // RDV 3 — Consultation dermatologie Max
   await prisma.mettingBase.create({
     data: {
-      id: "base-meeting-3",
       type: "SPECIFIED",
       specificDate: new Date("2026-04-01"),
       startTime: new Date("1970-01-01T10:00:00Z"),
@@ -615,7 +576,6 @@ async function main() {
   // Réunion RECURRING tous les lundis de 10h à 11h
   const baseInternal1 = await prisma.mettingBase.create({
     data: {
-      id: "base-internal-1",
       type: "RECURRING",
       dayOfWeek: 1,
       dateStart: new Date("2026-01-01"),
@@ -636,7 +596,6 @@ async function main() {
   // EXCEPTION : réunion annulée le lundi 9 mars
   await prisma.mettingBase.create({
     data: {
-      id: "base-internal-exception-1",
       type: "EXCEPTION",
       specificDate: new Date("2026-03-09"),
       parentId: baseInternal1.id,
@@ -653,7 +612,6 @@ async function main() {
   // Réunion SPECIFIED ponctuelle
   const baseInternal2 = await prisma.mettingBase.create({
     data: {
-      id: "base-internal-2",
       type: "SPECIFIED",
       specificDate: new Date("2026-03-20"),
       startTime: new Date("1970-01-01T14:00:00Z"),
@@ -673,31 +631,26 @@ async function main() {
   await prisma.internalMettingParticipant.createMany({
     data: [
       {
-        id: "imp-1",
         mettingId: baseInternal1.id,
         userId: vetoUser1.id,
         status: "ACCEPTED",
       },
       {
-        id: "imp-2",
         mettingId: baseInternal1.id,
         userId: vetoUser2.id,
         status: "ACCEPTED",
       },
       {
-        id: "imp-3",
         mettingId: baseInternal1.id,
         userId: secretaryUser1.id,
         status: "PENDING",
       },
       {
-        id: "imp-4",
         mettingId: baseInternal2.id,
         userId: vetoUser1.id,
         status: "ACCEPTED",
       },
       {
-        id: "imp-5",
         mettingId: baseInternal2.id,
         userId: vetoUser2.id,
         status: "DECLINED",
@@ -710,7 +663,6 @@ async function main() {
   // ============================================================
   await prisma.ownedPetHealthCondition.create({
     data: {
-      id: "ophc-1",
       notes: "Diagnostiqué lors de la consultation du 10 février",
       diagnosedAt: new Date("2026-02-10"),
       healthConditionId: conditionCardio.id,
@@ -722,7 +674,6 @@ async function main() {
 
   await prisma.ownedPetHealthCondition.create({
     data: {
-      id: "ophc-2",
       notes: "Déclaré par le propriétaire, à confirmer",
       diagnosedAt: new Date("2026-01-15"),
       healthConditionId: conditionRenal.id,
@@ -737,13 +688,12 @@ async function main() {
   await prisma.ownedPetVaccine.createMany({
     data: [
       {
-        id: "opv-1",
         ownedPetId: ownedPet1.id,
         vaccineId: vaccineRage.id,
         meetingId: animalMeeting1.id,
       },
-      { id: "opv-2", ownedPetId: ownedPet1.id, vaccineId: vaccineCHPPi.id },
-      { id: "opv-3", ownedPetId: ownedPet2.id, vaccineId: vaccineTyphus.id },
+      { ownedPetId: ownedPet1.id, vaccineId: vaccineCHPPi.id },
+      { ownedPetId: ownedPet2.id, vaccineId: vaccineTyphus.id },
     ],
   });
 
@@ -752,7 +702,6 @@ async function main() {
   // ============================================================
   const brandRoyal = await prisma.brand.create({
     data: {
-      id: "brand-1",
       name: "Royal Canin",
       logo: "https://royalcanin.com/logo.png",
     },
@@ -760,7 +709,6 @@ async function main() {
 
   const brandHills = await prisma.brand.create({
     data: {
-      id: "brand-2",
       name: "Hill's",
       logo: "https://hillspet.com/logo.png",
     },
@@ -768,7 +716,6 @@ async function main() {
 
   const productKibble1 = await prisma.product.create({
     data: {
-      id: "product-1",
       name: "Royal Canin Cardiac",
       qrCode: "RC-CARDIAC-001",
       brandId: brandRoyal.id,
@@ -778,7 +725,6 @@ async function main() {
 
   const productKibble2 = await prisma.product.create({
     data: {
-      id: "product-2",
       name: "Hill's Renal",
       qrCode: "HILLS-RENAL-001",
       brandId: brandHills.id,
@@ -788,7 +734,6 @@ async function main() {
 
   const productKibble3 = await prisma.product.create({
     data: {
-      id: "product-3",
       name: "Royal Canin Adult",
       qrCode: "RC-ADULT-001",
       brandId: brandRoyal.id,
@@ -798,7 +743,6 @@ async function main() {
 
   const food1 = await prisma.food.create({
     data: {
-      id: "food-1",
       caloriesPer100: 370,
       proteinPer100: 25.5,
       fatPercentage: 14.0,
@@ -811,7 +755,6 @@ async function main() {
 
   const food2 = await prisma.food.create({
     data: {
-      id: "food-2",
       caloriesPer100: 340,
       proteinPer100: 18.0,
       fatPercentage: 11.0,
@@ -824,7 +767,6 @@ async function main() {
 
   const food3 = await prisma.food.create({
     data: {
-      id: "food-3",
       caloriesPer100: 385,
       proteinPer100: 27.0,
       fatPercentage: 16.0,
@@ -838,25 +780,21 @@ async function main() {
   await prisma.foodHealthCondition.createMany({
     data: [
       {
-        id: "fhc-1",
         foodId: food1.id,
         healthConditionId: conditionCardio.id,
         recommendation: "RECOMMENDED",
       },
       {
-        id: "fhc-2",
         foodId: food2.id,
         healthConditionId: conditionRenal.id,
         recommendation: "RECOMMENDED",
       },
       {
-        id: "fhc-3",
         foodId: food3.id,
         healthConditionId: conditionCardio.id,
         recommendation: "AVOID",
       },
       {
-        id: "fhc-4",
         foodId: food3.id,
         healthConditionId: conditionRenal.id,
         recommendation: "AVOID",
@@ -867,7 +805,6 @@ async function main() {
   await prisma.foodPet.createMany({
     data: [
       {
-        id: "fp-1",
         day: 1,
         dateStart: new Date("2026-02-10"),
         quantity: 280,
@@ -876,7 +813,6 @@ async function main() {
         ownedPetId: ownedPet1.id,
       },
       {
-        id: "fp-2",
         day: 1,
         dateStart: new Date("2026-02-10"),
         quantity: 280,
@@ -892,7 +828,6 @@ async function main() {
   // ============================================================
   const cp1 = await prisma.clinicProduct.create({
     data: {
-      id: "clinprod-1",
       stock: 50,
       minimumRequired: 10,
       price: 65.9,
@@ -903,7 +838,6 @@ async function main() {
 
   await prisma.clinicProduct.create({
     data: {
-      id: "clinprod-2",
       stock: 30,
       minimumRequired: 5,
       price: 58.5,
@@ -914,7 +848,6 @@ async function main() {
 
   await prisma.clinicProduct.create({
     data: {
-      id: "clinprod-3",
       stock: 3,
       minimumRequired: 10,
       price: 45.0,
@@ -928,7 +861,6 @@ async function main() {
   // ============================================================
   const order1 = await prisma.order.create({
     data: {
-      id: "order-1",
       status: "CONFIRMED",
       pickupAt: new Date("2026-02-25T10:00:00"),
       clientId: clientProfile1.id,
@@ -938,7 +870,6 @@ async function main() {
 
   await prisma.orderItem.create({
     data: {
-      id: "oi-1",
       quantity: 2,
       unitPrice: 65.9,
       productClinicId: cp1.id,
@@ -950,12 +881,11 @@ async function main() {
   // MESSAGING
   // ============================================================
   const conv1 = await prisma.conversation.create({
-    data: { id: "conv-1", name: "Équipe Clinique du Parc" },
+    data: { name: "Équipe Clinique du Parc" },
   });
 
   const member1 = await prisma.conversationMember.create({
     data: {
-      id: "cm-1",
       role: "ADMIN",
       userId: vetoUser1.id,
       conversationId: conv1.id,
@@ -964,7 +894,6 @@ async function main() {
 
   const member2 = await prisma.conversationMember.create({
     data: {
-      id: "cm-2",
       role: "MEMBER",
       userId: vetoUser2.id,
       conversationId: conv1.id,
@@ -973,7 +902,6 @@ async function main() {
 
   const member3 = await prisma.conversationMember.create({
     data: {
-      id: "cm-3",
       role: "MEMBER",
       userId: secretaryUser1.id,
       conversationId: conv1.id,
@@ -982,7 +910,6 @@ async function main() {
 
   const msg1 = await prisma.message.create({
     data: {
-      id: "msg-1",
       content: "Bonjour à tous ! Réunion demain à 8h30.",
       conversationId: conv1.id,
     },
@@ -990,7 +917,6 @@ async function main() {
 
   const msg2 = await prisma.message.create({
     data: {
-      id: "msg-2",
       content: "Reçu, je serai là !",
       conversationId: conv1.id,
     },
@@ -999,19 +925,16 @@ async function main() {
   await prisma.messageRead.createMany({
     data: [
       {
-        id: "mr-1",
         readAt: new Date(),
         messageId: msg1.id,
         readById: member1.id,
       },
       {
-        id: "mr-2",
         readAt: new Date(),
         messageId: msg1.id,
         readById: member2.id,
       },
       {
-        id: "mr-3",
         readAt: new Date(),
         messageId: msg2.id,
         readById: member1.id,

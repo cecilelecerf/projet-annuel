@@ -1,5 +1,5 @@
 model Clinic {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   name        String
@@ -23,7 +23,7 @@ model Clinic {
 }
 
 model Speciality {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   name        String   @unique
@@ -37,7 +37,7 @@ model Speciality {
 }
 
 model VeterinarianClinic {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

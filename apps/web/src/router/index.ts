@@ -4,11 +4,12 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { clientRouter } from './clientRouter'
 import { veterinarianRouter } from './veterinarianRouter'
 import { directorRouter } from './directorRouter'
+import { secretaryRouter } from './secretaryRouter'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
-  DIRECTOR: '/directeur',
-  VETERINARIAN: '/veto',
-  SECRETARY: '/secretaire',
+  DIRECTOR: '/director',
+  VETERINARIAN: '/veterinarian',
+  SECRETARY: '/secretary',
   REFERANT: '/referent',
   CLIENT: '/',
 } as const
@@ -26,6 +27,7 @@ const routes: RouteRecordRaw[] = [
   ...clientRouter,
   ...veterinarianRouter,
   ...directorRouter,
+  ...secretaryRouter,
 
   // // ══════════════════════════════════════════════════════════════
   // // 🔓 AUTH (public)

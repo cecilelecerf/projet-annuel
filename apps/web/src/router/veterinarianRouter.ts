@@ -3,7 +3,7 @@ import { requireRole } from './utils'
 
 export const veterinarianRouter: RouteRecordRaw[] = [
   {
-    path: '/veto',
+    path: '/veterinarian',
     component: () => import('@/layouts/VetoLayout.vue'),
     beforeEnter: requireRole('VETERINARIAN'),
     children: [
@@ -14,26 +14,9 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       },
       // ── Agenda ───────────────────────────────────────────────
       {
-        path: 'agenda',
-        name: 'Veto.Agenda',
+        path: 'calendar',
+        name: 'Veto.Calendar',
         component: () => import('@/views/calendar/Calendar.vue'),
-        // children: [
-        //   {
-        //     path: 'journalier',
-        //     name: 'Veto.Agenda.Journalier',
-        //     //            component: () => import('@/views/veto/agenda/VueJournaliere.vue'),
-        //   },
-        //   {
-        //     path: 'hebdomadaire',
-        //     name: 'Veto.Agenda.Hebdomadaire',
-        //     //            component: () => import('@/views/veto/agenda/VueHebdomadaire.vue'),
-        //   },
-        //   {
-        //     path: 'mensuel',
-        //     name: 'Veto.Agenda.Mensuel',
-        //     //            component: () => import('@/views/veto/agenda/VueMensuelle.vue'),
-        //   },
-        // ],
       },
       // {
       //   path: 'agenda/rdv/:id',

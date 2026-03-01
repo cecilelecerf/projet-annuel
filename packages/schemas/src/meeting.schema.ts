@@ -7,6 +7,7 @@ import {
   clinicIdSchema,
   userIdSchema,
   veterinarianClinicIdSchema,
+  internalMeetingParticipantIdSchema,
 } from "./ids";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
@@ -20,9 +21,9 @@ export const meetingStatusSchema = z.enum(["PENDING", "ACCEPTED", "DECLINED"]);
 
 // ── InternalMettingParticipant ────────────────────────────────────────────────
 export const internalMettingParticipantSchema = z.object({
-  id: z.uuid(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  id: internalMeetingParticipantIdSchema,
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   mettingId: meetingIdSchema,
   userId: userIdSchema,
   status: meetingStatusSchema,

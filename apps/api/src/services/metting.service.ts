@@ -1,102 +1,73 @@
 import { MettingRepository } from "@api/repositories/metting.repository";
-import {
-  mettingWithExceptionSchema,
-  type MettingWithException,
-} from "@schemas";
-import { z } from "zod";
+import type {
+  AnimalMetting,
+  InternalMetting,
+  InternalMettingParticipant,
+  MettingBase,
+  ReferentClinicProfile,
+  SecretaryProfile,
+  VeterinarianClinic,
+} from "apps/api/prisma/generated/prisma/client";
+
+type MettingBaseWithExceptions = MettingBase & {
+  exceptions: MettingBase[];
+};
+
+type AnimalMeetingWithBase = AnimalMetting & {
+  base: MettingBaseWithExceptions;
+};
+
+type InternalMeetingWithBase = InternalMetting & {
+  base: MettingBaseWithExceptions;
+};
+
+type ParticipantWithMetting = InternalMettingParticipant & {
+  metting: InternalMeetingWithBase;
+};
+
+export type FlatMetting = Omit<MettingBaseWithExceptions, never> &
+  Partial<Omit<AnimalMetting, "id">> &
+  Partial<Omit<InternalMetting, "id">> & {
+    occurrenceDate?: Date;
+  };
 
 const mettingRepository = new MettingRepository();
 
 export class MettingService {
   // ── Helpers privés ──────────────────────────────────────────────────────────
 
-  private flattenBase({ base, ...rest }: { base: any; [key: string]: any }) {
+  private flattenAnimalMeeting({
+    base,
+    ...rest
+  }: AnimalMeetingWithBase): FlatMetting {
     return { ...base, ...rest };
   }
 
-  private parseAndExpand(raw: any[], start: Date, end: Date) {
-    const parsed = z.array(mettingWithExceptionSchema).parse(raw);
-
-    const recurring = parsed.filter((m) => m.type === "RECURRING");
-    const nonRecurring = parsed
-      .filter((m) => m.type !== "RECURRING")
-      .map(({ exceptions, ...m }) => m);
-
-    const expandedRecurring = recurring
-      .flatMap((m) => this.expandRecurring({ metting: m, start, end }))
-      .map(({ exceptions, ...m }) => m);
-
-    return [...nonRecurring, ...expandedRecurring];
+  private flattenInternalMeeting({
+    base,
+    ...rest
+  }: InternalMeetingWithBase): FlatMetting {
+    return { ...base, ...rest };
   }
 
-  private extractInternalMeetings(participants: any[]) {
+  private extractInternalMeetings(
+    participants: ParticipantWithMetting[],
+  ): FlatMetting[] {
     return participants
       .filter((p) => p.metting)
-      .map(({ metting: { base, ...meeting } }) => ({ ...base, ...meeting }));
+      .map(({ metting }) => this.flattenInternalMeeting(metting));
   }
-
-  // ── Par rôle ────────────────────────────────────────────────────────────────
-
-  async getCalendarForVeterinarian(id: string, start: Date, end: Date) {
-    const profile = await mettingRepository.getVeterinarianMeetings(
-      id,
-      start,
-      end,
-    );
-    if (!profile) return null;
-
-    const animalMeetings = profile.animalMeeting.map(this.flattenBase);
-    const internalMeetings = this.extractInternalMeetings(
-      profile.user.internalMettingParticipants,
-    );
-    // TODO: availabilities quand tu en auras besoin
-    // const availabilities = profile.veterinarianClinic.flatMap(vc => vc.availabilities.map(...))
-
-    return this.parseAndExpand(
-      [...animalMeetings, ...internalMeetings],
-      start,
-      end,
-    );
-  }
-
-  async getCalendarForSecretary(id: string, start: Date, end: Date) {
-    const profile = await mettingRepository.getSecretaryMeetings(
-      id,
-      start,
-      end,
-    );
-    if (!profile) return null;
-
-    const internalMeetings = this.extractInternalMeetings(
-      profile.user.internalMettingParticipants,
-    );
-
-    return this.parseAndExpand(internalMeetings, start, end);
-  }
-
-  async getCalendarForReferant(id: string, start: Date, end: Date) {
-    const profile = await mettingRepository.getReferantMeetings(id, start, end);
-    if (!profile) return null;
-
-    const internalMeetings = this.extractInternalMeetings(
-      profile.user.internalMettingParticipants,
-    );
-
-    return this.parseAndExpand(internalMeetings, start, end);
-  }
-
-  // ── Expand recurring ────────────────────────────────────────────────────────
 
   expandRecurring({
     metting,
     start,
     end,
   }: {
-    metting: MettingWithException;
+    metting: FlatMetting;
     start: Date;
     end: Date;
-  }) {
-    const occurrences = [];
+  }): FlatMetting[] {
+    const occurrences: FlatMetting[] = [];
     const current = new Date(
       metting.dateStart!.toISOString().split("T")[0] + "T00:00:00.000Z",
     );
@@ -104,7 +75,7 @@ export class MettingService {
     const exceptionDates = metting.exceptions
       .filter((e) => e.type === "EXCEPTION")
       .map((e) => e.specificDate?.toISOString().split("T")[0])
-      .filter(Boolean);
+      .filter((d): d is string => d !== undefined);
 
     while (current <= end) {
       if (current >= start && current.getUTCDay() === metting.dayOfWeek) {
@@ -122,5 +93,78 @@ export class MettingService {
     }
 
     return occurrences;
+  }
+
+  private expandAll(
+    flat: FlatMetting[],
+    start: Date,
+    end: Date,
+  ): FlatMetting[] {
+    const recurring = flat.filter((m) => m.type === "RECURRING");
+    const nonRecurring = flat.filter((m) => m.type !== "RECURRING");
+
+    const expanded = recurring.flatMap((m) =>
+      this.expandRecurring({ metting: m, start, end }),
+    );
+
+    return [...nonRecurring, ...expanded];
+  }
+
+  // ── Par rôle ────────────────────────────────────────────────────────────────
+
+  async getCalendarForVeterinarian(
+    id: VeterinarianClinic["id"],
+    start: Date,
+    end: Date,
+  ) {
+    const profile = await mettingRepository.getVeterinarianMeetings(
+      id,
+      start,
+      end,
+    );
+    if (!profile) return null;
+
+    const animalMeetings = profile.animalMeeting.map((m) =>
+      this.flattenAnimalMeeting(m as AnimalMeetingWithBase),
+    );
+    const internalMeetings = this.extractInternalMeetings(
+      profile.user.internalMettingParticipants as ParticipantWithMetting[],
+    );
+
+    return this.expandAll([...animalMeetings, ...internalMeetings], start, end);
+  }
+
+  async getCalendarForSecretary(
+    id: SecretaryProfile["id"],
+    start: Date,
+    end: Date,
+  ) {
+    const profile = await mettingRepository.getSecretaryMeetings(
+      id,
+      start,
+      end,
+    );
+    if (!profile) return null;
+
+    const internalMeetings = this.extractInternalMeetings(
+      profile.user.internalMettingParticipants as ParticipantWithMetting[],
+    );
+
+    return this.expandAll(internalMeetings, start, end);
+  }
+
+  async getCalendarForReferant(
+    id: ReferentClinicProfile["id"],
+    start: Date,
+    end: Date,
+  ) {
+    const profile = await mettingRepository.getReferantMeetings(id, start, end);
+    if (!profile) return null;
+
+    const internalMeetings = this.extractInternalMeetings(
+      profile.user.internalMettingParticipants as ParticipantWithMetting[],
+    );
+
+    return this.expandAll(internalMeetings, start, end);
   }
 }

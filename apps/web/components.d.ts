@@ -28,6 +28,7 @@ declare module 'vue' {
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
+    ListUser: typeof import('./src/components/users/ListUser.vue')['default']
     Navbar: typeof import('./src/components/nav/Navbar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

@@ -1,5 +1,5 @@
 import { hash, compare } from "bcryptjs";
-import { Login, Register, userSchema } from "@schemas";
+import { baseUserSchema, Login, Register } from "@schemas";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -7,26 +7,22 @@ import {
   verifyRefreshToken,
 } from "@api/utils/jwt";
 import { prisma } from "@api/lib/prisma";
+import { ConflictError, NotFoundError, UnauthorizedError } from "@api/errors";
 
 export class AuthService {
   async register(data: Register) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
-    if (existingUser) {
-      throw new Error("Cet email est déjà utilisé");
-    }
+    if (existingUser) throw new ConflictError("Cet email est déjà utilisé");
 
     const hashedPassword = await hash(data.password, 10);
 
     const user = await prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-      },
+      data: { ...data, password: hashedPassword },
     });
-    const parsedUser = userSchema.parse(user);
 
+    const parsedUser = baseUserSchema.parse(user);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);
 
@@ -39,26 +35,20 @@ export class AuthService {
     });
 
     const { password: _, ...userWithoutPassword } = user;
-
-    return {
-      user: userWithoutPassword,
-      accessToken,
-      refreshToken,
-    };
+    return { user: userWithoutPassword, accessToken, refreshToken };
   }
 
   async login(data: Login) {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
-    if (!user) {
-      throw new Error("Email ou mot de passe incorrect");
-    }
-    const parsedUser = userSchema.parse(user);
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (!user) throw new UnauthorizedError("Email ou mot de passe incorrect");
 
     const isPasswordValid = await compare(data.password, user.password);
-    if (!isPasswordValid) {
-      throw new Error("Email ou mot de passe incorrect");
-    }
-
+    if (!isPasswordValid)
+      throw new UnauthorizedError("Email ou mot de passe incorrect");
+    console.log(user);
+    const parsedUser = baseUserSchema.parse(user);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);
 
@@ -71,40 +61,29 @@ export class AuthService {
     });
 
     const { password: _, ...userWithoutPassword } = user;
-
-    return {
-      user: userWithoutPassword,
-      accessToken,
-      refreshToken,
-    };
+    return { user: userWithoutPassword, accessToken, refreshToken };
   }
 
   async refresh(refreshToken: string) {
     const savedToken = await prisma.refreshToken.findUnique({
-      where: { id: refreshToken },
+      where: { token: refreshToken },
     });
-    if (!savedToken) {
-      throw new Error("Refresh token invalide");
-    }
+    if (!savedToken) throw new UnauthorizedError("Refresh token invalide");
 
     if (savedToken.expiresAt < new Date()) {
-      await prisma.refreshToken.delete({ where: { id: refreshToken } });
-      throw new Error("Refresh token expiré");
+      await prisma.refreshToken.delete({ where: { token: refreshToken } });
+      throw new UnauthorizedError("Refresh token expiré");
     }
 
     const payload = verifyRefreshToken(refreshToken);
-    if (!payload) {
-      throw new Error("Refresh token invalide");
-    }
+    if (!payload) throw new UnauthorizedError("Refresh token invalide");
 
     const user = await prisma.user.findUnique({ where: { id: payload.id } });
-    if (!user) {
-      throw new Error("Utilisateur introuvable");
-    }
+    if (!user) throw new NotFoundError("Utilisateur");
 
-    await prisma.refreshToken.delete({ where: { id: refreshToken } });
-    const parsedUser = userSchema.parse(user);
+    await prisma.refreshToken.delete({ where: { token: refreshToken } });
 
+    const parsedUser = baseUserSchema.parse(user);
     const newAccessToken = generateAccessToken(parsedUser);
     const newRefreshToken = generateRefreshToken(parsedUser);
 
@@ -116,10 +95,7 @@ export class AuthService {
       },
     });
 
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    };
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 
   async logout(refreshToken: string) {
@@ -128,8 +104,11 @@ export class AuthService {
 
   async me(accessToken: string) {
     const payload = verifyAccessToken(accessToken);
-    if (!payload) throw new Error("Refresh token invalide");
-    const user = prisma.user.findUnique({ where: { id: payload.id } });
+    if (!payload) throw new UnauthorizedError("Token invalide");
+
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    if (!user) throw new NotFoundError("Utilisateur");
+
     return user;
   }
 }

@@ -5,19 +5,16 @@ export const userIdSchema = z.uuid().brand("UserId");
 export const clientIdSchema = z.uuid().brand("ClientId");
 export const veterinarianIdSchema = z.uuid().brand("VeterinarianId");
 export const secretaryIdSchema = z.uuid().brand("SecretaryId");
-export const directorClinicIdSchema = z
-  .string()
-  .uuid()
-  .brand("DirectorClinicId");
-export const referantClinicIdSchema = z
-  .string()
-  .uuid()
-  .brand("ReferantClinicId");
+export const directorClinicIdSchema = z.uuid().brand("DirectorClinicId");
+export const referantClinicIdSchema = z.uuid().brand("ReferantClinicId");
 export const clinicIdSchema = z.uuid().brand("ClinicId");
 export const petIdSchema = z.uuid().brand("PetId");
 export const ownedPetIdSchema = z.uuid().brand("OwnedPetId");
 export const raceIdSchema = z.uuid().brand("RaceId");
 export const meetingIdSchema = z.uuid().brand("MeetingId");
+export const internalMeetingParticipantIdSchema = z
+  .uuid()
+  .brand("InternalMeetingParticipantId");
 export const vaccineIdSchema = z.uuid().brand("VaccineId");
 export const petVaccineIdSchema = z.uuid().brand("PetVaccineId");
 export const brandIdSchema = z.uuid().brand("BrandId");
@@ -27,29 +24,21 @@ export const productClinicIdSchema = z.uuid().brand("ProductClinicId");
 export const reviewIdSchema = z.uuid().brand("ReviewId");
 export const petFoodIdSchema = z.number().int().brand("PetFoodId");
 export const veterinarianClinicIdSchema = z
-  .string()
   .uuid()
   .brand("VeterinarianClinicId");
 export const availabilityIdSchema = z.uuid().brand("AvailabilityId");
 export const specialityIdSchema = z.uuid().brand("SpecialityId");
 export const clinicPetIdSchema = z.uuid().brand("ClinicPetId");
-export const veterinarianPetIdSchema = z
-  .string()
-  .uuid()
-  .brand("VeterinarianPetId");
+export const veterinarianPetIdSchema = z.uuid().brand("VeterinarianPetId");
 export const orderIdSchema = z.uuid().brand("OrderId");
 export const orderItemIdSchema = z.uuid().brand("OrderItemId");
 export const conversationIdSchema = z.uuid().brand("ConversationId");
 export const conversationMemberIdSchema = z
-  .string()
   .uuid()
   .brand("ConversationMemberId");
 export const messageIdSchema = z.uuid().brand("MessageId");
 export const messageReadIdSchema = z.uuid().brand("MessageReadId");
-export const healthConditionIdSchema = z
-  .string()
-  .uuid()
-  .brand("HealthConditionId");
+export const healthConditionIdSchema = z.uuid().brand("HealthConditionId");
 
 export type UserId = z.infer<typeof userIdSchema>;
 export type ClientId = z.infer<typeof clientIdSchema>;

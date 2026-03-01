@@ -1,12 +1,12 @@
-import { User, UserRole } from "@schemas";
+import { BaseUser, UserRole } from "@schemas";
 import jwt from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export interface JwtPayload {
-  id: User["id"];
-  email: User["email"];
+  id: BaseUser["id"];
+  email: BaseUser["email"];
   role: UserRole;
 }
 

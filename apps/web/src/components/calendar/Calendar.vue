@@ -6,10 +6,12 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { ref } from 'vue'
 import { api } from '@/lib/api'
 import z from 'zod'
-import { meetingSchema, type Meeting } from '@schemas'
+import { meetingSchema, type Meeting, type UserId } from '@schemas'
 import dayjs from 'dayjs'
 import { match } from 'ts-pattern'
-
+const { userId } = defineProps<{
+  userId?: UserId
+}>()
 const toCalendarEvent = (base: Meeting) => {
   const date = base.specificDate ?? base.dateStart
   const title = match(base)
@@ -36,13 +38,15 @@ const toCalendarEvent = (base: Meeting) => {
   }
 }
 
-async function fetchMeetings(info: { startStr: string; endStr: string }) {
+async function fetchMeetings(info: { startStr: string; endStr: string; id?: UserId }) {
   const start = dayjs(info.startStr).format('YYYY-MM-DD')
   const end = dayjs(info.endStr).format('YYYY-MM-DD')
-  return api(`/meetings?startDate=${start}&endDate=${end}`).then((data) => {
-    const parsed = z.array(meetingSchema).parse(data)
-    return parsed.map(toCalendarEvent)
-  })
+  return api(`/meetings${info.id ? '/' + info.id : ''}?startDate=${start}&endDate=${end}`).then(
+    (data) => {
+      const parsed = z.array(meetingSchema).parse(data)
+      return parsed.map(toCalendarEvent)
+    },
+  )
 }
 
 const calendarOptions = ref({
@@ -69,6 +73,7 @@ const calendarOptions = ref({
     calendarOptions.value.events = await fetchMeetings({
       startStr: info.startStr,
       endStr: info.endStr,
+      id: userId,
     })
   },
 })

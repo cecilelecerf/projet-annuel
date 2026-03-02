@@ -109,7 +109,6 @@ export class MettingService {
     const expanded = recurring.flatMap((m) =>
       this.expandRecurring({ metting: m, start, end }),
     );
-
     return [...nonRecurring, ...expanded];
   }
 
@@ -133,7 +132,6 @@ export class MettingService {
     const internalMeetings = this.extractInternalMeetings(
       profile.user.internalMettingParticipants as ParticipantWithMetting[],
     );
-
     return this.expandAll([...animalMeetings, ...internalMeetings], start, end);
   }
 
@@ -185,18 +183,18 @@ export class MettingService {
       end,
     });
     if (!profile) return null;
-
     const availabilitiesUser: FlatMetting[] = profile.availabilities.map(
       this.flattenMeeting,
     );
     let availabilitiesVeto: FlatMetting[] = [];
     if (profile.veterinarianProfile) {
+      console.log(profile.veterinarianProfile?.veterinarianClinic);
       availabilitiesVeto =
-        profile.veterinarianProfile?.veterinarianClinic.flatMap(
+        profile.veterinarianProfile.veterinarianClinic.flatMap(
           ({ availabilities }) => availabilities.map(this.flattenMeeting),
         );
     }
-
+    console.log(availabilitiesVeto);
     return [
       ...this.expandAll(availabilitiesUser, start, end),
       ...this.expandAll(availabilitiesVeto, start, end),

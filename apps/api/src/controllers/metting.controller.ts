@@ -40,7 +40,7 @@ export class MettingController {
         SECRETARY: () => mettingService.getMettingsForSecretary(id, start, end),
         REFERANT: () => mettingService.getMettingsForReferant(id, start, end),
       };
-      const availabilities = mettingService.getAllAvailibilities({
+      const availabilities = await mettingService.getAllAvailibilities({
         id,
         start,
         end,
@@ -51,7 +51,6 @@ export class MettingController {
 
       const meetings = await handler();
       if (!meetings) throw new NotFoundError("Profile");
-
       return res
         .status(200)
         .json(calendarSchema.parse({ meetings, availabilities }));

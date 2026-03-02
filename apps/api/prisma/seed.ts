@@ -330,8 +330,13 @@ async function main() {
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T12:00:00Z"),
       kind: "AVAILABILITY",
-      veterinarianClinicAvailability: {
-        create: { veterinarianClinicId: vetoClinic1.id },
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      availabilty: {
+        create: {
+          veterinarianClinicId: vetoClinic1.id,
+          contextType: "VETERINARIAN_CLINIC",
+        },
       },
     },
   });
@@ -344,8 +349,13 @@ async function main() {
       startTime: new Date("1970-01-01T14:00:00Z"),
       endTime: new Date("1970-01-01T18:00:00Z"),
       kind: "AVAILABILITY",
-      veterinarianClinicAvailability: {
-        create: { veterinarianClinicId: vetoClinic1.id },
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      availabilty: {
+        create: {
+          veterinarianClinicId: vetoClinic1.id,
+          contextType: "VETERINARIAN_CLINIC",
+        },
       },
     },
   });
@@ -357,9 +367,10 @@ async function main() {
       specificDate: new Date("2026-03-09"),
       parentId: baseAvail1.id,
       kind: "AVAILABILITY",
-      veterinarianClinicAvailability: {
+      availabilty: {
         create: {
           veterinarianClinicId: vetoClinic1.id,
+          contextType: "VETERINARIAN_CLINIC",
         },
       },
     },
@@ -373,8 +384,11 @@ async function main() {
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T17:00:00Z"),
       kind: "AVAILABILITY",
-      veterinarianClinicAvailability: {
-        create: { veterinarianClinicId: vetoClinic1.id },
+      availabilty: {
+        create: {
+          veterinarianClinicId: vetoClinic1.id,
+          contextType: "VETERINARIAN_CLINIC",
+        },
       },
     },
   });
@@ -387,8 +401,13 @@ async function main() {
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T13:00:00Z"),
       kind: "AVAILABILITY",
-      veterinarianClinicAvailability: {
-        create: { veterinarianClinicId: vetoClinic2.id },
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      availabilty: {
+        create: {
+          veterinarianClinicId: vetoClinic2.id,
+          contextType: "VETERINARIAN_CLINIC",
+        },
       },
     },
   });
@@ -401,8 +420,88 @@ async function main() {
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T18:00:00Z"),
       kind: "AVAILABILITY",
-      veterinarianClinicAvailability: {
-        create: { veterinarianClinicId: vetoClinic2.id },
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      availabilty: {
+        create: {
+          veterinarianClinicId: vetoClinic2.id,
+          contextType: "VETERINARIAN_CLINIC",
+        },
+      },
+    },
+  });
+
+  // ============================================================
+  // AVAILABILITIES — SECRÉTAIRE
+  // ============================================================
+
+  // Secrétaire — RECURRING lundi 08h-17h
+  const baseSecAvail1 = await prisma.mettingBase.create({
+    data: {
+      type: "RECURRING",
+      dayOfWeek: 1,
+      startTime: new Date("1970-01-01T08:00:00Z"),
+      endTime: new Date("1970-01-01T17:00:00Z"),
+      kind: "AVAILABILITY",
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      availabilty: {
+        create: {
+          contextType: "USER",
+          userId: secretaryUser1.id,
+        },
+      },
+    },
+  });
+
+  // Secrétaire — RECURRING mardi 08h-17h
+  await prisma.mettingBase.create({
+    data: {
+      type: "RECURRING",
+      dayOfWeek: 2,
+      startTime: new Date("1970-01-01T08:00:00Z"),
+      endTime: new Date("1970-01-01T17:00:00Z"),
+      kind: "AVAILABILITY",
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      availabilty: {
+        create: {
+          contextType: "USER",
+          userId: secretaryUser1.id,
+        },
+      },
+    },
+  });
+
+  // Secrétaire — SPECIFIED : dispo exceptionnellement le mercredi 15 avril
+  await prisma.mettingBase.create({
+    data: {
+      type: "SPECIFIED",
+      specificDate: new Date("2026-04-15"),
+      startTime: new Date("1970-01-01T09:00:00Z"),
+      endTime: new Date("1970-01-01T14:00:00Z"),
+      kind: "AVAILABILITY",
+      availabilty: {
+        create: {
+          contextType: "USER",
+          userId: secretaryUser1.id,
+        },
+      },
+    },
+  });
+
+  // Secrétaire — EXCEPTION : absente le lundi 23 mars malgré le RECURRING
+  await prisma.mettingBase.create({
+    data: {
+      type: "EXCEPTION",
+      specificDate: new Date("2026-03-23"),
+      parentId: baseSecAvail1.id,
+      kind: "AVAILABILITY",
+      availabilty: {
+        create: {
+          contextType: "USER",
+          userId: secretaryUser1.id,
+        },
       },
     },
   });

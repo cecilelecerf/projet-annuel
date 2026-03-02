@@ -42,21 +42,11 @@ model MettingBase {
   availabilty                      Availability?
   internalMetting                  InternalMetting?
   animalMetting                    AnimalMetting?
-  veterinarianClinicAvailabilities VeterinarianClinicAvailability[]
-
+ 
   @@map("metting_bases")
 }
 
-model VeterinarianClinicAvailability {
-  id String @id
-
-  base MettingBase @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  veterinarianClinicId String
-  vererinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
-
-  @@map("veterinarian_clinic_availabilities")
-}
+ 
 
 enum AvailabilityContextType {
   USER

@@ -97,7 +97,7 @@ export class MettingController {
       );
       if (!handler) return res.status(200).json([]);
 
-      const availabilities = mettingService.getAvailibilitiesByClinic({
+      const availabilities = await mettingService.getAvailibilitiesByClinic({
         id: veterinarianId,
         clinicId,
         start,

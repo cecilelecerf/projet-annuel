@@ -188,13 +188,11 @@ export class MettingService {
     );
     let availabilitiesVeto: FlatMetting[] = [];
     if (profile.veterinarianProfile) {
-      console.log(profile.veterinarianProfile?.veterinarianClinic);
       availabilitiesVeto =
         profile.veterinarianProfile.veterinarianClinic.flatMap(
           ({ availabilities }) => availabilities.map(this.flattenMeeting),
         );
     }
-    console.log(availabilitiesVeto);
     return [
       ...this.expandAll(availabilitiesUser, start, end),
       ...this.expandAll(availabilitiesVeto, start, end),
@@ -222,7 +220,16 @@ export class MettingService {
     const availabilities: FlatMetting[] = profile.availabilities.map(
       this.flattenMeeting,
     );
-
-    return this.expandAll(availabilities, start, end);
+    let availabilitiesVeto: FlatMetting[] = [];
+    if (profile.veterinarianProfile) {
+      availabilitiesVeto =
+        profile.veterinarianProfile.veterinarianClinic.flatMap(
+          ({ availabilities }) => availabilities.map(this.flattenMeeting),
+        );
+    }
+    return [
+      ...this.expandAll(availabilities, start, end),
+      ...this.expandAll(availabilitiesVeto, start, end),
+    ];
   }
 }

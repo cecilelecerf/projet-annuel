@@ -46,8 +46,7 @@ model VeterinarianClinic {
   clinicId       String
   clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
-  veterinarianClinicAvailability VeterinarianClinicAvailability[]
-  availabilities                 Availability[]
+   availabilities                 Availability[]
 
   @@map("veterinarian_clinics")
 }

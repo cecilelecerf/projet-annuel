@@ -5,8 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { ref } from 'vue'
 import { api } from '@/lib/api'
-import z from 'zod'
-import { meetingSchema, type Meeting, type UserId } from '@schemas'
+import { calendarSchema, type Meeting, type UserId } from '@schemas'
 import dayjs from 'dayjs'
 import { match } from 'ts-pattern'
 const { userId } = defineProps<{
@@ -43,8 +42,8 @@ async function fetchMeetings(info: { startStr: string; endStr: string; id?: User
   const end = dayjs(info.endStr).format('YYYY-MM-DD')
   return api(`/meetings${info.id ? '/' + info.id : ''}?startDate=${start}&endDate=${end}`).then(
     (data) => {
-      const parsed = z.array(meetingSchema).parse(data)
-      return parsed.map(toCalendarEvent)
+      const parsed = calendarSchema.parse(data)
+      return parsed.mettings.map(toCalendarEvent)
     },
   )
 }
@@ -63,6 +62,12 @@ const calendarOptions = ref({
   allDaySlot: false,
   events: [] as any[],
   eventColor: '#409eff',
+
+  businessHours: {
+    daysOfWeek: [1, 2, 3],
+    startTime: '9:00',
+    endTime: '18:00',
+  },
   eventClassNames: (arg: any) => {
     console.log(arg.event.extendedProps)
     return arg.event.extendedProps.type === 'INTERNAL' ? ['event-internal'] : ['event-animal']

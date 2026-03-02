@@ -1,11 +1,14 @@
 import { MettingRepository } from "@api/repositories/metting.repository";
 import type {
   AnimalMetting,
+  Availability,
+  Clinic,
   InternalMetting,
   InternalMettingParticipant,
   MettingBase,
   ReferentClinicProfile,
   SecretaryProfile,
+  User,
   VeterinarianClinic,
 } from "apps/api/prisma/generated/prisma/client";
 
@@ -20,6 +23,9 @@ type AnimalMeetingWithBase = AnimalMetting & {
 type InternalMeetingWithBase = InternalMetting & {
   base: MettingBaseWithExceptions;
 };
+type AvailabilitiesWithBase = Availability & {
+  base: MettingBaseWithExceptions;
+};
 
 type ParticipantWithMetting = InternalMettingParticipant & {
   metting: InternalMeetingWithBase;
@@ -27,7 +33,8 @@ type ParticipantWithMetting = InternalMettingParticipant & {
 
 export type FlatMetting = Omit<MettingBaseWithExceptions, never> &
   Partial<Omit<AnimalMetting, "id">> &
-  Partial<Omit<InternalMetting, "id">> & {
+  Partial<Omit<InternalMetting, "id">> &
+  Partial<Omit<AvailabilitiesWithBase, "id">> & {
     occurrenceDate?: Date;
   };
 
@@ -36,17 +43,13 @@ const mettingRepository = new MettingRepository();
 export class MettingService {
   // ── Helpers privés ──────────────────────────────────────────────────────────
 
-  private flattenAnimalMeeting({
+  private flattenMeeting({
     base,
     ...rest
-  }: AnimalMeetingWithBase): FlatMetting {
-    return { ...base, ...rest };
-  }
-
-  private flattenInternalMeeting({
-    base,
-    ...rest
-  }: InternalMeetingWithBase): FlatMetting {
+  }:
+    | AnimalMeetingWithBase
+    | InternalMeetingWithBase
+    | AvailabilitiesWithBase): FlatMetting {
     return { ...base, ...rest };
   }
 
@@ -55,7 +58,7 @@ export class MettingService {
   ): FlatMetting[] {
     return participants
       .filter((p) => p.metting)
-      .map(({ metting }) => this.flattenInternalMeeting(metting));
+      .map(({ metting }) => this.flattenMeeting(metting));
   }
 
   expandRecurring({
@@ -112,7 +115,7 @@ export class MettingService {
 
   // ── Par rôle ────────────────────────────────────────────────────────────────
 
-  async getCalendarForVeterinarian(
+  async getMettingsForVeterinarian(
     id: VeterinarianClinic["id"],
     start: Date,
     end: Date,
@@ -125,7 +128,7 @@ export class MettingService {
     if (!profile) return null;
 
     const animalMeetings = profile.animalMeeting.map((m) =>
-      this.flattenAnimalMeeting(m as AnimalMeetingWithBase),
+      this.flattenMeeting(m as AnimalMeetingWithBase),
     );
     const internalMeetings = this.extractInternalMeetings(
       profile.user.internalMettingParticipants as ParticipantWithMetting[],
@@ -134,7 +137,7 @@ export class MettingService {
     return this.expandAll([...animalMeetings, ...internalMeetings], start, end);
   }
 
-  async getCalendarForSecretary(
+  async getMettingsForSecretary(
     id: SecretaryProfile["id"],
     start: Date,
     end: Date,
@@ -153,7 +156,7 @@ export class MettingService {
     return this.expandAll(internalMeetings, start, end);
   }
 
-  async getCalendarForReferant(
+  async getMettingsForReferant(
     id: ReferentClinicProfile["id"],
     start: Date,
     end: Date,
@@ -166,5 +169,62 @@ export class MettingService {
     );
 
     return this.expandAll(internalMeetings, start, end);
+  }
+  async getAllAvailibilities({
+    id,
+    start,
+    end,
+  }: {
+    id: User["id"];
+    start: Date;
+    end: Date;
+  }) {
+    const profile = await mettingRepository.getAllAvailabilities({
+      id,
+      start,
+      end,
+    });
+    if (!profile) return null;
+
+    const availabilitiesUser: FlatMetting[] = profile.availabilities.map(
+      this.flattenMeeting,
+    );
+    let availabilitiesVeto: FlatMetting[] = [];
+    if (profile.veterinarianProfile) {
+      availabilitiesVeto =
+        profile.veterinarianProfile?.veterinarianClinic.flatMap(
+          ({ availabilities }) => availabilities.map(this.flattenMeeting),
+        );
+    }
+
+    return [
+      ...this.expandAll(availabilitiesUser, start, end),
+      ...this.expandAll(availabilitiesVeto, start, end),
+    ];
+  }
+  async getAvailibilitiesByClinic({
+    id,
+    clinicId,
+    start,
+    end,
+  }: {
+    id: User["id"];
+    clinicId: Clinic["id"];
+    start: Date;
+    end: Date;
+  }) {
+    const profile = await mettingRepository.getAllAvailabilitiesByClinic({
+      id,
+      start,
+      end,
+      clinicId,
+    });
+    if (!profile) return null;
+
+    const availabilities: FlatMetting[] = profile.availabilities.map(
+      this.flattenMeeting,
+    );
+
+    return this.expandAll(availabilities, start, end);
   }
 }

@@ -10,7 +10,13 @@ export class UserService {
     return await userRepository.getAllUsers();
   }
 
-  async getClinicId(userId: string, role: UserRole): Promise<string> {
+  async getClinicId({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<string> {
     const clinicId = await userRepository.getClinicIdByUserId({
       id: userId,
       role,
@@ -20,7 +26,7 @@ export class UserService {
   }
 
   async getUsers(userId: string, role: UserRole) {
-    const clinicId = await this.getClinicId(userId, role);
+    const clinicId = await this.getClinicId({ userId, role });
     return userRepository.getUsersByClinic({ clinicId });
   }
 
@@ -28,7 +34,7 @@ export class UserService {
     if (role === "ADMIN") {
       return userRepository.getAllUsersByRole({ role });
     } else {
-      const clinicId = await this.getClinicId(userId, role);
+      const clinicId = await this.getClinicId({ userId, role });
       return userRepository.getUsersByRoleAndClinic({
         clinicId,
         role: targetRole,
@@ -53,7 +59,10 @@ export class UserService {
     }
 
     // Les autres vérifient que le user cible est dans leur clinic
-    const clinicId = await this.getClinicId(requesterId, requesterRole);
+    const clinicId = await this.getClinicId({
+      userId: requesterId,
+      role: requesterRole,
+    });
     const usersInClinic = await userRepository.getUsersByClinic({ clinicId });
     const user = usersInClinic.find((u) => u.id === targetId);
     if (!user) throw new NotFoundError("Utilisateur");

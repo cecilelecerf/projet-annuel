@@ -99,6 +99,12 @@ export const mettingWithExceptionSchema = z
   })
   .and(meetingSchema);
 
+export const calendarSchema = z.object({
+  mettings: z.array(mettingWithExceptionSchema),
+  availabilities: z.array(mettingWithExceptionSchema),
+});
+
+export type Calendar = z.infer<typeof calendarSchema>;
 export type MettingWithException = z.infer<typeof mettingWithExceptionSchema>;
 export type ScheduleType = z.infer<typeof scheduleTypeSchema>;
 export type MettingKind = z.infer<typeof mettingKindSchema>;

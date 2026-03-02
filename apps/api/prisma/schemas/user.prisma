@@ -17,7 +17,7 @@ model User {
   lastname  String
   password  String
   picture   String?
- 
+
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
   secretaryProfile      SecretaryProfile?
@@ -28,6 +28,7 @@ model User {
   ownedPetConditionHealths    OwnedPetHealthCondition[]
   conversationMembers         ConversationMember[]
   internalMettingParticipants InternalMettingParticipant[]
+  availabilities              Availability[]
 
   @@index([email])
   @@index([role])
@@ -40,7 +41,6 @@ model ClientProfile {
   address     String?
   phone       String?
 
-
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
   // appointments  Appointment[]
@@ -48,7 +48,6 @@ model ClientProfile {
   clinicProducts     ClinicProduct[]
   order              Order[]
   secretaryProfileId String?
-
 
   @@map("client_profiles")
 }

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import Sidebar, { type MenuItem } from './Sidebar.vue'
-import { getStringRole } from '@/utils/getStringRole'
+import { getStringRole } from '@/utils/role.utils'
 
 defineProps<{ menuItems: MenuItem[] }>()
 

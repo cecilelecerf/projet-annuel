@@ -39,22 +39,32 @@ model MettingBase {
 
   kind MettingKind
 
-  veterinarianClinicAvailability VeterinarianClinicAvailability?
-  internalMetting                InternalMetting?
-  animalMetting                  AnimalMetting?
+  availabilty     Availability?
+  internalMetting InternalMetting?
+  animalMetting   AnimalMetting?
 
   @@map("metting_bases")
 }
 
-model VeterinarianClinicAvailability {
+enum AvailabilityContextType {
+  USER
+  VETERINARIAN_CLINIC
+}
+
+model Availability {
   id String @id
 
   base MettingBase @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  veterinarianClinicId String
-  vererinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
+  contextType AvailabilityContextType
 
-  @@map("veterinarian_clinic_availabilities")
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  veterinarianClinicId String?
+  veterinarianClinic   VeterinarianClinic? @relation(fields: [veterinarianClinicId], references: [id])
+
+  @@map("availabilities")
 }
 
 enum MeetingStatus {
@@ -110,6 +120,8 @@ model AnimalMetting {
 
   ownedPetVaccines         OwnedPetVaccine[]
   ownedPetHealthConditions OwnedPetHealthCondition[]
+  animalMettingActs        AnimalMettingAct[]
+  prescriptions            Prescription[]
 
   @@map("animal_mettings")
 }

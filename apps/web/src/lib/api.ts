@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000'
+const BASE_URL = 'http://localhost:3000/api'
 
 export const api = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('accessToken')

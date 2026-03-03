@@ -25,9 +25,9 @@ app.get("/test", async (req, res) => {
   });
   res.json(users);
 });
-app.use("/auth", authRouter);
-app.use("/meetings", meetingRouter);
-app.use("/users", userRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/meetings", meetingRouter);
+app.use("/api/users", userRouter);
 // app.post(`/signup`, async (req, res) => {
 //   const { name, email, posts } = req.body;
 

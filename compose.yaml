@@ -2,8 +2,6 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: always
-    env_file:
-      - .env.dev
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -25,3 +23,4 @@ volumes:
 
 networks:
   backend:
+    driver: bridge

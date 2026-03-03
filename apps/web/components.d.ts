@@ -29,9 +29,9 @@ declare module 'vue' {
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
     ListUser: typeof import('./src/components/users/ListUser.vue')['default']
-    Navbar: typeof import('./src/components/nav/Navbar.vue')['default']
+    Navbar: typeof import('./src/components/ui/nav/Navbar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    Sidebar: typeof import('./src/components/nav/Sidebar.vue')['default']
+    Sidebar: typeof import('./src/components/ui/nav/Sidebar.vue')['default']
   }
 }

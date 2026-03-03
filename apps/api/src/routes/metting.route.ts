@@ -10,7 +10,7 @@ const controller = new MettingController();
 mettingRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(["VETERINARIAN", "SECRETARY", "DIRECTOR", "REFERANT"]),
+  roleMiddleware(["VETERINARIAN", "SECRETARY"]),
   controller.getMyCalendar.bind(controller) as RequestHandler,
 );
 mettingRouter.get(

@@ -15,10 +15,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == database
     networks:
       - backend
 
   api:
+    # A remplacer par l'image depuis la registry
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -32,6 +37,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGIN: http://localhost
+    deploy:
+      replicas: 3
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,10 +47,13 @@ services:
       - frontend
 
   web:
+    # A remplacer par l'image depuis la registry
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     restart: always
+    deploy:
+      replicas: 3
     networks:
       - frontend
 
@@ -55,7 +65,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "3000:3000"
+    deploy:
+      replicas: 3
     depends_on:
       - api
       - web
@@ -67,4 +78,6 @@ volumes:
 
 networks:
   backend:
+    driver: overlay
   frontend:
+    driver: overlay

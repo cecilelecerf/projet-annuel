@@ -9,10 +9,10 @@ enum UserRole {
 
 model User {
   id        String   @id @default(uuid())
-  email     String   @unique
-  role      UserRole @default(CLIENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+  role      UserRole @default(CLIENT)
+  email     String   @unique
   firstname String
   lastname  String
   password  String
@@ -60,11 +60,14 @@ model VeterinarianProfile {
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  ownedPet           OwnedPet[]
-  animalMeeting      AnimalMetting[]
-  speciality         Speciality[]
-  veterinarianClinic VeterinarianClinic[]
-  pet                Pet[]
+  ownedPet                   OwnedPet[]
+  animalMeeting              AnimalMetting[]
+  speciality                 Speciality[]
+  veterinarianClinic         VeterinarianClinic[]
+  pet                        Pet[]
+  animalMettingActPerformers AnimalMettingActPerformer[]
+  hospitalizationReports     HospitalizationReport[]
+  prescriptions              Prescription[]
 
   @@map("veterinarian_profiles")
 }

@@ -1,0 +1,41 @@
+import type { PrismaClient } from "../generated/prisma/client";
+
+export async function cleanup(prisma: PrismaClient) {
+  await prisma.messageRead.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.conversationMember.deleteMany();
+  await prisma.conversation.deleteMany();
+  await prisma.foodHealthCondition.deleteMany();
+  await prisma.ownedPetHealthCondition.deleteMany();
+  await prisma.healthCondition.deleteMany();
+  await prisma.ownedPetVaccine.deleteMany();
+  await prisma.foodPet.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.clinicProduct.deleteMany();
+  await prisma.food.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.brand.deleteMany();
+  await prisma.animalMettingAct.deleteMany();
+  await prisma.clinicAct.deleteMany();
+  await prisma.act.deleteMany();
+  await prisma.animalMetting.deleteMany();
+  await prisma.internalMettingParticipant.deleteMany();
+  await prisma.internalMetting.deleteMany();
+  await prisma.availability.deleteMany();
+  await prisma.mettingBase.deleteMany();
+  await prisma.ownedPet.deleteMany();
+  await prisma.veterinarianClinic.deleteMany();
+  await prisma.speciality.deleteMany();
+  await prisma.vaccine.deleteMany();
+  await prisma.race.deleteMany();
+  await prisma.pet.deleteMany();
+  await prisma.directorClinicProfile.deleteMany();
+  await prisma.referentClinicProfile.deleteMany();
+  await prisma.secretaryProfile.deleteMany();
+  await prisma.veterinarianProfile.deleteMany();
+  await prisma.clientProfile.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.clinic.deleteMany();
+  await prisma.user.deleteMany();
+}

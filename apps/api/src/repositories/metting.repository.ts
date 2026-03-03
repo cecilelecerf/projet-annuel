@@ -27,7 +27,7 @@ export class MettingRepository {
         },
         veterinarianClinic: {
           include: {
-            veterinarianClinicAvailability: {
+            availabilities: {
               where: { base: periodFilter(start, end) },
               include: { base: baseWithExceptions },
             },

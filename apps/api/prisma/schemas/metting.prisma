@@ -39,14 +39,12 @@ model MettingBase {
 
   kind MettingKind
 
-  availabilty                      Availability?
-  internalMetting                  InternalMetting?
-  animalMetting                    AnimalMetting?
- 
+  availabilty     Availability?
+  internalMetting InternalMetting?
+  animalMetting   AnimalMetting?
+
   @@map("metting_bases")
 }
-
- 
 
 enum AvailabilityContextType {
   USER
@@ -122,6 +120,8 @@ model AnimalMetting {
 
   ownedPetVaccines         OwnedPetVaccine[]
   ownedPetHealthConditions OwnedPetHealthCondition[]
+  animalMettingActs        AnimalMettingAct[]
+  prescriptions            Prescription[]
 
   @@map("animal_mettings")
 }

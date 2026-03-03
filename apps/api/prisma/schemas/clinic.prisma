@@ -18,6 +18,7 @@ model Clinic {
   directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]
   internalMettings       InternalMetting[]
+  clinicActs             ClinicAct[]
 
   @@map("clinics")
 }
@@ -46,7 +47,7 @@ model VeterinarianClinic {
   clinicId       String
   clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
-   availabilities                 Availability[]
+  availabilities Availability[]
 
   @@map("veterinarian_clinics")
 }

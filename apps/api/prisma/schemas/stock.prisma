@@ -67,11 +67,12 @@ model ClinicProduct {
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
 
-  productId       String
-  product         Product        @relation(fields: [productId], references: [id])
-  orderItems      OrderItem[]
-  clientProfile   ClientProfile? @relation(fields: [clientProfileId], references: [id])
-  clientProfileId String?
+  productId         String
+  product           Product            @relation(fields: [productId], references: [id])
+  orderItems        OrderItem[]
+  clientProfile     ClientProfile?     @relation(fields: [clientProfileId], references: [id])
+  clientProfileId   String?
+  prescriptionItems PrescriptionItem[]
 
   @@map("clinic_products")
 }

@@ -1,28 +1,33 @@
- enum ActType {
+enum ActType {
   VACCINATION
   SURGERY
   HOSPITALIZATION
-  IMAGING          // radio, écho, scanner
-  ANALYSIS         // prise de sang, urine, etc.
-  NURSING          // soins infirmiers
+  IMAGING // radio, écho, scanner
+  ANALYSIS // prise de sang, urine, etc.
+  NURSING // soins infirmiers
   CONSULTATION
 }
 
 model Act {
-  id          String  @id @default(uuid())
-  name        String
+
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+    name        String
   description String?
   type        ActType
   basePrice   Decimal @db.Decimal(8, 2)
 
-  clinicActs  ClinicAct[]
+  clinicActs ClinicAct[]
 
   @@map("acts")
 }
 
- model ClinicAct {
-  id      String  @id @default(uuid())
-  price   Decimal @db.Decimal(8, 2)
+model ClinicAct {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  price Decimal @db.Decimal(8, 2)
 
   actId    String
   act      Act    @relation(fields: [actId], references: [id])
@@ -37,11 +42,12 @@ model Act {
 
 // ── Actes réalisés durant un RDV ─────────────────────────────────────────────
 model AnimalMettingAct {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  performedAt DateTime
-  notes       String?
-  priceApplied Decimal @db.Decimal(8, 2) // prix au moment de l'acte
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  performedAt  DateTime
+  notes        String?
+  priceApplied Decimal  @db.Decimal(8, 2) // prix au moment de l'acte
 
   animalMettingId String
   animalMetting   AnimalMetting @relation(fields: [animalMettingId], references: [id])
@@ -55,7 +61,7 @@ model AnimalMettingAct {
   imaging         Imaging?
   analysis        Analysis?
 
-  performedBy     AnimalMettingActPerformer[]
+  performedBy AnimalMettingActPerformer[]
 
   @@map("animal_metting_acts")
 }
@@ -85,9 +91,9 @@ model Surgery {
 
   act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  anesthesiaType  AnesthesiaType
-  duration        Int?            // en minutes
-  complications   String?
+  anesthesiaType     AnesthesiaType
+  duration           Int? // en minutes
+  complications      String?
   postOpInstructions String?
 
   @@map("surgeries")
@@ -99,10 +105,10 @@ model Hospitalization {
 
   act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  admittedAt    DateTime
-  dischargedAt  DateTime?
-  boxNumber     String?
-  dailyReports  HospitalizationReport[]
+  admittedAt   DateTime
+  dischargedAt DateTime?
+  boxNumber    String?
+  dailyReports HospitalizationReport[]
 
   @@map("hospitalizations")
 }
@@ -110,9 +116,9 @@ model Hospitalization {
 model HospitalizationReport {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
-  reportedAt DateTime
-  notes     String
-  weight    Decimal? @db.Decimal(5, 2)
+  updatedAt DateTime @default(now()) @updatedAt
+  notes       String
+  weight      Decimal? @db.Decimal(5, 2)
   temperature Decimal? @db.Decimal(4, 2)
 
   hospitalizationId String
@@ -137,10 +143,10 @@ model Imaging {
 
   act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  imagingType  ImagingType
-  bodyPart     String?
-  findings     String?
-  fileUrl      String?     // PDF ou image
+  imagingType ImagingType
+  bodyPart    String?
+  findings    String?
+  fileUrl     String? // PDF ou image
 
   @@map("imagings")
 }
@@ -156,8 +162,8 @@ enum AnalysisType {
 }
 
 enum AnalysisStatus {
-  PENDING      // envoyé au labo
-  RECEIVED     // résultats reçus
+  PENDING // envoyé au labo
+  RECEIVED // résultats reçus
 }
 
 model Analysis {
@@ -167,11 +173,11 @@ model Analysis {
 
   analysisType   AnalysisType
   status         AnalysisStatus @default(PENDING)
-  laboratory     String?        // labo externe si applicable
+  laboratory     String? // labo externe si applicable
   sentAt         DateTime?
   receivedAt     DateTime?
-  fileUrl        String?        // PDF des résultats
-  interpretation String?        // interprétation du vétérinaire
+  fileUrl        String? // PDF des résultats
+  interpretation String? // interprétation du vétérinaire
 
   @@map("analyses")
 }
@@ -205,13 +211,15 @@ model Prescription {
 }
 
 model PrescriptionItem {
-  id String @id @default(uuid())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   // Posologie
-  dosage        String   // "1 comprimé"
-  frequency     String   // "2 fois par jour"
-  duration      Int?     // en jours
-  instructions  String?  // "à donner avec la nourriture"
+  dosage       String // "1 comprimé"
+  frequency    String // "2 fois par jour"
+  duration     Int? // en jours
+  instructions String? // "à donner avec la nourriture"
 
   prescriptionId String
   prescription   Prescription @relation(fields: [prescriptionId], references: [id])

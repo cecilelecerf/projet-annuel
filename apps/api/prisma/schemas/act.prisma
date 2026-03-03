@@ -1,0 +1,224 @@
+ enum ActType {
+  VACCINATION
+  SURGERY
+  HOSPITALIZATION
+  IMAGING          // radio, écho, scanner
+  ANALYSIS         // prise de sang, urine, etc.
+  NURSING          // soins infirmiers
+  CONSULTATION
+}
+
+model Act {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  type        ActType
+  basePrice   Decimal @db.Decimal(8, 2)
+
+  clinicActs  ClinicAct[]
+
+  @@map("acts")
+}
+
+ model ClinicAct {
+  id      String  @id @default(uuid())
+  price   Decimal @db.Decimal(8, 2)
+
+  actId    String
+  act      Act    @relation(fields: [actId], references: [id])
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+
+  animalMettingActs AnimalMettingAct[]
+
+  @@unique([actId, clinicId])
+  @@map("clinic_acts")
+}
+
+// ── Actes réalisés durant un RDV ─────────────────────────────────────────────
+model AnimalMettingAct {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  performedAt DateTime
+  notes       String?
+  priceApplied Decimal @db.Decimal(8, 2) // prix au moment de l'acte
+
+  animalMettingId String
+  animalMetting   AnimalMetting @relation(fields: [animalMettingId], references: [id])
+
+  clinicActId String
+  clinicAct   ClinicAct @relation(fields: [clinicActId], references: [id])
+
+  // Selon le type d'acte
+  surgery         Surgery?
+  hospitalization Hospitalization?
+  imaging         Imaging?
+  analysis        Analysis?
+
+  performedBy     AnimalMettingActPerformer[]
+
+  @@map("animal_metting_acts")
+}
+
+// Qui a réalisé l'acte (peut être plusieurs)
+model AnimalMettingActPerformer {
+  id String @id @default(uuid())
+
+  animalMettingActId String
+  animalMettingAct   AnimalMettingAct @relation(fields: [animalMettingActId], references: [id])
+
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
+
+  @@map("animal_metting_act_performers")
+}
+
+// ── Chirurgie ─────────────────────────────────────────────────────────────────
+enum AnesthesiaType {
+  LOCAL
+  GENERAL
+  SEDATION
+}
+
+model Surgery {
+  id String @id
+
+  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  anesthesiaType  AnesthesiaType
+  duration        Int?            // en minutes
+  complications   String?
+  postOpInstructions String?
+
+  @@map("surgeries")
+}
+
+// ── Hospitalisation ───────────────────────────────────────────────────────────
+model Hospitalization {
+  id String @id
+
+  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  admittedAt    DateTime
+  dischargedAt  DateTime?
+  boxNumber     String?
+  dailyReports  HospitalizationReport[]
+
+  @@map("hospitalizations")
+}
+
+model HospitalizationReport {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  reportedAt DateTime
+  notes     String
+  weight    Decimal? @db.Decimal(5, 2)
+  temperature Decimal? @db.Decimal(4, 2)
+
+  hospitalizationId String
+  hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
+
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
+
+  @@map("hospitalization_reports")
+}
+
+// ── Imagerie ──────────────────────────────────────────────────────────────────
+enum ImagingType {
+  XRAY
+  ULTRASOUND
+  SCANNER
+  MRI
+}
+
+model Imaging {
+  id String @id
+
+  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  imagingType  ImagingType
+  bodyPart     String?
+  findings     String?
+  fileUrl      String?     // PDF ou image
+
+  @@map("imagings")
+}
+
+// ── Analyse ───────────────────────────────────────────────────────────────────
+enum AnalysisType {
+  BLOOD
+  URINE
+  STOOL
+  BIOPSY
+  CYTOLOGY
+  OTHER
+}
+
+enum AnalysisStatus {
+  PENDING      // envoyé au labo
+  RECEIVED     // résultats reçus
+}
+
+model Analysis {
+  id String @id
+
+  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  analysisType   AnalysisType
+  status         AnalysisStatus @default(PENDING)
+  laboratory     String?        // labo externe si applicable
+  sentAt         DateTime?
+  receivedAt     DateTime?
+  fileUrl        String?        // PDF des résultats
+  interpretation String?        // interprétation du vétérinaire
+
+  @@map("analyses")
+}
+
+// ── Prescription / Traitement ─────────────────────────────────────────────────
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Prescription {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  startDate DateTime
+  endDate   DateTime?
+  status    PrescriptionStatus @default(ACTIVE)
+  notes     String?
+
+  animalMettingId String
+  animalMetting   AnimalMetting @relation(fields: [animalMettingId], references: [id])
+
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
+
+  items PrescriptionItem[]
+
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id String @id @default(uuid())
+
+  // Posologie
+  dosage        String   // "1 comprimé"
+  frequency     String   // "2 fois par jour"
+  duration      Int?     // en jours
+  instructions  String?  // "à donner avec la nourriture"
+
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+
+  // Vient du stock clinique
+  clinicProductId String
+  clinicProduct   ClinicProduct @relation(fields: [clinicProductId], references: [id])
+
+  @@map("prescription_items")
+}

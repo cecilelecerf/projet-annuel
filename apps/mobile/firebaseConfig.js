@@ -2,13 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA96OS-Cb9_-HynPFCFx1CXAHVFvv1sWbY",
-  authDomain: "veto-app-f04c7.firebaseapp.com",
-  projectId: "veto-app-f04c7",
-  storageBucket: "veto-app-f04c7.firebasestorage.app",
-  messagingSenderId: "819326713548",
-  appId: "1:819326713548:web:5eebd303ed6d5baa76cc69",
-  measurementId: "G-LYC1RGSVJ3",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);

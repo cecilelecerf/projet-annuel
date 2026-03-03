@@ -9,14 +9,13 @@ enum ActType {
 }
 
 model Act {
-
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-    name        String
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  name        String
   description String?
   type        ActType
-  basePrice   Decimal @db.Decimal(8, 2)
+  basePrice   Decimal  @db.Decimal(8, 2)
 
   clinicActs ClinicAct[]
 
@@ -27,7 +26,7 @@ model ClinicAct {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  price Decimal @db.Decimal(8, 2)
+  price     Decimal  @db.Decimal(8, 2)
 
   actId    String
   act      Act    @relation(fields: [actId], references: [id])
@@ -42,9 +41,9 @@ model ClinicAct {
 
 // ── Actes réalisés durant un RDV ─────────────────────────────────────────────
 model AnimalMettingAct {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
   performedAt  DateTime
   notes        String?
   priceApplied Decimal  @db.Decimal(8, 2) // prix au moment de l'acte
@@ -114,9 +113,9 @@ model Hospitalization {
 }
 
 model HospitalizationReport {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
   notes       String
   weight      Decimal? @db.Decimal(5, 2)
   temperature Decimal? @db.Decimal(4, 2)

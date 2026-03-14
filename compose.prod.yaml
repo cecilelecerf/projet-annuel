@@ -31,7 +31,6 @@ services:
   api:
     image: ${DOCKER_HUB_USERNAME}/pa-api:latest
     environment:
-      DATABASE_URL: postgresql://$(cat /run/secrets/db_user):$(cat /run/secrets/db_password)@postgres:5432/$(cat /run/secrets/db_name)
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGIN: http://localhost

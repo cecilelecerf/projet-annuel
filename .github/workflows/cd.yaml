@@ -39,25 +39,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build & Push Web
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: true
-          tags: ${{ env.IMAGE_WEB }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: Build & Push Web
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: apps/web/Dockerfile
+      #     push: true
+      #     tags: ${{ env.IMAGE_WEB }}:latest
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      - name: Build & Push Nginx
-        uses: docker/build-push-action@v5
-        with:
-          context: ./nginx
-          file: ./nginx/Dockerfile
-          push: true
-          tags: ${{ env.IMAGE_NGINX }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: Build & Push Nginx
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./nginx
+      #     file: ./nginx/Dockerfile
+      #     push: true
+      #     tags: ${{ env.IMAGE_NGINX }}:latest
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to VPS

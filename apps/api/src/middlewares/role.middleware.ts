@@ -1,4 +1,4 @@
-import { UserRole } from "@schemas";
+import { UserRole } from "@armali/schemas";
 import type { Request, Response, NextFunction } from "express";
 
 export const roleMiddleware = (roles: UserRole[]) => {

@@ -1,26 +1,16 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2023",
-    "module": "commonjs",
-    "moduleResolution": "Node",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "composite": true,
 
-    /* Output */
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": "dist",
+    "rootDir": "src",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-
-    /* Strict */
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-
-    /* Interop */
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "sourceMap": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

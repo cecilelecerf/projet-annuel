@@ -1,5 +1,5 @@
 import { hash, compare } from "bcryptjs";
-import { baseUserSchema, Login, Register } from "@schemas";
+import { baseUserSchema, Login, Register } from "@armali/schemas";
 import {
   generateAccessToken,
   generateRefreshToken,

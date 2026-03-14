@@ -1,8 +1,9 @@
 {
-  "name": "schemas",
+  "name": "@armali/schemas",
   "version": "1.0.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -10,7 +11,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b",
     "dev": "tsc --watch"
   },
   "dependencies": {

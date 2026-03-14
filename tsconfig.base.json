@@ -14,9 +14,7 @@
     "paths": {
       "@api/*": ["./apps/api/src/*"],
       "@web/*": ["./apps/web/src/*"],
-      "@mobile/*": ["./apps/mobile/src/*"],
-      "@schemas": ["./packages/schemas/src/index.ts"],
-      "@schemas/*": ["./packages/schemas/src/*"]
+      "@mobile/*": ["./apps/mobile/src/*"]
     }
   }
 }

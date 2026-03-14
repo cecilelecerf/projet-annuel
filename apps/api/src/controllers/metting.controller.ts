@@ -1,14 +1,11 @@
 import { FlatMetting, MettingService } from "@api/services/metting.service";
-import { calendarSchema } from "@schemas";
+import { calendarSchema } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { z } from "zod";
 import { NotFoundError, BadRequestError } from "@api/errors";
 import { AuthenticatedRequest } from "@api/middlewares/auth.middleware";
 import { prisma } from "@api/lib/prisma";
-import {
-  User,
-  VeterinarianProfile,
-} from "apps/api/prisma/generated/prisma/client";
+import { VeterinarianProfile } from "apps/api/prisma/generated/prisma/client";
 import { UserService } from "@api/services/user.service";
 
 const mettingService = new MettingService();

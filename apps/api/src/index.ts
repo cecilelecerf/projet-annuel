@@ -14,7 +14,7 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/test", async (req, res) => {
+app.get("/api/test", async (req, res) => {
   const users = await prisma.user.findMany({
     include: {
       clientProfile: true,

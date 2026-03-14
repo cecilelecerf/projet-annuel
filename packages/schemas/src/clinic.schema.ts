@@ -46,39 +46,6 @@ export const availabilityTypeSchema = z.enum([
   "exception",
 ]);
 
-export const veterinarianClinicAvailabilitySchema = z.object({
-  id: availabilityIdSchema,
-  vetoClinic: veterinarianClinicIdSchema,
-  type: availabilityTypeSchema,
-  dayOfWeek: z.number().int().min(0).max(6).nullable().optional(), // 0=lundi … 6=dimanche
-  specificDate: z.string().date().nullable().optional(),
-  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/), // HH:mm ou HH:mm:ss
-  endTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
-  isActive: z.boolean(),
-});
-// .refine(
-//   (data) => {
-//     if (data.type === 'recurring' && data.dayOfWeek === undefined) return false
-//     if (data.type === 'specified' && !data.specificDate) return false
-//     return true
-//   },
-//   { message: "dayOfWeek requis pour 'recurring', specificDate requis pour 'specified'" }
-// )
-
-export const createAvailabilitySchema =
-  veterinarianClinicAvailabilitySchema.omit({ id: true });
-export const updateAvailabilitySchema = createAvailabilitySchema.partial();
-
-export type VeterinarianClinicAvailability = z.infer<
-  typeof veterinarianClinicAvailabilitySchema
->;
-export type CreateVeterinarianClinicAvailability = z.infer<
-  typeof createAvailabilitySchema
->;
-export type UpdateVeterinarianClinicAvailability = z.infer<
-  typeof updateAvailabilitySchema
->;
-
 // ── Speciality ────────────────────────────────────────────────────────────────
 export const specialitySchema = z.object({
   id: specialityIdSchema,

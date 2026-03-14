@@ -3,7 +3,7 @@ import { AuthController } from "@api/controllers/auth.controller";
 import { Router } from "express";
 import type { Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
-import { loginSchema, registerSchema } from "@schemas";
+import { loginSchema, registerSchema } from "@armali/schemas";
 
 const authRouter: RouterType = Router();
 const controller = new AuthController();

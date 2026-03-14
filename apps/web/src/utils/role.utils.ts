@@ -1,4 +1,4 @@
-import type { UserRole } from '@schemas'
+import type { UserRole } from '@armali/schemas'
 import { match } from 'ts-pattern'
 
 export const getStringRole = (role: UserRole) =>

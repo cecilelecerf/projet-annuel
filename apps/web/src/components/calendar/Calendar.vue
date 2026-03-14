@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { ref } from 'vue'
 import { api } from '@/lib/api'
-import { calendarSchema, type Calendar, type UserId } from '@schemas'
+import { calendarSchema, type Calendar, type UserId } from '@armali/schemas'
 import dayjs from 'dayjs'
 import { availabilitiesToBusinessHours, toCalendarEvent } from './utils'
 const { userId } = defineProps<{

@@ -11,8 +11,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
-    "dev": "tsc --watch"
+    "build": "tsup",
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "tsup": "^8.5.1",

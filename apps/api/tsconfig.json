@@ -9,7 +9,12 @@
     "outDir": "dist",
     "composite": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "paths": {
+      "@api/*": ["./src/*"],
+      "@schemas": ["../../packages/schemas/dist/index.js"],
+      "@schemas/*": ["../../packages/schemas/dist/*"]
+    }
   },
   "include": ["src/**/*", "prisma/**/*", "prisma.config.ts"],
   "references": [{ "path": "../../packages/schemas" }]

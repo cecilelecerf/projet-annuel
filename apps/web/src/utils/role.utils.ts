@@ -8,4 +8,5 @@ export const getStringRole = (role: UserRole) =>
     .with('SECRETARY', () => 'secrétaire')
     .with('DIRECTOR', () => 'directeur')
     .with('REFERANT', () => 'référant')
+    .with('ADMIN', () => 'administrateur')
     .exhaustive()

@@ -11,7 +11,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U $(cat /run/secrets/db_user) -d $(cat /run/secrets/db_name)",
+          "pg_isready -U $$(cat /run/secrets/db_user) -d $$(cat /run/secrets/db_name)",
         ]
       interval: 10s
       timeout: 5s

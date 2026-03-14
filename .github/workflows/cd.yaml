@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - ci-cd
 
 env:
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}

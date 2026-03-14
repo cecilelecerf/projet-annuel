@@ -13,7 +13,6 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use(errorHandler);
 
 app.get("/test", async (req, res) => {
   const users = await prisma.user.findMany({
@@ -28,6 +27,8 @@ app.get("/test", async (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
+app.use(errorHandler);
+
 // app.post(`/signup`, async (req, res) => {
 //   const { name, email, posts } = req.body;
 

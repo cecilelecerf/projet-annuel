@@ -31,6 +31,9 @@ jobs:
       - name: Build schemas
         run: pnpm --filter schemas build
 
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate
+
       - name: Build API
         run: pnpm --filter api build
 

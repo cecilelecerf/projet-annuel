@@ -1,5 +1,5 @@
 model Clinic {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   name        String
@@ -17,12 +17,14 @@ model Clinic {
   secretaryProfile       SecretaryProfile[]
   directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]
+  internalMettings       InternalMetting[]
+  clinicActs             ClinicAct[]
 
   @@map("clinics")
 }
 
 model Speciality {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   name        String   @unique
@@ -30,13 +32,13 @@ model Speciality {
 
   veterinarianSpeciality VeterinarianProfile[]
   clinicSpeciality       Clinic[]
-  meetings               Meeting[]
+  meetings               AnimalMetting[]
 
   @@map("specialities")
 }
 
 model VeterinarianClinic {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -45,61 +47,7 @@ model VeterinarianClinic {
   clinicId       String
   clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
-  veterinarianClinicAverage VeterinarianClinicAverage[]
+  availabilities Availability[]
 
   @@map("veterinarian_clinics")
-}
-
-enum VeterinarianClinicType {
-  RECURRING
-  SPECIFIED
-  EXECPTION
-}
-
-model VeterinarianClinicAverage {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  type         VeterinarianClinicType
-  dayOfWeek    Int?                   @db.SmallInt
-  specificDate DateTime?              @db.Date
-  startTime    DateTime               @db.Time(0)
-  endTime      DateTime               @db.Time(0)
-
-  veterinarianClinicId String
-  vererinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
-
-  @@map("veterinarian_clinic_availabilities")
-}
-
-enum MeetingStatus {
-  PENDING
-  DONE
-  CONFIRMED
-  CANCELLED
-}
-
-model Meeting {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  date        DateTime
-  duration    Decimal
-  description String?  @db.Text
-  petWeight   Int?
-  petSize     Int?
-  report      String?  @db.Text
-
-  specialityId             String
-  speciality               Speciality                @relation(fields: [specialityId], references: [id])
-  ownedPetId               String
-  ownedPet                 OwnedPet                  @relation(fields: [ownedPetId], references: [id])
-  veterinarianId           String
-  veterinarian             VeterinarianProfile       @relation(fields: [veterinarianId], references: [id])
-  ownedPetVaccine          OwnedPetVaccine[]
-  ownedPetConditionHealths OwnedPetHealthCondition[]
-
-  @@map("meetings")
 }

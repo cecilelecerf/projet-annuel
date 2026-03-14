@@ -1,5 +1,5 @@
 model OwnedPet {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   name        String
@@ -17,7 +17,7 @@ model OwnedPet {
   race   Race   @relation(fields: [raceId], references: [id])
 
   ownedPetVaccine          OwnedPetVaccine[]
-  meeting                  Meeting[]
+  animalMeeting            AnimalMetting[]
   foodPets                 FoodPet[]
   ownedPetConditionHealths OwnedPetHealthCondition[]
 
@@ -25,7 +25,7 @@ model OwnedPet {
 }
 
 model Pet {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   name      String
@@ -41,7 +41,7 @@ model Pet {
 }
 
 model Race {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   name      String
@@ -55,7 +55,7 @@ model Race {
 }
 
 model Vaccine {
-  id                 String   @id @default(cuid())
+  id                 String   @id @default(uuid())
   createdAt          DateTime @default(now())
   updatedAt          DateTime @default(now()) @updatedAt
   name               String
@@ -73,7 +73,7 @@ model Vaccine {
 }
 
 model OwnedPetVaccine {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -83,8 +83,8 @@ model OwnedPetVaccine {
   vaccineId String
   vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
 
-  meetingId String?
-  meeting   Meeting? @relation(fields: [meetingId], references: [id])
+  meetingId     String?
+  animalMeeting AnimalMetting? @relation(fields: [meetingId], references: [id])
 
   @@map("owned_pet_vaccines")
 }

@@ -2,6 +2,9 @@ import express from "express";
 import { prisma } from "./lib/prisma";
 import authRouter from "./routes/auth.route";
 import cors from "cors";
+import meetingRouter from "./routes/metting.route";
+import { errorHandler } from "./middlewares/error.middleware";
+import userRouter from "./routes/user.route";
 const app = express();
 app.use(
   cors({
@@ -10,6 +13,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(errorHandler);
 
 app.get("/test", async (req, res) => {
   const users = await prisma.user.findMany({
@@ -21,7 +25,9 @@ app.get("/test", async (req, res) => {
   });
   res.json(users);
 });
-app.use("/auth", authRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/meetings", meetingRouter);
+app.use("/api/users", userRouter);
 // app.post(`/signup`, async (req, res) => {
 //   const { name, email, posts } = req.body;
 

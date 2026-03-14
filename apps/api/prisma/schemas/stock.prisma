@@ -1,5 +1,5 @@
 model Product {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
   name        String
@@ -23,7 +23,7 @@ enum FoodType {
 }
 
 model Food {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -44,7 +44,7 @@ model Food {
 }
 
 model Brand {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
   name      String
@@ -56,7 +56,7 @@ model Brand {
 }
 
 model ClinicProduct {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -67,17 +67,18 @@ model ClinicProduct {
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
 
-  productId       String
-  product         Product        @relation(fields: [productId], references: [id])
-  orderItems      OrderItem[]
-  clientProfile   ClientProfile? @relation(fields: [clientProfileId], references: [id])
-  clientProfileId String?
+  productId         String
+  product           Product            @relation(fields: [productId], references: [id])
+  orderItems        OrderItem[]
+  clientProfile     ClientProfile?     @relation(fields: [clientProfileId], references: [id])
+  clientProfileId   String?
+  prescriptionItems PrescriptionItem[]
 
   @@map("clinic_products")
 }
 
 model FoodPet {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -105,7 +106,7 @@ enum OrderStatus {
 }
 
 model Order {
-  id        String      @id @default(cuid())
+  id        String      @id @default(uuid())
   createdAt DateTime    @default(now())
   updatedAt DateTime    @default(now()) @updatedAt
   status    OrderStatus @default(PENDING)
@@ -122,7 +123,7 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

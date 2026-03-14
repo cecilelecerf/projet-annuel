@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: apps/api/Dockerfile
+          file: apps/api/Dockerfile
           push: true
           tags: ${{ env.IMAGE_API }}:latest
           cache-from: type=gha
@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: apps/web/Dockerfile
+          file: apps/web/Dockerfile
           push: true
           tags: ${{ env.IMAGE_WEB }}:latest
           cache-from: type=gha
@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./nginx
-          dockerfile: ./nginx/Dockerfile
+          file: ./nginx/Dockerfile
           push: true
           tags: ${{ env.IMAGE_NGINX }}:latest
           cache-from: type=gha

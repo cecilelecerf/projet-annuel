@@ -1,78 +1,77 @@
 services:
   postgres:
     image: postgres:16-alpine
+    restart: always
+    env_file:
+      - .env.prod
     environment:
-      POSTGRES_USER_FILE: /run/secrets/db_user
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB_FILE: /run/secrets/db_name
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    secrets:
-      - db_user
-      - db_password
-      - db_name
+    deploy:
+      placement:
+        constraints:
+          - node.labels.type == database
     networks:
       - backend
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      # placement:
-      #   constraints:
-      #     - node.role == manager
 
   api:
-    image: ${DOCKER_HUB_USERNAME}/pa-api:latest
+    # A remplacer par l'image depuis la registry
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: always
+    env_file:
+      - .env.prod
     environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGIN: http://localhost
-    secrets:
-      - db_user
-      - db_password
-      - db_name
-      - jwt_access_secret
-      - jwt_refresh_secret
+    deploy:
+      replicas: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - backend
       - frontend
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
 
   web:
-    image: ${DOCKER_HUB_USERNAME}/pa-web:latest
+    # A remplacer par l'image depuis la registry
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: always
+    deploy:
+      replicas: 3
     networks:
       - frontend
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
 
   nginx:
-    image: ${DOCKER_HUB_USERNAME}/pa-nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: always
     ports:
       - "80:80"
+      - "443:443"
+    deploy:
+      replicas: 3
+    depends_on:
+      - api
+      - web
     networks:
       - frontend
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
 
 volumes:
   postgres_data:
@@ -82,15 +81,3 @@ networks:
     driver: overlay
   frontend:
     driver: overlay
-
-secrets:
-  db_user:
-    external: true
-  db_password:
-    external: true
-  db_name:
-    external: true
-  jwt_access_secret:
-    external: true
-  jwt_refresh_secret:
-    external: true

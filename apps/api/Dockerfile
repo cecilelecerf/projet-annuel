@@ -13,9 +13,6 @@ COPY packages/schemas ./packages/schemas
 COPY apps/api ./apps/api
 COPY tsconfig.base.json ./
 
-WORKDIR /app/packages/schemas
-RUN pnpm build
-
 WORKDIR /app/apps/api
 RUN pnpm prisma generate 
 RUN pnpm build

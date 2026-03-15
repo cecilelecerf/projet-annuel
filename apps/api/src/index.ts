@@ -5,10 +5,20 @@ import cors from "cors";
 import meetingRouter from "./routes/metting.route";
 import { errorHandler } from "./middlewares/error.middleware";
 import userRouter from "./routes/user.route";
+import { resolve } from "path";
+import {config}  from 'dotenv';
+
+const env = process.env.ENV;
+config({path: resolve(process.cwd(), `../../.env.${env}`),});
+
+const frontendUrl = process.env.VITE_FRONTEND_URL;
+const backendUrl = process.env.VITE_BACKEND_URL || "";
+const backendPort = backendUrl.split(":").pop();
+
 const app = express();
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: frontendUrl,
     credentials: true,
   }),
 );
@@ -28,39 +38,7 @@ app.get("/test", async (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
-// app.post(`/signup`, async (req, res) => {
-//   const { name, email, posts } = req.body;
 
-//   const postData = posts?.map((post: Prisma.PostCreateInput) => {
-//     return { title: post?.title, content: post?.content };
-//   });
-
-//   const result = await prisma.user.create({
-//     data: {
-//       name,
-//       email,
-//       posts: {
-//         create: postData,
-//       },
-//     },
-//   });
-//   res.json(result);
-// });
-
-// app.post(`/post`, async (req, res) => {
-//   const { title, content, authorEmail } = req.body;
-//   const result = await prisma.post.create({
-//     data: {
-//       title,
-//       content,
-//       author: { connect: { email: authorEmail } },
-//     },
-//   });
-//   res.json(result);
-// });
-
-const server = app.listen(3000, () =>
-  console.log(`
-🚀 Server ready at: http://localhost:3000
-⭐️ See sample requests: https://github.com/prisma/prisma-examples/blob/latest/orm/express/README.md#using-the-rest-api`),
-);
+const server = app.listen(backendPort, () => {
+  console.log(`Server running : ${backendUrl}`);
+});

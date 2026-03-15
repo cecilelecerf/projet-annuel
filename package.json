@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "dev:setup": "docker compose --env-file .env.development up -d --wait && pnpm install && set ENV=development&& pnpm --filter api exec prisma generate && set ENV=development&& pnpm --filter api run migrate && set ENV=development&& pnpm --filter api run seed:if-needed",
     "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --filter api dev",
+    "dev:api": "set ENV=development&& pnpm --filter api dev",
     "db:view": "pnpm --filter api studio",
     "db:seed": "pnpm --filter api seed",
-    "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view"
+    "dev": "pnpm run dev:setup && pnpm dlx concurrently -k -n WEB,API \"pnpm dev:web\" \"pnpm dev:api\""
   },
   "workspaces": [
     "apps/*",

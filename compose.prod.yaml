@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     restart: always
     env_file:
-      - .env.prod
+      - .env.production
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -29,7 +29,7 @@ services:
       dockerfile: apps/api/Dockerfile
     restart: always
     env_file:
-      - .env.prod
+      - .env.production
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}

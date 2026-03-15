@@ -3,7 +3,7 @@ set -e
 
 echo "Checking DATABASE_URL..."
 if [ -z "$DATABASE_URL" ]; then
-  echo "❌ DATABASE_URL is not set"
+  echo "DATABASE_URL is not set"
   exit 1
 fi
 echo "$DATABASE_URL"

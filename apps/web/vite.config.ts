@@ -1,6 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
@@ -9,7 +9,10 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { resolve } from 'node:path'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, resolve(__dirname, '../../'), '')
+  
+  return {
   plugins: [
     vue(),
     vueDevTools(),
@@ -34,4 +37,8 @@ export default defineConfig({
       '@schemas': resolve(__dirname, '../../packages/schemas/src/index.ts'),
     },
   },
+  
+  envDir: resolve(__dirname, '../../'),
+  envPrefix: 'VITE_',
+}
 })

@@ -45,7 +45,7 @@ pnpm install
 
 ### Développement
 
-Crée `apps/api/.env.dev` (copie depuis `apps/api/.env.dev.sample`) :
+Crée `apps/api/.env.development` (copie depuis `apps/api/.env.development.sample`) :
 
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
@@ -55,7 +55,7 @@ JWT_REFRESH_SECRET="changeme"
 
 ### Production
 
-Crée `.env.prod` à la racine (copie depuis `.env.prod.sample`) :
+Crée `.env.production` à la racine (copie depuis `.env.production.sample`) :
 
 ```env
 DB_USER=user
@@ -133,7 +133,7 @@ apps/api/
 │   ├── migrations/           # Migrations générées
 │   └── seed.ts               # Données de test
 ├── prisma.config.ts          # Configuration Prisma
-├── .env.dev                  # Variables d'environnement (dev)
+├── .env.development                  # Variables d'environnement (dev)
 └── package.json
 ```
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MenuItem } from '@/components/nav/Sidebar.vue'
+import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
 import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [

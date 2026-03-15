@@ -16,6 +16,9 @@ FROM deps AS build
 COPY packages/schemas ./packages/schemas
 COPY apps/web ./apps/web
 
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter schemas build
+
 WORKDIR /app/apps/web
 RUN pnpm build
 

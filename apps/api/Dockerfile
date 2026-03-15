@@ -13,6 +13,9 @@ COPY packages/schemas ./packages/schemas
 COPY apps/api ./apps/api
 COPY tsconfig.base.json ./
 
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter schemas build
+
 WORKDIR /app/apps/api
 RUN pnpm prisma generate 
 RUN pnpm build

@@ -19,13 +19,14 @@ import { seedActs } from "./acts";
 import { seedBankingInfo } from "./banking-info";
 import { seedMedicalVisits } from "./medical-visit";
 
-config({ path: resolve(process.cwd(), ".env") });
+const env = process.env.ENV;
+config({path: resolve(process.cwd(), `../../.env.${env}`)});
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 export const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log("Seeding database...");
 
   await cleanup(prisma);
 
@@ -58,8 +59,8 @@ async function main() {
   await seedOrders(prisma, { users, clinic1 });
   await seedMessaging(prisma, { users });
 
-  console.log("✅ Seed terminé avec succès !");
-  console.log("\n📋 Comptes créés :");
+  console.log("Seed terminé avec succès !");
+  console.log("\nComptes créés :");
   console.log("  Admin      : admin@gmail.com / Password123!");
   console.log("  Directeur  : directeur@gmail.com / Password123!");
   console.log("  Référant   : referent@gmail.com / Password123!");
@@ -73,7 +74,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error("❌ Erreur seed :", e);
+    console.error("Erreur seed :", e);
     process.exit(1);
   })
   .finally(async () => await prisma.$disconnect());

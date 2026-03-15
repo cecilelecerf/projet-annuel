@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
 import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
 

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { api } from '@/lib/api'
-import { veterinarianSchema } from '@schemas'
+import { veterinarianSchema } from '@armali/schemas'
 import { useRouter } from 'vue-router'
 import z from 'zod'
 const router = useRouter()

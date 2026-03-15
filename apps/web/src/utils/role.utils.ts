@@ -1,4 +1,4 @@
-import type { UserRole } from '@schemas'
+import type { UserRole } from '@armali/schemas'
 import { match } from 'ts-pattern'
 
 export const getStringRole = (role: UserRole) =>
@@ -8,4 +8,5 @@ export const getStringRole = (role: UserRole) =>
     .with('SECRETARY', () => 'secrétaire')
     .with('DIRECTOR', () => 'directeur')
     .with('REFERANT', () => 'référant')
+    .with('ADMIN', () => 'administrateur')
     .exhaustive()

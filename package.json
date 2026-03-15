@@ -8,7 +8,8 @@
     "dev:api": "set ENV=development&& pnpm --filter api dev",
     "db:view": "pnpm --filter api studio",
     "db:seed": "pnpm --filter api seed",
-    "dev": "pnpm run dev:setup && pnpm dlx concurrently -k -n WEB,API \"pnpm dev:web\" \"pnpm dev:api\""
+    "dev": "pnpm run dev:setup && pnpm dlx concurrently -k -n WEB,API \"pnpm dev:web\" \"pnpm dev:api\"",
+    "build": "pnpm --filter schemas build & pnpm --filter api build & pnpm --filter web build"
   },
   "workspaces": [
     "apps/*",

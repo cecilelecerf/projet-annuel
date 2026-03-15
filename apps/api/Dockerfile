@@ -13,8 +13,8 @@ COPY packages/schemas ./packages/schemas
 COPY apps/api ./apps/api
 COPY tsconfig.base.json ./
 
-RUN pnpm install --frozen-lockfile
-RUN pnpm --filter schemas build
+WORKDIR /app/packages/schemas
+RUN pnpm build
 
 WORKDIR /app/apps/api
 RUN pnpm prisma generate 
@@ -24,6 +24,7 @@ FROM node:22-alpine AS prod
 RUN npm install -g prisma@7.4.0
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
+
 
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages/schemas/package.json ./packages/schemas/

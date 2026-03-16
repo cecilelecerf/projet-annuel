@@ -2,7 +2,7 @@ import express from "express";
 import { prisma } from "./lib/prisma";
 import authRouter from "./routes/auth.route";
 import cors from "cors";
-import meetingRouter from "./routes/metting.route";
+import calendarRouter from "./routes/calendar.route";
 import { errorHandler } from "./middlewares/error.middleware";
 import userRouter from "./routes/user.route";
 const app = express();
@@ -25,7 +25,7 @@ app.get("/api/test", async (req, res) => {
   res.json(users);
 });
 app.use("/api/auth", authRouter);
-app.use("/api/meetings", meetingRouter);
+app.use("/api/calendar", calendarRouter);
 app.use("/api/users", userRouter);
 app.use(errorHandler);
 

@@ -1,4 +1,4 @@
-import { MettingRepository } from "@api/repositories/metting.repository";
+import { MettingRepository } from "@api/repositories/calendar.repository";
 import type {
   AnimalMetting,
   Availability,

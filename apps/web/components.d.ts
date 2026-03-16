@@ -12,10 +12,13 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Calendar: typeof import('./src/components/calendar/Calendar.vue')['default']
+    DateDrawer: typeof import('./src/components/calendar/DateDrawer.vue')['default']
     DevSection: typeof import('./src/components/landingPage/DevSection.vue')['default']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCol: typeof import('element-plus/es')['ElCol']
+    ElColumn: typeof import('element-plus/es')['ElColumn']
     ElDrawer: typeof import('element-plus/es')['ElDrawer']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
@@ -23,7 +26,9 @@ declare module 'vue' {
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElMenu: typeof import('element-plus/es')['ElMenu']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
+    ElRow: typeof import('element-plus/es')['ElRow']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
+    EventContainer: typeof import('./src/components/calendar/EventContainer.vue')['default']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
     ListUser: typeof import('./src/components/users/ListUser.vue')['default']
     Navbar: typeof import('./src/components/ui/nav/Navbar.vue')['default']

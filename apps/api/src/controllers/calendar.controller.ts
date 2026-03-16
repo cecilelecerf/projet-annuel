@@ -1,7 +1,10 @@
 import { FlatMetting, MettingService } from "@api/services/metting.service";
-import { calendarSchema } from "@armali/schemas";
+import {
+  calendarSchema,
+  getPeriodQuerySchema,
+  meetingSchema,
+} from "@armali/schemas";
 import type { NextFunction, Response } from "express";
-import { z } from "zod";
 import { NotFoundError, BadRequestError } from "@api/errors";
 import { AuthenticatedRequest } from "@api/middlewares/auth.middleware";
 import { prisma } from "@api/lib/prisma";
@@ -10,10 +13,6 @@ import { UserService } from "@api/services/user.service";
 
 const mettingService = new MettingService();
 const userService = new UserService();
-const querySchema = z.object({
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-});
 
 export class MettingController {
   async getMyCalendar(
@@ -22,7 +21,7 @@ export class MettingController {
     next: NextFunction,
   ) {
     try {
-      const result = querySchema.safeParse(req.query);
+      const result = getPeriodQuerySchema.safeParse(req.query);
       if (!result.success)
         throw new BadRequestError("startDate et endDate sont requis");
 
@@ -62,7 +61,7 @@ export class MettingController {
     next: NextFunction,
   ) {
     try {
-      const result = querySchema.safeParse(req.query);
+      const result = getPeriodQuerySchema.safeParse(req.query);
       if (!result.success)
         throw new BadRequestError("startDate et endDate sont requis");
 
@@ -107,6 +106,52 @@ export class MettingController {
       return res
         .status(200)
         .json(calendarSchema.parse({ meetings, availabilities }));
+    } catch (err) {
+      next(err);
+    }
+  }
+  async getVeterinarianMetting(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const result = getPeriodQuerySchema.safeParse(req.query);
+      if (!result.success)
+        throw new BadRequestError("La date est requise sont requis");
+
+      const requester = prisma.user.findUnique({
+        where: { id: req.user.id },
+        include: {
+          directorClinicProfile: true,
+          referentClinicProfile: true,
+          secretaryProfile: true,
+        },
+      });
+      const clinicId = await userService.getClinicId({
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      const { startDate, endDate } = result.data;
+      const { veterinarianId } = req.params as {
+        veterinarianId: VeterinarianProfile["id"];
+      };
+
+      const veterinarian = await prisma.veterinarianProfile.findUnique({
+        where: { id: veterinarianId },
+      });
+      if (!veterinarian) throw new NotFoundError("Veterinarian");
+      const handler = mettingService.getMettingsForVeterinarian(
+        veterinarian.id,
+        startDate,
+        endDate,
+      );
+      if (!handler) return res.status(200).json([]);
+
+      const meetings = await handler;
+      if (!meetings) throw new NotFoundError("Profile");
+      console.log(meetings);
+      return res.status(200).json(meetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }

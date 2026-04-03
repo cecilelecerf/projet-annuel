@@ -33,7 +33,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      CORS_ORIGIN: http://localhost
+      CORS_ORIGIN: http://armali.online
     secrets:
       - db_user
       - db_password

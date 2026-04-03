@@ -25,4 +25,4 @@ prisma migrate deploy --config=./dist/prisma.config.js
  
 
 echo "Starting application..."
-exec node /app/apps/api/dist/src/index.js
+exec node /app/apps/api/dist/index.js

@@ -2,26 +2,27 @@
   "name": "api",
   "version": "1.0.0",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "seed": "tsx prisma/seeds/index.ts",
-    "build": "tsc && tsc-alias",
+    "build": "tsup",
     "start": "node dist/index.js",
     "studio": "prisma studio",
     "migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@armali/schemas": "workspace:*",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
-    "schemas": "^1.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
     "express": "5.1.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.18.0",
-    "zod": "4.3.6",
-    "bcryptjs": "^3.0.3",
-    "prisma": "^7.4.0"
+    "prisma": "^7.4.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -31,6 +32,7 @@
     "@types/node": "22.18.12",
     "@types/pg": "^8.16.0",
     "tsc-alias": "^1.8.16",
+    "tsup": "^8.5.1",
     "tsx": "^4.20.6",
     "typescript": "5.8.2"
   }

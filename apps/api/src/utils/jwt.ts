@@ -1,4 +1,4 @@
-import { BaseUser, UserRole } from "@schemas";
+import { BaseUser, UserRole } from "@armali/schemas";
 import jwt from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;

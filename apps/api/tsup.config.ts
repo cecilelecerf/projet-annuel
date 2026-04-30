@@ -17,7 +17,7 @@ export default defineConfig([
     clean: false,
   },
   {
-    entry: ["prisma/seeds/index.ts"],
+    entry: { seeds: "prisma/seeds/index.ts" },
     format: ["esm"],
     target: "node22",
     outDir: "dist",

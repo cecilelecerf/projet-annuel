@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "docker:up": "docker compose --env-file .env.dev up -d",
+    "docker:down": "docker compose --env-file .env.dev down",
+    "docker:logs": "docker compose --env-file .env.dev logs -f",
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
     "db:view": "pnpm --filter api studio",

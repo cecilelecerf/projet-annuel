@@ -60,8 +60,8 @@ app.use(errorHandler);
 //   res.json(result);
 // });
 
-const server = app.listen(3000, () =>
+const server = app.listen(3001, () =>
   console.log(`
-🚀 Server ready at: http://localhost:3000
+🚀 Server ready at: http://localhost:3001
 ⭐️ See sample requests: https://github.com/prisma/prisma-examples/blob/latest/orm/express/README.md#using-the-rest-api`),
 );

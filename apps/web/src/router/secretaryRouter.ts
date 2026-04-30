@@ -17,7 +17,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'calendar',
         name: 'Secretary.Calendar',
-        component: () => import('@/views/calendar/Calendar.vue'),
+        component: () => import('@/views/calendar/CalendarView.vue'),
       },
       {
         path: 'veterinarian',

@@ -154,9 +154,8 @@ services:
       rollback_config:
         parallelism: 1
         delay: 5s
-      deploy:
-        restart_policy:
-          condition: on-failure
+      restart_policy:
+        condition: on-failure
       labels:
         - "traefik.enable=true"
         - "traefik.docker.network=cecoule_frontend"

@@ -166,8 +166,10 @@ services:
 
   prometheus:
     image: prom/prometheus:v3.4.0
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -197,6 +199,13 @@ services:
 
   grafana:
     image: grafana/grafana:12.0.0
+    configs:
+      - source: grafana_datasources
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_dashboards_provider
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
+      - source: grafana_dashboard_express
+        target: /var/lib/grafana/dashboards/backend_overview.json
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password
@@ -206,8 +215,6 @@ services:
       - grafana_admin_password
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "3000:3000"
     networks:
@@ -257,4 +264,14 @@ secrets:
   jwt_refresh_secret:
     external: true
   grafana_admin_password:
+    external: true
+
+configs:
+  prometheus_config:
+    external: true
+  grafana_datasources:
+    external: true
+  grafana_dashboards_provider:
+    external: true
+  grafana_dashboard_express:
     external: true

@@ -178,8 +178,9 @@ services:
       - "9090:9090"
     networks:
       - frontend
-    restart_policy:
-      condition: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
     healthcheck:
       test:
         [

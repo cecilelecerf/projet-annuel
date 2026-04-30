@@ -183,6 +183,9 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+      placement:
+        constraints:
+          - node.hostname != docker-desktop
     healthcheck:
       test:
         [
@@ -215,13 +218,21 @@ services:
       - grafana_admin_password
     volumes:
       - grafana-data:/var/lib/grafana
-    ports:
-      - "3000:3000"
     networks:
       - frontend
     deploy:
       restart_policy:
         condition: on-failure
+      placement:
+        constraints:
+          - node.hostname != docker-desktop
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=cecoule_frontend"
+        - "traefik.http.routers.grafana.rule=Host(`grafana.armali.online`)"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     healthcheck:
       test:
         [

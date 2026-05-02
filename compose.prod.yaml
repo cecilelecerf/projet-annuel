@@ -167,7 +167,7 @@ services:
   prometheus:
     image: prom/prometheus:v3.4.0
     configs:
-      - source: prometheus_config
+      - source: prometheus_config_v2
         target: /etc/prometheus/prometheus.yml
     volumes:
       - prometheus-data:/prometheus
@@ -278,7 +278,7 @@ secrets:
     external: true
 
 configs:
-  prometheus_config:
+  prometheus_config_v2:
     external: true
   grafana_datasources:
     external: true

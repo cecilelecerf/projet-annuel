@@ -19,5 +19,18 @@
   ],
   "devDependencies": {
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "@parcel/watcher",
+      "@prisma/engines",
+      "contextify",
+      "esbuild",
+      "prisma",
+      "protobufjs",
+      "unrs-resolver",
+      "vue-demi"
+    ]
   }
 }

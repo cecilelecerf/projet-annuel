@@ -1,8 +1,7 @@
-import { validate } from "@api/middlewares/validate.middleware";
+import { validate, authMiddleware } from "@api/middlewares";
 import { AuthController } from "@api/auth/auth.controller";
 import { Router } from "express";
 import type { Router as RouterType } from "express";
-import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { loginSchema, registerSchema } from "@armali/schemas";
 
 const authRouter: RouterType = Router();

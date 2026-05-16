@@ -5,7 +5,6 @@ const root = resolve(__dirname, "../..");
 export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],
-    setupFiles: ["src/tests/helpers/setup.ts"],
     environment: "node",
     coverage: {
       provider: "v8",

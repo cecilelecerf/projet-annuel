@@ -5,7 +5,7 @@ import {
   generateRefreshToken,
   verifyAccessToken,
   verifyRefreshToken,
-} from "@api/utils/jwt";
+} from "@api/utils";
 import { prisma } from "@api/lib/prisma";
 import { ConflictError, NotFoundError, UnauthorizedError } from "@api/errors";
 

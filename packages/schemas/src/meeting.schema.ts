@@ -16,26 +16,26 @@ export const scheduleTypeSchema = z.enum([
   "SPECIFIED",
   "EXCEPTION",
 ]);
-export const mettingKindSchema = z.enum(["AVAILABILITY", "INTERNAL", "ANIMAL"]);
+export const meetingKindSchema = z.enum(["AVAILABILITY", "INTERNAL", "ANIMAL"]);
 export const meetingStatusSchema = z.enum(["PENDING", "ACCEPTED", "DECLINED"]);
 
-// ── InternalMettingParticipant ────────────────────────────────────────────────
-export const internalMettingParticipantSchema = z.object({
+// ── InternalMeetingParticipant ────────────────────────────────────────────────
+export const internalMeetingParticipantSchema = z.object({
   id: internalMeetingParticipantIdSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
-  mettingId: meetingIdSchema,
+  meetingId: meetingIdSchema,
   userId: userIdSchema,
   status: meetingStatusSchema,
 });
 
-// ── MettingBase ───────────────────────────────────────────────────────────────
-export const mettingBaseSchema = z.object({
+// ── MeetingBase ───────────────────────────────────────────────────────────────
+export const meetingBaseSchema = z.object({
   id: meetingIdSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   type: scheduleTypeSchema,
-  kind: mettingKindSchema,
+  kind: meetingKindSchema,
 
   // RECURRING
   dayOfWeek: z.number().int().min(0).max(6).nullable().optional(),
@@ -58,13 +58,13 @@ export const availabilityContextTypeSchema = z.enum([
   "USER",
 ]);
 // ── VeterinarianClinicAvailability ────────────────────────────────────────────
-export const veterinarianClinicAvailabilitySchema = mettingBaseSchema.extend({
+export const veterinarianClinicAvailabilitySchema = meetingBaseSchema.extend({
   veterinarianClinicId: veterinarianClinicIdSchema,
   kind: z.literal("AVAILABILITY"),
   contextType: z.literal("VETERINARIAN_CLINIC"),
 });
 
-export const userAvailabilitySchema = mettingBaseSchema.extend({
+export const userAvailabilitySchema = meetingBaseSchema.extend({
   kind: z.literal("AVAILABILITY"),
   userId: userIdSchema,
   contextType: z.literal("USER"),
@@ -74,17 +74,17 @@ export const availabilitiesSchema = z.discriminatedUnion("contextType", [
   userAvailabilitySchema,
 ]);
 
-// ── InternalMetting ───────────────────────────────────────────────────────────
-export const internalMettingSchema = mettingBaseSchema.extend({
+// ── InternalMeeting ───────────────────────────────────────────────────────────
+export const internalMeetingSchema = meetingBaseSchema.extend({
   title: z.string().max(255),
   description: z.string().nullable().optional(),
   clinicId: clinicIdSchema,
-  participants: z.array(internalMettingParticipantSchema).optional(),
+  participants: z.array(internalMeetingParticipantSchema).optional(),
   kind: z.literal("INTERNAL"),
 });
 
-// ── AnimalMetting ─────────────────────────────────────────────────────────────
-export const animalMettingSchema = mettingBaseSchema.extend({
+// ── AnimalMeeting ─────────────────────────────────────────────────────────────
+export const animalMeetingSchema = meetingBaseSchema.extend({
   description: z.string().nullable().optional(),
   petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
   petSize: z.coerce.number().multipleOf(0.01).nullable().optional(),
@@ -97,36 +97,36 @@ export const animalMettingSchema = mettingBaseSchema.extend({
 
 export const meetingSchema = z.discriminatedUnion("kind", [
   availabilitiesSchema,
-  internalMettingSchema,
-  animalMettingSchema,
+  internalMeetingSchema,
+  animalMeetingSchema,
 ]);
 // ── CRUD schemas ──────────────────────────────────────────────────────────────
-export const createMettingBaseSchema = mettingBaseSchema.omit({
+export const createMeetingBaseSchema = meetingBaseSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
-export const updateMettingBaseSchema = createMettingBaseSchema.partial();
+export const updateMeetingBaseSchema = createMeetingBaseSchema.partial();
 
-export const mettingWithExceptionSchema = z
+export const meetingWithExceptionSchema = z
   .object({
-    exceptions: z.array(mettingBaseSchema),
+    exceptions: z.array(meetingBaseSchema),
   })
   .and(meetingSchema);
 
 export const calendarSchema = z.object({
-  meetings: z.array(mettingWithExceptionSchema),
-  availabilities: z.array(mettingWithExceptionSchema),
+  meetings: z.array(meetingWithExceptionSchema),
+  availabilities: z.array(meetingWithExceptionSchema),
 });
 
 export type Calendar = z.infer<typeof calendarSchema>;
-export type MettingWithException = z.infer<typeof mettingWithExceptionSchema>;
+export type MeetingWithException = z.infer<typeof meetingWithExceptionSchema>;
 export type ScheduleType = z.infer<typeof scheduleTypeSchema>;
-export type MettingKind = z.infer<typeof mettingKindSchema>;
+export type MeetingKind = z.infer<typeof meetingKindSchema>;
 export type MeetingStatus = z.infer<typeof meetingStatusSchema>;
-export type MettingBase = z.infer<typeof mettingBaseSchema>;
+export type MeetingBase = z.infer<typeof meetingBaseSchema>;
 export type Meeting = z.infer<typeof meetingSchema>;
-export type InternalMetting = z.infer<typeof internalMettingSchema>;
-export type AnimalMetting = z.infer<typeof animalMettingSchema>;
-export type CreateMettingBase = z.infer<typeof createMettingBaseSchema>;
-export type UpdateMettingBase = z.infer<typeof updateMettingBaseSchema>;
+export type InternalMeeting = z.infer<typeof internalMeetingSchema>;
+export type AnimalMeeting = z.infer<typeof animalMeetingSchema>;
+export type CreateMeetingBase = z.infer<typeof createMeetingBaseSchema>;
+export type UpdateMeetingBase = z.infer<typeof updateMeetingBaseSchema>;

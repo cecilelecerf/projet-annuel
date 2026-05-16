@@ -2,7 +2,7 @@ import { UserService } from "@api/users/user.service";
 import { BadRequestError } from "@api/errors";
 import type { NextFunction, Response } from "express";
 import { UserRole } from "apps/api/prisma/generated/prisma/enums";
-import { AuthenticatedRequest } from "@api/middlewares/auth.middleware";
+import { AuthenticatedRequest } from "@api/middlewares";
 
 const userService = new UserService();
 

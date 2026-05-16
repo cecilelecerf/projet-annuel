@@ -5,8 +5,8 @@ import { NotFoundError, BadRequestError } from "@api/errors";
 import { prisma } from "@api/lib/prisma";
 import { VeterinarianProfile } from "apps/api/prisma/generated/prisma/client";
 import { UserService } from "@api/users";
-import { MeetingService } from ".";
 import { AuthenticatedRequest } from "@api/middlewares";
+import { FlatMeeting, MeetingService } from "./meeting.service";
 
 const meetingService = new MeetingService();
 const userService = new UserService();

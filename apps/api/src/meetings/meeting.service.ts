@@ -1,4 +1,4 @@
-import { MeetingRepository } from ".";
+import { MeetingRepository } from "./meeting.repository";
 import type {
   AnimalMeeting,
   Availability,

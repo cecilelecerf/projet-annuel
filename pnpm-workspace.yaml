@@ -1,3 +1,12 @@
 packages:
   - "packages/*"
   - "apps/*"
+allowBuilds:
+  '@firebase/util': true
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  contextify: false
+  esbuild: true
+  prisma: true
+  protobufjs: true
+  unrs-resolver: true

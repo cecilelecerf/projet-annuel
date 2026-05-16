@@ -7,6 +7,41 @@ on:
       - dev
 
 jobs:
+  test-unit:
+    name: Test Unitaire & Implémentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build schemas
+        run: pnpm --filter schemas build
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api prisma:generate
+
+      - name: Run tests
+        run: pnpm --filter api test
+
+      - name: Verify coverage (main only)
+        if: github.base_ref == 'main'
+        run: pnpm --filter api test:coverage
+
   build:
     name: Build & Type Check
     runs-on: ubuntu-latest
@@ -23,7 +58,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 25
           cache: "pnpm"
 
       - name: Install dependencies
@@ -33,7 +68,7 @@ jobs:
         run: pnpm --filter schemas build
 
       - name: Generate Prisma Client
-        run: pnpm --filter api exec prisma generate
+        run: pnpm --filter api prisma:generate
 
       - name: Build API
         run: pnpm --filter api build

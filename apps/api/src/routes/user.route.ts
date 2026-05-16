@@ -14,7 +14,7 @@ userRouter.get(
   controller.getUsers.bind(controller) as RequestHandler,
 );
 userRouter.get(
-  "/:role",
+  "/roles/:role",
   authMiddleware,
   roleMiddleware(["SECRETARY", "DIRECTOR", "REFERANT", "ADMIN"]),
   controller.getUsersByRole.bind(controller) as RequestHandler,

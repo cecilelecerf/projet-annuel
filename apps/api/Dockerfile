@@ -36,7 +36,7 @@ COPY --from=build /app/packages/schemas/dist ./packages/schemas/dist
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma/schemas ./apps/api/dist/prisma/schemas
 COPY --from=build /app/apps/api/prisma/migrations ./apps/api/dist/prisma/migrations 
-
+ 
 COPY apps/api/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

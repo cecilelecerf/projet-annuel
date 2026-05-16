@@ -14,8 +14,7 @@
 
 # pnpm
 .pnpm-store/
-pnpm-lock.yaml
-
+ 
 # Testing
 coverage/
 .nyc_output/

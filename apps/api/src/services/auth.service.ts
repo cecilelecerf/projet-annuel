@@ -47,7 +47,6 @@ export class AuthService {
     const isPasswordValid = await compare(data.password, user.password);
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
-    console.log(user);
     const parsedUser = baseUserSchema.parse(user);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);

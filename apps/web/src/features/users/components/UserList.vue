@@ -4,7 +4,7 @@ import { veterinarianSchema } from '@armali/schemas'
 import { useRouter } from 'vue-router'
 import z from 'zod'
 const router = useRouter()
-const veterinarians = await api('/users/veterinarian').then((data) =>
+const veterinarians = await api('/users/roles/veterinarian').then((data) =>
   z.array(veterinarianSchema).parse(data),
 )
 </script>

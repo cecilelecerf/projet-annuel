@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Calendar from '@/components/calendar/Calendar.vue'
+import CalendarWidget from '../components/CalendarWidget.vue'
 </script>
 
 <template>
   <Suspense>
-    <Calendar />
+    <CalendarWidget />
     <template #fallback>
       <div>Chargement...</div>
     </template>

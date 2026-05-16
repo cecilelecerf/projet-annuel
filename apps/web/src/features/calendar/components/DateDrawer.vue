@@ -3,7 +3,7 @@ import { api } from '@/lib/api'
 import { meetingSchema, type Meeting, type UserId } from '@armali/schemas'
 import dayjs from 'dayjs'
 import { ref } from 'vue'
-import EventContainer from './EventContainer.vue'
+import EventContainer from './EventCard.vue'
 
 const { date, userId } = defineProps<{
   date: Date

@@ -1,5 +1,8 @@
-import { getPeriodQuerySchema, meetingSchema } from "@armali/schemas";
-import { calendarSchema } from "@armali/schemas";
+import {
+  calendarSchema,
+  getPeriodQuerySchema,
+  meetingSchema,
+} from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { NotFoundError, BadRequestError } from "@api/errors";
 import { prisma } from "@api/lib/prisma";

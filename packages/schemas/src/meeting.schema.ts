@@ -119,6 +119,64 @@ export const calendarSchema = z.object({
   availabilities: z.array(meetingWithExceptionSchema),
 });
 
+// ── Create schemas ────────────────────────────────────────────────────────────
+
+export const createAvailabilitySchema = z.discriminatedUnion("contextType", [
+  createMeetingBaseSchema.extend({
+    kind: z.literal("AVAILABILITY"),
+    contextType: z.literal("USER"),
+    userId: userIdSchema,
+  }),
+  createMeetingBaseSchema.extend({
+    kind: z.literal("AVAILABILITY"),
+    contextType: z.literal("VETERINARIAN_CLINIC"),
+    veterinarianClinicId: veterinarianClinicIdSchema,
+  }),
+]);
+
+export const createInternalMeetingSchema = createMeetingBaseSchema.extend({
+  kind: z.literal("INTERNAL"),
+  title: z.string().min(1).max(255),
+  description: z.string().nullable().optional(),
+  clinicId: clinicIdSchema,
+  participantIds: z.array(userIdSchema).min(1),
+});
+
+export const createAnimalMeetingSchema = createMeetingBaseSchema.extend({
+  kind: z.literal("ANIMAL"),
+  description: z.string().nullable().optional(),
+  specialityId: specialityIdSchema.nullable().optional(),
+  ownedPetId: ownedPetIdSchema,
+  veterinarianId: veterinarianIdSchema,
+});
+
+export const updateInternalMeetingSchema = createInternalMeetingSchema
+  .omit({ kind: true, clinicId: true })
+  .partial();
+
+export const updateAnimalMeetingSchema = createAnimalMeetingSchema
+  .omit({ kind: true, ownedPetId: true, veterinarianId: true })
+  .partial()
+  .extend({
+    petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
+    petSize: z.coerce.number().multipleOf(0.01).nullable().optional(),
+    report: z.string().nullable().optional(),
+  });
+
+export const updateParticipantStatusSchema = z.object({
+  status: meetingStatusSchema,
+});
+
+export const updateAvailabilitySchema = createMeetingBaseSchema.partial();
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+export type CreateAvailability = z.infer<typeof createAvailabilitySchema>;
+export type CreateInternalMeeting = z.infer<typeof createInternalMeetingSchema>;
+export type CreateAnimalMeeting = z.infer<typeof createAnimalMeetingSchema>;
+export type UpdateInternalMeeting = z.infer<typeof updateInternalMeetingSchema>;
+export type UpdateAnimalMeeting = z.infer<typeof updateAnimalMeetingSchema>;
+export type UpdateAvailability = z.infer<typeof updateAvailabilitySchema>;
+
 export type Calendar = z.infer<typeof calendarSchema>;
 export type MeetingWithException = z.infer<typeof meetingWithExceptionSchema>;
 export type ScheduleType = z.infer<typeof scheduleTypeSchema>;

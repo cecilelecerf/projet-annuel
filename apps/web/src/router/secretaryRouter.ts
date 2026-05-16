@@ -10,24 +10,24 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'Secretary.Home',
-        component: () => import('@/views/secretary/Home.vue'),
+        component: () => import('@/features/users/views/secretary/SecretaryHomeView.vue'),
         // Widget : Prévision du nb de visites
       },
       // ── Calendar ───────────────────────────────────────────────
       {
         path: 'calendar',
         name: 'Secretary.Calendar',
-        component: () => import('@/views/calendar/CalendarView.vue'),
+        component: () => import('@/features/calendar/views/MeCalendarView.vue'),
       },
       {
         path: 'veterinarian',
         name: 'Secretary.Veto.List',
-        component: () => import('@/views/secretary/veterinarian/List.vue'),
+        component: () => import('@/features/users/views/secretary/UserListView.vue'),
       },
       {
         path: 'veterinarian/:id',
         name: 'Secretary.Veto.Calendar',
-        component: () => import('@/views/secretary/veterinarian/VeterinarianCalendar.vue'),
+        component: () => import('@/features/calendar/views/UserCalendarView.vue'),
       },
       // {
       //   path: 'calendar/tous',

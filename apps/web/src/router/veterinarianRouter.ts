@@ -10,13 +10,13 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'Veto.Home',
-        component: () => import('@/views/veterinarian/Home.vue'),
+        component: () => import('@/features/users/views/veterinarian/VeterinarianHomeView.vue'),
       },
       // ── Agenda ───────────────────────────────────────────────
       {
         path: 'calendar',
         name: 'Veto.Calendar',
-        component: () => import('@/views/calendar/CalendarView.vue'),
+        component: () => import('@/features/calendar/views/MeCalendarView.vue'),
       },
       // {
       //   path: 'agenda/rdv/:id',

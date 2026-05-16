@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Calendar from '@/components/calendar/Calendar.vue'
+import CalendarWidget from '../components/CalendarWidget.vue'
 import type { UserId } from '@armali/schemas'
 import { useRoute } from 'vue-router'
 
@@ -9,7 +9,7 @@ const id = route.params.id as UserId
 
 <template>
   <Suspense>
-    <Calendar :user-id="id" />
+    <CalendarWidget :user-id="id" />
     <template #fallback>
       <div>Chargement...</div>
     </template>

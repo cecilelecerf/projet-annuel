@@ -33,14 +33,14 @@ model ClinicAct {
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
 
-  animalMettingActs AnimalMettingAct[]
+  animalMeetingActs AnimalMeetingAct[]
 
   @@unique([actId, clinicId])
   @@map("clinic_acts")
 }
 
 // ── Actes réalisés durant un RDV ─────────────────────────────────────────────
-model AnimalMettingAct {
+model AnimalMeetingAct {
   id           String   @id @default(uuid())
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
@@ -48,8 +48,8 @@ model AnimalMettingAct {
   notes        String?
   priceApplied Decimal  @db.Decimal(8, 2) // prix au moment de l'acte
 
-  animalMettingId String
-  animalMetting   AnimalMetting @relation(fields: [animalMettingId], references: [id])
+  animalMeetingId String
+  animalMeeting   AnimalMeeting @relation(fields: [animalMeetingId], references: [id])
 
   clinicActId String
   clinicAct   ClinicAct @relation(fields: [clinicActId], references: [id])
@@ -60,22 +60,22 @@ model AnimalMettingAct {
   imaging         Imaging?
   analysis        Analysis?
 
-  performedBy AnimalMettingActPerformer[]
+  performedBy AnimalMeetingActPerformer[]
 
-  @@map("animal_metting_acts")
+  @@map("animal_meeting_acts")
 }
 
 // Qui a réalisé l'acte (peut être plusieurs)
-model AnimalMettingActPerformer {
+model AnimalMeetingActPerformer {
   id String @id @default(uuid())
 
-  animalMettingActId String
-  animalMettingAct   AnimalMettingAct @relation(fields: [animalMettingActId], references: [id])
+  animalMeetingActId String
+  animalMeetingAct   AnimalMeetingAct @relation(fields: [animalMeetingActId], references: [id])
 
   veterinarianId String
   veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
 
-  @@map("animal_metting_act_performers")
+  @@map("animal_meeting_act_performers")
 }
 
 // ── Chirurgie ─────────────────────────────────────────────────────────────────
@@ -88,7 +88,7 @@ enum AnesthesiaType {
 model Surgery {
   id String @id
 
-  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
   anesthesiaType     AnesthesiaType
   duration           Int? // en minutes
@@ -102,7 +102,7 @@ model Surgery {
 model Hospitalization {
   id String @id
 
-  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
   admittedAt   DateTime
   dischargedAt DateTime?
@@ -140,7 +140,7 @@ enum ImagingType {
 model Imaging {
   id String @id
 
-  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
   imagingType ImagingType
   bodyPart    String?
@@ -168,7 +168,7 @@ enum AnalysisStatus {
 model Analysis {
   id String @id
 
-  act AnimalMettingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
 
   analysisType   AnalysisType
   status         AnalysisStatus @default(PENDING)
@@ -198,8 +198,8 @@ model Prescription {
   status    PrescriptionStatus @default(ACTIVE)
   notes     String?
 
-  animalMettingId String
-  animalMetting   AnimalMetting @relation(fields: [animalMettingId], references: [id])
+  animalMeetingId String
+  animalMeeting   AnimalMeeting @relation(fields: [animalMeetingId], references: [id])
 
   veterinarianId String
   veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])

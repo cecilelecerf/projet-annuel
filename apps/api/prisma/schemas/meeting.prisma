@@ -1,0 +1,127 @@
+// RECURRING → "je suis dispo tous les lundis de 8h à 12h"
+// SPECIFIED → "je suis dispo ce mercredi 15 mars exceptionnellement"
+// EXCEPTION → "je ne suis PAS dispo ce lundi 24 mars malgré la règle récurrente
+enum ScheduleType {
+  RECURRING
+  SPECIFIED
+  EXCEPTION
+}
+
+enum MeetingKind {
+  AVAILABILITY
+  INTERNAL
+  ANIMAL
+}
+
+model MeetingBase {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  type ScheduleType
+
+  // RECURRING
+  dayOfWeek Int?      @db.SmallInt
+  dateStart DateTime? @db.Date
+  dateEnd   DateTime? @db.Date
+
+  // RECURRING + SPECIFIED
+  startTime DateTime? @db.Time(0)
+  endTime   DateTime? @db.Time(0)
+
+  // SPECIFIED + EXCEPTION
+  specificDate DateTime? @db.Date
+
+  // EXCEPTION → pointe vers le RECURRING parent à annuler
+  parentId   String?
+  parent     MeetingBase?  @relation("exceptions", fields: [parentId], references: [id])
+  exceptions MeetingBase[] @relation("exceptions")
+
+  kind MeetingKind
+
+  availabilty     Availability?
+  internalMeeting InternalMeeting?
+  animalMeeting   AnimalMeeting?
+
+  @@map("meeting_bases")
+}
+
+enum AvailabilityContextType {
+  USER
+  VETERINARIAN_CLINIC
+}
+
+model Availability {
+  id String @id
+
+  base MeetingBase @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  contextType AvailabilityContextType
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  veterinarianClinicId String?
+  veterinarianClinic   VeterinarianClinic? @relation(fields: [veterinarianClinicId], references: [id])
+
+  @@map("availabilities")
+}
+
+enum MeetingStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model InternalMeetingParticipant {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  meetingId String
+  meeting   InternalMeeting @relation(fields: [meetingId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  status MeetingStatus
+
+  @@map("internal_meeting_participants")
+}
+
+model InternalMeeting {
+  id          String  @id
+  title       String
+  description String?
+
+  base     MeetingBase @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  clinicId String
+  clinic   Clinic      @relation(fields: [clinicId], references: [id])
+
+  participants InternalMeetingParticipant[]
+
+  @@map("internal_meetings")
+}
+
+model AnimalMeeting {
+  id          String   @id
+  description String?
+  petWeight   Decimal? @db.Decimal(5, 2)
+  petSize     Decimal? @db.Decimal(5, 2)
+  report      String?
+
+  base           MeetingBase         @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  specialityId   String?
+  speciality     Speciality?         @relation(fields: [specialityId], references: [id])
+  ownedPetId     String
+  ownedPet       OwnedPet            @relation(fields: [ownedPetId], references: [id])
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
+
+  ownedPetVaccines         OwnedPetVaccine[]
+  ownedPetHealthConditions OwnedPetHealthCondition[]
+  animalMeetingActs        AnimalMeetingAct[]
+  prescriptions            Prescription[]
+
+  @@map("animal_meetings")
+}

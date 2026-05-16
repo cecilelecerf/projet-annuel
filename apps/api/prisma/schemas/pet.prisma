@@ -17,7 +17,7 @@ model OwnedPet {
   race   Race   @relation(fields: [raceId], references: [id])
 
   ownedPetVaccine          OwnedPetVaccine[]
-  animalMeeting            AnimalMetting[]
+  animalMeeting            AnimalMeeting[]
   foodPets                 FoodPet[]
   ownedPetConditionHealths OwnedPetHealthCondition[]
 
@@ -84,7 +84,7 @@ model OwnedPetVaccine {
   vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
 
   meetingId     String?
-  animalMeeting AnimalMetting? @relation(fields: [meetingId], references: [id])
+  animalMeeting AnimalMeeting? @relation(fields: [meetingId], references: [id])
 
   @@map("owned_pet_vaccines")
 }

@@ -27,7 +27,7 @@ model User {
   refreshTokens               RefreshToken[]
   ownedPetConditionHealths    OwnedPetHealthCondition[]
   conversationMembers         ConversationMember[]
-  internalMettingParticipants InternalMettingParticipant[]
+  internalMeetingParticipants InternalMeetingParticipant[]
   availabilities              Availability[]
   meticalVisites              MedicalVisit[]
 
@@ -61,11 +61,11 @@ model VeterinarianProfile {
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
   ownedPet                   OwnedPet[]
-  animalMeeting              AnimalMetting[]
+  animalMeeting              AnimalMeeting[]
   speciality                 Speciality[]
   veterinarianClinic         VeterinarianClinic[]
   pet                        Pet[]
-  animalMettingActPerformers AnimalMettingActPerformer[]
+  animalMeetingActPerformers AnimalMeetingActPerformer[]
   hospitalizationReports     HospitalizationReport[]
   prescriptions              Prescription[]
   veterinarianIdentity       VeterinarianIdentity?

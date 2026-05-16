@@ -30,6 +30,9 @@
       "protobufjs",
       "unrs-resolver",
       "vue-demi"
+    ],
+    "ignoredBuiltDependencies": [
+      "contextify"
     ]
   }
 }

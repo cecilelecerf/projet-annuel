@@ -1,12 +1,12 @@
 import express, { type Express } from "express";
 import { prisma } from "./lib/prisma";
-import authRouter from "./routes/auth.route";
 import cors from "cors";
-import meetingRouter from "./routes/metting.route";
-import { errorHandler } from "./middlewares/error.middleware";
-import userRouter from "./routes/user.route";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
+import { authRouter } from "./auth";
+import { userRouter } from "./users";
+import { errorHandler } from "./middlewares";
+import { meetingRouter as meetingRouter } from "./meetings";
 
 collectDefaultMetrics();
 

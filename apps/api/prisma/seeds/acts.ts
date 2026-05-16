@@ -5,10 +5,10 @@ export async function seedActs(
   {
     clinic1,
     clinic2,
-    mettings,
-  }: { clinic1: Clinic; clinic2: Clinic; mettings: any },
+    meetings,
+  }: { clinic1: Clinic; clinic2: Clinic; meetings: any },
 ) {
-  const { animalMeeting1, animalMeeting2, vetProfile1, vetProfile2 } = mettings;
+  const { animalMeeting1, animalMeeting2, vetProfile1, vetProfile2 } = meetings;
 
   // ── Catalogue d'actes ───────────────────────────────────────────────────────
   const actConsultation = await prisma.act.create({
@@ -102,21 +102,21 @@ export async function seedActs(
   });
 
   // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
-  const actCardioPerformed = await prisma.animalMettingAct.create({
+  const actCardioPerformed = await prisma.animalMeetingAct.create({
     data: {
       performedAt: new Date("2026-02-10T09:00:00Z"),
       priceApplied: 70,
-      animalMettingId: animalMeeting1.id,
+      animalMeetingId: animalMeeting1.id,
       clinicActId: caCardioClinic1.id,
     },
   });
 
-  const actEchoPerformed = await prisma.animalMettingAct.create({
+  const actEchoPerformed = await prisma.animalMeetingAct.create({
     data: {
       performedAt: new Date("2026-02-10T09:10:00Z"),
       priceApplied: 95,
       notes: "Échographie cardiaque — légère dilatation ventriculaire gauche",
-      animalMettingId: animalMeeting1.id,
+      animalMeetingId: animalMeeting1.id,
       clinicActId: caEchoClinic1.id,
       imaging: {
         create: {
@@ -129,11 +129,11 @@ export async function seedActs(
     },
   });
 
-  const actBloodPerformed = await prisma.animalMettingAct.create({
+  const actBloodPerformed = await prisma.animalMeetingAct.create({
     data: {
       performedAt: new Date("2026-02-10T09:20:00Z"),
       priceApplied: 50,
-      animalMettingId: animalMeeting1.id,
+      animalMeetingId: animalMeeting1.id,
       clinicActId: caBloodClinic1.id,
       analysis: {
         create: {
@@ -149,12 +149,12 @@ export async function seedActs(
   });
 
   // ── Actes réalisés sur RDV 2 (Luna — dermatologie) ─────────────────────────
-  await prisma.animalMettingAct.create({
+  await prisma.animalMeetingAct.create({
     data: {
       performedAt: new Date("2026-03-05T14:00:00Z"),
       priceApplied: 80,
       notes: "Radiographie thoracique de contrôle",
-      animalMettingId: animalMeeting2.id,
+      animalMeetingId: animalMeeting2.id,
       clinicActId: caXrayClinic1.id,
       imaging: {
         create: {
@@ -167,11 +167,11 @@ export async function seedActs(
     },
   });
 
-  await prisma.animalMettingAct.create({
+  await prisma.animalMeetingAct.create({
     data: {
       performedAt: new Date("2026-03-05T14:10:00Z"),
       priceApplied: 28,
-      animalMettingId: animalMeeting2.id,
+      animalMeetingId: animalMeeting2.id,
       clinicActId: caNursingClinic1.id,
     },
   });

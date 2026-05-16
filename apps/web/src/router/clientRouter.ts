@@ -10,7 +10,7 @@ export const clientRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'Client.Home',
-        component: () => import('@/views/client/MySpace.vue'),
+        component: () => import('@/features/users/views/client/MySpaceView.vue'),
       },
 
       // // ── Animal ───────────────────────────────────────────────

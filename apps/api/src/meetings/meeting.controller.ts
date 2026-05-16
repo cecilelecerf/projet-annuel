@@ -61,7 +61,9 @@ export class MeetingController {
     next: NextFunction,
   ) {
     try {
+      console.log(req.query);
       const result = getPeriodQuerySchema.safeParse(req.query);
+      console.log(result);
       if (!result.success)
         throw new BadRequestError("startDate et endDate sont requis");
 
@@ -110,6 +112,7 @@ export class MeetingController {
       next(err);
     }
   }
+
   async getVeterinarianMetting(
     req: AuthenticatedRequest,
     res: Response,
@@ -150,7 +153,6 @@ export class MeetingController {
 
       const meetings = await handler;
       if (!meetings) throw new NotFoundError("Profile");
-      console.log(meetings);
       return res.status(200).json(meetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);

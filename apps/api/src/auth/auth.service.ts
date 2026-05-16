@@ -105,9 +105,39 @@ export class AuthService {
     const payload = verifyAccessToken(accessToken);
     if (!payload) throw new UnauthorizedError("Token invalide");
 
-    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      include: {
+        secretaryProfile: true,
+        directorClinicProfile: true,
+        referentClinicProfile: true,
+        veterinarianProfile: {
+          include: {
+            veterinarianClinic: true,
+          },
+        },
+      },
+    });
     if (!user) throw new NotFoundError("Utilisateur");
 
-    return user;
+    const clinicId = (() => {
+      switch (user.role) {
+        case "SECRETARY":
+          return user.secretaryProfile?.clinicId ?? null;
+        case "DIRECTOR":
+          return user.directorClinicProfile?.clinicId ?? null;
+        case "REFERANT":
+          return user.referentClinicProfile?.clinicId ?? null;
+        case "VETERINARIAN":
+          return (
+            user.veterinarianProfile?.veterinarianClinic[0]?.clinicId ?? null
+          );
+        default:
+          return null;
+      }
+    })();
+
+    const { password: _, ...userWithoutPassword } = user;
+    return { ...userWithoutPassword, clinicId };
   }
 }

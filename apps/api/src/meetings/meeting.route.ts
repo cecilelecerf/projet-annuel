@@ -43,6 +43,17 @@ meetingRouter.get(
   ) as RequestHandler,
 );
 
+// Base
+
+meetingRouter.get(
+  "/:veterinarianId",
+  authMiddleware,
+  roleMiddleware(["SECRETARY", "VETERINARIAN"]),
+  meetingController.getVeterinarianMetting.bind(
+    meetingController,
+  ) as RequestHandler,
+);
+
 // ── Disponibilités ────────────────────────────────────────────────────────────
 meetingRouter.post(
   "/availabilities",

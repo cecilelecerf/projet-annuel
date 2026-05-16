@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import type { MeetingKind } from '@armali/schemas'
+import type {
+  ClientId,
+  MeetingKind,
+  OwnedPetId,
+  User,
+  UserId,
+  VeterinarianId,
+} from '@armali/schemas'
 import { computed, ref } from 'vue'
+import { calendarApi } from '../api/calendar.api'
+import { useAuthStore } from '@/stores/authStore'
+import { userApi } from '@/features/users/api/user.api'
+const authStore = useAuthStore()
 
 const emit = defineEmits<{ close: [] }>()
 
-const type = ref<MeetingKind>('INTERNAL')
+const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>>('INTERNAL')
 const title = ref('')
 const start = ref('')
 const end = ref('')
@@ -14,49 +25,27 @@ const participantSearch = ref('')
 const participants = ref<{ id: string; name: string; avatar?: string }[]>([])
 const animalName = ref('')
 const clientSearch = ref('')
-const selectedClient = ref<{ id: string; name: string } | null>(null)
+const selectedClient = ref<{ userId: ClientId; name: string; petId: OwnedPetId } | null>(null)
 const vetSearch = ref('')
-const selectedVet = ref<{ id: string; name: string } | null>(null)
+const selectedVet = ref<{ id: VeterinarianId; name: string } | null>(null)
 
-const mockClients = [
-  { id: 'c1', name: 'Jean Durand' },
-  { id: 'c2', name: 'Marie Leroy' },
-]
+const clients = await userApi.getUsersByRole('CLIENT')
+const vets = await userApi.getUsersByRole('VETERINARIAN')
 
-const mockVets = [
-  { id: 'v1', name: 'Dr. Alice Dupont' },
-  { id: 'v2', name: 'Dr. Bob Martin' },
-]
-
-const mockUsers = [
-  { id: '1', name: 'Alice Dupont' },
-  { id: '2', name: 'Bob Martin' },
-  { id: '3', name: 'Claire Bernard' },
-]
-
-const filteredUsers = computed(() =>
-  participantSearch.value.length > 1
-    ? mockUsers.filter(
-        (u) =>
-          u.name.toLowerCase().includes(participantSearch.value.toLowerCase()) &&
-          !participants.value.find((p) => p.id === u.id),
-      )
-    : [],
-)
 const filteredClients = computed(() =>
   clientSearch.value.length > 1
-    ? mockClients.filter((u) => u.name.toLowerCase().includes(clientSearch.value.toLowerCase()))
+    ? clients.filter((u) => u.lastname.toLowerCase().includes(clientSearch.value.toLowerCase()))
     : [],
 )
 
 const filteredVets = computed(() =>
   vetSearch.value.length > 1
-    ? mockVets.filter((u) => u.name.toLowerCase().includes(vetSearch.value.toLowerCase()))
+    ? vets.filter((u) => u.lastname.toLowerCase().includes(vetSearch.value.toLowerCase()))
     : [],
 )
 
-const addParticipant = (user: (typeof mockUsers)[0]) => {
-  participants.value.push(user)
+const addParticipant = (user: User) => {
+  participants.value.push({ id: user.id, name: user.lastname })
   participantSearch.value = ''
 }
 
@@ -65,6 +54,31 @@ const removeParticipant = (id: string) => {
 }
 
 const handleSubmit = async () => {
+  console.log(authStore.user?.clinicId)
+  if (type.value === 'INTERNAL') {
+    if (!authStore.user?.clinicId) return
+    await calendarApi.internal.new({
+      title: title.value,
+      type: 'SPECIFIED',
+      participantIds: participants.value.map(({ id }) => id as UserId),
+      specificDate: date.value,
+      startTime: new Date(`1970-01-01T${start.value}`),
+      endTime: new Date(`1970-01-01T${end.value}`),
+      kind: 'INTERNAL',
+      clinicId: authStore.user?.clinicId,
+    })
+  } else {
+    if (!selectedVet.value || !selectedClient.value) return
+    await calendarApi.animal.new({
+      kind: 'ANIMAL',
+      type: 'SPECIFIED',
+      specificDate: date.value,
+      startTime: new Date(`1970-01-01T${start.value}`),
+      endTime: new Date(`1970-01-01T${end.value}`),
+      veterinarianId: selectedVet.value.id,
+      ownedPetId: selectedClient.value.petId,
+    })
+  }
   emit('close')
 }
 </script>
@@ -119,7 +133,7 @@ const handleSubmit = async () => {
           <el-autocomplete
             v-model="clientSearch"
             :fetch-suggestions="
-              (q: string, cb: any) => cb(filteredClients.map((u) => ({ value: u.name, ...u })))
+              (q: string, cb: any) => cb(filteredClients.map((u) => ({ value: u.lastname, ...u })))
             "
             placeholder="Rechercher un client..."
             size="large"
@@ -150,7 +164,7 @@ const handleSubmit = async () => {
           <el-autocomplete
             v-model="vetSearch"
             :fetch-suggestions="
-              (q: string, cb: any) => cb(filteredVets.map((u) => ({ value: u.name, ...u })))
+              (q: string, cb: any) => cb(filteredVets.map((u) => ({ value: u.lastname, ...u })))
             "
             placeholder="Rechercher un vétérinaire..."
             size="large"
@@ -187,7 +201,12 @@ const handleSubmit = async () => {
           <el-autocomplete
             v-model="participantSearch"
             :fetch-suggestions="
-              (q: string, cb: any) => cb(filteredUsers.map((u) => ({ value: u.name, ...u })))
+              (q: string, cb: any) =>
+                cb(
+                  vets
+                    .filter((u) => u.lastname.toLowerCase().includes(q.toLowerCase()))
+                    .map((u) => ({ value: `${u.firstname} ${u.lastname}`, ...u })),
+                )
             "
             placeholder="Rechercher un participant..."
             size="large"
@@ -293,10 +312,10 @@ const handleSubmit = async () => {
   transition: background-color 0.2s;
 
   &.dot-internal {
-    background-color: var(--el-color-pink);
+    background-color: var(--el-color-purple);
   }
   &.dot-animal {
-    background-color: var(--el-color-primary);
+    background-color: var(--el-color-teal);
   }
 }
 
@@ -336,22 +355,26 @@ const handleSubmit = async () => {
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover {
-    border-color: var(--el-color-primary);
-    color: var(--el-color-primary);
+  &:hover.type-internal {
+    border-color: var(--el-color-purple-dark);
+    color: var(--el-color-purple-dark);
+  }
+  &:hover.type-animal {
+    border-color: var(--el-color-teal-dark);
+    color: var(--el-color-teal-dark);
   }
 
   &.active.type-internal {
-    background: rgba(224, 109, 132, 0.08);
-    border-color: var(--el-color-pink);
-    color: var(--el-color-pink);
+    background: var(--el-color-purple-light);
+    border-color: var(--el-color-purple);
+    color: var(--el-color-purple-dark);
     font-weight: var(--fw-semibold);
   }
 
   &.active.type-animal {
-    background: rgba(37, 108, 171, 0.08);
-    border-color: var(--el-color-primary);
-    color: var(--el-color-primary);
+    background: var(--el-color-teal-light);
+    border-color: var(--el-color-teal);
+    color: var(--el-color-teal-dark);
     font-weight: var(--fw-semibold);
   }
 }

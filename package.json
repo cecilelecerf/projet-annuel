@@ -25,7 +25,6 @@
       "@firebase/util",
       "@parcel/watcher",
       "@prisma/engines",
-      "contextify",
       "esbuild",
       "prisma",
       "protobufjs",

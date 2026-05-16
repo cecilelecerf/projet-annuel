@@ -8,7 +8,7 @@
     "docker:logs": "docker compose --env-file .env.dev logs -f",
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
-    "db:view": "pnpm --filter api studio",
+    "db:view": "pnpm --filter api prisma:studio",
     "db:seed": "pnpm --filter api seed",
     "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view",
     "build": "pnpm --filter schemas build & pnpm --filter api build & pnpm --filter web build"

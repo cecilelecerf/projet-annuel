@@ -2,6 +2,8 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { CreateAvailability } from "@armali/schemas";
 import { AvailabilityService } from "./availability.service";
+import { prisma } from "@api/lib/prisma";
+import { NotFoundError } from "@api/errors";
 
 const availabilityService = new AvailabilityService();
 
@@ -12,10 +14,25 @@ export class AvailabilityController {
     next: NextFunction,
   ) {
     try {
+      let veterinarianClinicId: string | undefined;
+
+      if (req.user.role === "VETERINARIAN") {
+        const veterinarianClinic =
+          await prisma.veterinarianClinic.findFirstOrThrow({
+            where: {
+              veterinarian: { user: { id: req.user.id } },
+              clinicId: req.body.clinicId,
+            },
+          });
+        veterinarianClinicId = veterinarianClinic.id;
+      }
+
       const availability = await availabilityService.create({
         data: req.body,
-        userId: req.user.id,
+        authorId: veterinarianClinicId ? undefined : req.user.id,
+        veterinarianClinicId,
       });
+
       res.status(201).json(availability);
     } catch (err) {
       next(err);

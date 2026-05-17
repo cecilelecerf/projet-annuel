@@ -34,13 +34,22 @@ export class AuthService {
       },
     });
 
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, accessToken, refreshToken };
+    return { user: parsedUser, accessToken, refreshToken };
   }
 
   async login(data: Login) {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
+      include: {
+        secretaryProfile: true,
+        directorClinicProfile: true,
+        referentClinicProfile: true,
+        veterinarianProfile: {
+          include: {
+            veterinarianClinic: true,
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedError("Email ou mot de passe incorrect");
 
@@ -58,9 +67,23 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
-
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, accessToken, refreshToken };
+    const clinicId = (() => {
+      switch (user.role) {
+        case "SECRETARY":
+          return user.secretaryProfile?.clinicId ?? null;
+        case "DIRECTOR":
+          return user.directorClinicProfile?.clinicId ?? null;
+        case "REFERANT":
+          return user.referentClinicProfile?.clinicId ?? null;
+        case "VETERINARIAN":
+          return (
+            user.veterinarianProfile?.veterinarianClinic[0]?.clinicId ?? null
+          );
+        default:
+          return null;
+      }
+    })();
+    return { user: { ...parsedUser, clinicId }, accessToken, refreshToken };
   }
 
   async refresh(refreshToken: string) {
@@ -117,6 +140,7 @@ export class AuthService {
           },
         },
       },
+      omit: { password: true },
     });
     if (!user) throw new NotFoundError("Utilisateur");
 
@@ -137,7 +161,6 @@ export class AuthService {
       }
     })();
 
-    const { password: _, ...userWithoutPassword } = user;
-    return { ...userWithoutPassword, clinicId };
+    return { ...user, clinicId };
   }
 }

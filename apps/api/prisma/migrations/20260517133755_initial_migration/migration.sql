@@ -23,13 +23,10 @@ CREATE TYPE "ConversationMemberRole" AS ENUM ('ADMIN', 'MEMBER');
 CREATE TYPE "FoodHealthConditionRecommendation" AS ENUM ('RECOMMENDED', 'AVOID');
 
 -- CreateEnum
-CREATE TYPE "ScheduleType" AS ENUM ('RECURRING', 'SPECIFIED', 'EXCEPTION');
-
--- CreateEnum
 CREATE TYPE "MeetingKind" AS ENUM ('AVAILABILITY', 'INTERNAL', 'ANIMAL');
 
 -- CreateEnum
-CREATE TYPE "AvailabilityContextType" AS ENUM ('USER', 'VETERINARIAN_CLINIC');
+CREATE TYPE "ScheduleType" AS ENUM ('SPECIFIED', 'EXCEPTION');
 
 -- CreateEnum
 CREATE TYPE "MeetingStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED');
@@ -310,27 +307,40 @@ CREATE TABLE "food_health_conditions" (
 );
 
 -- CreateTable
-CREATE TABLE "meeting_bases" (
+CREATE TABLE "meeting_recurring" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "type" "ScheduleType" NOT NULL,
-    "dayOfWeek" SMALLINT,
-    "dateStart" DATE,
-    "dateEnd" DATE,
-    "startTime" TIME(0),
-    "endTime" TIME(0),
-    "specificDate" DATE,
-    "parentId" TEXT,
+    "dateStart" DATE NOT NULL,
+    "dateEnd" DATE NOT NULL,
+    "dayOfWeek" SMALLINT[],
+    "startTime" TIME(0) NOT NULL,
+    "endTime" TIME(0) NOT NULL,
     "kind" "MeetingKind" NOT NULL,
 
-    CONSTRAINT "meeting_bases_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "meeting_recurring_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "meeting_base" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "type" "ScheduleType" NOT NULL DEFAULT 'SPECIFIED',
+    "date" DATE NOT NULL,
+    "startTime" TIME(0) NOT NULL,
+    "endTime" TIME(0) NOT NULL,
+    "kind" "MeetingKind" NOT NULL,
+    "parentId" TEXT,
+
+    CONSTRAINT "meeting_base_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "availabilities" (
     "id" TEXT NOT NULL,
-    "contextType" "AvailabilityContextType" NOT NULL,
+    "recurringId" TEXT,
+    "meetingId" TEXT,
     "userId" TEXT,
     "veterinarianClinicId" TEXT,
 
@@ -354,6 +364,8 @@ CREATE TABLE "internal_meetings" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
+    "recurringId" TEXT,
+    "meetingId" TEXT,
     "clinicId" TEXT NOT NULL,
 
     CONSTRAINT "internal_meetings_pkey" PRIMARY KEY ("id")
@@ -366,6 +378,8 @@ CREATE TABLE "animal_meetings" (
     "petWeight" DECIMAL(5,2),
     "petSize" DECIMAL(5,2),
     "report" TEXT,
+    "recurringId" TEXT,
+    "meetingId" TEXT,
     "specialityId" TEXT,
     "ownedPetId" TEXT NOT NULL,
     "veterinarianId" TEXT NOT NULL,
@@ -713,6 +727,24 @@ CREATE UNIQUE INDEX "clinics_siret_key" ON "clinics"("siret");
 CREATE UNIQUE INDEX "specialities_name_key" ON "specialities"("name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "availabilities_recurringId_key" ON "availabilities"("recurringId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "availabilities_meetingId_key" ON "availabilities"("meetingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "internal_meetings_recurringId_key" ON "internal_meetings"("recurringId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "internal_meetings_meetingId_key" ON "internal_meetings"("meetingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "animal_meetings_recurringId_key" ON "animal_meetings"("recurringId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "animal_meetings_meetingId_key" ON "animal_meetings"("meetingId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "foods_productId_key" ON "foods"("productId");
 
 -- CreateIndex
@@ -854,10 +886,13 @@ ALTER TABLE "food_health_conditions" ADD CONSTRAINT "food_health_conditions_food
 ALTER TABLE "food_health_conditions" ADD CONSTRAINT "food_health_conditions_healthConditionId_fkey" FOREIGN KEY ("healthConditionId") REFERENCES "health_conditions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "meeting_bases" ADD CONSTRAINT "meeting_bases_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "meeting_bases"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "meeting_base" ADD CONSTRAINT "meeting_base_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "meeting_recurring"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_id_fkey" FOREIGN KEY ("id") REFERENCES "meeting_bases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_recurringId_fkey" FOREIGN KEY ("recurringId") REFERENCES "meeting_recurring"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "meeting_base"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -872,13 +907,19 @@ ALTER TABLE "internal_meeting_participants" ADD CONSTRAINT "internal_meeting_par
 ALTER TABLE "internal_meeting_participants" ADD CONSTRAINT "internal_meeting_participants_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_id_fkey" FOREIGN KEY ("id") REFERENCES "meeting_bases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_recurringId_fkey" FOREIGN KEY ("recurringId") REFERENCES "meeting_recurring"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "meeting_base"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_id_fkey" FOREIGN KEY ("id") REFERENCES "meeting_bases"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_recurringId_fkey" FOREIGN KEY ("recurringId") REFERENCES "meeting_recurring"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "meeting_base"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "specialities"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -16,7 +16,7 @@ export class InternalMeetingService {
     data: CreateInternalMeeting;
     userId: string;
   }) {
-    return internalMeetingRepository.create({ data, creatorId: userId });
+    return internalMeetingRepository.create({ data });
   }
 
   async update({

@@ -25,7 +25,12 @@ vi.mock("@armali/schemas", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@armali/schemas")>();
   return {
     ...actual,
-    baseUserSchema: { parse: vi.fn((user) => user) },
+    baseUserSchema: {
+      parse: vi.fn((user) => {
+        const { password, clinicId, ...parsedUser } = user;
+        return parsedUser;
+      }),
+    },
   };
 });
 
@@ -44,6 +49,7 @@ const mockUser = {
   lastname: "Dupont",
   password: "hashed_password",
   picture: null,
+  clinicId: null,
   role: UserRole.CLIENT,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -242,7 +248,6 @@ describe("AuthService.me", () => {
     prisma.user.findUnique.mockResolvedValue(mockUser);
 
     const result = await authService.me("access_token");
-
     expect(result).toEqual(mockUser);
   });
 

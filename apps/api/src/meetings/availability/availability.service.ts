@@ -5,8 +5,20 @@ import { AvailabilityRepository } from "./availability.repository";
 const availabilityRepository = new AvailabilityRepository();
 
 export class AvailabilityService {
-  async create({ data, userId }: { data: CreateAvailability; userId: string }) {
-    return availabilityRepository.create({ data, userId });
+  async create({
+    data,
+    authorId,
+    veterinarianClinicId,
+  }: {
+    data: CreateAvailability;
+    authorId?: string;
+    veterinarianClinicId?: string;
+  }) {
+    return availabilityRepository.create({
+      data,
+      authorId,
+      veterinarianClinicId,
+    });
   }
 
   async update({

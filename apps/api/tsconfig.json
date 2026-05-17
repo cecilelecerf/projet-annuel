@@ -4,6 +4,6 @@
     "outDir": "dist",
     "noEmit": false
   },
-  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts"],
+  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts", "__tests__/**/*"],
   "references": [{ "path": "../../packages/schemas" }]
 }

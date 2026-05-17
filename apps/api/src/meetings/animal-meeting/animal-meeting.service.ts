@@ -1,7 +1,7 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
-import { UserRole } from "apps/api/prisma/generated/prisma/client";
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
+import { UserRole } from "../../../prisma/generated/prisma/enums";
 
 const animalMeetingRepository = new AnimalMeetingRepository();
 

@@ -6,7 +6,7 @@ export class AnimalMeetingRepository {
     return prisma.animalMeeting.findUnique({
       where: { id },
       include: {
-        base: true,
+        meeting: true,
         ownedPet: {
           include: {
             client: true,
@@ -20,20 +20,16 @@ export class AnimalMeetingRepository {
   async create({ data }: { data: CreateAnimalMeeting }) {
     return prisma.meetingBase.create({
       data: {
-        type: data.type,
         kind: "ANIMAL",
-        dayOfWeek: data.dayOfWeek,
-        dateStart: data.dateStart,
-        dateEnd: data.dateEnd,
+        date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
-        specificDate: data.specificDate,
         animalMeeting: {
           create: {
             description: data.description,
             specialityId: data.specialityId,
             ownedPetId: data.ownedPetId,
-            veterinarianId: data.veterinarianId,
+            veterinarianClinicId: data.veterinarianClinicId,
           },
         },
       },
@@ -59,19 +55,15 @@ export class AnimalMeetingRepository {
         speciality: data.specialityId
           ? { connect: { id: data.specialityId } }
           : { disconnect: true },
-        base: {
+        meeting: {
           update: {
-            dayOfWeek: data.dayOfWeek,
-            dateStart: data.dateStart,
-            dateEnd: data.dateEnd,
+            date: data.date,
             startTime: data.startTime,
             endTime: data.endTime,
-            specificDate: data.specificDate,
-            type: data.type,
           },
         },
       },
-      include: { base: true, ownedPet: true },
+      include: { meeting: true, ownedPet: true },
     });
   }
 

@@ -28,8 +28,8 @@ model User {
   ownedPetConditionHealths    OwnedPetHealthCondition[]
   conversationMembers         ConversationMember[]
   internalMeetingParticipants InternalMeetingParticipant[]
-  availabilities              Availability[]
   meticalVisites              MedicalVisit[]
+  availabilities              Availability[]
 
   @@index([email])
   @@index([role])

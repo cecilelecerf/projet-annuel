@@ -10,42 +10,28 @@ export class InternalMeetingRepository {
     return prisma.internalMeeting.findUnique({
       where: { id },
       include: {
-        base: true,
+        meeting: true,
         participants: true,
       },
     });
   }
 
-  async create({
-    data,
-    creatorId,
-  }: {
-    data: CreateInternalMeeting;
-    creatorId: string;
-  }) {
-    const allParticipantIds = Array.from(
-      new Set([creatorId, ...data.participantIds]),
-    );
-
+  async create({ data }: { data: CreateInternalMeeting }) {
     return prisma.meetingBase.create({
       data: {
-        type: data.type,
         kind: "INTERNAL",
-        dayOfWeek: data.dayOfWeek,
-        dateStart: data.dateStart,
-        dateEnd: data.dateEnd,
+        date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
-        specificDate: data.specificDate,
         internalMeeting: {
           create: {
             title: data.title,
             description: data.description,
             clinicId: data.clinicId,
             participants: {
-              create: allParticipantIds.map((userId) => ({
+              create: data.participantIds.map((userId) => ({
                 userId,
-                status: userId === creatorId ? "ACCEPTED" : "PENDING",
+                status: "PENDING",
               })),
             },
           },
@@ -65,19 +51,15 @@ export class InternalMeetingRepository {
       data: {
         title: data.title,
         description: data.description,
-        base: {
+        meeting: {
           update: {
-            dayOfWeek: data.dayOfWeek,
-            dateStart: data.dateStart,
-            dateEnd: data.dateEnd,
+            date: data.date,
             startTime: data.startTime,
             endTime: data.endTime,
-            specificDate: data.specificDate,
-            type: data.type,
           },
         },
       },
-      include: { base: true, participants: true },
+      include: { meeting: true, participants: true },
     });
   }
 

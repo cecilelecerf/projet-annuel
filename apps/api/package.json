@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@armali/schemas": "workspace:*",
+    "@testcontainers/postgresql": "^11.14.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "5.0.5",

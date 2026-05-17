@@ -106,7 +106,7 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-02-10T09:00:00Z"),
       priceApplied: 70,
-      animalMeetingId: animalMeeting1.id,
+      animalMeetingId: animalMeeting1.animalMeeting.id,
       clinicActId: caCardioClinic1.id,
     },
   });
@@ -116,7 +116,7 @@ export async function seedActs(
       performedAt: new Date("2026-02-10T09:10:00Z"),
       priceApplied: 95,
       notes: "Échographie cardiaque — légère dilatation ventriculaire gauche",
-      animalMeetingId: animalMeeting1.id,
+      animalMeetingId: animalMeeting1.animalMeeting.id,
       clinicActId: caEchoClinic1.id,
       imaging: {
         create: {
@@ -133,7 +133,7 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-02-10T09:20:00Z"),
       priceApplied: 50,
-      animalMeetingId: animalMeeting1.id,
+      animalMeetingId: animalMeeting1.animalMeeting.id,
       clinicActId: caBloodClinic1.id,
       analysis: {
         create: {
@@ -154,7 +154,7 @@ export async function seedActs(
       performedAt: new Date("2026-03-05T14:00:00Z"),
       priceApplied: 80,
       notes: "Radiographie thoracique de contrôle",
-      animalMeetingId: animalMeeting2.id,
+      animalMeetingId: animalMeeting2.animalMeeting.id,
       clinicActId: caXrayClinic1.id,
       imaging: {
         create: {
@@ -171,7 +171,7 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-03-05T14:10:00Z"),
       priceApplied: 28,
-      animalMeetingId: animalMeeting2.id,
+      animalMeetingId: animalMeeting2.animalMeeting.id,
       clinicActId: caNursingClinic1.id,
     },
   });

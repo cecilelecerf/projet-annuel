@@ -6,4 +6,8 @@ export const userApi = {
     const data = await http.get(`/users/roles/${role.toLowerCase()}`)
     return userSchema.array().parse(data)
   },
+  getUser: async (id: string): Promise<User> => {
+    const data = await http.get(`/users/${id}`)
+    return userSchema.parse(data)
+  },
 }

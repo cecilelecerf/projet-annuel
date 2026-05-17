@@ -28,6 +28,11 @@ export const calendarApi = {
     return meetingSchema.array().parse(data)
   },
 
+  getMeeting: async (meetingId: string): Promise<Meeting> => {
+    const data = await http.get(`/meetings/${meetingId}`)
+    return meetingSchema.parse(data)
+  },
+
   internal: {
     new: async (meeting: CreateInternalMeeting) => {
       const data = await http.post(`/meetings/internal`, meeting)

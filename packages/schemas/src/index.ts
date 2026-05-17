@@ -7,6 +7,6 @@ export * from "./order.schema";
 export * from "./messagerie.schema";
 export * from "./health.schema";
 export * from "./review.schema";
-export * from "./meeting.schema";
+export * from "./mettings";
 
 export * from "./requests/index";

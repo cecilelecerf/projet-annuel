@@ -1,12 +1,15 @@
-import type { Calendar, Meeting } from '@armali/schemas'
+import type {
+  AnimalMeeting,
+  Calendar,
+  FlatMeeting,
+  InternalMeeting,
+  Meeting,
+} from '@armali/schemas'
 import { match } from 'ts-pattern'
 
-export const toCalendarEvent = (base: Meeting) => {
+export const toCalendarEvent = (base: FlatMeeting) => {
   const date = base.specificDate ?? base.dateStart
-  const title = match(base)
-    .with({ kind: 'ANIMAL' }, (b) => b.description)
-    .with({ kind: 'INTERNAL' }, (b) => b.title)
-    .otherwise(() => 'RDV')
+
   const start =
     date && base.startTime
       ? new Date(
@@ -18,13 +21,23 @@ export const toCalendarEvent = (base: Meeting) => {
     date && base.endTime
       ? new Date(`${date.toISOString().split('T')[0]}T${base.endTime.toISOString().split('T')[1]}`)
       : undefined
-  return {
-    id: base.specificDate ? `${base.id}_${base.specificDate.toISOString().split('T')[0]}` : base.id,
-    title,
+  const resultBase = {
+    id: base.id,
     start: start?.toISOString(),
     end: end?.toISOString(),
-    extendedProps: { type: base.kind },
   }
+  return match(base)
+    .with({ kind: 'ANIMAL' }, (b) => ({
+      ...resultBase,
+      title: b.description ?? '',
+      extendedProps: { kind: base.kind, description: b.ownedPetId },
+    }))
+    .with({ kind: 'INTERNAL' }, (b) => ({
+      ...resultBase,
+      title: b.title,
+      extendedProps: { kind: base.kind, description: b.clinicId, status: b.status },
+    }))
+    .otherwise(() => ({ ...resultBase, title: 'RDV' }))
 }
 
 type BusinessHour = {

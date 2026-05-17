@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CalendarWidget from '../components/CalendarWidget.vue'
+import CalendarWidget from '../components/calendar/CalendarWidget.vue'
 </script>
 
 <template>

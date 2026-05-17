@@ -11,15 +11,26 @@ import { computed, ref } from 'vue'
 import { calendarApi } from '../api/calendar.api'
 import { useAuthStore } from '@/stores/authStore'
 import { userApi } from '@/features/users/api/user.api'
-const authStore = useAuthStore()
+import dayjs from 'dayjs'
+import { useRoute } from 'vue-router'
+import { toUserId } from '@/features/users/utils'
 
+const route = useRoute()
+const id = route.params.id as string
+const veterinarian: User | null = id ? await userApi.getUser(id) : null
+const authStore = useAuthStore()
+const { initialDate } = defineProps<{
+  initialDate: Date | null
+}>()
 const emit = defineEmits<{ close: [] }>()
+
+const date = ref<Date>(initialDate ?? new Date())
+const start = ref(initialDate ? dayjs(initialDate).format('HH:mm:ss') : '')
+const end = ref(initialDate ? dayjs(initialDate).add(1, 'hour').format('HH:mm:ss') : '')
 
 const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>>('INTERNAL')
 const title = ref('')
-const start = ref('')
-const end = ref('')
-const date = ref<Date>(new Date())
+
 const location = ref('')
 const participantSearch = ref('')
 const participants = ref<{ id: string; name: string; avatar?: string }[]>([])
@@ -57,10 +68,14 @@ const handleSubmit = async () => {
   console.log(authStore.user?.clinicId)
   if (type.value === 'INTERNAL') {
     if (!authStore.user?.clinicId) return
+    const participantIds: UserId[] = [
+      ...participants.value.map(({ id }) => toUserId(id)),
+      veterinarian ? toUserId(veterinarian.id) : toUserId(authStore.user.id),
+    ]
     await calendarApi.internal.new({
       title: title.value,
       type: 'SPECIFIED',
-      participantIds: participants.value.map(({ id }) => id as UserId),
+      participantIds,
       specificDate: date.value,
       startTime: new Date(`1970-01-01T${start.value}`),
       endTime: new Date(`1970-01-01T${end.value}`),

@@ -12,6 +12,7 @@ export const petIdSchema = z.uuid().brand("PetId");
 export const ownedPetIdSchema = z.uuid().brand("OwnedPetId");
 export const raceIdSchema = z.uuid().brand("RaceId");
 export const meetingIdSchema = z.uuid().brand("MeetingId");
+export const meetingRecurringIdSchema = z.uuid().brand("MeetingRecurringId");
 export const internalMeetingParticipantIdSchema = z
   .uuid()
   .brand("InternalMeetingParticipantId");

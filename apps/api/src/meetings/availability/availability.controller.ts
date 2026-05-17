@@ -3,7 +3,8 @@ import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { CreateAvailability } from "@armali/schemas";
 import { AvailabilityService } from "./availability.service";
 import { prisma } from "@api/lib/prisma";
-import { NotFoundError } from "@api/errors";
+import { ForbiddenError, NotFoundError } from "@api/errors";
+import { VeterinarianClinic } from "../../../prisma/generated/prisma/client";
 
 const availabilityService = new AvailabilityService();
 
@@ -14,23 +15,11 @@ export class AvailabilityController {
     next: NextFunction,
   ) {
     try {
-      let veterinarianClinicId: string | undefined;
-
-      if (req.user.role === "VETERINARIAN") {
-        const veterinarianClinic =
-          await prisma.veterinarianClinic.findFirstOrThrow({
-            where: {
-              veterinarian: { user: { id: req.user.id } },
-              clinicId: req.body.clinicId,
-            },
-          });
-        veterinarianClinicId = veterinarianClinic.id;
-      }
-
+      if (!req.user.clinicId) throw new ForbiddenError();
       const availability = await availabilityService.create({
         data: req.body,
-        authorId: veterinarianClinicId ? undefined : req.user.id,
-        veterinarianClinicId,
+        authorId: req.user.id,
+        clinicId: req.user.clinicId,
       });
 
       res.status(201).json(availability);
@@ -62,9 +51,11 @@ export class AvailabilityController {
     next: NextFunction,
   ) {
     try {
+      if (!req.user.clinicId) throw new ForbiddenError();
+      // TODO : vérificaiton author travail bien dans la clinic
       await availabilityService.delete({
         id: req.params.id,
-        userId: req.user.id,
+        authorId: req.user.id,
       });
       res.status(204).json();
     } catch (err) {

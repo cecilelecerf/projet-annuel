@@ -23,7 +23,6 @@ describe("POST /api/auth/register", () => {
     expect(res.status).toBe(201);
     expect(res.body.user).not.toHaveProperty("password");
 
-    // Vérifie que l'utilisateur est bien en DB
     const user = await getPrisma().user.findUnique({
       where: { email: "nouveau@test.com" },
     });
@@ -70,6 +69,9 @@ describe("POST /api/auth/login", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("accessToken");
+    expect(res.body.user).toHaveProperty("clinicId");
+    expect(res.body.user).toHaveProperty("email");
+    expect(res.body.user).toHaveProperty("id");
     expect(res.body.user).not.toHaveProperty("password");
   });
 
@@ -117,7 +119,6 @@ describe("GET /api/auth/me", () => {
   });
 });
 
-// -------------------------------------------------------------------
 describe("POST /api/auth/logout", () => {
   it("204 — logout réussi", async () => {
     const login = await request(app).post("/api/auth/login").send({
@@ -128,12 +129,14 @@ describe("POST /api/auth/logout", () => {
     const res = await request(app)
       .post("/api/auth/logout")
       .set("Authorization", `Bearer ${login.body.accessToken}`)
-      .send({ refreshToken: login.body.refreshToken });
-
+      .send({
+        refreshToken: login.body.refreshToken,
+      });
     expect(res.status).toBe(204);
 
-    // Vérifie que le refreshToken est bien supprimé
-    const token = await getPrisma().refreshToken.findFirst();
+    const token = await getPrisma().refreshToken.findUnique({
+      where: { token: login.body.refreshToken },
+    });
     expect(token).toBeNull();
   });
 });

@@ -3,8 +3,8 @@ import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
 
 export class AnimalMeetingRepository {
   async findById(id: string) {
-    return prisma.animalMeeting.findUnique({
-      where: { id },
+    return prisma.animalMeeting.findFirst({
+      where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
         ownedPet: {

@@ -105,24 +105,13 @@ export class MeetingRepository {
   }) {
     return prisma.availability.findMany({
       where: {
-        AND: [
+        userId,
+        OR: [
           {
-            OR: [
-              { userId },
-              {
-                veterinarianClinic: { veterinarian: { user: { id: userId } } },
-              },
-            ],
+            recurringId: { not: null },
+            recurring: recurringFilter(start, end),
           },
-          {
-            OR: [
-              {
-                recurringId: { not: null },
-                recurring: recurringFilter(start, end),
-              },
-              { meetingId: { not: null }, meeting: baseFilter(start, end) },
-            ],
-          },
+          { meetingId: { not: null }, meeting: baseFilter(start, end) },
         ],
       },
       include: {
@@ -164,7 +153,7 @@ export class MeetingRepository {
                   ],
                 },
               },
-              { veterinarianClinic: { clinicId } },
+              { clinicId },
             ],
           },
           {

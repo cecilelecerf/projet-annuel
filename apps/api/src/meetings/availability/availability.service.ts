@@ -8,16 +8,16 @@ export class AvailabilityService {
   async create({
     data,
     authorId,
-    veterinarianClinicId,
+    clinicId,
   }: {
     data: CreateAvailability;
-    authorId?: string;
-    veterinarianClinicId?: string;
+    authorId: string;
+    clinicId: string;
   }) {
     return availabilityRepository.create({
       data,
       authorId,
-      veterinarianClinicId,
+      clinicId,
     });
   }
 
@@ -37,10 +37,10 @@ export class AvailabilityService {
     return availabilityRepository.update({ id, data });
   }
 
-  async delete({ id, userId }: { id: string; userId: string }) {
+  async delete({ id, authorId }: { id: string; authorId: string }) {
     const existing = await availabilityRepository.findById(id);
     if (!existing) throw new NotFoundError("Disponibilité");
-    if (existing.userId !== userId) throw new ForbiddenError();
+    if (authorId && existing.userId !== authorId) throw new ForbiddenError();
 
     return availabilityRepository.delete(id);
   }

@@ -30,6 +30,7 @@ model User {
   internalMeetingParticipants InternalMeetingParticipant[]
   meticalVisites              MedicalVisit[]
   availabilities              Availability[]
+  adminInternalMeetings       InternalMeeting[]
 
   @@index([email])
   @@index([role])

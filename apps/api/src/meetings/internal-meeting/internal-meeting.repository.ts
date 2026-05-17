@@ -7,8 +7,8 @@ import type {
 
 export class InternalMeetingRepository {
   async findById(id: string) {
-    return prisma.internalMeeting.findUnique({
-      where: { id },
+    return prisma.internalMeeting.findFirst({
+      where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
         participants: true,
@@ -16,7 +16,15 @@ export class InternalMeetingRepository {
     });
   }
 
-  async create({ data }: { data: CreateInternalMeeting }) {
+  async create({
+    data,
+    authorId,
+    clinicId,
+  }: {
+    data: CreateInternalMeeting;
+    authorId: string;
+    clinicId: string;
+  }) {
     return prisma.meetingBase.create({
       data: {
         kind: "INTERNAL",
@@ -27,9 +35,10 @@ export class InternalMeetingRepository {
           create: {
             title: data.title,
             description: data.description,
-            clinicId: data.clinicId,
+            clinicId: data.clinicId ?? clinicId,
+            adminId: authorId,
             participants: {
-              create: data.participantIds.map((userId) => ({
+              create: data.participantIds?.map((userId) => ({
                 userId,
                 status: "PENDING",
               })),

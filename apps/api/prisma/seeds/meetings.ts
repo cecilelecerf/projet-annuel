@@ -51,6 +51,7 @@ export async function seedMeetings(
     vetProfile1,
     vetProfile2,
     vetProfile3,
+    secretaryProfile,
   } = users;
   const { vetoClinic1, vetoClinic2, vetoClinic3 } = veterinarianClinics;
   const { specCardio, specDerma } = specialities;
@@ -100,7 +101,8 @@ export async function seedMeetings(
       kind: "AVAILABILITY",
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
@@ -116,7 +118,8 @@ export async function seedMeetings(
       parentId: recurringAvail1.id,
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
@@ -132,7 +135,8 @@ export async function seedMeetings(
       kind: "AVAILABILITY",
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
@@ -147,7 +151,8 @@ export async function seedMeetings(
       endTime: new Date("1970-01-01T17:00:00Z"),
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
@@ -163,7 +168,8 @@ export async function seedMeetings(
       kind: "AVAILABILITY",
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic2.id,
+          userId: vetoClinic2.veterinarianId,
+          clinicId: vetoClinic2.clinicId,
         },
       },
     },
@@ -179,7 +185,8 @@ export async function seedMeetings(
       kind: "AVAILABILITY",
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic2.id,
+          userId: vetoClinic2.veterinarianId,
+          clinicId: vetoClinic2.clinicId,
         },
       },
     },
@@ -196,7 +203,8 @@ export async function seedMeetings(
       kind: "AVAILABILITY",
       availabilty: {
         create: {
-          userId: secretaryUser1.id,
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
         },
       },
     },
@@ -212,7 +220,8 @@ export async function seedMeetings(
       kind: "AVAILABILITY",
       availabilty: {
         create: {
-          userId: secretaryUser1.id,
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
         },
       },
     },
@@ -227,7 +236,8 @@ export async function seedMeetings(
       endTime: new Date("1970-01-01T14:00:00Z"),
       availabilty: {
         create: {
-          userId: secretaryUser1.id,
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
         },
       },
     },
@@ -243,7 +253,8 @@ export async function seedMeetings(
       parentId: recurringSecAvail1.id,
       availabilty: {
         create: {
-          userId: secretaryUser1.id,
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
         },
       },
     },
@@ -332,6 +343,7 @@ export async function seedMeetings(
           title: "Réunion hebdomadaire équipe",
           description: "Point de la semaine",
           clinicId: clinic1.id,
+          adminId: vetProfile1.id,
         },
       },
     },
@@ -354,6 +366,7 @@ export async function seedMeetings(
           title: "Réunion hebdomadaire — bilan mensuel",
           description: "Bilan du mois de mars",
           clinicId: clinic1.id,
+          adminId: vetProfile1.id,
         },
       },
     },
@@ -371,6 +384,7 @@ export async function seedMeetings(
           title: "Formation nouveaux équipements",
           description: "Présentation échographie",
           clinicId: clinic1.id,
+          adminId: secretaryProfile.id,
         },
       },
     },

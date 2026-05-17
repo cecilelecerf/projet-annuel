@@ -1,6 +1,6 @@
 import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
-import { BadRequestError } from "@api/errors";
+import { BadRequestError, ForbiddenError } from "@api/errors";
 import {
   CreateInternalMeeting,
   createInternalMeetingSchema,
@@ -19,9 +19,12 @@ export class InternalMeetingController {
     next: NextFunction,
   ) {
     try {
+      if (!req.user.clinicId) throw new ForbiddenError();
+
       const meeting = await internalMeetingService.create({
         data: req.body,
         userId: req.user.id,
+        clinicId: req.user.clinicId,
       });
       res.status(201).json(meeting);
     } catch (err) {

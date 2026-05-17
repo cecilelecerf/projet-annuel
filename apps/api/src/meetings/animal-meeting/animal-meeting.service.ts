@@ -50,18 +50,10 @@ export class AnimalMeetingService {
     const meeting = await animalMeetingRepository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
-    return animalMeetingRepository.update({ id, data });
+    return animalMeetingRepository.update({ id: meeting.id, data });
   }
 
-  async delete({
-    id,
-    userId,
-    role,
-  }: {
-    id: string;
-    userId: string;
-    role: UserRole;
-  }) {
+  async delete({ id }: { id: string }) {
     const meeting = await animalMeetingRepository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 

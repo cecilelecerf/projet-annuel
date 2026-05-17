@@ -26,14 +26,14 @@ availabilityRouter.post(
 availabilityRouter.patch(
   "/:id",
   authMiddleware,
-  roleMiddleware([...staffRoles]),
+  roleMiddleware(staffRoles),
   validate(updateAvailabilitySchema),
   availabilityController.update.bind(availabilityController) as RequestHandler,
 );
 availabilityRouter.delete(
   "/:id",
   authMiddleware,
-  roleMiddleware([...staffRoles]),
+  roleMiddleware(staffRoles),
   availabilityController.delete.bind(availabilityController) as RequestHandler,
 );
 export default availabilityRouter;

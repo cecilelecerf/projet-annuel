@@ -65,12 +65,10 @@ model Availability {
   meetingId String?      @unique
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
-  // For Othr worker
-  userId               String?
-  user                 User?               @relation(fields: [userId], references: [id])
-  // For veterinarian
-  veterinarianClinicId String?
-  veterinarianClinic   VeterinarianClinic? @relation(fields: [veterinarianClinicId], references: [id])
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id])
+  clinicId String
+  clinic   Clinic  @relation(fields: [clinicId], references: [id])
 
   @@map("availabilities")
 }
@@ -87,7 +85,7 @@ model InternalMeetingParticipant {
   updatedAt DateTime @default(now()) @updatedAt
 
   meetingId String
-  meeting   InternalMeeting @relation(fields: [meetingId], references: [id])
+  meeting   InternalMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
@@ -107,6 +105,9 @@ model InternalMeeting {
 
   meetingId String?      @unique
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  adminId String
+  admin   User   @relation(fields: [adminId], references: [id])
 
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])

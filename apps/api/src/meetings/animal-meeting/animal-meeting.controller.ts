@@ -1,12 +1,6 @@
 import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
-import { BadRequestError } from "@api/errors";
-import {
-  CreateAnimalMeeting,
-  createAnimalMeetingSchema,
-  UpdateAnimalMeeting,
-  updateAnimalMeetingSchema,
-} from "@armali/schemas";
+import { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
 
 const animalMeetingService = new AnimalMeetingService();
@@ -71,8 +65,6 @@ export class AnimalMeetingController {
     try {
       await animalMeetingService.delete({
         id: req.params.id,
-        userId: req.user.id,
-        role: req.user.role,
       });
       res.status(204).json();
     } catch (err) {

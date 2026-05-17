@@ -8,30 +8,34 @@ import {
   createMeetingBaseSchema,
   meetingBaseSchema,
 } from "./meeting-base.schema";
+import { timeRefineFn, timeRefineOptions } from "./utils";
 
 export const availabilitiesSchema = meetingBaseSchema.extend({
-  veterinarianClinicId: veterinarianClinicIdSchema.nullable(),
-  userId: userIdSchema.nullable(),
+  clinicId: clinicIdSchema,
+  userId: userIdSchema,
   kind: z.literal("AVAILABILITY"),
 });
 
-const createAvailabilitiesMeetingBaseSchema = availabilitiesSchema
-  .omit({
-    kind: true,
-    veterinarianClinicId: true,
-    userId: true,
-    createdAt: true,
-    updatedAt: true,
-    id: true,
-    type: true,
-  })
-  .extend({ clinicId: clinicIdSchema.optional() });
+const createAvailabilitiesMeetingBaseSchema = availabilitiesSchema.omit({
+  kind: true,
+  clinicId: true,
+  userId: true,
+  createdAt: true,
+  updatedAt: true,
+  id: true,
+  type: true,
+});
 
-export const createAvailabilitySchema = createMeetingBaseSchema
+const createAvailabilityFields = createMeetingBaseSchema
   .omit({ kind: true, type: true })
   .extend(createAvailabilitiesMeetingBaseSchema.shape);
-
-export const updateAvailabilitySchema = createAvailabilitySchema.partial();
+export const createAvailabilitySchema = createAvailabilityFields.refine(
+  timeRefineFn,
+  timeRefineOptions,
+);
+export const updateAvailabilitySchema = createAvailabilityFields
+  .partial()
+  .refine(timeRefineFn, timeRefineOptions);
 
 export type CreateAvailability = z.infer<typeof createAvailabilitySchema>;
 export type UpdateAvailability = z.infer<typeof updateAvailabilitySchema>;

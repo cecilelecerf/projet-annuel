@@ -3,20 +3,20 @@ import type { CreateAvailability, UpdateAvailability } from "@armali/schemas";
 
 export class AvailabilityRepository {
   async findById(id: string) {
-    return prisma.availability.findUnique({
-      where: { id },
-      include: { meeting: true, user: true, veterinarianClinic: true },
+    return prisma.availability.findFirst({
+      where: { OR: [{ meetingId: id }, { recurringId: id }] },
+      include: { meeting: true, user: true, clinic: true },
     });
   }
 
   async create({
     data,
     authorId,
-    veterinarianClinicId,
+    clinicId,
   }: {
     data: CreateAvailability;
-    authorId?: string;
-    veterinarianClinicId?: string;
+    authorId: string;
+    clinicId: string;
   }) {
     return prisma.meetingBase.create({
       data: {
@@ -27,7 +27,7 @@ export class AvailabilityRepository {
         availabilty: {
           create: {
             userId: authorId,
-            veterinarianClinicId: veterinarianClinicId,
+            clinicId,
           },
         },
       },

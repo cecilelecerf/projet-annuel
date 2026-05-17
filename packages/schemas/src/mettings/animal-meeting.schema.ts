@@ -9,6 +9,7 @@ import {
   createMeetingBaseSchema,
   meetingBaseSchema,
 } from "./meeting-base.schema";
+import { timeRefineFn, timeRefineOptions } from "./utils";
 
 export const animalMeetingSchema = meetingBaseSchema.extend({
   description: z.string().nullable().optional(),
@@ -26,20 +27,23 @@ const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   specialityId: true,
   ownedPetId: true,
   veterinarianClinicId: true,
+  petSize: true,
+  petWeight: true,
+  report: true,
 });
 
-export const createAnimalMeetingSchema = createMeetingBaseSchema
+const createAnimalMeetingFields = createMeetingBaseSchema
   .omit({ kind: true, type: true })
   .extend(createAnimalMeetingBaseFields.shape);
 
-export const updateAnimalMeetingSchema = createAnimalMeetingSchema
+export const createAnimalMeetingSchema = createAnimalMeetingFields.refine(
+  timeRefineFn,
+  timeRefineOptions,
+);
+export const updateAnimalMeetingSchema = createAnimalMeetingFields
   .omit({ ownedPetId: true, veterinarianClinicId: true })
   .partial()
-  .extend({
-    petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
-    petSize: z.coerce.number().multipleOf(0.01).nullable().optional(),
-    report: z.string().nullable().optional(),
-  });
+  .refine(timeRefineFn, timeRefineOptions);
 
 export type AnimalMeeting = z.infer<typeof animalMeetingSchema>;
 export type CreateAnimalMeeting = z.infer<typeof createAnimalMeetingSchema>;

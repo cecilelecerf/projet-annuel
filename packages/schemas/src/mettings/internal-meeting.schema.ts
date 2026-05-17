@@ -10,6 +10,7 @@ import {
   meetingBaseSchema,
   meetingStatusSchema,
 } from "./meeting-base.schema";
+import { timeRefineFn, timeRefineOptions } from "./utils";
 
 export const internalMeetingParticipantSchema = z.object({
   id: internalMeetingParticipantIdSchema,
@@ -28,20 +29,28 @@ export const internalMeetingSchema = meetingBaseSchema.extend({
   kind: z.literal("INTERNAL"),
 });
 
-const createInternalMeetingBaseFields = internalMeetingSchema.pick({
-  description: true,
-  title: true,
-  clinicId: true,
-  participantIds: true,
-});
+const createInternalMeetingBaseFields = internalMeetingSchema
+  .pick({
+    description: true,
+    title: true,
+    clinicId: true,
+    participantIds: true,
+  })
+  .partial({ clinicId: true });
 
-export const createInternalMeetingSchema = createMeetingBaseSchema
+const createInternalMeetingFields = createMeetingBaseSchema
   .omit({ kind: true, type: true })
   .extend(createInternalMeetingBaseFields.shape);
 
-export const updateInternalMeetingSchema = createInternalMeetingSchema
+export const createInternalMeetingSchema = createMeetingBaseSchema
+  .omit({ kind: true, type: true })
+  .extend(createInternalMeetingBaseFields.shape)
+  .refine(timeRefineFn, timeRefineOptions);
+
+export const updateInternalMeetingSchema = createInternalMeetingFields
   .omit({ clinicId: true })
-  .partial();
+  .partial()
+  .refine(timeRefineFn, timeRefineOptions);
 
 export const updateParticipantStatusSchema = z.object({
   status: meetingStatusSchema,

@@ -12,11 +12,17 @@ export class InternalMeetingService {
   async create({
     data,
     userId,
+    clinicId,
   }: {
     data: CreateInternalMeeting;
     userId: string;
+    clinicId: string;
   }) {
-    return internalMeetingRepository.create({ data });
+    return internalMeetingRepository.create({
+      data,
+      authorId: userId,
+      clinicId,
+    });
   }
 
   async update({
@@ -43,10 +49,7 @@ export class InternalMeetingService {
     const existing = await internalMeetingRepository.findById(id);
     if (!existing) throw new NotFoundError("Réunion");
 
-    const isParticipant = existing.participants.some(
-      (p) => p.userId === userId,
-    );
-    if (!isParticipant) throw new ForbiddenError();
+    if (existing.adminId !== userId) throw new ForbiddenError();
 
     return internalMeetingRepository.delete(id);
   }

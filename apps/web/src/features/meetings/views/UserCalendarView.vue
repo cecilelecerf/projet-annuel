@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import CalendarWidget from '../components/calendar/CalendarWidget.vue'
 import type { UserId } from '@armali/schemas'
+import CalendarWidget from '../components/calendar/CalendarWidget.vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()

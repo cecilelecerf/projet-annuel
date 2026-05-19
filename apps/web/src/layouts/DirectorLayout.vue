@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
+import { Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
@@ -37,6 +38,7 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
+  <FormError />
   <main>
     <Navbar :menu-items="menuItems" />
     <router-view />

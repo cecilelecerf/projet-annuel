@@ -1,7 +1,7 @@
 import { UserRepository } from "@api/users/user.repository";
 import { ForbiddenError, NotFoundError } from "@api/errors";
-import { UserRole } from "apps/api/prisma/generated/prisma/enums";
-import { User } from "apps/api/prisma/generated/prisma/client";
+import { UserRole } from "../../prisma/generated/prisma/enums";
+import { User } from "../../prisma/generated/prisma/client";
 
 const userRepository = new UserRepository();
 
@@ -30,14 +30,21 @@ export class UserService {
     return userRepository.getUsersByClinic({ clinicId });
   }
 
-  async getUsersByRole(userId: string, role: UserRole, targetRole: UserRole) {
+  async getUsersByRoles(
+    userId: string,
+    role: UserRole,
+    targetRole: UserRole[],
+  ) {
     if (role === "ADMIN") {
-      return userRepository.getAllUsersByRole({ role });
+      return userRepository.getAllUsersByRole({ roles: [role] });
     } else {
+      if (targetRole.includes("CLIENT")) {
+        return userRepository.getAllUsersByRole({ roles: targetRole });
+      }
       const clinicId = await this.getClinicId({ userId, role });
       return userRepository.getUsersByRoleAndClinic({
         clinicId,
-        role: targetRole,
+        roles: targetRole,
       });
     }
   }

@@ -14,7 +14,7 @@ const isEditing = ref(false)
 const meeting = await calendarApi.getMeeting(meetingId)
 
 const dateLabel = computed(() => {
-  const date = meeting.specificDate
+  const date = meeting.date
   if (!date) return ''
   const start = meeting.startTime ? dayjs(meeting.startTime).format('H[h]mm') : ''
   const end = meeting.endTime ? dayjs(meeting.endTime).format('H[h]mm') : ''

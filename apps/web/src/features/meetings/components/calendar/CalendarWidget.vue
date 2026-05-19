@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import FullCalendar from '@fullcalendar/vue3'
-import { type UserId } from '@armali/schemas'
 import DateDrawer from './DateDrawer.vue'
-import NewEvent from '../NewEventDrawer.vue'
+import NewEvent from '../NewEventDrawer/index.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
+import type { UserId } from '@armali/schemas'
 const { userId } = defineProps<{
   userId?: UserId
 }>()

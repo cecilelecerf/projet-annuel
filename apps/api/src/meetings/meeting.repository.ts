@@ -54,7 +54,7 @@ export class MeetingRepository {
 
   async getAnimalMeetingsAsVet(vetProfileId: string, start: Date, end: Date) {
     return prisma.animalMeeting.findMany({
-      where: { veterinarianClinic: { veterinarianId: vetProfileId } },
+      where: { veterinarianClinic: { veterinarian: { id: vetProfileId } } },
       include: {
         recurring: {
           where: recurringFilter(start, end),

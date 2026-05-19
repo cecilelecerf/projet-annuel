@@ -1,14 +1,8 @@
-import type {
-  AnimalMeeting,
-  Calendar,
-  FlatMeeting,
-  InternalMeeting,
-  Meeting,
-} from '@armali/schemas'
+import type { Calendar, FlatMeeting } from '@armali/schemas'
 import { match } from 'ts-pattern'
 
 export const toCalendarEvent = (base: FlatMeeting) => {
-  const date = base.specificDate ?? base.dateStart
+  const date = base.date
 
   const start =
     date && base.startTime
@@ -56,9 +50,9 @@ export const availabilitiesToBusinessHours = ({
   calendar: Calendar
 }): BusinessHour[] => {
   return calendar.availabilities
-    .filter((a) => a.type === 'SPECIFIED' && a.dayOfWeek != null && a.startTime && a.endTime)
+    .filter((a) => a.type === 'SPECIFIED' && a.startTime && a.endTime)
     .map((a) => ({
-      daysOfWeek: [a.dayOfWeek!],
+      daysOfWeek: [a.date.getDay()],
       startTime: toTimeString(a.startTime!),
       endTime: toTimeString(a.endTime!),
     }))

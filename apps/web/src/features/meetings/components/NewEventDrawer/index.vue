@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import type {
-  ClientId,
-  MeetingKind,
-  OwnedPetId,
-  User,
-  UserId,
-  VeterinarianId,
-} from '@armali/schemas'
-import { computed, ref } from 'vue'
-import { calendarApi } from '../api/calendar.api'
+import type { MeetingKind, OwnedPet, User, UserId } from '@armali/schemas'
+import { computed, ref, watch } from 'vue'
+import { calendarApi } from '../../api/calendar.api'
 import { useAuthStore } from '@/stores/authStore'
 import { userApi } from '@/features/users/api/user.api'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { toUserId } from '@/features/users/utils'
+import SearchSelectSingle from './SearchSelectSingle.vue'
+import SearchSelectMultiple from './SearchSelectMultiple.vue'
+import { ownedPetApi } from '@/features/ownedPets/api'
+import { useFormErrorStore } from '@/stores/formErrorStore'
 
 const route = useRoute()
 const id = route.params.id as string
@@ -23,6 +20,7 @@ const { initialDate } = defineProps<{
   initialDate: Date | null
 }>()
 const emit = defineEmits<{ close: [] }>()
+const formErrorStore = useFormErrorStore()
 
 const date = ref<Date>(initialDate ?? new Date())
 const start = ref(initialDate ? dayjs(initialDate).format('HH:mm:ss') : '')
@@ -32,69 +30,72 @@ const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>>('INTERNAL')
 const title = ref('')
 
 const location = ref('')
-const participantSearch = ref('')
-const participants = ref<{ id: string; name: string; avatar?: string }[]>([])
-const animalName = ref('')
-const clientSearch = ref('')
-const selectedClient = ref<{ userId: ClientId; name: string; petId: OwnedPetId } | null>(null)
-const vetSearch = ref('')
-const selectedVet = ref<{ id: VeterinarianId; name: string } | null>(null)
+const participants = ref<User[]>([])
+const selectedClient = ref<User | null>(null)
+const selectedVet = ref<User | null>(veterinarian ?? null)
 
-const clients = await userApi.getUsersByRole('CLIENT')
-const vets = await userApi.getUsersByRole('VETERINARIAN')
+const selectOwnedPet = ref<OwnedPet | null>(null)
 
-const filteredClients = computed(() =>
-  clientSearch.value.length > 1
-    ? clients.filter((u) => u.lastname.toLowerCase().includes(clientSearch.value.toLowerCase()))
-    : [],
+const clients = ref<User[]>([])
+const vets = ref<User[]>([])
+const staffs = ref<User[]>([])
+const ownedPets = ref<OwnedPet[]>([])
+
+watch(selectedClient, async (client) => {
+  selectOwnedPet.value = null
+  ownedPets.value = client ? await ownedPetApi.getAllByUser(client.id) : []
+})
+watch(
+  type,
+  async (t) => {
+    if (t === 'ANIMAL') {
+      const [clientsData, vetsData] = await Promise.all([
+        userApi.getUsersByRole(['CLIENT']),
+        userApi.getUsersByRole(['VETERINARIAN']),
+      ])
+
+      clients.value = clientsData
+      vets.value = vetsData
+    } else {
+      staffs.value = await userApi.getUsersByRole(['STAFF'])
+    }
+  },
+  { immediate: true },
 )
-
-const filteredVets = computed(() =>
-  vetSearch.value.length > 1
-    ? vets.filter((u) => u.lastname.toLowerCase().includes(vetSearch.value.toLowerCase()))
-    : [],
-)
-
-const addParticipant = (user: User) => {
-  participants.value.push({ id: user.id, name: user.lastname })
-  participantSearch.value = ''
-}
-
-const removeParticipant = (id: string) => {
-  participants.value = participants.value.filter((p) => p.id !== id)
-}
+const isVetLocked = computed(() => !!veterinarian)
 
 const handleSubmit = async () => {
   console.log(authStore.user?.clinicId)
-  if (type.value === 'INTERNAL') {
-    if (!authStore.user?.clinicId) return
-    const participantIds: UserId[] = [
-      ...participants.value.map(({ id }) => toUserId(id)),
-      veterinarian ? toUserId(veterinarian.id) : toUserId(authStore.user.id),
-    ]
-    await calendarApi.internal.new({
-      title: title.value,
-      type: 'SPECIFIED',
-      participantIds,
-      specificDate: date.value,
-      startTime: new Date(`1970-01-01T${start.value}`),
-      endTime: new Date(`1970-01-01T${end.value}`),
-      kind: 'INTERNAL',
-      clinicId: authStore.user?.clinicId,
-    })
-  } else {
-    if (!selectedVet.value || !selectedClient.value) return
-    await calendarApi.animal.new({
-      kind: 'ANIMAL',
-      type: 'SPECIFIED',
-      specificDate: date.value,
-      startTime: new Date(`1970-01-01T${start.value}`),
-      endTime: new Date(`1970-01-01T${end.value}`),
-      veterinarianId: selectedVet.value.id,
-      ownedPetId: selectedClient.value.petId,
-    })
+  formErrorStore.clear()
+  try {
+    if (type.value === 'INTERNAL') {
+      if (!authStore.user?.clinicId) return
+      const participantIds: UserId[] = [
+        ...participants.value.map(({ id }) => toUserId(id)),
+        veterinarian ? toUserId(veterinarian.id) : toUserId(authStore.user.id),
+      ]
+      await calendarApi.internal.new({
+        title: title.value,
+        participantIds: [],
+        date: date.value,
+        startTime: new Date(`1970-01-01T${start.value}`),
+        endTime: new Date(`1970-01-01T${end.value}`),
+        clinicId: authStore.user?.clinicId,
+      })
+    } else {
+      if (!selectedVet.value || !selectedClient.value || !selectOwnedPet.value) return
+      await calendarApi.animal.new({
+        date: date.value,
+        startTime: new Date(`1970-01-01T${start.value}`),
+        endTime: new Date(`1970-01-01T${end.value}`),
+        veterinarianId: selectedVet.value.id,
+        ownedPetId: selectOwnedPet.value?.id,
+      })
+    }
+    emit('close')
+  } catch (err) {
+    formErrorStore.handle(err)
   }
-  emit('close')
 }
 </script>
 
@@ -135,74 +136,27 @@ const handleSubmit = async () => {
     <div class="form">
       <!-- ANIMAL : animal + client -->
       <template v-if="type === 'ANIMAL'">
-        <div class="field">
-          <label class="field-label">Animal</label>
-          <el-input v-model="animalName" placeholder="Nom de l'animal" size="large">
-            <template #prefix
-              ><el-icon><Pets /></el-icon
-            ></template>
-          </el-input>
-        </div>
-        <div class="field">
-          <label class="field-label">Client</label>
-          <el-autocomplete
-            v-model="clientSearch"
-            :fetch-suggestions="
-              (q: string, cb: any) => cb(filteredClients.map((u) => ({ value: u.lastname, ...u })))
-            "
-            placeholder="Rechercher un client..."
-            size="large"
-            style="width: 100%"
-            @select="(u: any) => (selectedClient = u)"
-          >
-            <template #default="{ item }">
-              <div class="autocomplete-item">
-                <el-avatar :size="20" class="chip-avatar">{{ item.name.charAt(0) }}</el-avatar>
-                <span>{{ item.name }}</span>
-              </div>
-            </template>
-          </el-autocomplete>
-          <div
-            v-if="selectedClient"
-            class="participant-chip"
-            style="margin-top: var(--spacing-xs); align-self: flex-start"
-          >
-            <el-avatar :size="24" class="chip-avatar">{{
-              selectedClient.name.charAt(0)
-            }}</el-avatar>
-            <span class="chip-name">{{ selectedClient.name }}</span>
-            <el-icon class="chip-remove" @click="selectedClient = null"><Close /></el-icon>
-          </div>
-        </div>
-        <div class="field">
-          <label class="field-label">Vétérinaire</label>
-          <el-autocomplete
-            v-model="vetSearch"
-            :fetch-suggestions="
-              (q: string, cb: any) => cb(filteredVets.map((u) => ({ value: u.lastname, ...u })))
-            "
-            placeholder="Rechercher un vétérinaire..."
-            size="large"
-            style="width: 100%"
-            @select="(u: any) => (selectedVet = u)"
-          >
-            <template #default="{ item }">
-              <div class="autocomplete-item">
-                <el-avatar :size="20" class="chip-avatar">{{ item.name.charAt(0) }}</el-avatar>
-                <span>{{ item.name }}</span>
-              </div>
-            </template>
-          </el-autocomplete>
-          <div
-            v-if="selectedVet"
-            class="participant-chip"
-            style="margin-top: var(--spacing-xs); align-self: flex-start"
-          >
-            <el-avatar :size="24" class="chip-avatar">{{ selectedVet.name.charAt(0) }}</el-avatar>
-            <span class="chip-name">{{ selectedVet.name }}</span>
-            <el-icon class="chip-remove" @click="selectedVet = null"><Close /></el-icon>
-          </div>
-        </div>
+        <SearchSelectSingle
+          v-model="selectedClient"
+          :items="clients"
+          display-key="lastname"
+          secondary-key="firstname"
+          placeholder="Rechercher un client..."
+        />
+        <SearchSelectSingle
+          v-model="selectOwnedPet"
+          :items="ownedPets"
+          display-key="name"
+          placeholder="Rechercher un animal..."
+        />
+        <SearchSelectSingle
+          v-model="selectedVet"
+          :items="vets"
+          display-key="lastname"
+          secondary-key="firstname"
+          placeholder="Rechercher un vétérinaire..."
+          :locked="isVetLocked"
+        />
       </template>
 
       <!-- INTERNAL : titre + participants + lieu -->
@@ -211,31 +165,13 @@ const handleSubmit = async () => {
           <label class="field-label">Titre</label>
           <el-input v-model="title" placeholder="Nom de la réunion" size="large" />
         </div>
-        <div class="field">
-          <label class="field-label">Participants</label>
-          <el-autocomplete
-            v-model="participantSearch"
-            :fetch-suggestions="
-              (q: string, cb: any) =>
-                cb(
-                  vets
-                    .filter((u) => u.lastname.toLowerCase().includes(q.toLowerCase()))
-                    .map((u) => ({ value: `${u.firstname} ${u.lastname}`, ...u })),
-                )
-            "
-            placeholder="Rechercher un participant..."
-            size="large"
-            style="width: 100%"
-            @select="(u: any) => addParticipant(u)"
-          />
-          <div v-if="participants.length > 0" class="participants-list">
-            <div v-for="p in participants" :key="p.id" class="participant-chip">
-              <el-avatar :size="24" class="chip-avatar">{{ p.name.charAt(0) }}</el-avatar>
-              <span class="chip-name">{{ p.name }}</span>
-              <el-icon class="chip-remove" @click="removeParticipant(p.id)"><Close /></el-icon>
-            </div>
-          </div>
-        </div>
+        <SearchSelectMultiple
+          v-model="participants"
+          :items="staffs"
+          display-key="lastname"
+          secondary-key="firstname"
+          placeholder="Rechercher des participant..."
+        />
         <div class="field">
           <label class="field-label">Lieu</label>
           <el-input v-model="location" placeholder="Salle, adresse..." size="large">

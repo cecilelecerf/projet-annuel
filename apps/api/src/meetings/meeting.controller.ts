@@ -67,12 +67,11 @@ export class MeetingController {
       const { veterinarianId } = req.params;
 
       const [veterinarian, clinicId] = await Promise.all([
-        prisma.veterinarianProfile.findUnique({
+        prisma.veterinarianProfile.findUniqueOrThrow({
           where: { id: veterinarianId },
         }),
         userService.getClinicId({ userId: req.user.id, role: req.user.role }),
       ]);
-
       if (!veterinarian) throw new NotFoundError("Veterinarian");
 
       const [internal, animal, availabilities] = await Promise.all([
@@ -80,7 +79,7 @@ export class MeetingController {
         meetingService.getAnimalMeetingsAsVet(veterinarian.id, start, end),
         meetingService.getAvailabilitiesByClinic({ clinicId, start, end }),
       ]);
-
+      console.log(internal, animal);
       return res.status(200).json(
         calendarSchema.parse({
           meetings: [...internal, ...animal],

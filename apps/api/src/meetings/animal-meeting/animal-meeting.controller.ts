@@ -2,6 +2,7 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
+import { ForbiddenError } from "@api/errors";
 
 const animalMeetingService = new AnimalMeetingService();
 
@@ -12,10 +13,10 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
+      if (!req.user.clinicId) throw new ForbiddenError();
       const meeting = await animalMeetingService.create({
         data: req.body,
-        userId: req.user.id,
-        role: req.user.role,
+        clinicId: req.user.clinicId,
       });
       res.status(201).json(meeting);
     } catch (err) {

@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  clinicIdSchema,
-  userIdSchema,
-  veterinarianClinicIdSchema,
-} from "../ids";
+import { clinicIdSchema, userIdSchema } from "../ids";
 import {
   createMeetingBaseSchema,
   meetingBaseSchema,

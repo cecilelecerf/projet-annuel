@@ -7,6 +7,13 @@ enum MeetingKind {
   ANIMAL
 }
 
+enum MeetingFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
 model MeetingReccuring {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
@@ -15,9 +22,10 @@ model MeetingReccuring {
   dateStart DateTime @db.Date
   dateEnd   DateTime @db.Date
 
-  dayOfWeek Int[]    @db.SmallInt
-  startTime DateTime @db.Time(0)
-  endTime   DateTime @db.Time(0)
+  frequency MeetingFrequency @default(WEEKLY)
+  dayOfWeek Int[]            @db.SmallInt
+  startTime DateTime         @db.Time(0)
+  endTime   DateTime         @db.Time(0)
 
   childrens MeetingBase[] @relation("RecurringChildren")
 

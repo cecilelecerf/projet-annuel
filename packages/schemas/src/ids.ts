@@ -2,11 +2,11 @@ import { z } from "zod";
 
 // ── Branded IDs ───────────────────────────────────────────────────────────────
 export const userIdSchema = z.uuid().brand("UserId");
-export const clientIdSchema = z.uuid().brand("ClientId");
-export const veterinarianIdSchema = z.uuid().brand("VeterinarianId");
-export const secretaryIdSchema = z.uuid().brand("SecretaryId");
-export const directorClinicIdSchema = z.uuid().brand("DirectorClinicId");
-export const referantClinicIdSchema = z.uuid().brand("ReferantClinicId");
+export const clientIdSchema = userIdSchema;
+export const veterinarianIdSchema = userIdSchema;
+export const secretaryIdSchema = userIdSchema;
+export const directorClinicIdSchema = userIdSchema;
+export const referantClinicIdSchema = userIdSchema;
 export const clinicIdSchema = z.uuid().brand("ClinicId");
 export const petIdSchema = z.uuid().brand("PetId");
 export const ownedPetIdSchema = z.uuid().brand("OwnedPetId");

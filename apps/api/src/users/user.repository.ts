@@ -1,5 +1,5 @@
 import { prisma } from "@api/lib/prisma";
-import { UserRole } from "apps/api/prisma/generated/prisma/enums";
+import { UserRole } from "../../prisma/generated/prisma/enums";
 
 export class UserRepository {
   async getClinicIdByUserId({
@@ -51,14 +51,14 @@ export class UserRepository {
 
   async getUsersByRoleAndClinic({
     clinicId,
-    role,
+    roles,
   }: {
     clinicId: string;
-    role: UserRole;
+    roles: UserRole[];
   }) {
     return prisma.user.findMany({
       where: {
-        role,
+        role: { in: roles },
         OR: [
           { secretaryProfile: { clinicId } },
           { directorClinicProfile: { clinicId } },
@@ -90,9 +90,9 @@ export class UserRepository {
       },
     });
   }
-  async getAllUsersByRole({ role }: { role: UserRole }) {
+  async getAllUsersByRole({ roles }: { roles: UserRole[] }) {
     return prisma.user.findMany({
-      where: { role },
+      where: { role: { in: roles } },
       include: {
         veterinarianProfile: true,
         clientProfile: true,

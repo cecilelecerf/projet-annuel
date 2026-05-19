@@ -1,7 +1,10 @@
 import { z } from "zod";
 import {
+  clinicIdSchema,
   ownedPetIdSchema,
+  petIdSchema,
   specialityIdSchema,
+  userIdSchema,
   veterinarianClinicIdSchema,
   veterinarianIdSchema,
 } from "../ids";
@@ -34,14 +37,18 @@ const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
 
 const createAnimalMeetingFields = createMeetingBaseSchema
   .omit({ kind: true, type: true })
-  .extend(createAnimalMeetingBaseFields.shape);
+  .extend(
+    createAnimalMeetingBaseFields.omit({ veterinarianClinicId: true }).extend({
+      veterinarianId: veterinarianIdSchema,
+    }).shape,
+  );
 
 export const createAnimalMeetingSchema = createAnimalMeetingFields.refine(
   timeRefineFn,
   timeRefineOptions,
 );
 export const updateAnimalMeetingSchema = createAnimalMeetingFields
-  .omit({ ownedPetId: true, veterinarianClinicId: true })
+  .omit({ veterinarianId: true, ownedPetId: true })
   .partial()
   .refine(timeRefineFn, timeRefineOptions);
 

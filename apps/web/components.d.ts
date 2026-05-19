@@ -37,6 +37,7 @@ declare module 'vue' {
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     ElTimePicker: typeof import('element-plus/es')['ElTimePicker']
     EventContainer: typeof import('./src/components/calendar/EventContainer.vue')['default']
+    FormError: typeof import('./src/components/ui/FormError.vue')['default']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
     ListUser: typeof import('./src/components/users/ListUser.vue')['default']
     Navbar: typeof import('./src/components/ui/nav/Navbar.vue')['default']

@@ -1,3 +1,6 @@
+import type { Weekday, Frequency } from "rrule";
+import RRuleLib from "rrule";
+const { RRule, RRuleSet } = RRuleLib;
 import {
   AnimalMeeting,
   Availability,
@@ -33,6 +36,23 @@ export type FlatMeeting = MeetingBase &
 
 const meetingRepository = new MeetingRepository();
 
+const RRULE_DAYS: Weekday[] = [
+  RRule.SU,
+  RRule.MO,
+  RRule.TU,
+  RRule.WE,
+  RRule.TH,
+  RRule.FR,
+  RRule.SA,
+];
+
+const RRULE_FREQ: Record<string, Frequency> = {
+  DAILY: RRule.DAILY,
+  WEEKLY: RRule.WEEKLY,
+  MONTHLY: RRule.MONTHLY,
+  YEARLY: RRule.YEARLY,
+};
+
 export class MeetingService {
   private isRecurring(
     m: MeetingBaseWithSpecific | MeetingRecurringWithChildren,
@@ -67,18 +87,10 @@ export class MeetingService {
     reccuring: MeetingRecurringWithChildren;
     start: Date;
     end: Date;
-  }): FlatMeeting[] {
-    const occurrences: FlatMeeting[] = [];
-    const current = new Date(
-      reccuring.dateStart.toISOString().split("T")[0] + "T00:00:00.000Z",
-    );
-    const rangeEnd = new Date(
-      reccuring.dateEnd.toISOString().split("T")[0] + "T00:00:00.000Z",
-    );
-
+  }) {
     const exceptionDates = (reccuring.childrens ?? [])
       .filter((c) => c.type === "EXCEPTION")
-      .map((c) => c.date?.toISOString().split("T")[0])
+      .map((c) => c.date!)
       .filter(Boolean);
 
     const overrideMap = (reccuring.childrens ?? [])
@@ -88,47 +100,53 @@ export class MeetingService {
         if (dateStr) acc[dateStr] = c as MeetingBaseWithSpecific;
         return acc;
       }, {});
+    const freq = RRULE_FREQ[reccuring.frequency];
+    const rule = new RRule({
+      freq,
+      byweekday: reccuring.dayOfWeek.map((d) => RRULE_DAYS[d]),
+      dtstart: new Date(
+        reccuring.dateStart.toISOString().split("T")[0] + "T00:00:00.000Z",
+      ),
+      until: new Date(
+        reccuring.dateEnd.toISOString().split("T")[0] + "T23:59:59.000Z",
+      ),
+    });
+    const ruleSet = new RRuleSet();
+    ruleSet.rrule(rule);
+    exceptionDates.forEach((d) => ruleSet.exdate(d));
 
-    while (current <= rangeEnd) {
-      if (current >= start && current <= end) {
-        const dateStr = current.toISOString().split("T")[0];
-        const dow = current.getUTCDay();
+    const occurrences = ruleSet.between(start, end, true);
 
-        if (
-          reccuring.dayOfWeek.includes(dow) &&
-          !exceptionDates.includes(dateStr)
-        ) {
-          if (overrideMap[dateStr]) {
-            occurrences.push(this.flattenBase(overrideMap[dateStr]));
-          } else {
-            let t: AnimalMeeting | InternalMeeting | Availability | undefined;
-            if (reccuring.animalMeeting) t = reccuring.animalMeeting;
-            else if (reccuring.internalMeeting) t = reccuring.internalMeeting;
-            else if (reccuring.availabilty) t = reccuring.availabilty;
-            if (!t)
-              throw new Error(
-                `RecurringMeetingBase ${reccuring.id} has no specific type`,
-              );
+    return occurrences.map((date) => {
+      const dateStr = date.toISOString().split("T")[0];
 
-            occurrences.push({
-              ...t,
-              id: reccuring.id,
-              createdAt: reccuring.createdAt,
-              updatedAt: reccuring.updatedAt,
-              startTime: reccuring.startTime,
-              endTime: reccuring.endTime,
-              kind: reccuring.kind,
-              date: new Date(dateStr + "T00:00:00.000Z"),
-              type: "SPECIFIED",
-              parentId: null,
-            });
-          }
-        }
+      if (overrideMap[dateStr]) {
+        return this.flattenBase(overrideMap[dateStr]);
       }
-      current.setUTCDate(current.getUTCDate() + 1);
-    }
 
-    return occurrences;
+      let t: AnimalMeeting | InternalMeeting | Availability | undefined;
+      if (reccuring.animalMeeting) t = reccuring.animalMeeting;
+      else if (reccuring.internalMeeting) t = reccuring.internalMeeting;
+      else if (reccuring.availabilty) t = reccuring.availabilty;
+
+      if (!t)
+        throw new Error(
+          `RecurringMeetingBase ${reccuring.id} has no specific type`,
+        );
+
+      return {
+        ...t,
+        id: reccuring.id,
+        createdAt: reccuring.createdAt,
+        updatedAt: reccuring.updatedAt,
+        startTime: reccuring.startTime,
+        endTime: reccuring.endTime,
+        kind: reccuring.kind,
+        date: new Date(dateStr + "T00:00:00.000Z"),
+        type: "SPECIFIED" as const,
+        parentId: null,
+      };
+    });
   }
 
   private expandAll(
@@ -184,7 +202,6 @@ export class MeetingService {
       start,
       end,
     );
-
     const flat = meetings.flatMap(
       ({
         recurring,
@@ -195,7 +212,6 @@ export class MeetingService {
         return [];
       },
     );
-
     return this.expandAll(flat, start, end);
   }
 
@@ -312,7 +328,6 @@ export class MeetingService {
         ? this.getAvailabilitiesByClinic({ clinicId, start, end })
         : this.getAvailabilities({ userId, start, end }),
     ]);
-
     return {
       meetings: [...internal, ...animal],
       availabilities,

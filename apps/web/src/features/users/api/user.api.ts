@@ -2,8 +2,8 @@ import { http } from '@/lib/api'
 import { userSchema, type User, type UserRole } from '@armali/schemas'
 
 export const userApi = {
-  getUsersByRole: async (role: UserRole): Promise<User[]> => {
-    const data = await http.get(`/users/roles/${role.toLowerCase()}`)
+  getUsersByRole: async (roles: (UserRole | 'STAFF')[]): Promise<User[]> => {
+    const data = await http.get(`/users/roles/${roles.map((role) => role.toLowerCase()).join('/')}`)
     return userSchema.array().parse(data)
   },
   getUser: async (id: string): Promise<User> => {

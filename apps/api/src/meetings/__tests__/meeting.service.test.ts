@@ -50,6 +50,7 @@ const makeRecurring = (overrides = {}) => ({
   dayOfWeek: [1],
   startTime: new Date("1970-01-01T08:00:00.000Z"),
   endTime: new Date("1970-01-01T09:00:00.000Z"),
+  frequency: "WEEKLY" as const,
   animalMeeting: null,
   internalMeeting: null,
   availabilty: null,

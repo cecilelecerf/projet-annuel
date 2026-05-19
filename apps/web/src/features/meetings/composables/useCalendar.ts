@@ -14,6 +14,7 @@ import type {
   EventInput,
 } from '@fullcalendar/core/index.js'
 import type { VerboseFormattingArg } from '@fullcalendar/core/internal'
+import { useAuthStore } from '@/stores/authStore'
 
 export function useCalendar(userId?: UserId) {
   const calendarData = ref<Calendar | null>(null)
@@ -70,7 +71,9 @@ export function useCalendar(userId?: UserId) {
       selectedMeeting.value = info.event.id
     },
     datesSet: async (info: DatesSetArg) => {
-      calendarData.value = await fetchMeetings(info.startStr, info.endStr)
+      const meetings = await fetchMeetings(info.startStr, info.endStr)
+      console.log(meetings)
+      calendarData.value = meetings
       calendarOptions.value.events = calendarData.value!.meetings.map(toCalendarEvent)
       calendarOptions.value.businessHours = availabilitiesToBusinessHours({
         calendar: calendarData.value!,

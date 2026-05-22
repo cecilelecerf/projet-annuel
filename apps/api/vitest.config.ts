@@ -4,6 +4,10 @@ const root = resolve(__dirname, "../..");
 
 export default defineConfig({
   test: {
+    globalSetup: "./__tests__/globalSetup.ts",
+    setupFiles: ["./__tests__/setup.ts"],
+    hookTimeout: 60_000,
+    testTimeout: 15_000,
     include: ["src/**/*.test.ts"],
     environment: "node",
     coverage: {

@@ -2,21 +2,47 @@ import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { MeetingController } from "@api/meetings/meeting.controller";
+import { UserRole } from "@armali/schemas";
+import availabilityRouter from "./availability/availability.route";
+import animalMeetingRouter from "./animal-meeting/animal-meeting.router";
+import internalMeetingRouter from "./internal-meeting/internal-meeting.router";
 
 const meetingRouter: RouterType = Router();
-const controller = new MeetingController();
 
+const meetingController = new MeetingController();
+
+export const staffRoles: UserRole[] = [
+  "VETERINARIAN",
+  "SECRETARY",
+  "REFERANT",
+  "DIRECTOR",
+] as const;
+
+// ── Calendrier ────────────────────────────────────────────────────────────────
 meetingRouter.get(
-  "/",
+  "/calendar",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY"]),
-  controller.getMyCalendar.bind(controller) as RequestHandler,
+  meetingController.getMyCalendar.bind(meetingController) as RequestHandler,
 );
 meetingRouter.get(
-  "/:veterinarianId",
+  "/calendar/:veterinarianId",
   authMiddleware,
   roleMiddleware(["SECRETARY"]),
-  controller.getVeterinarianCalendar.bind(controller) as RequestHandler,
+  meetingController.getVeterinarianCalendar.bind(
+    meetingController,
+  ) as RequestHandler,
 );
+
+meetingRouter.get(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),
+  meetingController.getMeeting.bind(meetingController) as RequestHandler,
+);
+
+meetingRouter.use("/availabilities", availabilityRouter);
+meetingRouter.use("/animal", animalMeetingRouter);
+meetingRouter.use("/internal", internalMeetingRouter);
 
 export default meetingRouter;

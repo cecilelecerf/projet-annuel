@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api } from '../lib/api'
-import { type User } from '@armali/schemas'
-export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'>
+import { api, http } from '../lib/api'
+import { type ClinicId, type User } from '@armali/schemas'
+export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'> & {
+  clinicId?: ClinicId
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserStore | null>(null)
@@ -11,15 +13,16 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!accessToken.value)
 
   const init = async () => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated.value) return
     try {
-      const data = await api('/auth/me')
+      const data = await http.get<UserStore>('/auth/me')
       const userData: UserStore = {
         id: data.id,
         email: data.email,
         firstname: data.firstname,
         lastname: data.lastname,
         role: data.role,
+        clinicId: data.clinicId,
       }
       user.value = userData
     } catch {
@@ -32,10 +35,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const login = async (email: string, password: string) => {
-    const data = await api('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
+    const data = await http.post<{ user: UserStore; accessToken: string; refreshToken: string }>(
+      '/auth/login',
+      {
+        email,
+        password,
+      },
+    )
     user.value = data.user
     accessToken.value = data.accessToken
     refreshToken.value = data.refreshToken

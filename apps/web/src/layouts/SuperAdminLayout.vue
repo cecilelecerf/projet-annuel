@@ -1,9 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import FormError from '@/components/ui/FormError.vue'
+</script>
 
 <template>
-  <div>
-    <main>
-      <router-view />
-    </main>
-  </div>
+  <FormError />
+  <main>
+    <router-view />
+  </main>
 </template>

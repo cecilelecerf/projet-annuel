@@ -10,6 +10,7 @@ jobs:
   test-unit:
     name: Test Unitaire & Implémentation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
@@ -37,10 +38,18 @@ jobs:
 
       - name: Run tests
         run: pnpm --filter api test
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          JWT_ACCESS_SECRET: "test-access-secret"
+          JWT_REFRESH_SECRET: "test-refresh-secret"
 
       - name: Verify coverage (main only)
         if: github.base_ref == 'main'
         run: pnpm --filter api test:coverage
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          JWT_ACCESS_SECRET: "test-access-secret"
+          JWT_REFRESH_SECRET: "test-refresh-secret"
 
   build:
     name: Build & Type Check

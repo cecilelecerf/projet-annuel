@@ -95,18 +95,16 @@ describe("UserService.getUsers", () => {
 
 // ── getUsersByRole ────────────────────────────────────────────────────────────
 
-describe("UserService.getUsersByRole", () => {
+describe("UserService.getUsersByRoles", () => {
   it("ADMIN — retourne tous les utilisateurs du rôle cible", async () => {
     mockUserRepository.getAllUsersByRole.mockResolvedValue([mockUser]);
 
-    const result = await userService.getUsersByRole(
-      "admin-1",
-      "ADMIN",
+    const result = await userService.getUsersByRoles("admin-1", "ADMIN", [
       "VETERINARIAN",
-    );
+    ]);
 
     expect(mockUserRepository.getAllUsersByRole).toHaveBeenCalledWith({
-      role: "ADMIN",
+      roles: ["VETERINARIAN"],
     });
     expect(result).toHaveLength(1);
   });
@@ -115,15 +113,13 @@ describe("UserService.getUsersByRole", () => {
     mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockUserRepository.getUsersByRoleAndClinic.mockResolvedValue([mockUser]);
 
-    const result = await userService.getUsersByRole(
-      "dir-1",
-      "DIRECTOR",
+    const result = await userService.getUsersByRoles("dir-1", "DIRECTOR", [
       "VETERINARIAN",
-    );
+    ]);
 
     expect(mockUserRepository.getUsersByRoleAndClinic).toHaveBeenCalledWith({
       clinicId: "clinic-1",
-      role: "VETERINARIAN",
+      roles: ["VETERINARIAN"],
     });
     expect(result).toHaveLength(1);
   });
@@ -133,7 +129,7 @@ describe("UserService.getUsersByRole", () => {
     mockUserRepository.getClinicIdByUserId.mockResolvedValue(null);
 
     await expect(
-      userService.getUsersByRole("dir-1", "DIRECTOR", "VETERINARIAN"),
+      userService.getUsersByRoles("dir-1", "DIRECTOR", ["VETERINARIAN"]),
     ).rejects.toThrow(ForbiddenError);
   });
 });

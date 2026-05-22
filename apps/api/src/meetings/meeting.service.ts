@@ -1,235 +1,344 @@
-import { MeetingRepository } from "./meeting.repository";
-import type {
+import type { Weekday, Frequency } from "rrule";
+import RRuleLib from "rrule";
+const { RRule, RRuleSet } = RRuleLib;
+import {
   AnimalMeeting,
   Availability,
-  Clinic,
   InternalMeeting,
   InternalMeetingParticipant,
   MeetingBase,
-  ReferentClinicProfile,
-  SecretaryProfile,
-  User,
-  VeterinarianClinic,
-} from "apps/api/prisma/generated/prisma/client";
+  MeetingReccuring,
+} from "../../prisma/generated/prisma/client";
+import { MeetingRepository } from "./meeting.repository";
+import type { UserRole } from "@armali/schemas";
+import { NotFoundError } from "@api/errors";
 
-type MeetingBaseWithExceptions = MeetingBase & {
-  exceptions: MeetingBase[];
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type MeetingBaseWithSpecific = MeetingBase & {
+  animalMeeting: AnimalMeeting | null;
+  internalMeeting:
+    | (InternalMeeting & { participants: InternalMeetingParticipant[] })
+    | null;
+  availabilty: Availability | null;
 };
 
-type AnimalMeetingWithBase = AnimalMeeting & {
-  base: MeetingBaseWithExceptions;
+type MeetingRecurringWithChildren = MeetingReccuring & {
+  animalMeeting: AnimalMeeting | null;
+  internalMeeting:
+    | (InternalMeeting & { participants: InternalMeetingParticipant[] })
+    | null;
+  availabilty: Availability | null;
+  childrens: MeetingBaseWithSpecific[];
 };
 
-type InternalMeetingWithBase = InternalMeeting & {
-  base: MeetingBaseWithExceptions;
-};
-type AvailabilitiesWithBase = Availability & {
-  base: MeetingBaseWithExceptions;
-};
-
-type ParticipantWithMeeting = InternalMeetingParticipant & {
-  meeting: InternalMeetingWithBase;
-};
-
-export type FlatMeeting = Omit<MeetingBaseWithExceptions, never> &
-  Partial<Omit<AnimalMeeting, "id">> &
-  Partial<Omit<InternalMeeting, "id">> &
-  Partial<Omit<AvailabilitiesWithBase, "id">> & {
-    occurrenceDate?: Date;
-  };
+export type FlatMeeting = MeetingBase &
+  (AnimalMeeting | InternalMeeting | Availability);
 
 const meetingRepository = new MeetingRepository();
 
+const RRULE_DAYS: Weekday[] = [
+  RRule.SU,
+  RRule.MO,
+  RRule.TU,
+  RRule.WE,
+  RRule.TH,
+  RRule.FR,
+  RRule.SA,
+];
+
+const RRULE_FREQ: Record<string, Frequency> = {
+  DAILY: RRule.DAILY,
+  WEEKLY: RRule.WEEKLY,
+  MONTHLY: RRule.MONTHLY,
+  YEARLY: RRule.YEARLY,
+};
+
 export class MeetingService {
-  // ── Helpers privés ──────────────────────────────────────────────────────────
+  private isRecurring(
+    m: MeetingBaseWithSpecific | MeetingRecurringWithChildren,
+  ): m is MeetingRecurringWithChildren {
+    return "dateStart" in m;
+  }
+  // ── Flatten ────────────────────────────────────────────────────────────────
 
-  private flattenMeeting({
-    base,
+  private flattenBase({
+    animalMeeting,
+    internalMeeting,
+    availabilty,
     ...rest
-  }:
-    | AnimalMeetingWithBase
-    | InternalMeetingWithBase
-    | AvailabilitiesWithBase): FlatMeeting {
-    return { ...base, ...rest };
+  }: MeetingBaseWithSpecific): FlatMeeting {
+    if (animalMeeting) return { ...animalMeeting, ...rest };
+    if (internalMeeting) return { ...internalMeeting, ...rest };
+    if (availabilty) return { ...availabilty, ...rest };
+    throw new Error(`MeetingBase ${rest.id} has no specific type`);
   }
 
-  private extractInternalMeetings(
-    participants: ParticipantWithMeeting[],
-  ): FlatMeeting[] {
-    return participants
-      .filter((p) => p.meeting)
-      .map(({ meeting }) => this.flattenMeeting(meeting));
+  flattenMeetingByBase(base: MeetingBaseWithSpecific): FlatMeeting {
+    return this.flattenBase(base);
   }
+
+  // ── Expand ─────────────────────────────────────────────────────────────────
 
   expandRecurring({
-    meeting: meeting,
+    reccuring,
     start,
     end,
   }: {
-    meeting: FlatMeeting;
-    start: Date;
-    end: Date;
-  }): FlatMeeting[] {
-    const occurrences: FlatMeeting[] = [];
-    const current = new Date(
-      meeting.dateStart!.toISOString().split("T")[0] + "T00:00:00.000Z",
-    );
-
-    const exceptionDates = meeting.exceptions
-      .filter((e) => e.type === "EXCEPTION")
-      .map((e) => e.specificDate?.toISOString().split("T")[0])
-      .filter((d): d is string => d !== undefined);
-
-    while (current <= end) {
-      if (current >= start && current.getUTCDay() === meeting.dayOfWeek) {
-        const dateStr = current.toISOString().split("T")[0];
-        if (!exceptionDates.includes(dateStr)) {
-          occurrences.push({
-            ...meeting,
-            specificDate: new Date(dateStr + "T00:00:00.000Z"),
-            occurrenceDate: new Date(dateStr + "T00:00:00.000Z"),
-            type: "SPECIFIED" as const,
-          });
-        }
-      }
-      current.setUTCDate(current.getUTCDate() + 1);
-    }
-
-    return occurrences;
-  }
-
-  private expandAll(
-    flat: FlatMeeting[],
-    start: Date,
-    end: Date,
-  ): FlatMeeting[] {
-    const recurring = flat.filter((m) => m.type === "RECURRING");
-    const nonRecurring = flat.filter((m) => m.type !== "RECURRING");
-
-    const expanded = recurring.flatMap((m) =>
-      this.expandRecurring({ meeting: m, start, end }),
-    );
-    return [...nonRecurring, ...expanded];
-  }
-
-  // ── Par rôle ────────────────────────────────────────────────────────────────
-
-  async getMeetingsForVeterinarian(
-    id: VeterinarianClinic["id"],
-    start: Date,
-    end: Date,
-  ) {
-    const profile = await meetingRepository.getVeterinarianMeetings(
-      id,
-      start,
-      end,
-    );
-    if (!profile) return null;
-
-    const animalMeetings = profile.animalMeeting.map((m) =>
-      this.flattenMeeting(m as AnimalMeetingWithBase),
-    );
-    const internalMeetings = this.extractInternalMeetings(
-      profile.user.internalMeetingParticipants as ParticipantWithMeeting[],
-    );
-    return this.expandAll([...animalMeetings, ...internalMeetings], start, end);
-  }
-
-  async getMeetingsForSecretary(
-    id: SecretaryProfile["id"],
-    start: Date,
-    end: Date,
-  ) {
-    const profile = await meetingRepository.getSecretaryMeetings(
-      id,
-      start,
-      end,
-    );
-    if (!profile) return null;
-
-    const internalMeetings = this.extractInternalMeetings(
-      profile.user.internalMeetingParticipants as ParticipantWithMeeting[],
-    );
-
-    return this.expandAll(internalMeetings, start, end);
-  }
-
-  async getMeetingsForReferant(
-    id: ReferentClinicProfile["id"],
-    start: Date,
-    end: Date,
-  ) {
-    const profile = await meetingRepository.getReferantMeetings(id, start, end);
-    if (!profile) return null;
-
-    const internalMeetings = this.extractInternalMeetings(
-      profile.user.internalMeetingParticipants as ParticipantWithMeeting[],
-    );
-
-    return this.expandAll(internalMeetings, start, end);
-  }
-  async getAllAvailibilities({
-    id,
-    start,
-    end,
-  }: {
-    id: User["id"];
+    reccuring: MeetingRecurringWithChildren;
     start: Date;
     end: Date;
   }) {
-    const profile = await meetingRepository.getAllAvailabilities({
-      id,
+    const exceptionDates = (reccuring.childrens ?? [])
+      .filter((c) => c.type === "EXCEPTION")
+      .map((c) => c.date!)
+      .filter(Boolean);
+
+    const overrideMap = (reccuring.childrens ?? [])
+      .filter((c) => c.type === "SPECIFIED")
+      .reduce<Record<string, MeetingBaseWithSpecific>>((acc, c) => {
+        const dateStr = c.date?.toISOString().split("T")[0];
+        if (dateStr) acc[dateStr] = c as MeetingBaseWithSpecific;
+        return acc;
+      }, {});
+    const freq = RRULE_FREQ[reccuring.frequency];
+    const rule = new RRule({
+      freq,
+      byweekday: reccuring.dayOfWeek.map((d) => RRULE_DAYS[d]),
+      dtstart: new Date(
+        reccuring.dateStart.toISOString().split("T")[0] + "T00:00:00.000Z",
+      ),
+      until: new Date(
+        reccuring.dateEnd.toISOString().split("T")[0] + "T23:59:59.000Z",
+      ),
+    });
+    const ruleSet = new RRuleSet();
+    ruleSet.rrule(rule);
+    exceptionDates.forEach((d) => ruleSet.exdate(d));
+
+    const occurrences = ruleSet.between(start, end, true);
+
+    return occurrences.map((date) => {
+      const dateStr = date.toISOString().split("T")[0];
+
+      if (overrideMap[dateStr]) {
+        return this.flattenBase(overrideMap[dateStr]);
+      }
+
+      let t: AnimalMeeting | InternalMeeting | Availability | undefined;
+      if (reccuring.animalMeeting) t = reccuring.animalMeeting;
+      else if (reccuring.internalMeeting) t = reccuring.internalMeeting;
+      else if (reccuring.availabilty) t = reccuring.availabilty;
+
+      if (!t)
+        throw new Error(
+          `RecurringMeetingBase ${reccuring.id} has no specific type`,
+        );
+
+      return {
+        ...t,
+        id: reccuring.id,
+        recurringId: reccuring.id,
+        createdAt: reccuring.createdAt,
+        updatedAt: reccuring.updatedAt,
+        startTime: reccuring.startTime,
+        endTime: reccuring.endTime,
+        kind: reccuring.kind,
+        date: new Date(dateStr + "T00:00:00.000Z"),
+        type: "SPECIFIED" as const,
+        parentId: null,
+      };
+    });
+  }
+
+  private expandAll(
+    flat: (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[],
+    start: Date,
+    end: Date,
+  ): FlatMeeting[] {
+    const recurrings: MeetingRecurringWithChildren[] = [];
+    const nonRecurring: MeetingBaseWithSpecific[] = [];
+    flat.forEach((item) => {
+      if (this.isRecurring(item)) recurrings.push(item);
+      else nonRecurring.push(item);
+    });
+    return [
+      ...nonRecurring.map((m) => this.flattenBase(m)),
+      ...recurrings.flatMap((m) =>
+        this.expandRecurring({ reccuring: m, start, end }),
+      ),
+    ];
+  }
+
+  // ── Par ressource ──────────────────────────────────────────────────────────
+
+  async getInternalMeetings(
+    userId: string,
+    start: Date,
+    end: Date,
+  ): Promise<FlatMeeting[]> {
+    const participants = await meetingRepository.getInternalMeetings(
+      userId,
+      start,
+      end,
+    );
+    const flat = participants.flatMap(
+      ({
+        meeting: { recurring, meeting },
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
+    );
+    return this.expandAll(flat, start, end);
+  }
+
+  async getAnimalMeetingsAsVet(
+    vetProfileId: string,
+    start: Date,
+    end: Date,
+  ): Promise<FlatMeeting[]> {
+    const meetings = await meetingRepository.getAnimalMeetingsAsVet(
+      vetProfileId,
+      start,
+      end,
+    );
+    const flat = meetings.flatMap(
+      ({
+        recurring,
+        meeting,
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
+    );
+    return this.expandAll(flat, start, end);
+  }
+
+  async getAnimalMeetingsAsClient(
+    clientProfileId: string,
+    start: Date,
+    end: Date,
+  ): Promise<FlatMeeting[]> {
+    const meetings = await meetingRepository.getAnimalMeetingsAsClient(
+      clientProfileId,
+      start,
+      end,
+    );
+
+    const flat = meetings.flatMap(
+      ({
+        meeting,
+        recurring,
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
+    );
+
+    return this.expandAll(flat, start, end);
+  }
+
+  async getAvailabilities({
+    userId,
+    start,
+    end,
+  }: {
+    userId: string;
+    start: Date;
+    end: Date;
+  }): Promise<FlatMeeting[]> {
+    const avails = await meetingRepository.getAvailabilities({
+      userId,
       start,
       end,
     });
-    if (!profile) return null;
-    const availabilitiesUser: FlatMeeting[] = profile.availabilities.map(
-      this.flattenMeeting,
+
+    const flat = avails.flatMap(
+      ({
+        recurring,
+        meeting,
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
     );
-    let availabilitiesVeto: FlatMeeting[] = [];
-    if (profile.veterinarianProfile) {
-      availabilitiesVeto =
-        profile.veterinarianProfile.veterinarianClinic.flatMap(
-          ({ availabilities }) => availabilities.map(this.flattenMeeting),
-        );
-    }
-    return [
-      ...this.expandAll(availabilitiesUser, start, end),
-      ...this.expandAll(availabilitiesVeto, start, end),
-    ];
+
+    return this.expandAll(flat, start, end);
   }
-  async getAvailibilitiesByClinic({
-    id,
+
+  async getAvailabilitiesByClinic({
     clinicId,
     start,
     end,
   }: {
-    id: User["id"];
-    clinicId: Clinic["id"];
+    clinicId: string;
+    start: Date;
+    end: Date;
+  }): Promise<FlatMeeting[]> {
+    const avails = await meetingRepository.getAvailabilitiesByClinic({
+      clinicId,
+      start,
+      end,
+    });
+
+    const flat = avails.flatMap(
+      ({
+        recurring,
+        meeting,
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
+    );
+
+    return this.expandAll(flat, start, end);
+  }
+
+  // ── Calendrier agrégé ──────────────────────────────────────────────────────
+
+  async getCalendar({
+    userId,
+    role,
+    vetProfileId,
+    clientProfileId,
+    clinicId,
+    start,
+    end,
+  }: {
+    userId: string;
+    role: UserRole;
+    vetProfileId?: string;
+    clientProfileId?: string;
+    clinicId?: string;
     start: Date;
     end: Date;
   }) {
-    const profile = await meetingRepository.getAllAvailabilitiesByClinic({
-      id,
-      start,
-      end,
-      clinicId,
-    });
-    if (!profile) return null;
+    const [internal, animal, availabilities] = await Promise.all([
+      this.getInternalMeetings(userId, start, end),
+      role === "VETERINARIAN" && vetProfileId
+        ? this.getAnimalMeetingsAsVet(vetProfileId, start, end)
+        : role === "CLIENT" && clientProfileId
+          ? this.getAnimalMeetingsAsClient(clientProfileId, start, end)
+          : Promise.resolve([]),
+      clinicId
+        ? this.getAvailabilitiesByClinic({ clinicId, start, end })
+        : this.getAvailabilities({ userId, start, end }),
+    ]);
+    return {
+      meetings: [...internal, ...animal],
+      availabilities,
+    };
+  }
 
-    const availabilities: FlatMeeting[] = profile.availabilities.map(
-      this.flattenMeeting,
-    );
-    let availabilitiesVeto: FlatMeeting[] = [];
-    if (profile.veterinarianProfile) {
-      availabilitiesVeto =
-        profile.veterinarianProfile.veterinarianClinic.flatMap(
-          ({ availabilities }) => availabilities.map(this.flattenMeeting),
-        );
-    }
-    return [
-      ...this.expandAll(availabilities, start, end),
-      ...this.expandAll(availabilitiesVeto, start, end),
-    ];
+  async getMeeting(id: string): Promise<FlatMeeting> {
+    const meeting = await meetingRepository.getMeetingById(id);
+    if (!meeting) throw new NotFoundError("Meeting");
+    return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
   }
 }

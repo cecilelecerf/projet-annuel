@@ -10,45 +10,33 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'Secretary.Home',
-        component: () => import('@/views/secretary/Home.vue'),
+        component: () => import('@/features/users/views/secretary/SecretaryHomeView.vue'),
         // Widget : Prévision du nb de visites
       },
       // ── Calendar ───────────────────────────────────────────────
       {
         path: 'calendar',
         name: 'Secretary.Calendar',
-        component: () => import('@/views/calendar/CalendarView.vue'),
+        component: () => import('@/features/meetings/views/MeCalendarView.vue'),
       },
       {
         path: 'veterinarian',
         name: 'Secretary.Veto.List',
-        component: () => import('@/views/secretary/veterinarian/List.vue'),
+        component: () => import('@/features/users/views/secretary/UserListView.vue'),
       },
       {
-        path: 'veterinarian/:id',
+        path: 'veterinarian/calendar/:id',
         name: 'Secretary.Veto.Calendar',
-        component: () => import('@/views/secretary/veterinarian/VeterinarianCalendar.vue'),
+        component: () => import('@/features/meetings/views/UserCalendarView.vue'),
       },
-      // {
-      //   path: 'calendar/tous',
-      //   name: 'Secretary.Calendar.Tous',
-      //   //        component: () => import('@/views/secretary/calendar/TousCalendars.vue'),
-      //   // Voir les calendars de tous les vétos — Filtre sur un véto
-      // },
-      // {
-      //   path: 'calendar/jour',
-      //   name: 'Secretary.Calendar.Jour',
-      //   //        component: () => import('@/views/secretary/calendar/VueJour.vue'),
-      //   // Voir tous les RDV du jour (n'importe quel véto)
-      // },
-      // {
-      //   path: 'calendar/rdv/:id',
-      //   name: 'Secretary.Calendar.RDV.Detail',
-      //   //        component: () => import('@/views/secretary/calendar/DetailRDV.vue'),
-      //   // Horaires, Infos résumé de l'animal (Nom, Type),
-      //   // Type de RDV (chirurgies, castration…)
-      //   // Actions : Modification | Suppression | Création
-      // },
+      {
+        path: 'meetings/:id',
+        name: 'Secretary.Calendar.Meeting.Detail',
+        component: () => import('@/features/meetings/views/MeetingView.vue'),
+        // Horaires, Infos résumé de l'animal (Nom, Type),
+        // Type de RDV (chirurgies, castration…)
+        // Actions : Modification | Suppression | Création
+      },
       // // ── Boutique ─────────────────────────────────────────────
       // {
       //   path: 'boutique',

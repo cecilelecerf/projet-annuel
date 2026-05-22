@@ -31,8 +31,8 @@ async function main() {
 
   const { clinic1, clinic2 } = await seedClinics(prisma);
   const users = await seedUsers(prisma, [clinic1, clinic2]);
-  const medicalVisit = await seedMedicalVisits(prisma, { users });
-  const bankingInfo = await seedBankingInfo(prisma, { users });
+  await seedMedicalVisits(prisma, { users });
+  await seedBankingInfo(prisma, { users });
   const pets = await seedPets(prisma);
   const specialities = await seedSpecialities(prisma);
   const vaccines = await seedVaccines(prisma, pets);

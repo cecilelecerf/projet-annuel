@@ -1,8 +1,8 @@
 import { UserService } from "@api/users/user.service";
 import { BadRequestError } from "@api/errors";
 import type { NextFunction, Response } from "express";
-import { UserRole } from "apps/api/prisma/generated/prisma/enums";
 import { AuthenticatedRequest } from "@api/middlewares";
+import { UserRole } from "../../prisma/generated/prisma/enums";
 
 const userService = new UserService();
 
@@ -36,15 +36,24 @@ export class UserController {
   ) {
     try {
       const { id, role } = req.user;
-      const targetRole = Array.isArray(req.params.role)
-        ? (req.params.role[0].toUpperCase() as UserRole)
-        : (req.params.role.toUpperCase() as UserRole);
 
-      if (!VALID_ROLES.includes(targetRole)) {
-        throw new BadRequestError(`Rôle invalide : ${targetRole}`);
+      const targetRoles = (
+        Array.isArray(req.params.role) ? req.params.role : [req.params.role]
+      ).map((r) => r.toUpperCase()) as (UserRole | "STAFF")[];
+
+      if (
+        !targetRoles.every(
+          (targetRole) =>
+            targetRole === "STAFF" || VALID_ROLES.includes(targetRole),
+        )
+      ) {
+        throw new BadRequestError(`Rôle invalide`);
       }
+      const rolesToSearch: UserRole[] = targetRoles.includes("STAFF")
+        ? ["DIRECTOR", "REFERANT", "SECRETARY", "VETERINARIAN"]
+        : (targetRoles as UserRole[]);
 
-      const users = await userService.getUsersByRole(id, role, targetRole);
+      const users = await userService.getUsersByRoles(id, role, rolesToSearch);
 
       res.status(200).json(users);
     } catch (err) {

@@ -1,5 +1,6 @@
 import { prisma } from "@api/lib/prisma";
-import { UserRole } from "apps/api/prisma/generated/prisma/enums";
+import { UserRole } from "../../prisma/generated/prisma/enums";
+import { userWithProfileAndClinicIdInclude } from "./user.types";
 
 export class UserRepository {
   async getClinicIdByUserId({
@@ -51,14 +52,14 @@ export class UserRepository {
 
   async getUsersByRoleAndClinic({
     clinicId,
-    role,
+    roles,
   }: {
     clinicId: string;
-    role: UserRole;
+    roles: UserRole[];
   }) {
     return prisma.user.findMany({
       where: {
-        role,
+        role: { in: roles },
         OR: [
           { secretaryProfile: { clinicId } },
           { directorClinicProfile: { clinicId } },
@@ -69,6 +70,8 @@ export class UserRepository {
         ],
       },
       omit: { password: true },
+
+      include: userWithProfileAndClinicIdInclude,
     });
   }
 
@@ -88,18 +91,15 @@ export class UserRepository {
         directorClinicProfile: true,
         referentClinicProfile: true,
       },
+
+      omit: { password: true },
     });
   }
-  async getAllUsersByRole({ role }: { role: UserRole }) {
+  async getAllUsersByRole({ roles }: { roles: UserRole[] }) {
     return prisma.user.findMany({
-      where: { role },
-      include: {
-        veterinarianProfile: true,
-        clientProfile: true,
-        secretaryProfile: true,
-        directorClinicProfile: true,
-        referentClinicProfile: true,
-      },
+      where: { role: { in: roles } },
+      omit: { password: true },
+      include: userWithProfileAndClinicIdInclude,
     });
   }
 }

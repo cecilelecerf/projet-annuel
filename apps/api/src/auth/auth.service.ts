@@ -1,5 +1,12 @@
 import { hash, compare } from "bcryptjs";
-import { baseUserSchema, Login, Register } from "@armali/schemas";
+import {
+  baseUserSchema,
+  ClinicId,
+  Login,
+  ReferantClinic,
+  Register,
+  User,
+} from "@armali/schemas";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -8,8 +15,39 @@ import {
 } from "@api/utils";
 import { prisma } from "@api/lib/prisma";
 import { ConflictError, NotFoundError, UnauthorizedError } from "@api/errors";
+import {
+  Clinic,
+  DirectorClinicProfile,
+  SecretaryProfile,
+  VeterinarianClinic,
+  VeterinarianProfile,
+  User as UserPrisma,
+} from "../../prisma/generated/prisma/client";
 
 export class AuthService {
+  private getClinicId(user: {
+    role: string;
+    secretaryProfile?: { clinicId: string } | null;
+    directorClinicProfile?: { clinicId: string } | null;
+    referentClinicProfile?: { clinicId: string } | null;
+    veterinarianProfile?: { veterinarianClinic: { clinicId: string }[] } | null;
+  }): ClinicId | null {
+    switch (user.role) {
+      case "SECRETARY":
+        return (user.secretaryProfile?.clinicId as ClinicId) ?? null;
+      case "DIRECTOR":
+        return (user.directorClinicProfile?.clinicId as ClinicId) ?? null;
+      case "REFERANT":
+        return (user.referentClinicProfile?.clinicId as ClinicId) ?? null;
+      case "VETERINARIAN":
+        return (
+          (user.veterinarianProfile?.veterinarianClinic[0]
+            ?.clinicId as ClinicId) ?? null
+        );
+      default:
+        return null;
+    }
+  }
   async register(data: Register) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
@@ -34,13 +72,22 @@ export class AuthService {
       },
     });
 
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, accessToken, refreshToken };
+    return { user: parsedUser, accessToken, refreshToken };
   }
 
   async login(data: Login) {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
+      include: {
+        secretaryProfile: true,
+        directorClinicProfile: true,
+        referentClinicProfile: true,
+        veterinarianProfile: {
+          include: {
+            veterinarianClinic: true,
+          },
+        },
+      },
     });
     if (!user) throw new UnauthorizedError("Email ou mot de passe incorrect");
 
@@ -48,8 +95,15 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
     const parsedUser = baseUserSchema.parse(user);
-    const accessToken = generateAccessToken(parsedUser);
-    const refreshToken = generateRefreshToken(parsedUser);
+    const clinicId = this.getClinicId(user);
+    const accessToken = generateAccessToken({
+      ...parsedUser,
+      clinicId: clinicId ?? undefined,
+    });
+    const refreshToken = generateRefreshToken({
+      ...parsedUser,
+      clinicId: clinicId ?? undefined,
+    });
 
     await prisma.refreshToken.create({
       data: {
@@ -59,8 +113,7 @@ export class AuthService {
       },
     });
 
-    const { password: _, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, accessToken, refreshToken };
+    return { user: { ...parsedUser, clinicId }, accessToken, refreshToken };
   }
 
   async refresh(refreshToken: string) {
@@ -105,9 +158,24 @@ export class AuthService {
     const payload = verifyAccessToken(accessToken);
     if (!payload) throw new UnauthorizedError("Token invalide");
 
-    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      include: {
+        secretaryProfile: true,
+        directorClinicProfile: true,
+        referentClinicProfile: true,
+        veterinarianProfile: {
+          include: {
+            veterinarianClinic: true,
+          },
+        },
+      },
+      omit: { password: true },
+    });
     if (!user) throw new NotFoundError("Utilisateur");
 
-    return user;
+    const clinicId = this.getClinicId(user);
+
+    return { ...user, clinicId };
   }
 }

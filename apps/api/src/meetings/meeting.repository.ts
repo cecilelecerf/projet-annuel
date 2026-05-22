@@ -1,44 +1,49 @@
 import { prisma } from "@api/lib/prisma";
-import { Clinic, User } from "apps/api/prisma/generated/prisma/client";
 
-const periodFilter = (start: Date, end: Date) => ({
-  OR: [
-    { type: "SPECIFIED" as const, specificDate: { gte: start, lte: end } },
-    {
-      type: "RECURRING" as const,
-      dateStart: { lte: end },
-      dateEnd: { gte: start },
-    },
-  ],
+const recurringFilter = (start: Date, end: Date) => ({
+  dateStart: { lte: end },
+  dateEnd: { gte: start },
 });
 
-const baseWithExceptions = {
-  include: { exceptions: true },
-};
+const baseFilter = (start: Date, end: Date) => ({
+  date: { gte: start, lte: end },
+});
+
+const recurringWithChildren = (start: Date, end: Date) => ({
+  animalMeeting: true,
+  internalMeeting: { include: { participants: true } },
+  availabilty: true,
+  childrens: {
+    where: baseFilter(start, end),
+    include: {
+      animalMeeting: true,
+      internalMeeting: { include: { participants: true } },
+      availabilty: true,
+    },
+  },
+});
 
 export class MeetingRepository {
-  async getVeterinarianMeetings(id: string, start: Date, end: Date) {
-    return prisma.veterinarianProfile.findUnique({
-      where: { id },
+  async getInternalMeetings(userId: string, start: Date, end: Date) {
+    return prisma.internalMeetingParticipant.findMany({
+      where: { userId },
       include: {
-        animalMeeting: {
-          where: { base: periodFilter(start, end) },
-          include: { base: baseWithExceptions },
-        },
-        veterinarianClinic: {
+        meeting: {
           include: {
-            availabilities: {
-              where: { base: periodFilter(start, end) },
-              include: { base: baseWithExceptions },
-            },
-          },
-        },
-        user: {
-          include: {
-            internalMeetingParticipants: {
-              where: { meeting: { base: periodFilter(start, end) } },
+            recurring: {
+              where: recurringFilter(start, end),
               include: {
-                meeting: { include: { base: baseWithExceptions } },
+                ...recurringWithChildren(start, end),
+                internalMeeting: { include: { participants: true } },
+              },
+            },
+            meeting: {
+              where: {
+                ...baseFilter(start, end),
+                parentId: null,
+              },
+              include: {
+                internalMeeting: { include: { participants: true } },
               },
             },
           },
@@ -47,112 +52,149 @@ export class MeetingRepository {
     });
   }
 
-  async getSecretaryMeetings(id: string, start: Date, end: Date) {
-    return prisma.secretaryProfile.findUnique({
-      where: { id },
+  async getAnimalMeetingsAsVet(vetProfileId: string, start: Date, end: Date) {
+    return prisma.animalMeeting.findMany({
+      where: { veterinarianClinic: { veterinarian: { id: vetProfileId } } },
       include: {
-        user: {
-          include: {
-            internalMeetingParticipants: {
-              where: { meeting: { base: periodFilter(start, end) } },
-              include: {
-                meeting: { include: { base: baseWithExceptions } },
-              },
-            },
+        recurring: {
+          where: recurringFilter(start, end),
+          include: recurringWithChildren(start, end),
+        },
+        meeting: {
+          where: {
+            ...baseFilter(start, end),
+            parentId: null,
           },
+          include: { animalMeeting: true },
         },
       },
     });
   }
-
-  async getReferantMeetings(id: string, start: Date, end: Date) {
-    return prisma.referentClinicProfile.findUnique({
-      where: { id },
+  async getAnimalMeetingsAsClient(
+    clientProfileId: string,
+    start: Date,
+    end: Date,
+  ) {
+    return prisma.animalMeeting.findMany({
+      where: { ownedPet: { clientId: clientProfileId } },
       include: {
-        user: {
-          include: {
-            internalMeetingParticipants: {
-              where: { meeting: { base: periodFilter(start, end) } },
-              include: {
-                meeting: { include: { base: baseWithExceptions } },
-              },
-            },
-          },
+        recurring: {
+          where: recurringFilter(start, end),
+          include: recurringWithChildren(start, end),
         },
+        meeting: {
+          where: {
+            ...baseFilter(start, end),
+            parentId: null,
+          },
+          include: { animalMeeting: true },
+        },
+        ownedPet: true,
       },
     });
   }
 
-  async getAllAvailabilities({
-    id,
+  async getAvailabilities({
+    userId,
     start,
     end,
   }: {
-    id: string;
+    userId: string;
     start: Date;
     end: Date;
   }) {
-    return prisma.user.findUnique({
-      where: { id },
+    return prisma.availability.findMany({
+      where: {
+        userId,
+        OR: [
+          {
+            recurringId: { not: null },
+            recurring: recurringFilter(start, end),
+          },
+          { meetingId: { not: null }, meeting: baseFilter(start, end) },
+        ],
+      },
       include: {
-        availabilities: {
-          where: { base: periodFilter(start, end) },
-          include: {
-            base: baseWithExceptions,
-          },
+        recurring: {
+          where: recurringFilter(start, end),
+          include: recurringWithChildren(start, end),
         },
-        veterinarianProfile: {
-          include: {
-            veterinarianClinic: {
-              include: {
-                availabilities: {
-                  where: { base: periodFilter(start, end) },
-                  include: {
-                    base: baseWithExceptions,
-                  },
-                },
-              },
-            },
+        meeting: {
+          where: {
+            ...baseFilter(start, end),
+            parentId: null,
           },
+          include: { availabilty: true },
         },
       },
     });
   }
-  async getAllAvailabilitiesByClinic({
-    id,
+
+  async getAvailabilitiesByClinic({
     clinicId,
     start,
     end,
   }: {
-    id: User["id"];
-    clinicId: Clinic["id"];
+    clinicId: string;
     start: Date;
     end: Date;
   }) {
-    return prisma.user.findUnique({
-      where: { id },
-      include: {
-        availabilities: {
-          where: { base: periodFilter(start, end) },
-          include: {
-            base: baseWithExceptions,
-          },
-        },
-        veterinarianProfile: {
-          include: {
-            veterinarianClinic: {
-              where: { clinicId },
-              include: {
-                availabilities: {
-                  where: { base: periodFilter(start, end) },
-                  include: {
-                    base: baseWithExceptions,
-                  },
+    return prisma.availability.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              {
+                user: {
+                  OR: [
+                    { directorClinicProfile: { clinicId } },
+                    { referentClinicProfile: { clinicId } },
+                    { secretaryProfile: { clinicId } },
+                  ],
                 },
               },
-            },
+              { clinicId },
+            ],
           },
+          {
+            OR: [
+              { recurring: recurringFilter(start, end) },
+              { meeting: baseFilter(start, end) },
+            ],
+          },
+        ],
+      },
+      include: {
+        recurring: {
+          where: recurringFilter(start, end),
+          include: recurringWithChildren(start, end),
         },
+        meeting: {
+          where: baseFilter(start, end),
+          include: { availabilty: true },
+        },
+      },
+    });
+  }
+  async getMeetingById(id: string) {
+    return prisma.meetingBase.findUnique({
+      where: { id },
+      include: {
+        animalMeeting: true,
+        internalMeeting: { include: { participants: true } },
+        availabilty: true,
+        parent: true,
+      },
+    });
+  }
+
+  async getRecurringById(id: string) {
+    return prisma.meetingReccuring.findUnique({
+      where: { id },
+      include: {
+        animalMeeting: true,
+        internalMeeting: { include: { participants: true } },
+        availabilty: true,
       },
     });
   }

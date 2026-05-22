@@ -10,7 +10,7 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'Director.Home',
-        component: () => import('@/views/director/Home.vue'),
+        component: () => import('@/features/users/views/director/DirectorHomeView.vue'),
       },
       // ── Administration & Configuration ────────────────────────
       // {

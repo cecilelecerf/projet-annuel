@@ -51,6 +51,7 @@ export async function seedMeetings(
     vetProfile1,
     vetProfile2,
     vetProfile3,
+    secretaryProfile,
   } = users;
   const { vetoClinic1, vetoClinic2, vetoClinic3 } = veterinarianClinics;
   const { specCardio, specDerma } = specialities;
@@ -90,153 +91,171 @@ export async function seedMeetings(
   });
 
   // ── Disponibilités véto ─────────────────────────────────────────────────────
-  const baseAvail1 = await prisma.meetingBase.create({
+  const recurringAvail1 = await prisma.meetingReccuring.create({
     data: {
-      type: "RECURRING",
-      kind: "AVAILABILITY",
-      dayOfWeek: 1,
       dateStart: new Date("2026-01-01"),
       dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [1],
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T12:00:00Z"),
-      availabilty: {
-        create: {
-          veterinarianClinicId: vetoClinic1.id,
-          contextType: "VETERINARIAN_CLINIC",
-        },
-      },
-    },
-  });
-  await prisma.meetingBase.create({
-    data: {
-      type: "RECURRING",
       kind: "AVAILABILITY",
-      dayOfWeek: 3,
-      dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
-      startTime: new Date("1970-01-01T14:00:00Z"),
-      endTime: new Date("1970-01-01T18:00:00Z"),
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
-          contextType: "VETERINARIAN_CLINIC",
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
   });
+  // Exception sur le récurrent
   await prisma.meetingBase.create({
     data: {
       type: "EXCEPTION",
       kind: "AVAILABILITY",
-      specificDate: new Date("2026-03-09"),
-      parentId: baseAvail1.id,
+      date: new Date("2026-03-09"),
+      startTime: new Date("1970-01-01T08:00:00Z"),
+      endTime: new Date("1970-01-01T12:00:00Z"),
+      parentId: recurringAvail1.id,
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
-          contextType: "VETERINARIAN_CLINIC",
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
   });
+
+  await prisma.meetingReccuring.create({
+    data: {
+      dateStart: new Date("2026-01-01"),
+      dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [3],
+      startTime: new Date("1970-01-01T14:00:00Z"),
+      endTime: new Date("1970-01-01T18:00:00Z"),
+      kind: "AVAILABILITY",
+      availabilty: {
+        create: {
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
+        },
+      },
+    },
+  });
+
   await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "AVAILABILITY",
-      specificDate: new Date("2026-03-15"),
+      date: new Date("2026-03-15"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T17:00:00Z"),
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic1.id,
-          contextType: "VETERINARIAN_CLINIC",
+          userId: vetoClinic1.veterinarianId,
+          clinicId: vetoClinic1.clinicId,
         },
       },
     },
   });
-  await prisma.meetingBase.create({
+
+  await prisma.meetingReccuring.create({
     data: {
-      type: "RECURRING",
-      kind: "AVAILABILITY",
-      dayOfWeek: 2,
       dateStart: new Date("2026-01-01"),
       dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [2],
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T13:00:00Z"),
+      kind: "AVAILABILITY",
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic2.id,
-          contextType: "VETERINARIAN_CLINIC",
+          userId: vetoClinic2.veterinarianId,
+          clinicId: vetoClinic2.clinicId,
         },
       },
     },
   });
-  await prisma.meetingBase.create({
+
+  await prisma.meetingReccuring.create({
     data: {
-      type: "RECURRING",
-      kind: "AVAILABILITY",
-      dayOfWeek: 4,
       dateStart: new Date("2026-01-01"),
       dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [4],
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T18:00:00Z"),
+      kind: "AVAILABILITY",
       availabilty: {
         create: {
-          veterinarianClinicId: vetoClinic2.id,
-          contextType: "VETERINARIAN_CLINIC",
+          userId: vetoClinic2.veterinarianId,
+          clinicId: vetoClinic2.clinicId,
         },
       },
     },
   });
 
   // ── Disponibilités secrétaire ───────────────────────────────────────────────
-  const baseSecAvail1 = await prisma.meetingBase.create({
+  const recurringSecAvail1 = await prisma.meetingReccuring.create({
     data: {
-      type: "RECURRING",
-      kind: "AVAILABILITY",
-      dayOfWeek: 1,
       dateStart: new Date("2026-01-01"),
       dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [1],
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T17:00:00Z"),
+      kind: "AVAILABILITY",
       availabilty: {
-        create: { contextType: "USER", userId: secretaryUser1.id },
+        create: {
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
+        },
       },
     },
   });
-  await prisma.meetingBase.create({
+
+  await prisma.meetingReccuring.create({
     data: {
-      type: "RECURRING",
-      kind: "AVAILABILITY",
-      dayOfWeek: 2,
       dateStart: new Date("2026-01-01"),
       dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [2],
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T17:00:00Z"),
+      kind: "AVAILABILITY",
       availabilty: {
-        create: { contextType: "USER", userId: secretaryUser1.id },
+        create: {
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
+        },
       },
     },
   });
+
   await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "AVAILABILITY",
-      specificDate: new Date("2026-04-15"),
+      date: new Date("2026-04-15"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T14:00:00Z"),
       availabilty: {
-        create: { contextType: "USER", userId: secretaryUser1.id },
+        create: {
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
+        },
       },
     },
   });
+
   await prisma.meetingBase.create({
     data: {
       type: "EXCEPTION",
       kind: "AVAILABILITY",
-      specificDate: new Date("2026-03-23"),
-      parentId: baseSecAvail1.id,
+      date: new Date("2026-03-23"),
+      startTime: new Date("1970-01-01T08:00:00Z"),
+      endTime: new Date("1970-01-01T17:00:00Z"),
+      parentId: recurringSecAvail1.id,
       availabilty: {
-        create: { contextType: "USER", userId: secretaryUser1.id },
+        create: {
+          userId: secretaryProfile.user.id,
+          clinicId: secretaryProfile.clinicId,
+        },
       },
     },
   });
@@ -246,7 +265,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      specificDate: new Date("2026-02-10"),
+      date: new Date("2026-02-10"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T09:30:00Z"),
       animalMeeting: {
@@ -258,16 +277,20 @@ export async function seedMeetings(
             "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
           specialityId: specCardio.id,
           ownedPetId: ownedPet1.id,
-          veterinarianId: vetProfile1.id,
+          veterinarianClinicId: vetoClinic1.id,
         },
       },
     },
+    include: {
+      animalMeeting: true,
+    },
   });
+
   const animalMeeting2 = await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      specificDate: new Date("2026-03-05"),
+      date: new Date("2026-03-05"),
       startTime: new Date("1970-01-01T14:00:00Z"),
       endTime: new Date("1970-01-01T14:20:00Z"),
       animalMeeting: {
@@ -277,63 +300,83 @@ export async function seedMeetings(
           petSize: 32,
           specialityId: specDerma.id,
           ownedPetId: ownedPet2.id,
-          veterinarianId: vetProfile2.id,
+          veterinarianClinicId: vetoClinic1.id,
         },
       },
     },
+    include: {
+      animalMeeting: true,
+    },
   });
+
   await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      specificDate: new Date("2026-04-01"),
+      date: new Date("2026-04-01"),
       startTime: new Date("1970-01-01T10:00:00Z"),
       endTime: new Date("1970-01-01T10:30:00Z"),
       animalMeeting: {
         create: {
           specialityId: specDerma.id,
           ownedPetId: ownedPet3.id,
-          veterinarianId: vetProfile2.id,
+          veterinarianClinicId: vetoClinic1.id,
         },
       },
+    },
+    include: {
+      animalMeeting: true,
     },
   });
 
   // ── Réunions internes ───────────────────────────────────────────────────────
-  const baseInternal1 = await prisma.meetingBase.create({
+  const recurringInternal1 = await prisma.meetingReccuring.create({
     data: {
-      type: "RECURRING",
-      kind: "INTERNAL",
-      dayOfWeek: 1,
       dateStart: new Date("2026-01-01"),
       dateEnd: new Date("2026-06-30"),
+      dayOfWeek: [1],
       startTime: new Date("1970-01-01T10:00:00Z"),
       endTime: new Date("1970-01-01T11:00:00Z"),
+      kind: "INTERNAL",
       internalMeeting: {
         create: {
           title: "Réunion hebdomadaire équipe",
           description: "Point de la semaine",
           clinicId: clinic1.id,
+          adminId: vetProfile1.id,
+        },
+      },
+    },
+    include: {
+      internalMeeting: true,
+    },
+  });
+
+  // Occurrence spécifique avec contenu différent
+  await prisma.meetingBase.create({
+    data: {
+      type: "SPECIFIED",
+      kind: "INTERNAL",
+      date: new Date("2026-03-16"),
+      startTime: new Date("1970-01-01T10:00:00Z"),
+      endTime: new Date("1970-01-01T11:00:00Z"),
+      parentId: recurringInternal1.id,
+      internalMeeting: {
+        create: {
+          title: "Réunion hebdomadaire — bilan mensuel",
+          description: "Bilan du mois de mars",
+          clinicId: clinic1.id,
+          adminId: vetProfile1.id,
         },
       },
     },
   });
-  await prisma.meetingBase.create({
-    data: {
-      type: "EXCEPTION",
-      kind: "INTERNAL",
-      specificDate: new Date("2026-03-09"),
-      parentId: baseInternal1.id,
-      internalMeeting: {
-        create: { title: "Annulation réunion du 9 mars", clinicId: clinic1.id },
-      },
-    },
-  });
+
   const baseInternal2 = await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "INTERNAL",
-      specificDate: new Date("2026-03-20"),
+      date: new Date("2026-03-20"),
       startTime: new Date("1970-01-01T14:00:00Z"),
       endTime: new Date("1970-01-01T15:30:00Z"),
       internalMeeting: {
@@ -341,22 +384,42 @@ export async function seedMeetings(
           title: "Formation nouveaux équipements",
           description: "Présentation échographie",
           clinicId: clinic1.id,
+          adminId: secretaryProfile.id,
         },
       },
+    },
+    include: {
+      internalMeeting: true,
     },
   });
 
   await prisma.internalMeetingParticipant.createMany({
     data: [
-      { meetingId: baseInternal1.id, userId: vetoUser1.id, status: "ACCEPTED" },
-      { meetingId: baseInternal1.id, userId: vetoUser2.id, status: "ACCEPTED" },
       {
-        meetingId: baseInternal1.id,
+        meetingId: recurringInternal1.internalMeeting!.id,
+        userId: vetoUser1.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: recurringInternal1.internalMeeting!.id,
+        userId: vetoUser2.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: recurringInternal1.internalMeeting!.id,
         userId: secretaryUser1.id,
         status: "PENDING",
       },
-      { meetingId: baseInternal2.id, userId: vetoUser1.id, status: "ACCEPTED" },
-      { meetingId: baseInternal2.id, userId: vetoUser2.id, status: "DECLINED" },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: vetoUser1.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: vetoUser2.id,
+        status: "DECLINED",
+      },
     ],
   });
 
@@ -367,7 +430,7 @@ export async function seedMeetings(
       diagnosedAt: new Date("2026-02-10"),
       healthConditionId: conditionCardio.id,
       ownedPetId: ownedPet1.id,
-      meetingId: animalMeeting1.id,
+      meetingId: animalMeeting1.animalMeeting?.id,
       addedById: vetoUser1.id,
     },
   });
@@ -387,7 +450,7 @@ export async function seedMeetings(
       {
         ownedPetId: ownedPet1.id,
         vaccineId: vaccineRage.id,
-        meetingId: animalMeeting1.id,
+        meetingId: animalMeeting1.animalMeeting?.id,
       },
       { ownedPetId: ownedPet1.id, vaccineId: vaccineCHPPi.id },
       { ownedPetId: ownedPet2.id, vaccineId: vaccineTyphus.id },

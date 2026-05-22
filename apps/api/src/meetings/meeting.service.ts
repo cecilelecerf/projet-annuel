@@ -138,6 +138,7 @@ export class MeetingService {
       return {
         ...t,
         id: reccuring.id,
+        recurringId: reccuring.id,
         createdAt: reccuring.createdAt,
         updatedAt: reccuring.updatedAt,
         startTime: reccuring.startTime,

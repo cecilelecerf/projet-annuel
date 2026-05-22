@@ -18,9 +18,9 @@ export class AnimalMeetingService {
     data: CreateAnimalMeeting;
     clinicId: Clinic["id"];
   }) {
-    const veterinarianClinic = await prisma.veterinarianClinic.findFirstOrThrow(
-      { where: { clinicId, veterinarianId: data.veterinarianId } },
-    );
+    const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
+      where: { clinicId, veterinarianId: data.veterinarianId },
+    });
     if (!veterinarianClinic) throw new NotFoundError("veterinarianClinic");
 
     const timeOverlapFilter = {
@@ -30,8 +30,6 @@ export class AnimalMeetingService {
         { startTime: { gte: data.startTime }, endTime: { lte: data.endTime } },
       ],
     };
-
-    // 1. Vérifie qu'il n'a pas déjà un RDV sur ce créneau
     const meetingConflict = await prisma.meetingBase.findFirst({
       where: {
         date: data.date,
@@ -58,7 +56,6 @@ export class AnimalMeetingService {
         endTime: { gte: data.endTime },
       },
     });
-
     // Vérifie aussi dans les récurrents
     const recurringAvailability = availability
       ? availability
@@ -74,7 +71,6 @@ export class AnimalMeetingService {
             },
           },
         });
-
     if (!recurringAvailability)
       throw new ConflictError(
         "Le vétérinaire n'est pas disponible sur ce créneau",

@@ -6,6 +6,7 @@ import type {
 } from "@armali/schemas";
 import { InternalMeetingRepository } from "./internal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
+import { flatClinicId, flatUser } from "@api/users/user.utils";
 
 const internalMeetingRepository = new InternalMeetingRepository();
 
@@ -84,6 +85,12 @@ export class InternalMeetingService {
     if (role === "CLIENT") throw new ForbiddenError();
     const meeting = await internalMeetingRepository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
-    return meeting;
+    return {
+      ...meeting,
+      participants: meeting.participants.map((participant) => ({
+        ...participant,
+        user: flatClinicId(participant.user),
+      })),
+    };
   }
 }

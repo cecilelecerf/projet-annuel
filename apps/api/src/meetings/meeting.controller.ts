@@ -1,9 +1,6 @@
 import {
   getPeriodQuerySchema,
   calendarSchema,
-  meetingSchema,
-  animalMeetingSchema,
-  internalMeetingSchema,
   availabilitiesSchema,
   animalMeetingMetaSchema,
   internalMeetingMetaSchema,
@@ -82,7 +79,7 @@ export class MeetingController {
       const { veterinarianId } = req.params;
 
       const [veterinarian, clinicId] = await Promise.all([
-        prisma.veterinarianProfile.findUniqueOrThrow({
+        prisma.veterinarianProfile.findUnique({
           where: { id: veterinarianId },
         }),
         userService.getClinicId({ userId: req.user.id, role: req.user.role }),
@@ -106,43 +103,76 @@ export class MeetingController {
   }
 
   async getMeeting(
-    req: RequestWithParams<{ id: string }>,
+    req: RequestWithParams<{ id: string }> & { query: { date?: string } },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const base = await prisma.meetingBase.findUnique({
-        where: { id: req.params.id },
-        select: { kind: true },
-      });
+      const isRecurring = !!req.query.date;
 
-      if (!base) throw new NotFoundError("Meeting");
+      const kind = isRecurring
+        ? (
+            await prisma.meetingReccuring.findUnique({
+              where: { id: req.params.id },
+              select: { kind: true },
+            })
+          )?.kind
+        : (
+            await prisma.meetingBase.findUnique({
+              where: { id: req.params.id },
+              select: { kind: true },
+            })
+          )?.kind;
 
-      switch (base.kind) {
+      if (!kind) throw new NotFoundError("Meeting");
+
+      const recurringBase = isRecurring
+        ? await prisma.meetingReccuring
+            .findUnique({
+              where: { id: req.params.id },
+            })
+            .then((base) => {
+              if (!base) throw new NotFoundError("Meeting");
+              const date = new Date(req.query.date!);
+              if (isNaN(date.getTime()))
+                throw new BadRequestError("date invalide");
+              return {
+                id: base.id,
+                recurringId: base.id,
+                createdAt: base.createdAt,
+                updatedAt: base.updatedAt,
+                startTime: base.startTime,
+                endTime: base.endTime,
+                kind: base.kind,
+                date: date.toISOString(),
+                type: "SPECIFIED" as const,
+                parentId: null,
+              };
+            })
+        : null;
+
+      switch (kind) {
         case "ANIMAL": {
           const meeting = await animalMeetingService.getById({
             id: req.params.id,
             userId: req.user.id,
             role: req.user.role,
           });
-          console.log(meeting);
-          return res
-            .status(200)
-            .json(
-              animalMeetingMetaSchema.parse({ ...meeting, ...meeting.meeting }),
-            );
+          const data = recurringBase
+            ? { ...meeting, ...recurringBase }
+            : { ...meeting, ...meeting.meeting };
+          return res.status(200).json(animalMeetingMetaSchema.parse(data));
         }
         case "INTERNAL": {
           const meeting = await internalMeetingService.getById({
             id: req.params.id,
             role: req.user.role,
           });
-          return res.status(200).json(
-            internalMeetingMetaSchema.parse({
-              ...meeting,
-              ...meeting.meeting,
-            }),
-          );
+          const data = recurringBase
+            ? { ...meeting, ...recurringBase }
+            : { ...meeting, ...meeting.meeting };
+
+          return res.status(200).json(internalMeetingMetaSchema.parse(data));
         }
         case "AVAILABILITY": {
           const meeting = await availabilityService.getById({
@@ -150,9 +180,11 @@ export class MeetingController {
             userId: req.user.id,
             role: req.user.role,
           });
-          return res
-            .status(200)
-            .json(availabilitiesSchema.parse({ ...meeting, ...meeting }));
+          const data = recurringBase
+            ? { ...meeting, ...recurringBase }
+            : { ...meeting, ...meeting.meeting };
+
+          return res.status(200).json(availabilitiesSchema.parse(data));
         }
         default:
           throw new NotFoundError("Meeting");

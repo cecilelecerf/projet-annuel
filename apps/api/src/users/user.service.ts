@@ -1,8 +1,7 @@
 import { UserRepository } from "@api/users/user.repository";
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { Clinic, User } from "../../prisma/generated/prisma/client";
-import { UserWithProfileAndClinicId } from "./user.types";
+import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId } from "./user.utils";
 const userRepository = new UserRepository();
 

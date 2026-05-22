@@ -1,4 +1,5 @@
 import { prisma } from "@api/lib/prisma";
+import { userWithProfileAndClinicIdInclude } from "@api/users/user.types";
 import type {
   CreateInternalMeeting,
   MeetingStatus,
@@ -11,7 +12,9 @@ export class InternalMeetingRepository {
       where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
-        participants: { include: { user: true } },
+        participants: {
+          include: { user: { include: userWithProfileAndClinicIdInclude } },
+        },
       },
     });
   }

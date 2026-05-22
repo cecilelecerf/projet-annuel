@@ -1,5 +1,5 @@
 export * from "./ids";
-export * from "./user.schema";
+export * from "./users";
 export * from "./clinic.schema";
 export * from "./pet.schema";
 export * from "./owned-pet.schema";

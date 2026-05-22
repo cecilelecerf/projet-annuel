@@ -49,11 +49,20 @@ const onDelete = () => {
       <p class="popup-date">{{ dateLabel }}</p>
 
       <!-- ANIMAL -->
+
       <template v-if="meeting.kind === 'ANIMAL'">
         <div class="popup-animal-row">
-          <span class="animal-cell">Type animal</span>
-          <span class="animal-cell">Nom</span>
-          <span class="animal-cell">Âge</span>
+          <span class="animal-cell"
+            >{{ meeting.ownedPet.race.pet.name }} - {{ meeting.ownedPet.race.name }}</span
+          >
+          <span class="animal-cell">{{ meeting.ownedPet.name }}</span>
+          <span class="animal-cell">{{
+            meeting.ownedPet.age.years > 1
+              ? `${meeting.ownedPet.age.years} ans`
+              : meeting.ownedPet.age.years > 0
+                ? `${meeting.ownedPet.age.years} an et ${meeting.ownedPet.age.months} mois`
+                : `${meeting.ownedPet.age.months} mois`
+          }}</span>
         </div>
       </template>
 
@@ -95,15 +104,6 @@ const onDelete = () => {
           <el-time-picker size="small" style="width: 100px" />
         </div>
 
-        <!-- ANIMAL edit -->
-        <template v-if="meeting.kind === 'ANIMAL'">
-          <div class="popup-animal-row">
-            <span class="animal-cell">Type animal</span>
-            <span class="animal-cell">Nom</span>
-            <span class="animal-cell">Âge</span>
-          </div>
-        </template>
-
         <div class="popup-actions">
           <el-button type="primary" @click="onEdit">Enregistrer</el-button>
           <el-button @click="isEditing = false">Annuler</el-button>
@@ -144,8 +144,6 @@ const onDelete = () => {
 }
 
 .popup-title {
-  font-family: 'Nunito', sans-serif;
-  font-size: 20px;
   font-weight: var(--fw-bold);
   color: var(--el-text-color-primary);
   margin: 0;
@@ -153,7 +151,6 @@ const onDelete = () => {
 
 .popup-close {
   cursor: pointer;
-  font-size: 22px;
   color: var(--el-text-color-placeholder);
   transition: color 0.2s;
   &:hover {
@@ -168,7 +165,6 @@ const onDelete = () => {
 }
 
 .popup-description {
-  font-size: 13px;
   color: var(--el-text-color-secondary);
   margin: 0;
 }

@@ -40,6 +40,7 @@ meetingRouter.get(
   roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),
   meetingController.getMeeting.bind(meetingController) as RequestHandler,
 );
+
 meetingRouter.use("/availabilities", availabilityRouter);
 meetingRouter.use("/animal", animalMeetingRouter);
 meetingRouter.use("/internal", internalMeetingRouter);

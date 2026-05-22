@@ -3,9 +3,7 @@ import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError, ForbiddenError } from "@api/errors";
 import {
   CreateInternalMeeting,
-  createInternalMeetingSchema,
   UpdateInternalMeeting,
-  updateInternalMeetingSchema,
   updateParticipantStatusSchema,
 } from "@armali/schemas";
 import { InternalMeetingService } from "./internal-meeting.service";

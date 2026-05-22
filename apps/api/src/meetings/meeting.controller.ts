@@ -1,12 +1,27 @@
-import { getPeriodQuerySchema, calendarSchema } from "@armali/schemas";
+import {
+  getPeriodQuerySchema,
+  calendarSchema,
+  meetingSchema,
+  animalMeetingSchema,
+  internalMeetingSchema,
+  availabilitiesSchema,
+  animalMeetingMetaSchema,
+  internalMeetingMetaSchema,
+} from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { BadRequestError, NotFoundError } from "@api/errors";
 import { prisma } from "@api/lib/prisma";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { MeetingService } from "./meeting.service";
 import { UserService } from "@api/users";
+import { AnimalMeetingService } from "./animal-meeting";
+import { InternalMeetingService } from "./internal-meeting";
+import { AvailabilityService } from "./availability";
 
 const meetingService = new MeetingService();
+const animalMeetingService = new AnimalMeetingService();
+const internalMeetingService = new InternalMeetingService();
+const availabilityService = new AvailabilityService();
 const userService = new UserService();
 
 export class MeetingController {
@@ -79,7 +94,6 @@ export class MeetingController {
         meetingService.getAnimalMeetingsAsVet(veterinarian.id, start, end),
         meetingService.getAvailabilitiesByClinic({ clinicId, start, end }),
       ]);
-      console.log(internal, animal);
       return res.status(200).json(
         calendarSchema.parse({
           meetings: [...internal, ...animal],
@@ -97,21 +111,52 @@ export class MeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await prisma.meetingBase.findUnique({
+      const base = await prisma.meetingBase.findUnique({
         where: { id: req.params.id },
-        include: {
-          animalMeeting: true,
-          internalMeeting: { include: { participants: true } },
-          availabilty: true,
-          parent: true,
-        },
+        select: { kind: true },
       });
 
-      if (!meeting) throw new NotFoundError("Meeting");
+      if (!base) throw new NotFoundError("Meeting");
 
-      return res
-        .status(200)
-        .json(meetingService.flattenMeetingByBase(meeting as any));
+      switch (base.kind) {
+        case "ANIMAL": {
+          const meeting = await animalMeetingService.getById({
+            id: req.params.id,
+            userId: req.user.id,
+            role: req.user.role,
+          });
+          console.log(meeting);
+          return res
+            .status(200)
+            .json(
+              animalMeetingMetaSchema.parse({ ...meeting, ...meeting.meeting }),
+            );
+        }
+        case "INTERNAL": {
+          const meeting = await internalMeetingService.getById({
+            id: req.params.id,
+            role: req.user.role,
+          });
+          return res.status(200).json(
+            internalMeetingMetaSchema.parse({
+              ...meeting,
+              ...meeting.meeting,
+            }),
+          );
+        }
+        case "AVAILABILITY": {
+          const meeting = await availabilityService.getById({
+            id: req.params.id,
+            userId: req.user.id,
+            role: req.user.role,
+          });
+          return res
+            .status(200)
+            .json(availabilitiesSchema.parse({ ...meeting, ...meeting }));
+        }
+        default:
+          throw new NotFoundError("Meeting");
+      }
     } catch (err) {
       next(err);
     }

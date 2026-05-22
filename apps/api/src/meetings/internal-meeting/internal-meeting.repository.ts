@@ -11,7 +11,7 @@ export class InternalMeetingRepository {
       where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
-        participants: true,
+        participants: { include: { user: true } },
       },
     });
   }
@@ -38,7 +38,7 @@ export class InternalMeetingRepository {
             clinicId: data.clinicId ?? clinicId,
             adminId: authorId,
             participants: {
-              create: data.participantIds?.map((userId) => ({
+              create: data.userIds?.map((userId) => ({
                 userId,
                 status: "PENDING",
               })),

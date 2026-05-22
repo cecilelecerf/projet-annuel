@@ -1,6 +1,8 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import type { CreateAvailability, UpdateAvailability } from "@armali/schemas";
 import { AvailabilityRepository } from "./availability.repository";
+import { UserRole } from "../../../prisma/generated/prisma/enums";
+import { User } from "../../../prisma/generated/prisma/client";
 
 const availabilityRepository = new AvailabilityRepository();
 
@@ -43,5 +45,23 @@ export class AvailabilityService {
     if (authorId && existing.userId !== authorId) throw new ForbiddenError();
 
     return availabilityRepository.delete(id);
+  }
+
+  async getById({
+    id,
+    role,
+    userId,
+  }: {
+    id: string;
+    role: UserRole;
+    userId: User["id"];
+  }) {
+    if (role === "CLIENT") throw new ForbiddenError();
+
+    const meeting = await availabilityRepository.findById(id);
+    if (!meeting) throw new NotFoundError("Rendez-vous");
+    if (meeting.userId !== userId) throw new ForbiddenError();
+
+    return meeting;
   }
 }

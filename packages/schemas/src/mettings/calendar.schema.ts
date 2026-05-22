@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { meetingBaseSchema, meetingStatusSchema } from "./meeting-base.schema";
+import { meetingStatusSchema } from "./meeting-base.schema";
 import { internalMeetingSchema } from "./internal-meeting.schema";
 import { availabilitiesSchema } from "./availability.schema";
 import { animalMeetingSchema } from "./animal-meeting.schema";
@@ -7,7 +7,6 @@ import { animalMeetingSchema } from "./animal-meeting.schema";
 export const flatInternalMeetingSchema = internalMeetingSchema.extend({
   status: meetingStatusSchema.optional(),
 });
-
 export const flatMeetingSchema = z.discriminatedUnion("kind", [
   availabilitiesSchema,
   flatInternalMeetingSchema,

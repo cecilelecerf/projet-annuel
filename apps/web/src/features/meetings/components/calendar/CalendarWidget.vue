@@ -23,7 +23,6 @@ const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
 }
-console.log(selectedMeeting.value)
 </script>
 
 <template>

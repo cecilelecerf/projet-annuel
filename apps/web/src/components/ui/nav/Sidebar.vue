@@ -21,8 +21,6 @@ defineProps<{ menuItems: MenuItem[] }>()
 const activeMenu = computed(() => route.name as string)
 
 const handleMenuSelect = (index: string) => {
-  console.log('handle')
-  console.log(index)
   router.push({ name: index })
 }
 </script>

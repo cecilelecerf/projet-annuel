@@ -4,9 +4,12 @@ import { AnimalMeetingRepository } from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { Clinic } from "../../../prisma/generated/prisma/client";
 import { prisma } from "@api/lib/prisma";
+import { UserService } from "@api/users";
+import { flatUser } from "@api/users/user.utils";
+import { calculateAge } from "@api/utils";
 
 const animalMeetingRepository = new AnimalMeetingRepository();
-
+const userService = new UserService();
 export class AnimalMeetingService {
   async create({
     data,
@@ -99,8 +102,15 @@ export class AnimalMeetingService {
       const isOwner = meeting.ownedPet.client.id === userId;
       if (!isOwner) throw new ForbiddenError();
     }
-
-    return meeting;
+    const user = flatUser(meeting.ownedPet.client);
+    return {
+      ...meeting,
+      ownedPet: {
+        ...meeting.ownedPet,
+        client: user,
+        age: calculateAge(meeting.ownedPet.dateOfBirth),
+      },
+    };
   }
 
   async update({

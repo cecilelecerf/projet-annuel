@@ -10,9 +10,11 @@ export class AnimalMeetingRepository {
         meeting: true,
         ownedPet: {
           include: {
-            client: true,
+            client: { include: { user: { omit: { password: true } } } },
+            race: { include: { pet: true } },
           },
         },
+
         speciality: true,
       },
     });

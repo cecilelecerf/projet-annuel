@@ -72,7 +72,6 @@ export function useCalendar(userId?: UserId) {
     },
     datesSet: async (info: DatesSetArg) => {
       const meetings = await fetchMeetings(info.startStr, info.endStr)
-      console.log(meetings)
       calendarData.value = meetings
       calendarOptions.value.events = calendarData.value!.meetings.map(toCalendarEvent)
       calendarOptions.value.businessHours = availabilitiesToBusinessHours({

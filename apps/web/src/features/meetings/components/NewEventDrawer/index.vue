@@ -65,7 +65,6 @@ watch(
 const isVetLocked = computed(() => !!veterinarian)
 
 const handleSubmit = async () => {
-  console.log(authStore.user?.clinicId)
   formErrorStore.clear()
   try {
     if (type.value === 'INTERNAL') {
@@ -76,7 +75,7 @@ const handleSubmit = async () => {
       ]
       await calendarApi.internal.new({
         title: title.value,
-        participantIds: [],
+        userIds: participantIds,
         date: date.value,
         startTime: new Date(`1970-01-01T${start.value}`),
         endTime: new Date(`1970-01-01T${end.value}`),

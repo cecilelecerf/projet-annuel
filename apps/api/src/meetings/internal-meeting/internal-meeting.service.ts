@@ -5,6 +5,7 @@ import type {
   UpdateInternalMeeting,
 } from "@armali/schemas";
 import { InternalMeetingRepository } from "./internal-meeting.repository";
+import { UserRole } from "../../../prisma/generated/prisma/enums";
 
 const internalMeetingRepository = new InternalMeetingRepository();
 
@@ -77,5 +78,12 @@ export class InternalMeetingService {
       participantId: participant.id,
       status,
     });
+  }
+
+  async getById({ id, role }: { id: string; role: UserRole }) {
+    if (role === "CLIENT") throw new ForbiddenError();
+    const meeting = await internalMeetingRepository.findById(id);
+    if (!meeting) throw new NotFoundError("Rendez-vous");
+    return meeting;
   }
 }

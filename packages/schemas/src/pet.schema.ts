@@ -35,6 +35,7 @@ export const raceSchema = z.object({
   name: z.string().min(1),
   picture: z.string().url().nullable().optional(),
 });
+export const raceMetaSchema = raceSchema.extend({ pet: petSchema });
 
 export const createRaceSchema = raceSchema.omit({ id: true });
 export const updateRaceSchema = createRaceSchema.partial();

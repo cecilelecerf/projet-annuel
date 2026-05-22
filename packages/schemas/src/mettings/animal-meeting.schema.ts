@@ -1,10 +1,7 @@
 import { z } from "zod";
 import {
-  clinicIdSchema,
   ownedPetIdSchema,
-  petIdSchema,
   specialityIdSchema,
-  userIdSchema,
   veterinarianClinicIdSchema,
   veterinarianIdSchema,
 } from "../ids";
@@ -13,6 +10,7 @@ import {
   meetingBaseSchema,
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
+import { ownedPetMetaSchema } from "../owned-pet.schema";
 
 export const animalMeetingSchema = meetingBaseSchema.extend({
   description: z.string().nullable().optional(),
@@ -23,6 +21,10 @@ export const animalMeetingSchema = meetingBaseSchema.extend({
   ownedPetId: ownedPetIdSchema,
   veterinarianClinicId: veterinarianClinicIdSchema,
   kind: z.literal("ANIMAL"),
+});
+
+export const animalMeetingMetaSchema = animalMeetingSchema.extend({
+  ownedPet: ownedPetMetaSchema,
 });
 
 const createAnimalMeetingBaseFields = animalMeetingSchema.pick({

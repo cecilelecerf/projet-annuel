@@ -1,4 +1,4 @@
-import type { Calendar, FlatMeeting } from '@armali/schemas'
+import type { Calendar, FlatMeeting, Meeting } from '@armali/schemas'
 import { match } from 'ts-pattern'
 
 export const toCalendarEvent = (base: FlatMeeting) => {

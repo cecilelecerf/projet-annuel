@@ -1,12 +1,13 @@
 import { UserRepository } from "@api/users/user.repository";
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { User } from "../../prisma/generated/prisma/client";
-
+import { Clinic, User } from "../../prisma/generated/prisma/client";
+import { UserWithProfileAndClinicId } from "./user.types";
+import { flatClinicId } from "./user.utils";
 const userRepository = new UserRepository();
 
 export class UserService {
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers(): Promise<Omit<User, "password">[]> {
     return await userRepository.getAllUsers();
   }
 
@@ -36,17 +37,28 @@ export class UserService {
     targetRole: UserRole[],
   ) {
     if (role === "ADMIN") {
-      return userRepository.getAllUsersByRole({ roles: [role] });
-    } else {
-      if (targetRole.includes("CLIENT")) {
-        return userRepository.getAllUsersByRole({ roles: targetRole });
-      }
-      const clinicId = await this.getClinicId({ userId, role });
-      return userRepository.getUsersByRoleAndClinic({
-        clinicId,
+      const users = await userRepository.getAllUsersByRole({
         roles: targetRole,
       });
+      return users.map(flatClinicId);
     }
+
+    const clinicId = await this.getClinicId({ userId, role });
+    const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
+
+    const [clients, staffs] = await Promise.all([
+      targetRole.includes("CLIENT")
+        ? userRepository.getAllUsersByRole({ roles: ["CLIENT"] })
+        : Promise.resolve([]),
+      nonClientRoles.length > 0
+        ? userRepository.getUsersByRoleAndClinic({
+            clinicId,
+            roles: nonClientRoles,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    return [...clients, ...staffs].map(flatClinicId);
   }
 
   async getUserById({

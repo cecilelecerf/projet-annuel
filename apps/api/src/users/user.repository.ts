@@ -1,5 +1,6 @@
 import { prisma } from "@api/lib/prisma";
 import { UserRole } from "../../prisma/generated/prisma/enums";
+import { userWithProfileAndClinicIdInclude } from "./user.types";
 
 export class UserRepository {
   async getClinicIdByUserId({
@@ -69,6 +70,8 @@ export class UserRepository {
         ],
       },
       omit: { password: true },
+
+      include: userWithProfileAndClinicIdInclude,
     });
   }
 
@@ -88,18 +91,15 @@ export class UserRepository {
         directorClinicProfile: true,
         referentClinicProfile: true,
       },
+
+      omit: { password: true },
     });
   }
   async getAllUsersByRole({ roles }: { roles: UserRole[] }) {
     return prisma.user.findMany({
       where: { role: { in: roles } },
-      include: {
-        veterinarianProfile: true,
-        clientProfile: true,
-        secretaryProfile: true,
-        directorClinicProfile: true,
-        referentClinicProfile: true,
-      },
+      omit: { password: true },
+      include: userWithProfileAndClinicIdInclude,
     });
   }
 }

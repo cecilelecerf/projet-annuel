@@ -1,12 +1,6 @@
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
-import { BadRequestError } from "@api/errors";
-import {
-  createOwnedPetSchema,
-  updateOwnedPetSchema,
-  type CreateOwnedPet,
-  type UpdateOwnedPet,
-} from "@armali/schemas";
+import { type CreateOwnedPet, type UpdateOwnedPet } from "@armali/schemas";
 import { OwnedPetService } from "./owned-pet.service";
 
 const ownedPetService = new OwnedPetService();

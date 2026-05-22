@@ -11,6 +11,7 @@ import {
 } from "../../prisma/generated/prisma/client";
 import { MeetingRepository } from "./meeting.repository";
 import type { UserRole } from "@armali/schemas";
+import { NotFoundError } from "@api/errors";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -332,5 +333,11 @@ export class MeetingService {
       meetings: [...internal, ...animal],
       availabilities,
     };
+  }
+
+  async getMeeting(id: string): Promise<FlatMeeting> {
+    const meeting = await meetingRepository.getMeetingById(id);
+    if (!meeting) throw new NotFoundError("Meeting");
+    return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
   }
 }

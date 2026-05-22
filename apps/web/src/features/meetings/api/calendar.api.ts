@@ -3,13 +3,13 @@ import {
   animalMeetingSchema,
   calendarSchema,
   internalMeetingSchema,
+  meetingMetaSchema,
   meetingSchema,
-  type AnimalMeeting,
   type Calendar,
   type CreateAnimalMeeting,
   type CreateInternalMeeting,
-  type InternalMeeting,
   type Meeting,
+  type MeetingId,
   type UserId,
 } from '@armali/schemas'
 
@@ -30,17 +30,25 @@ export const calendarApi = {
 
   getMeeting: async (meetingId: string): Promise<Meeting> => {
     const data = await http.get(`/meetings/${meetingId}`)
-    return meetingSchema.parse(data)
+    return meetingMetaSchema.parse(data)
   },
 
   internal: {
     new: async (meeting: CreateInternalMeeting) => {
       const data = await http.post(`/meetings/internal`, meeting)
     },
+    get: async (meetingId: MeetingId) => {
+      const data = await http.get(`/meetings/internal/${meetingId}`)
+      return internalMeetingSchema.parse(data)
+    },
   },
   animal: {
     new: async (meeting: CreateAnimalMeeting) => {
       const data = await http.post(`/meetings/animal`, meeting)
+    },
+    get: async (meetingId: MeetingId) => {
+      const data = await http.get(`/meetings/animal/${meetingId}`)
+      return animalMeetingSchema.parse(data)
     },
   },
 }

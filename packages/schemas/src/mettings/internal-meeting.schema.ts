@@ -11,13 +11,23 @@ import {
   meetingStatusSchema,
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
+import { userSchema } from "../users";
 
 export const internalMeetingParticipantSchema = z.object({
   id: internalMeetingParticipantIdSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
-  internalMeetingId: meetingBaseSchema,
+  meetingId: meetingIdSchema,
   userId: userIdSchema,
+  status: meetingStatusSchema,
+});
+export const internalMeetingParticipantMetaSchema = z.object({
+  id: internalMeetingParticipantIdSchema,
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  meetingId: meetingIdSchema,
+  userId: userIdSchema,
+  user: userSchema,
   status: meetingStatusSchema,
 });
 
@@ -25,8 +35,11 @@ export const internalMeetingSchema = meetingBaseSchema.extend({
   title: z.string().max(255),
   description: z.string().nullable().optional(),
   clinicId: clinicIdSchema,
-  participantIds: z.array(internalMeetingParticipantIdSchema).optional(),
+  participants: internalMeetingParticipantSchema.array(),
   kind: z.literal("INTERNAL"),
+});
+export const internalMeetingMetaSchema = internalMeetingSchema.extend({
+  participants: z.array(internalMeetingParticipantMetaSchema),
 });
 
 const createInternalMeetingBaseFields = internalMeetingSchema
@@ -34,18 +47,18 @@ const createInternalMeetingBaseFields = internalMeetingSchema
     description: true,
     title: true,
     clinicId: true,
-    participantIds: true,
   })
-  .partial({ clinicId: true });
+  .partial({ clinicId: true })
+  .extend({ userIds: userIdSchema.array() });
 
 const createInternalMeetingFields = createMeetingBaseSchema
-  .omit({ kind: true, type: true })
+  .omit({ kind: true, type: true, parentId: true })
   .extend(createInternalMeetingBaseFields.shape);
 
-export const createInternalMeetingSchema = createMeetingBaseSchema
-  .omit({ kind: true, type: true })
-  .extend(createInternalMeetingBaseFields.shape)
-  .refine(timeRefineFn, timeRefineOptions);
+export const createInternalMeetingSchema = createInternalMeetingFields.refine(
+  timeRefineFn,
+  timeRefineOptions,
+);
 
 export const updateInternalMeetingSchema = createInternalMeetingFields
   .omit({ clinicId: true })

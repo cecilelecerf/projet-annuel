@@ -10,4 +10,6 @@ export * from "./health.schema";
 export * from "./review.schema";
 export * from "./mettings";
 
-export * from "./requests/index";
+export * from "./requests";
+export * from "./acts";
+export * from "./prescription.schema";

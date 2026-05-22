@@ -32,6 +32,21 @@ const menuItems: MenuItem[] = [
   <FormError />
   <main>
     <Navbar :menu-items="menuItems" />
-    <router-view />
+    <Suspense>
+      <div class="content">
+        <router-view />
+      </div>
+
+      <template #fallback>
+        <div class="loading">Chargement...</div>
+      </template>
+    </Suspense>
   </main>
 </template>
+
+<style lang="scss" scoped>
+.content {
+  margin-inline: var(--spacing-3xl);
+  margin-top: var(--spacing-xl);
+}
+</style>

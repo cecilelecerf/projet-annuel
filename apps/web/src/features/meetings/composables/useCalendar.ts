@@ -14,13 +14,12 @@ import type {
   EventInput,
 } from '@fullcalendar/core/index.js'
 import type { VerboseFormattingArg } from '@fullcalendar/core/internal'
-import { useAuthStore } from '@/stores/authStore'
 
 export function useCalendar(userId?: UserId) {
   const calendarData = ref<Calendar | null>(null)
   const dateSelect = ref<Date | null>(null)
   const openNewEvent = ref(false)
-  const selectedMeeting = ref<string | null>(null)
+  const selectedMeeting = ref<{ id: string; isReccuring?: boolean; date: Date } | null>(null)
 
   const fetchMeetings = (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
@@ -67,8 +66,10 @@ export function useCalendar(userId?: UserId) {
       dateSelect.value = info.date
     },
     eventClick: (info: EventClickArg) => {
-      console.log('RDV cliqué', info.event.id)
-      selectedMeeting.value = info.event.id
+      selectedMeeting.value = {
+        id: info.event.id,
+        date: info.event.extendedProps.date,
+      }
     },
     datesSet: async (info: DatesSetArg) => {
       const meetings = await fetchMeetings(info.startStr, info.endStr)

@@ -9,7 +9,7 @@ import {
   veterinarianIdSchema,
 } from "./ids";
 import { userSchema } from "./users";
-import { raceMetaSchema, raceSchema } from "./pet.schema";
+import { raceMetaSchema } from "./pet.schema";
 
 // ── OwnedPet (animal d'un client) ─────────────────────────────────────────────
 export const ownedPetSchema = z.object({

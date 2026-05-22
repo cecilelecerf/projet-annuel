@@ -54,6 +54,7 @@ export const updateAnimalMeetingSchema = createAnimalMeetingFields
   .partial()
   .refine(timeRefineFn, timeRefineOptions);
 
+export type AnimalMeetingMeta = z.infer<typeof animalMeetingMetaSchema>;
 export type AnimalMeeting = z.infer<typeof animalMeetingSchema>;
 export type CreateAnimalMeeting = z.infer<typeof createAnimalMeetingSchema>;
 export type UpdateAnimalMeeting = z.infer<typeof updateAnimalMeetingSchema>;

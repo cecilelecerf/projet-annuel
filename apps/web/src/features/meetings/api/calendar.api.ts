@@ -10,6 +10,7 @@ import {
   type CreateInternalMeeting,
   type Meeting,
   type MeetingId,
+  type MeetingMeta,
   type UserId,
 } from '@armali/schemas'
 
@@ -28,8 +29,17 @@ export const calendarApi = {
     return meetingSchema.array().parse(data)
   },
 
-  getMeeting: async (meetingId: string): Promise<Meeting> => {
-    const data = await http.get(`/meetings/${meetingId}`)
+  getMeeting: async (meetingId: string, date?: string): Promise<MeetingMeta> => {
+    const data = await http.get(`/meetings/${meetingId}${date ? `?date=${date}` : ''}`)
+    return meetingMetaSchema.parse(data)
+  },
+
+  getActs: async (meetingId: string): Promise<MeetingMeta> => {
+    const data = await http.get(`/meetings/${meetingId}/acts`)
+    return meetingMetaSchema.parse(data)
+  },
+  getPrescriptions: async (meetingId: string): Promise<MeetingMeta> => {
+    const data = await http.get(`/meetings/${meetingId}/prescriptions`)
     return meetingMetaSchema.parse(data)
   },
 

@@ -3,6 +3,7 @@ import {
   clinicIdSchema,
   internalMeetingParticipantIdSchema,
   meetingIdSchema,
+  meetingRecurringIdSchema,
   userIdSchema,
 } from "../ids";
 import {
@@ -40,6 +41,7 @@ export const internalMeetingSchema = meetingBaseSchema.extend({
 });
 export const internalMeetingMetaSchema = internalMeetingSchema.extend({
   participants: z.array(internalMeetingParticipantMetaSchema),
+  recurringId: meetingRecurringIdSchema.nullable(),
 });
 
 const createInternalMeetingBaseFields = internalMeetingSchema
@@ -69,6 +71,7 @@ export const updateParticipantStatusSchema = z.object({
   status: meetingStatusSchema,
 });
 
+export type InternalMeetingMeta = z.infer<typeof internalMeetingMetaSchema>;
 export type InternalMeeting = z.infer<typeof internalMeetingSchema>;
 export type CreateInternalMeeting = z.infer<typeof createInternalMeetingSchema>;
 export type UpdateInternalMeeting = z.infer<typeof updateInternalMeetingSchema>;

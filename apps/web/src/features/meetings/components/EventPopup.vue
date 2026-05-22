@@ -4,14 +4,20 @@ import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { calendarApi } from '../api/calendar.api'
+import { Plus } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/authStore'
 
 dayjs.locale('fr')
 
-const { meetingId } = defineProps<{ meetingId: string }>()
+const { meetingId, date } = defineProps<{
+  meetingId: string
+  date: Date
+}>()
 const emit = defineEmits<{ close: []; delete: [] }>()
+const { user } = useAuthStore()
 const router = useRouter()
 const isEditing = ref(false)
-const meeting = await calendarApi.getMeeting(meetingId)
+const meeting = await calendarApi.getMeeting(meetingId, date ? date.toISOString() : undefined)
 
 const dateLabel = computed(() => {
   const date = meeting.date
@@ -28,7 +34,9 @@ const title = computed(() => {
 })
 
 const goToDetail = () => {
-  router.push(`/meetings/${meeting.id}`)
+  router.push(
+    `/${user?.role.toLowerCase()}/meetings/${meeting.id}${date ? `?date=${date.toISOString()}` : ''}`,
+  )
 }
 const onEdit = () => {}
 const onDelete = () => {
@@ -84,11 +92,17 @@ const onDelete = () => {
       <!-- Mode lecture -->
       <template v-if="!isEditing">
         <div class="popup-actions">
-          <el-button type="primary" @click="isEditing = true">Modifier</el-button>
-          <el-button type="danger" @click="onDelete">Supprimer</el-button>
-          <el-button @click="goToDetail">
-            <el-icon><ArrowRight /></el-icon>
-            Détails
+          <el-row>
+            <el-button @click="isEditing = true" plain>Modifier</el-button>
+            <el-button type="danger" @click="onDelete" plain>Supprimer</el-button>
+          </el-row>
+          <el-button
+            @click="goToDetail"
+            type="primary"
+            :color="meeting.kind === 'ANIMAL' ? 'var(--el-color-teal)' : ' var(--el-color-purple)'"
+          >
+            <el-icon><Plus /></el-icon>
+            Voir plus
           </el-button>
         </div>
       </template>
@@ -174,9 +188,9 @@ const onDelete = () => {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
-  border: 1.5px solid var(--el-color-primary-light-5);
-  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--el-color-teal) 8%, transparent);
+  border: 1.5px solid var(--el-color-teal-light);
+  border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-lg);
   gap: var(--spacing-md);
 }
@@ -195,8 +209,8 @@ const onDelete = () => {
 }
 
 .participant-avatar {
-  background: var(--el-color-primary-light-5);
-  color: var(--el-color-primary);
+  background: var(--el-color-purple-light);
+  color: var(--el-color-purple-dark);
   font-size: 12px;
   border: 2px solid var(--el-bg-color);
   margin-left: -6px;
@@ -220,5 +234,6 @@ const onDelete = () => {
   display: flex;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xs);
+  justify-content: space-between;
 }
 </style>

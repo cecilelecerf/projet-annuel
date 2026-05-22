@@ -26,53 +26,48 @@ const onNewEventDrawerClose = () => {
 </script>
 
 <template>
-  <div class="calendar-wrapper">
-    <div class="calendar-container">
-      <FullCalendar :options="calendarOptions"> </FullCalendar>
-    </div>
-
-    <el-drawer v-model="isDateDrawerOpen" direction="rtl" :with-header="false" size="420px">
-      <DateDrawer
-        v-if="dateSelect !== null"
-        :date="dateSelect"
-        @close="dateSelect = null"
-        :user-id="userId"
-        @new-event="
-          (date) => {
-            newEventDate = date
-            openNewEvent = true
-          }
-        "
-      />
-    </el-drawer>
-
-    <el-drawer
-      v-model="openNewEvent"
-      direction="rtl"
-      :with-header="false"
-      size="420px"
-      @close="onNewEventDrawerClose"
-    >
-      <NewEvent
-        :key="newEventDate?.toISOString()"
-        @close="onNewEventDrawerClose"
-        :initial-date="newEventDate"
-      />
-    </el-drawer>
-    <EventPopup
-      v-if="selectedMeeting"
-      :meetingId="selectedMeeting"
-      @close="selectedMeeting = null"
-      @delete="selectedMeeting = null"
-    />
+  <div class="calendar-container">
+    <FullCalendar :options="calendarOptions"> </FullCalendar>
   </div>
+
+  <el-drawer v-model="isDateDrawerOpen" direction="rtl" :with-header="false" size="420px">
+    <DateDrawer
+      v-if="dateSelect !== null"
+      :date="dateSelect"
+      @close="dateSelect = null"
+      :user-id="userId"
+      @new-event="
+        (date) => {
+          newEventDate = date
+          openNewEvent = true
+        }
+      "
+    />
+  </el-drawer>
+
+  <el-drawer
+    v-model="openNewEvent"
+    direction="rtl"
+    :with-header="false"
+    size="420px"
+    @close="onNewEventDrawerClose"
+  >
+    <NewEvent
+      :key="newEventDate?.toISOString()"
+      @close="onNewEventDrawerClose"
+      :initial-date="newEventDate"
+    />
+  </el-drawer>
+  <EventPopup
+    v-if="selectedMeeting"
+    :meetingId="selectedMeeting.id"
+    :date="selectedMeeting.date"
+    @close="selectedMeeting = null"
+    @delete="selectedMeeting = null"
+  />
 </template>
 
 <style scoped>
-.calendar-wrapper {
-  padding: var(--spacing-lg);
-}
-
 .calendar-container {
   flex: 1;
   min-height: 0;

@@ -24,14 +24,25 @@ export const toCalendarEvent = (base: FlatMeeting) => {
     .with({ kind: 'ANIMAL' }, (b) => ({
       ...resultBase,
       title: b.description ?? '',
-      extendedProps: { kind: base.kind, description: b.ownedPetId },
+      extendedProps: {
+        kind: base.kind,
+        description: b.ownedPetId,
+
+        date: b.recurringId ? b.date : undefined,
+      },
     }))
     .with({ kind: 'INTERNAL' }, (b) => ({
       ...resultBase,
       title: b.title,
-      extendedProps: { kind: base.kind, description: b.clinicId, status: b.status },
+      extendedProps: {
+        kind: base.kind,
+        description: b.clinicId,
+        status: b.status,
+
+        date: b.recurringId ? b.date : undefined,
+      },
     }))
-    .otherwise(() => ({ ...resultBase, title: 'RDV' }))
+    .otherwise((b) => ({ ...resultBase, title: 'RDV', date: b.recurringId ? b.date : undefined }))
 }
 
 type BusinessHour = {

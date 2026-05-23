@@ -45,6 +45,10 @@ export const calendarApi = {
     return meetingMetaSchema.parse(data)
   },
 
+  delete: async (meetingId: MeetingId) => {
+    return await http.delete(`/meetings/${meetingId}`)
+  },
+
   internal: {
     new: async (meeting: CreateInternalMeeting) => {
       const data = await http.post(`/meetings/internal`, meeting)

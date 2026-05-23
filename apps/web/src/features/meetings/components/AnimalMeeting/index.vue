@@ -9,11 +9,14 @@ import { calendarApi } from '../../api/calendar.api'
 import MeetingActs from './MeetingActs.vue'
 import { prescriptionApi } from '@/features/prescriptions/api'
 import PrescriptionCard from '@/features/prescriptions/components/PrescriptionCard.vue'
+import { useAuthStore } from '@/stores/authStore'
+import { ElMessageBox } from 'element-plus'
 
 dayjs.locale('fr')
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
+const { user } = useAuthStore()
 const isEditing = ref(false)
 const [acts, prescriptions] = await Promise.all([
   calendarApi.meetingActs.getAll(meeting.id),
@@ -48,8 +51,18 @@ const onSave = async () => {
 }
 
 const onDelete = async () => {
-  // TODO: appel API delete
-  router.back()
+  try {
+    await ElMessageBox.confirm('Cette action est irréversible.', 'Supprimer le rendez-vous ?', {
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      type: 'warning',
+      confirmButtonClass: 'el-button--danger',
+    })
+    calendarApi.delete(meeting.id)
+    router.back()
+  } catch {
+    // Annulé — ne rien faire
+  }
 }
 </script>
 
@@ -61,12 +74,33 @@ const onDelete = async () => {
       Retour
     </el-button>
     <div class="header-actions">
-      <el-button v-if="!isEditing" @click="isEditing = true" :icon="Edit"> Modifier </el-button>
-      <el-button v-if="isEditing" type="primary" @click="onSave" :icon="Check">
+      <el-button
+        v-if="!isEditing && user?.role !== 'CLIENT'"
+        @click="isEditing = true"
+        :icon="Edit"
+      >
+        Modifier
+      </el-button>
+      <el-button
+        v-if="isEditing && user?.role !== 'CLIENT'"
+        type="primary"
+        @click="onSave"
+        :icon="Check"
+      >
         Enregistrer
       </el-button>
-      <el-button v-if="isEditing" @click="isEditing = false">Annuler</el-button>
-      <el-button type="danger" plain @click="onDelete" :icon="Delete"> Supprimer </el-button>
+      <el-button v-if="isEditing && user?.role !== 'CLIENT'" @click="isEditing = false"
+        >Annuler
+      </el-button>
+      <el-button
+        v-if="new Date(meeting.date) > new Date()"
+        type="danger"
+        plain
+        @click="onDelete"
+        :icon="Delete"
+      >
+        Supprimer
+      </el-button>
     </div>
   </div>
 

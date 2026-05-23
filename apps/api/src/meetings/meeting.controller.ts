@@ -4,6 +4,7 @@ import {
   availabilitiesSchema,
   animalMeetingMetaSchema,
   internalMeetingMetaSchema,
+  MeetingId,
 } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { BadRequestError, NotFoundError } from "@api/errors";
@@ -189,6 +190,23 @@ export class MeetingController {
         default:
           throw new NotFoundError("Meeting");
       }
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async delete(
+    req: RequestWithParams<{ id: MeetingId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      await animalMeetingService.delete({
+        id: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

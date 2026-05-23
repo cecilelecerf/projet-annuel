@@ -198,4 +198,8 @@ export class MeetingRepository {
       },
     });
   }
+
+  async delete(id: string) {
+    return prisma.meetingBase.delete({ where: { id } });
+  }
 }

@@ -11,13 +11,6 @@ const meetingRouter: RouterType = Router();
 
 const meetingController = new MeetingController();
 
-export const staffRoles: UserRole[] = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "REFERANT",
-  "DIRECTOR",
-] as const;
-
 // ── Calendrier ────────────────────────────────────────────────────────────────
 meetingRouter.get(
   "/calendar",
@@ -35,6 +28,13 @@ meetingRouter.get(
 );
 
 meetingRouter.get(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),
+  meetingController.getMeeting.bind(meetingController) as RequestHandler,
+);
+
+meetingRouter.delete(
   "/:id",
   authMiddleware,
   roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),

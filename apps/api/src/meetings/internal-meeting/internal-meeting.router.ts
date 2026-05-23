@@ -8,38 +8,34 @@ import {
   UserRole,
 } from "@armali/schemas";
 import { InternalMeetingController } from "./internal-meeting.controller";
+import { STAFF_ROLES } from "@api/utils";
 
 const internalMeetingRouter: RouterType = Router();
-export const staffRoles: UserRole[] = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "REFERANT",
-  "DIRECTOR",
-] as const;
+
 const internalController = new InternalMeetingController();
 internalMeetingRouter.post(
   "/",
   authMiddleware,
-  roleMiddleware([...staffRoles]),
+  roleMiddleware(STAFF_ROLES),
   validate(createInternalMeetingSchema),
   internalController.create.bind(internalController) as RequestHandler,
 );
 internalMeetingRouter.patch(
   "/:id",
   authMiddleware,
-  roleMiddleware([...staffRoles]),
+  roleMiddleware(STAFF_ROLES),
   internalController.update.bind(internalController) as RequestHandler,
 );
 internalMeetingRouter.delete(
   "/:id",
   authMiddleware,
-  roleMiddleware([...staffRoles]),
+  roleMiddleware(STAFF_ROLES),
   internalController.delete.bind(internalController) as RequestHandler,
 );
 internalMeetingRouter.patch(
   "/:id/participants/:userId",
   authMiddleware,
-  roleMiddleware([...staffRoles]),
+  roleMiddleware(STAFF_ROLES),
   internalController.updateParticipantStatus.bind(
     internalController,
   ) as RequestHandler,

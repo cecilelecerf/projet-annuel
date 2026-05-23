@@ -1,24 +1,23 @@
 <script setup lang="ts">
 import type { AnimalMeetingMeta } from '@armali/schemas'
-import { ArrowRight } from '@element-plus/icons-vue'
+import { ArrowRight, Check, Delete, Edit } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { calendarApi } from '../../api/calendar.api'
 import MeetingActs from './MeetingActs.vue'
+import { prescriptionApi } from '@/features/prescriptions/api'
+import PrescriptionCard from '@/features/prescriptions/components/PrescriptionCard.vue'
 
 dayjs.locale('fr')
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
 const isEditing = ref(false)
-const [
-  acts,
-  // prescriptions
-] = await Promise.all([
+const [acts, prescriptions] = await Promise.all([
   calendarApi.meetingActs.getAll(meeting.id),
-  // calendarApi.getPrescriptions(id),
+  prescriptionApi.getByMeeting(meeting.id),
 ])
 const editDescription = ref(meeting.description ?? '')
 const editReport = ref(meeting.report ?? '')
@@ -62,19 +61,12 @@ const onDelete = async () => {
       Retour
     </el-button>
     <div class="header-actions">
-      <el-button v-if="!isEditing" @click="isEditing = true">
-        <el-icon><Edit /></el-icon>
-        Modifier
-      </el-button>
-      <el-button v-if="isEditing" type="primary" @click="onSave">
-        <el-icon><Check /></el-icon>
+      <el-button v-if="!isEditing" @click="isEditing = true" :icon="Edit"> Modifier </el-button>
+      <el-button v-if="isEditing" type="primary" @click="onSave" :icon="Check">
         Enregistrer
       </el-button>
       <el-button v-if="isEditing" @click="isEditing = false">Annuler</el-button>
-      <el-button type="danger" plain @click="onDelete">
-        <el-icon><Delete /></el-icon>
-        Supprimer
-      </el-button>
+      <el-button type="danger" plain @click="onDelete" :icon="Delete"> Supprimer </el-button>
     </div>
   </div>
 
@@ -84,17 +76,19 @@ const onDelete = async () => {
         <div class="pet-avatar">
           {{ meeting.ownedPet?.name?.charAt(0) ?? '?' }}
         </div>
-        <p class="pet-info">
-          <span class="pet-name">{{ meeting.ownedPet?.name }}</span>
-          <span class="pet-meta">
-            {{ meeting.ownedPet?.race?.pet?.name }} · {{ meeting.ownedPet?.race?.name }}
-          </span>
-          <span v-if="petAge" class="pet-meta">{{ petAge }}</span>
-        </p>
-        <el-button text size="small" @click="router.push(`/animals/${meeting.ownedPet?.id}`)">
-          Voir la fiche
-          <el-icon><ArrowRight /></el-icon>
-        </el-button>
+        <div class="pet-section">
+          <p class="pet-info">
+            <span class="pet-name">{{ meeting.ownedPet?.name }}</span>
+            <span class="pet-meta">
+              {{ meeting.ownedPet?.race?.pet?.name }} · {{ meeting.ownedPet?.race?.name }}
+            </span>
+            <span v-if="petAge" class="pet-meta">{{ petAge }}</span>
+          </p>
+          <el-button text size="small" @click="router.push(`/animals/${meeting.ownedPet?.id}`)">
+            Voir la fiche
+            <el-icon><ArrowRight /></el-icon>
+          </el-button>
+        </div>
       </div>
       <div class="pet-card">
         <div class="pet-avatar">
@@ -217,68 +211,21 @@ const onDelete = async () => {
         <p v-else class="empty-text">Aucun compte rendu</p>
       </div>
       <MeetingActs :acts="acts" />
-
-      <!-- Prescriptions -->
-      <!-- <div v-if="meeting.prescriptions?.length" class="section">
+      <div v-if="prescriptions?.length" class="section">
         <h3 class="section-label">
           <el-icon><Document /></el-icon>
           Prescriptions
-          <span class="count-badge">{{ meeting.prescriptions.length }}</span>
+          <span class="count-badge">{{ prescriptions.length }}</span>
         </h3>
         <div class="prescriptions-list">
-          <div
-            v-for="prescription in meeting.prescriptions"
+          <PrescriptionCard
+            v-for="prescription in prescriptions"
             :key="prescription.id"
-            class="prescription-row"
+            :prescription="prescription"
           >
-            <div class="prescription-info">
-              <span class="prescription-dates">
-                Du {{ dayjs(prescription.startDate).format('D MMM') }}
-                <template v-if="prescription.endDate">
-                  au {{ dayjs(prescription.endDate).format('D MMM YYYY') }}
-                </template>
-              </span>
-              <el-tag
-                :type="
-                  prescription.status === 'ACTIVE'
-                    ? 'success'
-                    : prescription.status === 'COMPLETED'
-                      ? 'info'
-                      : 'danger'
-                "
-                size="small"
-                round
-              >
-                {{
-                  prescription.status === 'ACTIVE'
-                    ? 'Active'
-                    : prescription.status === 'COMPLETED'
-                      ? 'Terminée'
-                      : 'Annulée'
-                }}
-              </el-tag>
-            </div>
-            <div class="prescription-items">
-              <span v-for="item in prescription.items" :key="item.id" class="prescription-item">
-                {{ item.clinicProduct?.name }} · {{ item.dosage }} · {{ item.frequency }}
-              </span>
-            </div>
-          </div>
+          </PrescriptionCard>
         </div>
-      </div> -->
-
-      <!-- Vaccins administrés -->
-      <!-- <div v-if="meeting.ownedPetVaccines?.length" class="section">
-        <h3 class="section-label">
-          <el-icon><Syringe /></el-icon>
-          Vaccins administrés
-        </h3>
-        <div class="vaccines-list">
-          <el-tag v-for="v in meeting.ownedPetVaccines" :key="v.id" type="success" round>
-            {{ v.vaccine?.name }}
-          </el-tag>
-        </div>
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -299,18 +246,28 @@ const onDelete = async () => {
 .meeting-content {
   display: flex;
   gap: var(--spacing-xl);
+  flex-direction: column;
+  @include above('lg') {
+    flex-direction: row;
+  }
 }
 .meeting-right {
   width: 100%;
   display: flex;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-xl);
   flex-direction: column;
 }
 .meeting-left {
   display: flex;
-  flex-direction: column;
   gap: var(--spacing-md);
-  width: 300px;
+  width: 100%;
+  @include below('sm') {
+    flex-direction: column;
+  }
+  @include above('lg') {
+    flex-direction: column;
+    width: 300px;
+  }
 }
 
 // ── Sections ──────────────────────────────────────────────────────────────────
@@ -419,6 +376,15 @@ const onDelete = async () => {
   border-radius: var(--radius-lg);
   border: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+.pet-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .pet-avatar {
@@ -517,57 +483,14 @@ const onDelete = async () => {
   font-size: 16px;
 }
 
-// ── Prescriptions ─────────────────────────────────────────────────────────────
-
 .prescriptions-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-}
 
-.prescription-row {
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.prescription-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.prescription-dates {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
-.prescription-items {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.prescription-item {
-  font-size: 13px;
-  color: var(--el-text-color-primary);
-}
-
-// ── Vaccins ───────────────────────────────────────────────────────────────────
-
-.vaccines-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-xs);
-}
-
-.section-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  @include above('lg') {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 </style>

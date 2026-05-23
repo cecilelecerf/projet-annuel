@@ -1,6 +1,7 @@
 import { prisma } from "@api/lib/prisma";
 import type {
   CreateAnimalMeetingAct,
+  MeetingId,
   UpdateAnimalMeetingAct,
 } from "@armali/schemas";
 
@@ -16,7 +17,7 @@ const meetingActInclude = {
 } as const;
 
 export class AnimalMeetingActRepository {
-  async findByMeeting(meetingId: string) {
+  async findByMeeting(meetingId: MeetingId) {
     return prisma.animalMeetingAct.findMany({
       where: { animalMeeting: { meetingId } },
       include: meetingActInclude,

@@ -46,7 +46,17 @@ const menuItems: MenuItem[] = [
 
 <style lang="scss" scoped>
 .content {
-  margin-inline: var(--spacing-3xl);
-  margin-top: var(--spacing-xl);
+  margin-inline: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  @include above('sm') {
+    margin-inline: var(--spacing-lg);
+  }
+  @include above('md') {
+    margin-inline: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+  }
+  @include above('lg') {
+    margin-inline: var(--spacing-3xl);
+  }
 }
 </style>

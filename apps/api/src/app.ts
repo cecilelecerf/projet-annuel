@@ -10,6 +10,7 @@ import { meetingRouter as meetingRouter } from "./meetings";
 import ownedPetRouter from "./owned-pets/owned-pet.router";
 import actRouter from "./acts/act.router";
 import animalMeetingActRouter from "./acts/meetingActs/animal-meeting-act.router";
+import prescriptionRouter from "./prescriptions/prescription.router";
 
 collectDefaultMetrics();
 
@@ -49,4 +50,5 @@ app.use("/api/users", userRouter);
 app.use("/api/owned-pets", ownedPetRouter);
 app.use("/api/acts", actRouter);
 app.use("/api/meeting-acts", animalMeetingActRouter);
+app.use("/api/prescriptions", prescriptionRouter);
 app.use(errorHandler);

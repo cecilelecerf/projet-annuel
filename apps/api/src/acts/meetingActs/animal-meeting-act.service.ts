@@ -2,6 +2,7 @@ import { ForbiddenError, NotFoundError } from "@api/errors";
 import { AnimalMeetingActRepository } from "./animal-meeting-act.repository";
 import type {
   CreateAnimalMeetingAct,
+  MeetingId,
   UpdateAnimalMeetingAct,
   UserRole,
 } from "@armali/schemas";
@@ -17,7 +18,7 @@ const ALLOWED_ROLES: UserRole[] = [
 const repository = new AnimalMeetingActRepository();
 
 export class AnimalMeetingActService {
-  async getByMeeting(meetingId: string) {
+  async getByMeeting(meetingId: MeetingId) {
     return repository.findByMeeting(meetingId);
   }
 

@@ -13,6 +13,7 @@ import {
 } from "./hospitalization.schema";
 import { createImagingSchema, imagingSchema } from "./imaging.schema";
 import { analysisSchema, createAnalysisSchema } from "./analysis.schema";
+import { veterinarianProfileSchema, veterinarianSchema } from "../users";
 
 export const animalMeetingActSchema = z.object({
   id: animalMeetingActIdSchema,
@@ -33,6 +34,9 @@ export const animalMeetingActSchema = z.object({
       z.object({
         id: z.uuid(),
         veterinarianId: veterinarianIdSchema,
+        veterinarian: veterinarianProfileSchema.extend({
+          user: veterinarianSchema,
+        }),
       }),
     )
     .optional(),

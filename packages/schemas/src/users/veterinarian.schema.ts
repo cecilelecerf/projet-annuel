@@ -7,4 +7,9 @@ export const veterinarianSchema = baseUserSchema.extend({
   role: z.literal("VETERINARIAN"),
 });
 
+export const veterinarianProfileSchema = z.object({
+  id: z.uuid(),
+  licenseNumber: z.string(),
+  bio: z.string(),
+});
 export type Veterinarian = z.infer<typeof veterinarianSchema>;

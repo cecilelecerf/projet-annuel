@@ -53,7 +53,7 @@ async function main() {
     vaccines,
     pets,
   });
-  const acts = await seedActs(prisma, { clinic1, clinic2, meetings });
+  const acts = await seedActs(prisma, { clinic1, clinic2, meetings, users });
   await seedProducts(prisma, { clinic1, clinic2, healthConditions });
   await seedOrders(prisma, { users, clinic1 });
   await seedMessaging(prisma, { users });

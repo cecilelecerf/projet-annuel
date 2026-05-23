@@ -1,37 +1,43 @@
 <script setup lang="ts">
 import type { AnimalMeetingMeta } from '@armali/schemas'
+import { ArrowRight } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { calendarApi } from '../../api/calendar.api'
+import MeetingActs from './MeetingActs.vue'
 
 dayjs.locale('fr')
 
-const props = defineProps<{ meeting: AnimalMeetingMeta }>()
+const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
 const isEditing = ref(false)
-// const [acts, prescriptions] = await Promise.all([
-//   calendarApi.getActs(id),
-//   calendarApi.getPrescriptions(id),
-// ])
-const editDescription = ref(props.meeting.description ?? '')
-const editReport = ref(props.meeting.report ?? '')
-const editWeight = ref(props.meeting.petWeight ?? null)
-const editSize = ref(props.meeting.petSize ?? null)
-const editStart = ref(dayjs(props.meeting.startTime).format('HH:mm:ss'))
-const editEnd = ref(dayjs(props.meeting.endTime).format('HH:mm:ss'))
+const [
+  acts,
+  // prescriptions
+] = await Promise.all([
+  calendarApi.meetingActs.getAll(meeting.id),
+  // calendarApi.getPrescriptions(id),
+])
+const editDescription = ref(meeting.description ?? '')
+const editReport = ref(meeting.report ?? '')
+const editWeight = ref(meeting.petWeight ?? null)
+const editSize = ref(meeting.petSize ?? null)
+const editStart = ref(dayjs(meeting.startTime).format('HH:mm:ss'))
+const editEnd = ref(dayjs(meeting.endTime).format('HH:mm:ss'))
 
-const dateLabel = computed(() => dayjs(props.meeting.date).format('dddd D MMMM YYYY'))
+const dateLabel = computed(() => dayjs(meeting.date).format('dddd D MMMM YYYY'))
 const timeLabel = computed(() => {
-  const start = dayjs(props.meeting.startTime).format('H[h]mm')
-  const end = dayjs(props.meeting.endTime).format('H[h]mm')
+  const start = dayjs(meeting.startTime).format('H[h]mm')
+  const end = dayjs(meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
 
 const petAge = computed(() => {
-  if (!props.meeting.ownedPet?.dateOfBirth) return null
-  const years = dayjs().diff(dayjs(props.meeting.ownedPet.dateOfBirth), 'year')
-  const months = dayjs().diff(dayjs(props.meeting.ownedPet.dateOfBirth), 'month') % 12
+  if (!meeting.ownedPet?.dateOfBirth) return null
+  const years = dayjs().diff(dayjs(meeting.ownedPet.dateOfBirth), 'year')
+  const months = dayjs().diff(dayjs(meeting.ownedPet.dateOfBirth), 'month') % 12
   if (years === 0) return `${months} mois`
   if (months === 0) return `${years} an${years > 1 ? 's' : ''}`
   return `${years} an${years > 1 ? 's' : ''} et ${months} mois`
@@ -49,31 +55,64 @@ const onDelete = async () => {
 </script>
 
 <template>
-  <div class="meeting-page">
-    <!-- Header -->
-    <div class="page-header">
-      <el-button text @click="router.back()">
-        <el-icon><ArrowLeft /></el-icon>
-        Retour
+  <!-- Header -->
+  <div class="page-header">
+    <el-button text @click="router.back()">
+      <el-icon><ArrowLeft /></el-icon>
+      Retour
+    </el-button>
+    <div class="header-actions">
+      <el-button v-if="!isEditing" @click="isEditing = true">
+        <el-icon><Edit /></el-icon>
+        Modifier
       </el-button>
-      <div class="header-actions">
-        <el-button v-if="!isEditing" @click="isEditing = true">
-          <el-icon><Edit /></el-icon>
-          Modifier
+      <el-button v-if="isEditing" type="primary" @click="onSave">
+        <el-icon><Check /></el-icon>
+        Enregistrer
+      </el-button>
+      <el-button v-if="isEditing" @click="isEditing = false">Annuler</el-button>
+      <el-button type="danger" plain @click="onDelete">
+        <el-icon><Delete /></el-icon>
+        Supprimer
+      </el-button>
+    </div>
+  </div>
+
+  <div class="meeting-content">
+    <div class="meeting-left">
+      <div class="pet-card">
+        <div class="pet-avatar">
+          {{ meeting.ownedPet?.name?.charAt(0) ?? '?' }}
+        </div>
+        <p class="pet-info">
+          <span class="pet-name">{{ meeting.ownedPet?.name }}</span>
+          <span class="pet-meta">
+            {{ meeting.ownedPet?.race?.pet?.name }} · {{ meeting.ownedPet?.race?.name }}
+          </span>
+          <span v-if="petAge" class="pet-meta">{{ petAge }}</span>
+        </p>
+        <el-button text size="small" @click="router.push(`/animals/${meeting.ownedPet?.id}`)">
+          Voir la fiche
+          <el-icon><ArrowRight /></el-icon>
         </el-button>
-        <el-button v-if="isEditing" type="primary" @click="onSave">
-          <el-icon><Check /></el-icon>
-          Enregistrer
-        </el-button>
-        <el-button v-if="isEditing" @click="isEditing = false">Annuler</el-button>
-        <el-button type="danger" plain @click="onDelete">
-          <el-icon><Delete /></el-icon>
-          Supprimer
+      </div>
+      <div class="pet-card">
+        <div class="pet-avatar">
+          {{ meeting.ownedPet?.client.picture?.charAt(0) ?? '?' }}
+        </div>
+        <p class="pet-info">
+          <span class="pet-name"
+            >{{ meeting.ownedPet?.client?.firstname }}
+            {{ meeting.ownedPet?.client?.lastname }}</span
+          >
+        </p>
+        <el-button text size="small" @click="router.push(`/clients/${meeting.ownedPet?.clientId}`)">
+          Voir la fiche
+          <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
     </div>
-
-    <div class="meeting-content">
+    <div class="meeting-right">
       <!-- Badge + titre -->
       <div class="section title-section">
         <div class="kind-badge animal">
@@ -100,30 +139,6 @@ const onDelete = async () => {
           <el-time-picker v-model="editStart" format="HH:mm" value-format="HH:mm:ss" size="large" />
           <span class="time-arrow">→</span>
           <el-time-picker v-model="editEnd" format="HH:mm" value-format="HH:mm:ss" size="large" />
-        </div>
-      </div>
-
-      <!-- Animal -->
-      <div class="section">
-        <h3 class="section-label">
-          <el-icon><Pets /></el-icon>
-          Animal
-        </h3>
-        <div class="pet-card">
-          <div class="pet-avatar">
-            {{ meeting.ownedPet?.name?.charAt(0) ?? '?' }}
-          </div>
-          <div class="pet-info">
-            <span class="pet-name">{{ meeting.ownedPet?.name }}</span>
-            <span class="pet-meta">
-              {{ meeting.ownedPet?.race?.pet?.name }} · {{ meeting.ownedPet?.race?.name }}
-              <template v-if="petAge"> · {{ petAge }}</template>
-            </span>
-          </div>
-          <el-button text size="small" @click="router.push(`/animals/${meeting.ownedPet?.id}`)">
-            Voir la fiche
-            <el-icon><ArrowRight /></el-icon>
-          </el-button>
         </div>
       </div>
 
@@ -201,24 +216,7 @@ const onDelete = async () => {
         <p v-else-if="meeting.report" class="description-text">{{ meeting.report }}</p>
         <p v-else class="empty-text">Aucun compte rendu</p>
       </div>
-
-      <!-- Actes -->
-      <!-- <div v-if="meeting.animalMeetingActs?.length" class="section">
-        <h3 class="section-label">
-          <el-icon><List /></el-icon>
-          Actes réalisés
-          <span class="count-badge">{{ meeting.animalMeetingActs.length }}</span>
-        </h3>
-        <div class="acts-list">
-          <div v-for="act in meeting.animalMeetingActs" :key="act.id" class="act-row">
-            <div class="act-info">
-              <span class="act-name">{{ act.clinicAct?.act?.name }}</span>
-              <span class="act-type">{{ act.clinicAct?.act?.type }}</span>
-            </div>
-            <span class="act-price">{{ act.priceApplied }} €</span>
-          </div>
-        </div>
-      </div> -->
+      <MeetingActs :acts="acts" />
 
       <!-- Prescriptions -->
       <!-- <div v-if="meeting.prescriptions?.length" class="section">
@@ -286,12 +284,6 @@ const onDelete = async () => {
 </template>
 
 <style lang="scss" scoped>
-.meeting-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-lg);
-}
-
 .page-header {
   display: flex;
   align-items: center;
@@ -306,8 +298,19 @@ const onDelete = async () => {
 
 .meeting-content {
   display: flex;
-  flex-direction: column;
   gap: var(--spacing-xl);
+}
+.meeting-right {
+  width: 100%;
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-direction: column;
+}
+.meeting-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  width: 300px;
 }
 
 // ── Sections ──────────────────────────────────────────────────────────────────
@@ -408,8 +411,10 @@ const onDelete = async () => {
 
 .pet-card {
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   padding: var(--spacing-md);
   border-radius: var(--radius-lg);
   border: 1px solid var(--el-border-color-lighter);
@@ -435,17 +440,20 @@ const onDelete = async () => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin: 0;
 }
 
 .pet-name {
   font-size: 15px;
   font-weight: var(--fw-semibold);
   color: var(--el-text-color-primary);
+  text-align: center;
 }
 
 .pet-meta {
   font-size: 12px;
   color: var(--el-text-color-secondary);
+  text-align: center;
 }
 
 // ── Mesures ───────────────────────────────────────────────────────────────────
@@ -509,47 +517,6 @@ const onDelete = async () => {
   font-size: 16px;
 }
 
-// ── Actes ─────────────────────────────────────────────────────────────────────
-
-.acts-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.act-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.act-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.act-name {
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-  color: var(--el-text-color-primary);
-}
-
-.act-type {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.act-price {
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-  color: var(--el-text-color-primary);
-}
-
 // ── Prescriptions ─────────────────────────────────────────────────────────────
 
 .prescriptions-list {
@@ -596,5 +563,11 @@ const onDelete = async () => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-xs);
+}
+
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 </style>

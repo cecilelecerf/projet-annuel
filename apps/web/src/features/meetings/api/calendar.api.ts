@@ -1,5 +1,7 @@
 import { http } from '@/lib/api'
 import {
+  actSchema,
+  animalMeetingActSchema,
   animalMeetingSchema,
   calendarSchema,
   internalMeetingSchema,
@@ -59,6 +61,12 @@ export const calendarApi = {
     get: async (meetingId: MeetingId) => {
       const data = await http.get(`/meetings/animal/${meetingId}`)
       return animalMeetingSchema.parse(data)
+    },
+  },
+  meetingActs: {
+    getAll: async (meetingId: MeetingId) => {
+      const data = await http.get(`/meeting-acts/meeting/${meetingId}`)
+      return animalMeetingActSchema.array().parse(data)
     },
   },
 }

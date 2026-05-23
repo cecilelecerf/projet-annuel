@@ -11,6 +11,13 @@ export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem('accessToken'))
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
   const isAuthenticated = computed(() => !!accessToken.value)
+  const clearAuth = () => {
+    user.value = null
+    accessToken.value = null
+    refreshToken.value = null
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+  }
 
   const init = async () => {
     if (!isAuthenticated.value) return
@@ -26,11 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
       user.value = userData
     } catch {
-      user.value = null
-      accessToken.value = null
-      refreshToken.value = null
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
+      clearAuth()
     }
   }
 
@@ -56,12 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
       body: JSON.stringify({ refreshToken: refreshToken.value }),
     })
 
-    user.value = null
-    accessToken.value = null
-    refreshToken.value = null
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
+    clearAuth()
   }
 
-  return { user, accessToken, isAuthenticated, login, logout, init }
+  return { user, accessToken, isAuthenticated, login, logout, init, clearAuth }
 })

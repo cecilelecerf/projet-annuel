@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
@@ -425,6 +425,9 @@ describe("GET /api/meetings/animal/:id", () => {
 
 describe("PATCH /api/meetings/animal/:id", () => {
   beforeAll(async () => {
+    await getPrisma().prescriptionItem.deleteMany();
+    await getPrisma().prescription.deleteMany();
+    await getPrisma().animalMeetingActPerformer.deleteMany();
     await getPrisma().animalMeetingAct.deleteMany();
     await getPrisma().animalMeeting.deleteMany();
     await getPrisma().meetingBase.deleteMany({
@@ -435,14 +438,14 @@ describe("PATCH /api/meetings/animal/:id", () => {
     const res = await request(app).patch("/api/meetings/animal/some-id");
     expect(res.status).toBe(401);
   });
-
-  it("403 — rôle SECRETARY non autorisé", async () => {
-    const token = await loginAs("secretaire@gmail.com");
+  it("404 — Meeting n'existe pas", async () => {
+    const token = await loginAs("veto@gmail.com");
     const res = await request(app)
       .patch("/api/meetings/animal/some-id")
       .set("Authorization", `Bearer ${token}`)
       .send({});
-    expect(res.status).toBe(403);
+
+    expect(res.status).toBe(404);
   });
 
   it("200 — VETERINARIAN met à jour un rendez-vous", async () => {
@@ -472,6 +475,17 @@ describe("PATCH /api/meetings/animal/:id", () => {
 // ── DELETE /api/meetings/animal/:id ───────────────────────────────────────────
 
 describe("DELETE /api/meetings/animal/:id", () => {
+  beforeAll(async () => {
+    await getPrisma().prescriptionItem.deleteMany();
+    await getPrisma().prescription.deleteMany();
+    await getPrisma().animalMeetingActPerformer.deleteMany();
+    await getPrisma().animalMeetingAct.deleteMany();
+    await getPrisma().animalMeeting.deleteMany();
+    await getPrisma().meetingBase.deleteMany({
+      where: { kind: "ANIMAL" },
+    });
+  });
+  // TODO : ADD si la date est déjà passé
   it("401 — sans token", async () => {
     const res = await request(app).delete("/api/meetings/animal/some-id");
     expect(res.status).toBe(401);
@@ -493,19 +507,17 @@ describe("DELETE /api/meetings/animal/:id", () => {
     const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
 
-    // Crée un RDV à supprimer
     const created = await request(app)
       .post("/api/meetings/animal")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        date: "2026-04-01",
+        date: "2026-08-28",
         startTime: "1970-01-01T15:00:00.000Z",
         endTime: "1970-01-01T15:30:00.000Z",
         ownedPetId: ownedPet!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
-
     const res = await request(app)
       .delete(`/api/meetings/animal/${created.body.id}`)
       .set("Authorization", `Bearer ${token}`);
@@ -518,6 +530,9 @@ describe("DELETE /api/meetings/animal/:id", () => {
     // TODO : ajout vérficiation si date de fin avant date de début
     // TODO : si veto déjà occupé
     beforeAll(async () => {
+      await getPrisma().prescriptionItem.deleteMany();
+      await getPrisma().prescription.deleteMany();
+      await getPrisma().animalMeetingActPerformer.deleteMany();
       await getPrisma().animalMeetingAct.deleteMany();
       await getPrisma().animalMeeting.deleteMany();
       await getPrisma().meetingBase.deleteMany({

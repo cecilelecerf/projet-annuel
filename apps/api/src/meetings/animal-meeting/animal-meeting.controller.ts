@@ -57,7 +57,6 @@ export class AnimalMeetingController {
         data: req.body,
         userId: req.user.id,
       });
-      console.log(meeting);
       res.status(200).json(animalMeetigWithMeetingSchema.parse(meeting));
     } catch (err) {
       next(err);

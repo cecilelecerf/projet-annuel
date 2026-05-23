@@ -9,7 +9,6 @@ const { meetingId, act } = defineProps<{
   meetingId: MeetingId
   act?: AnimalMeetingAct | null
 }>()
-console.log(meetingId)
 const emit = defineEmits<{
   'update:modelValue': [boolean]
   saved: []

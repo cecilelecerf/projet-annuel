@@ -247,7 +247,7 @@ const analysisTypeLabel = (type?: string) =>
   // min-width: 300px;
   width: 100%;
   @include above('lg') {
-    max-width: 550px;
+    // max-width: 400px;
   }
 }
 

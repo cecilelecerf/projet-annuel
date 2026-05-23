@@ -4,7 +4,7 @@ import 'dayjs/locale/fr'
 import { useRoute } from 'vue-router'
 import { calendarApi } from '../api/calendar.api'
 import InternalMeeting from '../components/InternalMeeting.vue'
-import AnimalMeeting from '../components/AnimalMeeting/index.vue'
+import AnimalMeeting from '../components/animal-meeting/AnimalMeetingComponent.vue'
 
 dayjs.locale('fr')
 

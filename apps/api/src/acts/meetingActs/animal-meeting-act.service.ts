@@ -6,6 +6,7 @@ import type {
   UpdateAnimalMeetingAct,
   UserRole,
 } from "@armali/schemas";
+import { AnimalMeetingRepository } from "@api/meetings";
 
 const ALLOWED_ROLES: UserRole[] = [
   "VETERINARIAN",
@@ -16,6 +17,7 @@ const ALLOWED_ROLES: UserRole[] = [
 ];
 
 const repository = new AnimalMeetingActRepository();
+const animalMeetingRepository = new AnimalMeetingRepository();
 
 export class AnimalMeetingActService {
   async getByMeeting(meetingId: MeetingId) {
@@ -30,7 +32,11 @@ export class AnimalMeetingActService {
 
   async create(data: CreateAnimalMeetingAct, role: UserRole) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
-    return repository.create(data);
+    const animalMeeting = await animalMeetingRepository.findById(
+      data.meetingId,
+    );
+    if (!animalMeeting) throw new NotFoundError("animalMeeting");
+    return repository.create(animalMeeting.id, data);
   }
 
   async update(id: string, data: UpdateAnimalMeetingAct, role: UserRole) {

@@ -50,12 +50,12 @@ actRouter.delete(
   roleMiddleware(["ADMIN"]),
   controller.delete.bind(controller) as RequestHandler,
 );
-actRouter.get(
-  "/meeting/:meetingId",
-  authMiddleware,
-  roleMiddleware([...allStaff]),
-  controller.getByMeeting.bind(controller) as RequestHandler,
-);
+// actRouter.get(
+//   "/meeting/:meetingId",
+//   authMiddleware,
+//   roleMiddleware([...allStaff]),
+//   controller.getByMeeting.bind(controller) as RequestHandler,
+// );
 // ── ClinicActs ────────────────────────────────────────────────────────────────
 
 actRouter.get(

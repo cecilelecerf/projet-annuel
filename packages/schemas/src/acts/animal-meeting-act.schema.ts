@@ -49,6 +49,7 @@ export const createAnimalMeetingActSchema = animalMeetingActSchema
     updatedAt: true,
     clinicAct: true,
     performedBy: true,
+    animalMeetingId: true,
   })
   .extend({
     surgery: createSurgerySchema.optional(),
@@ -56,10 +57,11 @@ export const createAnimalMeetingActSchema = animalMeetingActSchema
     imaging: createImagingSchema.optional(),
     analysis: createAnalysisSchema.optional(),
     performedByIds: z.array(veterinarianIdSchema).optional(),
+    meetingId: meetingIdSchema,
   });
 
 export const updateAnimalMeetingActSchema = createAnimalMeetingActSchema
-  .omit({ animalMeetingId: true })
+  .omit({ meetingId: true })
   .partial();
 
 export type AnimalMeetingAct = z.infer<typeof animalMeetingActSchema>;

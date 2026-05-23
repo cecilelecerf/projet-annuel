@@ -1,6 +1,7 @@
 import { http } from '@/lib/api'
 import {
   actSchema,
+  animalMeetigWithMeetingSchema,
   animalMeetingActSchema,
   animalMeetingSchema,
   calendarSchema,
@@ -13,6 +14,7 @@ import {
   type Meeting,
   type MeetingId,
   type MeetingMeta,
+  type UpdateAnimalMeeting,
   type UserId,
 } from '@armali/schemas'
 
@@ -24,24 +26,15 @@ export const calendarApi = {
     return calendarSchema.parse(data)
   },
 
-  getMeetingsByDate: async (date: string, userId?: UserId): Promise<Meeting[]> => {
+  byDate: async (date: string, userId?: UserId): Promise<Meeting[]> => {
     const data = await http.get(
       `/meetings${userId ? '/' + userId : ''}?startDate=${date}&endDate=${date}`,
     )
     return meetingSchema.array().parse(data)
   },
 
-  getMeeting: async (meetingId: string, date?: string): Promise<MeetingMeta> => {
+  get: async (meetingId: string, date?: string): Promise<MeetingMeta> => {
     const data = await http.get(`/meetings/${meetingId}${date ? `?date=${date}` : ''}`)
-    return meetingMetaSchema.parse(data)
-  },
-
-  getActs: async (meetingId: string): Promise<MeetingMeta> => {
-    const data = await http.get(`/meetings/${meetingId}/acts`)
-    return meetingMetaSchema.parse(data)
-  },
-  getPrescriptions: async (meetingId: string): Promise<MeetingMeta> => {
-    const data = await http.get(`/meetings/${meetingId}/prescriptions`)
     return meetingMetaSchema.parse(data)
   },
 
@@ -66,11 +59,9 @@ export const calendarApi = {
       const data = await http.get(`/meetings/animal/${meetingId}`)
       return animalMeetingSchema.parse(data)
     },
-  },
-  meetingActs: {
-    getAll: async (meetingId: MeetingId) => {
-      const data = await http.get(`/meeting-acts/meeting/${meetingId}`)
-      return animalMeetingActSchema.array().parse(data)
+    update: async (meetingId: MeetingId, meeting: UpdateAnimalMeeting) => {
+      const data = await http.patch(`/meetings/animal/${meetingId}`, meeting)
+      return animalMeetigWithMeetingSchema.parse(data)
     },
   },
 }

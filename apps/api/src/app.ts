@@ -49,6 +49,6 @@ app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/owned-pets", ownedPetRouter);
 app.use("/api/acts", actRouter);
-app.use("/api/meeting-acts", animalMeetingActRouter);
+app.use("/api/acts/meeting", animalMeetingActRouter);
 app.use("/api/prescriptions", prescriptionRouter);
 app.use(errorHandler);

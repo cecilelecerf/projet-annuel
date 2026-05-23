@@ -27,6 +27,18 @@ export const animalMeetingMetaSchema = animalMeetingSchema.extend({
   ownedPet: ownedPetMetaSchema,
 });
 
+export const animalMeetigWithMeetingSchema = animalMeetingSchema
+  .pick({
+    description: true,
+    petSize: true,
+    petWeight: true,
+    report: true,
+    specialityId: true,
+    ownedPetId: true,
+    veterinarianClinicId: true,
+  })
+  .extend({ meeting: meetingBaseSchema });
+
 const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   description: true,
   specialityId: true,

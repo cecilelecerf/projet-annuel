@@ -1,33 +1,39 @@
 <script setup lang="ts">
-import type { AnimalMeetingMeta } from '@armali/schemas'
-import { ArrowRight, Check, Delete, Edit } from '@element-plus/icons-vue'
+import { ArrowRight, Check, Delete, Edit, Plus } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { calendarApi } from '../../api/calendar.api'
-import MeetingActs from './MeetingActs.vue'
 import { prescriptionApi } from '@/features/prescriptions/api'
 import PrescriptionCard from '@/features/prescriptions/components/PrescriptionCard.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { ElMessageBox } from 'element-plus'
+import { useFormErrorStore } from '@/stores/formErrorStore'
+import type { AnimalMeetingAct, AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
+import { actsApi } from '@/features/acts/api'
+import MeetingActCard from '@/features/acts/components/MeetingActCard.vue'
 
 dayjs.locale('fr')
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
 const { user } = useAuthStore()
+const { handle } = useFormErrorStore()
 const isEditing = ref(false)
 const [acts, prescriptions] = await Promise.all([
-  calendarApi.meetingActs.getAll(meeting.id),
+  actsApi.meetingActs.getAll(meeting.id),
   prescriptionApi.getByMeeting(meeting.id),
 ])
-const editDescription = ref(meeting.description ?? '')
-const editReport = ref(meeting.report ?? '')
-const editWeight = ref(meeting.petWeight ?? null)
-const editSize = ref(meeting.petSize ?? null)
-const editStart = ref(dayjs(meeting.startTime).format('HH:mm:ss'))
-const editEnd = ref(dayjs(meeting.endTime).format('HH:mm:ss'))
+
+const edit = ref<UpdateAnimalMeeting>({
+  description: meeting.description ?? '',
+  report: meeting.report ?? '',
+  petWeight: meeting.petWeight ?? null,
+  petSize: meeting.petSize ?? null,
+  startTime: new Date(meeting.startTime),
+  endTime: new Date(meeting.endTime),
+})
 
 const dateLabel = computed(() => dayjs(meeting.date).format('dddd D MMMM YYYY'))
 const timeLabel = computed(() => {
@@ -46,8 +52,13 @@ const petAge = computed(() => {
 })
 
 const onSave = async () => {
-  // TODO: appel API update
-  isEditing.value = false
+  try {
+    await calendarApi.animal.update(meeting.id, { ...meeting, ...edit.value })
+    isEditing.value = false
+  } catch (err) {
+    console.log(err)
+    handle(err)
+  }
 }
 
 const onDelete = async () => {
@@ -58,11 +69,26 @@ const onDelete = async () => {
       type: 'warning',
       confirmButtonClass: 'el-button--danger',
     })
-    calendarApi.delete(meeting.id)
+    await calendarApi.delete(meeting.id)
     router.back()
-  } catch {
-    // Annulé — ne rien faire
-  }
+  } catch {}
+}
+
+const showActForm = ref(false)
+const editingAct = ref<AnimalMeetingAct | null>(null)
+
+const openAddAct = () => {
+  editingAct.value = null
+  showActForm.value = true
+}
+
+const openEditAct = (act: AnimalMeetingAct) => {
+  editingAct.value = act
+  showActForm.value = true
+}
+
+const onSavedAct = () => {
+  // emit('refresh')
 }
 </script>
 
@@ -164,9 +190,19 @@ const onDelete = async () => {
           <span class="info-value">{{ timeLabel }}</span>
         </div>
         <div v-else class="edit-time-row">
-          <el-time-picker v-model="editStart" format="HH:mm" value-format="HH:mm:ss" size="large" />
+          <el-time-picker
+            v-model="edit.startTime"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            size="large"
+          />
           <span class="time-arrow">→</span>
-          <el-time-picker v-model="editEnd" format="HH:mm" value-format="HH:mm:ss" size="large" />
+          <el-time-picker
+            v-model="edit.endTime"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            size="large"
+          />
         </div>
       </div>
 
@@ -193,11 +229,11 @@ const onDelete = async () => {
         <div v-else class="measures-edit-row">
           <div class="measure-edit">
             <label class="edit-label">Poids (kg)</label>
-            <el-input-number v-model="editWeight" :precision="2" :step="0.1" size="large" />
+            <el-input-number v-model="edit.petWeight" :precision="2" :step="0.1" size="large" />
           </div>
           <div class="measure-edit">
             <label class="edit-label">Taille (cm)</label>
-            <el-input-number v-model="editSize" :precision="2" :step="0.5" size="large" />
+            <el-input-number v-model="edit.petSize" :precision="2" :step="0.5" size="large" />
           </div>
         </div>
       </div>
@@ -219,7 +255,7 @@ const onDelete = async () => {
         </h3>
         <el-input
           v-if="isEditing"
-          v-model="editDescription"
+          v-model="edit.description"
           type="textarea"
           :rows="3"
           placeholder="Décrire le motif..."
@@ -236,7 +272,7 @@ const onDelete = async () => {
         </h3>
         <el-input
           v-if="isEditing"
-          v-model="editReport"
+          v-model="edit.report"
           type="textarea"
           :rows="5"
           placeholder="Rédiger le compte rendu..."
@@ -244,7 +280,39 @@ const onDelete = async () => {
         <p v-else-if="meeting.report" class="description-text">{{ meeting.report }}</p>
         <p v-else class="empty-text">Aucun compte rendu</p>
       </div>
-      <MeetingActs :acts="acts" />
+
+      <div class="section">
+        <div class="section-label-row">
+          <h3 class="section-label">
+            <el-icon><List /></el-icon>
+
+            Actes réalisés
+            <span class="count-badge">{{ acts?.length ?? 0 }}</span>
+          </h3>
+          <el-button
+            size="small"
+            color="var(--el-color-teal)"
+            plain
+            @click="openAddAct"
+            :icon="Plus"
+          >
+            Ajouter
+          </el-button>
+        </div>
+
+        <div v-if="acts?.length" class="acts-list">
+          <MeetingActCard v-for="act in acts" :key="act.id" :act="act" @edit="openEditAct(act)" />
+        </div>
+
+        <p v-else class="empty-text">Aucun acte réalisé</p>
+        <MeetingActForm
+          v-model="showActForm"
+          :meeting-id="meeting.id"
+          :act="editingAct"
+          @saved="onSavedAct"
+        />
+      </div>
+
       <div v-if="prescriptions?.length" class="section">
         <h3 class="section-label">
           <el-icon><Document /></el-icon>
@@ -322,6 +390,11 @@ const onDelete = async () => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0;
+}
+.section-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .count-badge {
@@ -521,6 +594,17 @@ const onDelete = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+
+  @include above('lg') {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.acts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 
   @include above('lg') {
     flex-direction: row;

@@ -1,6 +1,11 @@
 import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
-import { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
+import {
+  animalMeetigWithMeetingSchema,
+  animalMeetingSchema,
+  CreateAnimalMeeting,
+  UpdateAnimalMeeting,
+} from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
 import { ForbiddenError } from "@api/errors";
 
@@ -52,7 +57,8 @@ export class AnimalMeetingController {
         data: req.body,
         userId: req.user.id,
       });
-      res.status(200).json(meeting);
+      console.log(meeting);
+      res.status(200).json(animalMeetigWithMeetingSchema.parse(meeting));
     } catch (err) {
       next(err);
     }
@@ -66,6 +72,8 @@ export class AnimalMeetingController {
     try {
       await animalMeetingService.delete({
         id: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
       });
       res.status(204).json();
     } catch (err) {

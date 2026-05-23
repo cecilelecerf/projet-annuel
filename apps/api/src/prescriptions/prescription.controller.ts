@@ -22,7 +22,6 @@ export class PrescriptionController {
       const prescriptions = await prescriptionService.getByMeeting(
         req.params.meetingId,
       );
-      console.log(prescriptions);
       res.status(200).json(prescriptions);
     } catch (err) {
       next(err);

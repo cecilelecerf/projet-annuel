@@ -10,7 +10,7 @@ dayjs.locale('fr')
 
 const { params, query } = useRoute()
 
-const meeting = await calendarApi.getMeeting(params.id as string, query.date as string | undefined)
+const meeting = await calendarApi.get(params.id as string, query.date as string | undefined)
 </script>
 
 <template>

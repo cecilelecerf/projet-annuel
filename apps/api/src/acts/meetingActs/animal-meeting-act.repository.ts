@@ -4,6 +4,7 @@ import type {
   MeetingId,
   UpdateAnimalMeetingAct,
 } from "@armali/schemas";
+import { AnimalMeeting } from "../../../prisma/generated/prisma/client";
 
 const meetingActInclude = {
   clinicAct: { include: { act: true } },
@@ -32,13 +33,16 @@ export class AnimalMeetingActRepository {
     });
   }
 
-  async create(data: CreateAnimalMeetingAct) {
+  async create(
+    animalMeetingId: AnimalMeeting["id"],
+    data: CreateAnimalMeetingAct,
+  ) {
     return prisma.animalMeetingAct.create({
       data: {
         performedAt: data.performedAt,
         notes: data.notes,
         priceApplied: data.priceApplied,
-        animalMeetingId: data.animalMeetingId,
+        animalMeetingId: animalMeetingId,
         clinicActId: data.clinicActId,
         performedBy: data.performedByIds?.length
           ? {

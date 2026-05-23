@@ -17,7 +17,7 @@ const emit = defineEmits<{ close: []; delete: [] }>()
 const { user } = useAuthStore()
 const router = useRouter()
 const isEditing = ref(false)
-const meeting = await calendarApi.getMeeting(meetingId, date ? date.toISOString() : undefined)
+const meeting = await calendarApi.get(meetingId, date ? date.toISOString() : undefined)
 
 const dateLabel = computed(() => {
   const date = meeting.date

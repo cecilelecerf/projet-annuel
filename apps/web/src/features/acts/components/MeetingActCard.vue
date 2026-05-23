@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/authStore'
 import type { ActType, AnimalMeetingAct } from '@armali/schemas'
 import dayjs from 'dayjs'
 defineProps<{ act: AnimalMeetingAct }>()
 
+const { user } = useAuthStore()
+const emit = defineEmits<{ edit: []; delete: [] }>()
 const actTypeIcon = (type?: ActType) => {
   const icons: Record<string, string> = {
     VACCINATION: 'Syringe',
@@ -46,14 +49,6 @@ const analysisTypeLabel = (type?: string) =>
     CYTOLOGY: 'Cytologie',
     OTHER: 'Autre',
   })[type ?? ''] ?? type
-
-const editAct = (act: AnimalMeetingAct) => {
-  // TODO
-}
-
-const deleteAct = async (id: string) => {
-  // TODO
-}
 </script>
 <template>
   <div class="act-card">
@@ -223,15 +218,15 @@ const deleteAct = async (id: string) => {
       </div>
     </div>
     <!-- Footer -->
-    <div class="act-card-footer">
+    <div class="act-card-footer" v-if="user?.role === 'VETERINARIAN'">
       <span class="act-date">
         {{ dayjs(act.performedAt).format('D MMM YYYY à H[h]mm') }}
       </span>
       <div class="act-actions">
-        <el-button text size="small" @click="editAct(act)">
+        <el-button text size="small" @click="emit('edit')">
           <el-icon><Edit /></el-icon>
         </el-button>
-        <el-button text size="small" type="danger" @click="deleteAct(act.id)">
+        <el-button text size="small" type="danger" @click="emit('delete')">
           <el-icon><Delete /></el-icon>
         </el-button>
       </div>
@@ -249,6 +244,11 @@ const deleteAct = async (id: string) => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  // min-width: 300px;
+  width: 100%;
+  @include above('lg') {
+    max-width: 550px;
+  }
 }
 
 .act-card-header {

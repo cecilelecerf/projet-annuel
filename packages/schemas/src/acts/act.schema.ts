@@ -52,3 +52,4 @@ export const updateActSchema = createActSchema.partial();
 export type ActType = z.infer<typeof actTypeSchema>;
 export type Act = z.infer<typeof actSchema>;
 export type CreateAct = z.infer<typeof createActSchema>;
+export type UpdateAct = z.infer<typeof updateActSchema>;

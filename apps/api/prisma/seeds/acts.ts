@@ -6,10 +6,24 @@ export async function seedActs(
     clinic1,
     clinic2,
     meetings,
-  }: { clinic1: Clinic; clinic2: Clinic; meetings: any },
+    users,
+  }: {
+    clinic1: Clinic;
+    clinic2: Clinic;
+    meetings: ReturnType<
+      typeof import("./meetings").seedMeetings
+    > extends Promise<infer T>
+      ? T
+      : never;
+    users: ReturnType<typeof import("./users").seedUsers> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+  },
 ) {
-  const { animalMeeting1, animalMeeting2, vetProfile1, vetProfile2 } = meetings;
-
+  const { animalMeeting1, animalMeeting2 } = meetings;
+  const { vetProfile1, vetProfile2 } = users;
   // ── Catalogue d'actes ───────────────────────────────────────────────────────
   const actConsultation = await prisma.act.create({
     data: {
@@ -106,8 +120,11 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-02-10T09:00:00Z"),
       priceApplied: 70,
-      animalMeetingId: animalMeeting1.animalMeeting.id,
+      animalMeetingId: animalMeeting1.animalMeeting?.id!,
       clinicActId: caCardioClinic1.id,
+      performedBy: {
+        create: [{ veterinarianId: vetProfile1.id }],
+      },
     },
   });
 
@@ -116,8 +133,11 @@ export async function seedActs(
       performedAt: new Date("2026-02-10T09:10:00Z"),
       priceApplied: 95,
       notes: "Échographie cardiaque — légère dilatation ventriculaire gauche",
-      animalMeetingId: animalMeeting1.animalMeeting.id,
+      animalMeetingId: animalMeeting1.animalMeeting?.id!,
       clinicActId: caEchoClinic1.id,
+      performedBy: {
+        create: [{ veterinarianId: vetProfile1.id }],
+      },
       imaging: {
         create: {
           imagingType: "ULTRASOUND",
@@ -133,7 +153,7 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-02-10T09:20:00Z"),
       priceApplied: 50,
-      animalMeetingId: animalMeeting1.animalMeeting.id,
+      animalMeetingId: animalMeeting1.animalMeeting?.id!,
       clinicActId: caBloodClinic1.id,
       analysis: {
         create: {
@@ -154,8 +174,11 @@ export async function seedActs(
       performedAt: new Date("2026-03-05T14:00:00Z"),
       priceApplied: 80,
       notes: "Radiographie thoracique de contrôle",
-      animalMeetingId: animalMeeting2.animalMeeting.id,
+      animalMeetingId: animalMeeting2.animalMeeting?.id!,
       clinicActId: caXrayClinic1.id,
+      performedBy: {
+        create: [{ veterinarianId: vetProfile1.id }],
+      },
       imaging: {
         create: {
           imagingType: "XRAY",
@@ -171,8 +194,11 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-03-05T14:10:00Z"),
       priceApplied: 28,
-      animalMeetingId: animalMeeting2.animalMeeting.id,
+      animalMeetingId: animalMeeting2.animalMeeting?.id!,
       clinicActId: caNursingClinic1.id,
+      performedBy: {
+        create: [{ veterinarianId: vetProfile1.id }],
+      },
     },
   });
 

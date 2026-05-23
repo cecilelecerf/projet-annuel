@@ -6,10 +6,9 @@ import { Clinic } from "../../../prisma/generated/prisma/client";
 import { prisma } from "@api/lib/prisma";
 import { UserService } from "@api/users";
 import { flatUser } from "@api/users/user.utils";
-import { calculateAge } from "@api/utils";
+import { calculateAge, isStaff } from "@api/utils";
 
 const animalMeetingRepository = new AnimalMeetingRepository();
-const userService = new UserService();
 export class AnimalMeetingService {
   async create({
     data,
@@ -124,9 +123,28 @@ export class AnimalMeetingService {
     return animalMeetingRepository.update({ id: meeting.id, data });
   }
 
-  async delete({ id }: { id: string }) {
+  async delete({
+    id,
+    userId,
+    role,
+  }: {
+    id: string;
+    userId: string;
+    role: UserRole;
+  }) {
     const meeting = await animalMeetingRepository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
+
+    // Vérifie que le RDV n'est pas passé
+    const meetingDate = new Date(meeting.meeting!.date);
+    if (meetingDate < new Date()) {
+      throw new ForbiddenError();
+    }
+
+    // Vérifie les droits
+    if (!isStaff(role) && meeting.ownedPet.clientId !== userId) {
+      throw new ForbiddenError();
+    }
 
     return animalMeetingRepository.delete(id);
   }

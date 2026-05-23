@@ -44,11 +44,11 @@ model ClientProfile {
   phone       String?
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
- 
-  ownedPet           OwnedPet[]
-  clinicProducts     ClinicProduct[]
-  order              Order[]
- 
+
+  ownedPet       OwnedPet[]
+  clinicProducts ClinicProduct[]
+  order          Order[]
+
   @@map("client_profiles")
 }
 

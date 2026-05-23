@@ -215,17 +215,18 @@ model PrescriptionItem {
   updatedAt DateTime @default(now()) @updatedAt
 
   // Posologie
-  dosage       String // "1 comprimé"
-  frequency    String // "2 fois par jour"
-  duration     Int? // en jours
-  instructions String? // "à donner avec la nourriture"
+  medicationName String
+  dosage         String // "1 comprimé"
+  frequency      String // "2 fois par jour"
+  duration       Int? // en jours
+  instructions   String? // "à donner avec la nourriture"
 
   prescriptionId String
   prescription   Prescription @relation(fields: [prescriptionId], references: [id])
 
   // Vient du stock clinique
-  clinicProductId String
-  clinicProduct   ClinicProduct @relation(fields: [clinicProductId], references: [id])
+  clinicProductId String?
+  clinicProduct   ClinicProduct? @relation(fields: [clinicProductId], references: [id])
 
   @@map("prescription_items")
 }

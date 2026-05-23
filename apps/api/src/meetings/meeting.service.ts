@@ -10,8 +10,8 @@ import {
   MeetingReccuring,
 } from "../../prisma/generated/prisma/client";
 import { MeetingRepository } from "./meeting.repository";
-import type { UserRole } from "@armali/schemas";
-import { NotFoundError } from "@api/errors";
+import type { MeetingId, UserRole } from "@armali/schemas";
+import { ForbiddenError, NotFoundError } from "@api/errors";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -340,5 +340,17 @@ export class MeetingService {
     const meeting = await meetingRepository.getMeetingById(id);
     if (!meeting) throw new NotFoundError("Meeting");
     return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
+  }
+
+  async delete(id: MeetingId) {
+    const meeting = await meetingRepository.getMeetingById(id);
+    if (!meeting) throw new NotFoundError("Rendez-vous");
+
+    const meetingDate = new Date(meeting!.date);
+    if (meetingDate < new Date()) {
+      throw new ForbiddenError();
+    }
+
+    return meetingRepository.delete(id);
   }
 }

@@ -26,7 +26,7 @@ animalMeetingRouter.get(
 animalMeetingRouter.patch(
   "/:id",
   authMiddleware,
-  roleMiddleware(["VETERINARIAN"]),
+  roleMiddleware(["VETERINARIAN", "SECRETARY"]),
   validate(updateAnimalMeetingSchema),
   animalController.update.bind(animalController) as RequestHandler,
 );

@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import './styles/fonts.scss'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import './styles/meeting.scss'
 import router from './router/index'
 import { useAuthStore } from './stores/authStore'
 

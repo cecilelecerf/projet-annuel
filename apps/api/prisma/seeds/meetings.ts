@@ -94,7 +94,7 @@ export async function seedMeetings(
   const recurringAvail1 = await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [1],
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T12:00:00Z"),
@@ -128,7 +128,7 @@ export async function seedMeetings(
   await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [3],
       startTime: new Date("1970-01-01T14:00:00Z"),
       endTime: new Date("1970-01-01T18:00:00Z"),
@@ -161,7 +161,7 @@ export async function seedMeetings(
   await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [2],
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T13:00:00Z"),
@@ -178,7 +178,7 @@ export async function seedMeetings(
   await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [4],
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T18:00:00Z"),
@@ -196,7 +196,7 @@ export async function seedMeetings(
   const recurringSecAvail1 = await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [1],
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T17:00:00Z"),
@@ -213,7 +213,7 @@ export async function seedMeetings(
   await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [2],
       startTime: new Date("1970-01-01T08:00:00Z"),
       endTime: new Date("1970-01-01T17:00:00Z"),
@@ -333,7 +333,7 @@ export async function seedMeetings(
   const recurringInternal1 = await prisma.meetingReccuring.create({
     data: {
       dateStart: new Date("2026-01-01"),
-      dateEnd: new Date("2026-06-30"),
+      dateEnd: new Date("2026-09-30"),
       dayOfWeek: [1],
       startTime: new Date("1970-01-01T10:00:00Z"),
       endTime: new Date("1970-01-01T11:00:00Z"),

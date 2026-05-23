@@ -22,3 +22,4 @@ export const updateClinicActSchema = createClinicActSchema.partial();
 
 export type ClinicAct = z.infer<typeof clinicActSchema>;
 export type CreateClinicAct = z.infer<typeof createClinicActSchema>;
+export type UpdateClinicAct = z.infer<typeof updateClinicActSchema>;

@@ -18,6 +18,7 @@ import { seedActs } from "./acts";
 import { seedBankingInfo } from "./banking-info";
 import { seedMedicalVisits } from "./medical-visit";
 import { seedMeetings } from "./meetings";
+import { seedPrescriptions } from "./prescriptions";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -53,8 +54,13 @@ async function main() {
     vaccines,
     pets,
   });
-  const acts = await seedActs(prisma, { clinic1, clinic2, meetings });
-  await seedProducts(prisma, { clinic1, clinic2, healthConditions });
+  const acts = await seedActs(prisma, { clinic1, clinic2, meetings, users });
+  const products = await seedProducts(prisma, {
+    clinic1,
+    clinic2,
+    healthConditions,
+  });
+  await seedPrescriptions(prisma, { meetings, products, users });
   await seedOrders(prisma, { users, clinic1 });
   await seedMessaging(prisma, { users });
 

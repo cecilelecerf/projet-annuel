@@ -4,13 +4,13 @@ import 'dayjs/locale/fr'
 import { useRoute } from 'vue-router'
 import { calendarApi } from '../api/calendar.api'
 import InternalMeeting from '../components/InternalMeeting.vue'
-import AnimalMeeting from '../components/AnimalMeeting.vue'
+import AnimalMeeting from '../components/animal-meeting/AnimalMeetingComponent.vue'
 
 dayjs.locale('fr')
 
 const { params, query } = useRoute()
 
-const meeting = await calendarApi.getMeeting(params.id as string, query.date as string | undefined)
+const meeting = await calendarApi.get(params.id as string, query.date as string | undefined)
 </script>
 
 <template>

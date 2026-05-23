@@ -6,6 +6,7 @@ import {
   veterinarianIdSchema,
   clinicProductIdSchema,
 } from "./ids";
+import { productClinicSchema } from "./product.schema";
 
 export const prescriptionStatusSchema = z.enum([
   "ACTIVE",
@@ -17,18 +18,14 @@ export const prescriptionItemSchema = z.object({
   id: prescriptionItemIdSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
+  medicationName: z.string().min(1).max(255),
   dosage: z.string().min(1).max(100),
   frequency: z.string().min(1).max(100),
   duration: z.number().int().positive().nullable().optional(),
   instructions: z.string().max(500).nullable().optional(),
   prescriptionId: prescriptionIdSchema,
-  clinicProductId: clinicProductIdSchema,
-  clinicProduct: z
-    .object({
-      id: clinicProductIdSchema,
-      name: z.string(),
-    })
-    .optional(),
+  clinicProductId: clinicProductIdSchema.nullable().optional(),
+  clinicProduct: productClinicSchema.optional().nullable(),
 });
 
 export const createPrescriptionItemSchema = prescriptionItemSchema.omit({

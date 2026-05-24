@@ -145,9 +145,8 @@ model AnimalMeeting {
   veterinarianClinicId String
   veterinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id])
 
-  ownedPetVaccines         OwnedPetVaccine[]
   ownedPetHealthConditions OwnedPetHealthCondition[]
-  animalMeetingActs        AnimalMeetingAct[]
+  animalMedicalHistory     AnimalMedicalHistory[]
   prescriptions            Prescription[]
   veterinarianProfile      VeterinarianProfile?      @relation(fields: [veterinarianProfileId], references: [id])
   veterinarianProfileId    String?

@@ -16,8 +16,9 @@ export async function cleanup(prisma: PrismaClient) {
   await prisma.food.deleteMany();
   await prisma.product.deleteMany();
   await prisma.brand.deleteMany();
-  await prisma.animalMeetingActPerformer.deleteMany();
-  await prisma.animalMeetingAct.deleteMany();
+  await prisma.prescriptionItem.deleteMany();
+  await prisma.prescription.deleteMany();
+  await prisma.animalMedicalHistory.deleteMany();
   await prisma.clinicAct.deleteMany();
   await prisma.act.deleteMany();
   await prisma.animalMeeting.deleteMany();

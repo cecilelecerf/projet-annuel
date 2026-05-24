@@ -175,8 +175,6 @@ describe("UserService.getUserById", () => {
       requesterRole: "DIRECTOR",
       targetId: "user-1",
     });
-    console.log(result);
-    console.log(mockUser);
     expect(result).toEqual(mockUser);
   });
 

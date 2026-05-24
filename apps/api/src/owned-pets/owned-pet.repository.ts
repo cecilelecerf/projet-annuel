@@ -20,8 +20,12 @@ export class OwnedPetRepository {
       where: { id },
       include: {
         race: { include: { pet: true } },
-        client: true,
-        attendingVeterinarian: true,
+        client: { include: { user: true } },
+        ownedPetConditionHealths: {
+          include: { healthCondition: true },
+        },
+        attendingVeterinarian: { include: { user: true } },
+        ownedPetVaccine: true,
       },
     });
   }

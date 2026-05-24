@@ -1,5 +1,10 @@
 import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
-import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
+import type {
+  CreateAnimalMeeting,
+  OwnedPet,
+  OwnedPetId,
+  UpdateAnimalMeeting,
+} from "@armali/schemas";
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { Clinic } from "../../../prisma/generated/prisma/client";
@@ -159,7 +164,6 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    console.log(id);
     const user = await userRepository.getUserById({ id });
     if (!user) throw new NotFoundError("Utilisateur");
     if (user.role !== "CLIENT") throw new ForbiddenError();
@@ -167,5 +171,18 @@ export class AnimalMeetingService {
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
 
     return animalMeetingRepository.findByClient(id);
+  }
+
+  // TODO : add vérification
+  async getByAnimal({
+    ownedPetId,
+    userId,
+    role,
+  }: {
+    ownedPetId: OwnedPetId;
+    userId: string;
+    role: UserRole;
+  }) {
+    return animalMeetingRepository.findByAnimal(ownedPetId);
   }
 }

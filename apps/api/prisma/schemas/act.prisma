@@ -33,26 +33,31 @@ model ClinicAct {
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
 
-  animalMeetingActs AnimalMeetingAct[]
+  animalMeetingActs AnimalMedicalHistory[]
 
   @@unique([actId, clinicId])
   @@map("clinic_acts")
 }
 
 // ── Actes réalisés durant un RDV ─────────────────────────────────────────────
-model AnimalMeetingAct {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+model AnimalMedicalHistory {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  type      ActType
+
   performedAt  DateTime
   notes        String?
-  priceApplied Decimal  @db.Decimal(8, 2) // prix au moment de l'acte
+  priceApplied Decimal? @db.Decimal(8, 2) // prix au moment de l'acte
 
-  animalMeetingId String
-  animalMeeting   AnimalMeeting @relation(fields: [animalMeetingId], references: [id])
+  animalMeetingId String?
+  animalMeeting   AnimalMeeting? @relation(fields: [animalMeetingId], references: [id])
 
-  clinicActId String
-  clinicAct   ClinicAct @relation(fields: [clinicActId], references: [id])
+  clinicActId String?
+  clinicAct   ClinicAct? @relation(fields: [clinicActId], references: [id])
+
+  ownedPetId String
+  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
 
   // Selon le type d'acte
   surgery         Surgery?
@@ -60,22 +65,10 @@ model AnimalMeetingAct {
   imaging         Imaging?
   analysis        Analysis?
 
-  performedBy AnimalMeetingActPerformer[]
+  performedBy      VeterinarianClinic[]
+  ownedPetVaccines OwnedPetVaccine[]
 
-  @@map("animal_meeting_acts")
-}
-
-// Qui a réalisé l'acte (peut être plusieurs)
-model AnimalMeetingActPerformer {
-  id String @id @default(uuid())
-
-  animalMeetingActId String
-  animalMeetingAct   AnimalMeetingAct @relation(fields: [animalMeetingActId], references: [id])
-
-  veterinarianId String
-  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
-
-  @@map("animal_meeting_act_performers")
+  @@map("animal_medical_histories")
 }
 
 // ── Chirurgie ─────────────────────────────────────────────────────────────────
@@ -88,7 +81,7 @@ enum AnesthesiaType {
 model Surgery {
   id String @id
 
-  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMedicalHistory @relation(fields: [id], references: [id], onDelete: Cascade)
 
   anesthesiaType     AnesthesiaType
   duration           Int? // en minutes
@@ -102,7 +95,7 @@ model Surgery {
 model Hospitalization {
   id String @id
 
-  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMedicalHistory @relation(fields: [id], references: [id], onDelete: Cascade)
 
   admittedAt   DateTime
   dischargedAt DateTime?
@@ -140,7 +133,7 @@ enum ImagingType {
 model Imaging {
   id String @id
 
-  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMedicalHistory @relation(fields: [id], references: [id], onDelete: Cascade)
 
   imagingType ImagingType
   bodyPart    String?
@@ -168,7 +161,7 @@ enum AnalysisStatus {
 model Analysis {
   id String @id
 
-  act AnimalMeetingAct @relation(fields: [id], references: [id], onDelete: Cascade)
+  act AnimalMedicalHistory @relation(fields: [id], references: [id], onDelete: Cascade)
 
   analysisType   AnalysisType
   status         AnalysisStatus @default(PENDING)
@@ -229,4 +222,20 @@ model PrescriptionItem {
   clinicProduct   ClinicProduct? @relation(fields: [clinicProductId], references: [id])
 
   @@map("prescription_items")
+}
+
+model OwnedPetVaccine {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  vaccineId String
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
+
+  medicalHistoryId String
+  medicalHistory   AnimalMedicalHistory @relation(fields: [medicalHistoryId], references: [id], onDelete: Cascade)
+  ownedPet         OwnedPet?            @relation(fields: [ownedPetId], references: [id])
+  ownedPetId       String?
+
+  @@map("owned_pet_vaccines")
 }

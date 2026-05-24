@@ -54,7 +54,13 @@ async function main() {
     vaccines,
     pets,
   });
-  const acts = await seedActs(prisma, { clinic1, clinic2, meetings, users });
+  const acts = await seedActs(prisma, {
+    clinic1,
+    clinic2,
+    meetings,
+    users,
+    vaccines,
+  });
   const products = await seedProducts(prisma, {
     clinic1,
     clinic2,

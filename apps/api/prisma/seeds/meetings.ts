@@ -444,18 +444,5 @@ export async function seedMeetings(
     },
   });
 
-  // ── Vaccines owned pets ─────────────────────────────────────────────────────
-  await prisma.ownedPetVaccine.createMany({
-    data: [
-      {
-        ownedPetId: ownedPet1.id,
-        vaccineId: vaccineRage.id,
-        meetingId: animalMeeting1.animalMeeting?.id,
-      },
-      { ownedPetId: ownedPet1.id, vaccineId: vaccineCHPPi.id },
-      { ownedPetId: ownedPet2.id, vaccineId: vaccineTyphus.id },
-    ],
-  });
-
   return { animalMeeting1, animalMeeting2, ownedPet1, ownedPet2, ownedPet3 };
 }

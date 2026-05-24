@@ -44,7 +44,6 @@ export class UserService {
     }
 
     const clinicId = await this.getClinicId({ userId, role });
-    console.log(clinicId);
     const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
     const [clients, staffs] = await Promise.all([
       targetRole.includes("CLIENT")

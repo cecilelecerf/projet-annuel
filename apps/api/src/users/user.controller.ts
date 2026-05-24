@@ -68,7 +68,6 @@ export class UserController {
       const targetId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
-      console.log(targetId);
       const user = await userService.getUserById({
         requesterId: id,
         requesterRole: role,

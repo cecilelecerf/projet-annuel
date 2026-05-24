@@ -1,6 +1,7 @@
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
+  ownedPetDetailSchema,
   ownedPetMetaSchema,
   ownedPetWithRaceMeta,
   type CreateOwnedPet,
@@ -34,7 +35,8 @@ export class OwnedPetController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(pet);
+      console.log(pet);
+      res.status(200).json(ownedPetDetailSchema.parse(pet));
     } catch (err) {
       next(err);
     }

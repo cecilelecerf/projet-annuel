@@ -20,6 +20,7 @@ model OwnedPet {
   animalMeeting            AnimalMeeting[]
   foodPets                 FoodPet[]
   ownedPetConditionHealths OwnedPetHealthCondition[]
+  animalMedicalHistories   AnimalMedicalHistory[]
 
   @@map("owned_pets")
 }
@@ -70,21 +71,4 @@ model Vaccine {
   ownedPetVaccine OwnedPetVaccine[]
 
   @@map("vaccines")
-}
-
-model OwnedPetVaccine {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  ownedPetId String
-  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
-
-  vaccineId String
-  vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
-
-  meetingId     String?
-  animalMeeting AnimalMeeting? @relation(fields: [meetingId], references: [id])
-
-  @@map("owned_pet_vaccines")
 }

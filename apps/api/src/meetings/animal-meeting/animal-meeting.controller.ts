@@ -2,15 +2,19 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
+  animalMeetingActSchema,
+  animalMeetingFieldSchema,
   animalMeetingSchema,
   ClientId,
+  clinicActSchema,
   CreateAnimalMeeting,
+  meetingBaseSchema,
+  OwnedPetId,
   ownedPetWithRaceMeta,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { ForbiddenError, NotFoundError } from "@api/errors";
-import { UserRepository } from "@api/users/user.repository";
+import { ForbiddenError } from "@api/errors";
 
 const animalMeetingService = new AnimalMeetingService();
 export class AnimalMeetingController {
@@ -88,8 +92,6 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      console.log("client");
-      console.log(req.params.id);
       const meetings = await animalMeetingService.getByClient({
         id: req.params.id,
         userId: req.user.id,
@@ -103,6 +105,31 @@ export class AnimalMeetingController {
             .array()
             .parse(meetings),
         );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByAnimal(
+    req: RequestWithParams<{ id: OwnedPetId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const meetings = await animalMeetingService.getByAnimal({
+        ownedPetId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res.status(200).json(
+        animalMeetingFieldSchema
+          .extend({
+            meeting: meetingBaseSchema,
+            animalMeetingActs: animalMeetingActSchema.array(),
+          })
+          .array()
+          .parse(meetings),
+      );
     } catch (err) {
       next(err);
     }

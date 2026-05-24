@@ -1,5 +1,10 @@
 import { prisma } from "@api/lib/prisma";
-import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
+import type {
+  CreateAnimalMeeting,
+  OwnedPet,
+  OwnedPetId,
+  UpdateAnimalMeeting,
+} from "@armali/schemas";
 import {
   User,
   VeterinarianClinic,
@@ -93,6 +98,18 @@ export class AnimalMeetingRepository {
           },
         },
         meeting: true,
+      },
+    });
+  }
+
+  async findByAnimal(ownedPetId: OwnedPetId) {
+    return prisma.animalMeeting.findMany({
+      where: { ownedPetId: ownedPetId },
+      include: {
+        meeting: true,
+        animalMeetingActs: {
+          include: { clinicAct: { include: { act: true } } },
+        },
       },
     });
   }

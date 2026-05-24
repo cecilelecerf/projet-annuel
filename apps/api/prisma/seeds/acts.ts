@@ -7,6 +7,7 @@ export async function seedActs(
     clinic2,
     meetings,
     users,
+    vaccines,
   }: {
     clinic1: Clinic;
     clinic2: Clinic;
@@ -20,10 +21,17 @@ export async function seedActs(
     >
       ? T
       : never;
+    vaccines: ReturnType<
+      typeof import("./vaccines").seedVaccines
+    > extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
   const { animalMeeting1, animalMeeting2 } = meetings;
   const { vetProfile1, vetProfile2 } = users;
+  const { vaccineRage, vaccineCHPPi, vaccineTyphus } = vaccines;
+
   // ── Catalogue d'actes ───────────────────────────────────────────────────────
   const actConsultation = await prisma.act.create({
     data: {
@@ -116,28 +124,75 @@ export async function seedActs(
   });
 
   // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
-  const actCardioPerformed = await prisma.animalMeetingAct.create({
+
+  await prisma.animalMedicalHistory.create({
     data: {
-      performedAt: new Date("2026-02-10T09:00:00Z"),
+      performedAt: animalMeeting1.date,
       priceApplied: 70,
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
       clinicActId: caCardioClinic1.id,
+      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      type: "VACCINATION",
       performedBy: {
-        create: [{ veterinarianId: vetProfile1.id }],
+        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
+      },
+      ownedPetVaccines: {
+        create: {
+          ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+          vaccineId: vaccineCHPPi.id,
+        },
       },
     },
   });
 
-  const actEchoPerformed = await prisma.animalMeetingAct.create({
+  const actCardioPerformed = await prisma.animalMedicalHistory.create({
     data: {
-      performedAt: new Date("2026-02-10T09:10:00Z"),
+      performedAt: animalMeeting1.date,
+      priceApplied: 70,
+      animalMeetingId: animalMeeting1.animalMeeting?.id!,
+      clinicActId: caCardioClinic1.id,
+      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      type: "VACCINATION",
+      performedBy: {
+        connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
+      },
+      ownedPetVaccines: {
+        create: {
+          ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+          vaccineId: vaccineCHPPi.id,
+        },
+      },
+    },
+  });
+
+  await prisma.animalMedicalHistory.create({
+    data: {
+      performedAt: new Date("2026-5-02"),
+      priceApplied: 70,
+      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      type: "VACCINATION",
+      ownedPetVaccines: {
+        create: {
+          ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+          vaccineId: vaccineCHPPi.id,
+        },
+      },
+    },
+  });
+
+  const actEchoPerformed = await prisma.animalMedicalHistory.create({
+    data: {
+      performedAt: animalMeeting1.date,
       priceApplied: 95,
       notes: "Échographie cardiaque — légère dilatation ventriculaire gauche",
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
       clinicActId: caEchoClinic1.id,
       performedBy: {
-        create: [{ veterinarianId: vetProfile1.id }],
+        connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
       },
+      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+
+      type: "IMAGING",
       imaging: {
         create: {
           imagingType: "ULTRASOUND",
@@ -149,12 +204,18 @@ export async function seedActs(
     },
   });
 
-  const actBloodPerformed = await prisma.animalMeetingAct.create({
+  const actBloodPerformed = await prisma.animalMedicalHistory.create({
     data: {
-      performedAt: new Date("2026-02-10T09:20:00Z"),
+      performedAt: animalMeeting1.date,
       priceApplied: 50,
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
       clinicActId: caBloodClinic1.id,
+      performedBy: {
+        connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
+      },
+      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+
+      type: "ANALYSIS",
       analysis: {
         create: {
           analysisType: "BLOOD",
@@ -169,16 +230,19 @@ export async function seedActs(
   });
 
   // ── Actes réalisés sur RDV 2 (Luna — dermatologie) ─────────────────────────
-  await prisma.animalMeetingAct.create({
+  await prisma.animalMedicalHistory.create({
     data: {
-      performedAt: new Date("2026-03-05T14:00:00Z"),
+      performedAt: animalMeeting2.date,
       priceApplied: 80,
       notes: "Radiographie thoracique de contrôle",
       animalMeetingId: animalMeeting2.animalMeeting?.id!,
       clinicActId: caXrayClinic1.id,
       performedBy: {
-        create: [{ veterinarianId: vetProfile1.id }],
+        connect: [{ id: animalMeeting2.animalMeeting?.veterinarianClinicId }],
       },
+      ownedPetId: animalMeeting2.animalMeeting!.ownedPetId,
+
+      type: "IMAGING",
       imaging: {
         create: {
           imagingType: "XRAY",
@@ -190,14 +254,24 @@ export async function seedActs(
     },
   });
 
-  await prisma.animalMeetingAct.create({
+  await prisma.animalMedicalHistory.create({
     data: {
-      performedAt: new Date("2026-03-05T14:10:00Z"),
+      performedAt: animalMeeting2.date,
       priceApplied: 28,
       animalMeetingId: animalMeeting2.animalMeeting?.id!,
       clinicActId: caNursingClinic1.id,
+      ownedPetId: animalMeeting2.animalMeeting!.ownedPetId,
+      type: "IMAGING",
       performedBy: {
-        create: [{ veterinarianId: vetProfile1.id }],
+        connect: [{ id: animalMeeting2.animalMeeting?.veterinarianClinicId }],
+      },
+      imaging: {
+        create: {
+          imagingType: "ULTRASOUND",
+          bodyPart: "Cœur",
+          findings: "Dilatation ventriculaire gauche légère, FEVG conservée",
+          fileUrl: "https://storage.vetparc.fr/echo-rex-20260210.pdf",
+        },
       },
     },
   });

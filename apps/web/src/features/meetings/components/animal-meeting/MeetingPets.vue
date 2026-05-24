@@ -8,9 +8,9 @@ import type { AnimalMeetingMeta } from '@armali/schemas'
 const props = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
 const petAge = computed(() => {
-  if (!props.meeting.ownedPet?.dateOfBirth) return null
-  const years = dayjs().diff(dayjs(props.meeting.ownedPet.dateOfBirth), 'year')
-  const months = dayjs().diff(dayjs(props.meeting.ownedPet.dateOfBirth), 'month') % 12
+  if (!props.meeting.animal?.dateOfBirth) return null
+  const years = dayjs().diff(dayjs(props.meeting.animal.dateOfBirth), 'year')
+  const months = dayjs().diff(dayjs(props.meeting.animal.dateOfBirth), 'month') % 12
   if (years === 0) return `${months} mois`
   if (months === 0) return `${years} an${years > 1 ? 's' : ''}`
   return `${years} an${years > 1 ? 's' : ''} et ${months} mois`
@@ -19,16 +19,22 @@ const petAge = computed(() => {
 
 <template>
   <div class="pet-card">
-    <div class="pet-avatar">{{ meeting.ownedPet?.name?.charAt(0) ?? '?' }}</div>
+    <div class="pet-avatar">{{ meeting.animal?.name?.charAt(0) ?? '?' }}</div>
     <div class="pet-section">
       <p class="pet-info">
-        <span class="pet-name">{{ meeting.ownedPet?.name }}</span>
+        <span class="pet-name">{{ meeting.animal?.name }}</span>
         <span class="pet-meta">
-          {{ meeting.ownedPet?.race?.pet?.name }} · {{ meeting.ownedPet?.race?.name }}
+          {{ meeting.animal?.race?.pet?.name }} · {{ meeting.animal?.race?.name }}
         </span>
         <span v-if="petAge" class="pet-meta">{{ petAge }}</span>
       </p>
-      <el-button text size="small" @click="router.push(`/animals/${meeting.ownedPet?.id}`)">
+      <el-button
+        text
+        size="small"
+        @click="
+          router.push({ name: 'Secretary.Animals.Detail', params: { id: meeting.animal.id } })
+        "
+      >
         Voir la fiche <el-icon><ArrowRight /></el-icon>
       </el-button>
     </div>
@@ -36,18 +42,18 @@ const petAge = computed(() => {
 
   <div class="pet-card">
     <div class="pet-avatar">
-      {{ meeting.ownedPet?.client?.firstname?.charAt(0) ?? '?' }}
+      {{ meeting.animal?.client?.firstname?.charAt(0) ?? '?' }}
     </div>
     <p class="pet-info">
       <span class="pet-name">
-        {{ meeting.ownedPet?.client?.firstname }} {{ meeting.ownedPet?.client?.lastname }}
+        {{ meeting.animal?.client?.firstname }} {{ meeting.animal?.client?.lastname }}
       </span>
     </p>
     <el-button
       text
       size="small"
       @click="
-        router.push({ name: 'Secretary.Users.Detail', params: { id: meeting.ownedPet.clientId } })
+        router.push({ name: 'Secretary.Users.Detail', params: { id: meeting.animal.clientId } })
       "
     >
       Voir la fiche <el-icon><ArrowRight /></el-icon>

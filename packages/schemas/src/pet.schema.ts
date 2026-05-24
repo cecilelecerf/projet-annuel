@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   petIdSchema,
-  ownedPetIdSchema,
+  animalIdSchema,
   raceIdSchema,
   clientIdSchema,
   veterinarianIdSchema,
@@ -43,25 +43,6 @@ export const updateRaceSchema = createRaceSchema.partial();
 export type Race = z.infer<typeof raceSchema>;
 export type CreateRace = z.infer<typeof createRaceSchema>;
 export type UpdateRace = z.infer<typeof updateRaceSchema>;
-
-// ── Vaccine ───────────────────────────────────────────────────────────────────
-export const vaccineSchema = z.object({
-  id: vaccineIdSchema,
-  name: z.string().min(1),
-  description: z.string().max(255).nullable().optional(),
-  petId: petIdSchema,
-  recommendedAge: z.number().int().positive(), // en semaine
-  boosterInterval: z.number().int().positive(), // en semaine
-  mandatoryCountry: z.array(z.string()).nullable().optional(),
-  recommendedCountry: z.array(z.string()).nullable().optional(),
-});
-
-export const createVaccineSchema = vaccineSchema.omit({ id: true });
-export const updateVaccineSchema = createVaccineSchema.partial();
-
-export type Vaccine = z.infer<typeof vaccineSchema>;
-export type CreateVaccine = z.infer<typeof createVaccineSchema>;
-export type UpdateVaccine = z.infer<typeof updateVaccineSchema>;
 
 // ── ClinicPet (junction clinique ↔ espèce) ────────────────────────────────────
 export const clinicPetSchema = z.object({

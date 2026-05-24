@@ -1,9 +1,11 @@
 import { z } from "zod";
 import {
   clinicActIdSchema,
-  animalMeetingActIdSchema,
-  veterinarianIdSchema,
+  clinicIdSchema,
+  medicalHistoryIdSchema,
   meetingIdSchema,
+  veterinarianClinicIdSchema,
+  veterinarianIdSchema,
 } from "../ids";
 import { clinicActSchema } from "./clinic-act.schema";
 import { createSurgerySchema, surgerySchema } from "./surgery.schema";
@@ -13,36 +15,37 @@ import {
 } from "./hospitalization.schema";
 import { createImagingSchema, imagingSchema } from "./imaging.schema";
 import { analysisSchema, createAnalysisSchema } from "./analysis.schema";
-import { veterinarianProfileSchema, veterinarianSchema } from "../users";
+import { userSchema, veterinarianProfileSchema } from "../users";
+import {
+  createAnimalVaccineSchema,
+  animalVaccineSchema,
+} from "./animal-vaccination.schema";
 
-export const animalMeetingActSchema = z.object({
-  id: animalMeetingActIdSchema,
+const performedUser = z.object({
+  veterinarianId: veterinarianIdSchema,
+  clinicId: clinicIdSchema,
+  animalMedicalHistoryId: medicalHistoryIdSchema,
+  veterinarian: userSchema,
+});
+export const medicalHistorySchema = z.object({
+  id: medicalHistoryIdSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   performedAt: z.coerce.date(),
   notes: z.string().nullable().optional(),
   priceApplied: z.coerce.number().multipleOf(0.01),
   animalMeetingId: meetingIdSchema,
-  clinicActId: clinicActIdSchema,
-  clinicAct: clinicActSchema.optional(),
+  clinicActId: clinicActIdSchema.nullable().optional(),
+  clinicAct: clinicActSchema.nullable().optional(),
   surgery: surgerySchema.nullable().optional(),
   hospitalization: hospitalizationSchema.nullable().optional(),
   imaging: imagingSchema.nullable().optional(),
   analysis: analysisSchema.nullable().optional(),
-  performedBy: z
-    .array(
-      z.object({
-        id: z.uuid(),
-        veterinarianId: veterinarianIdSchema,
-        veterinarian: veterinarianProfileSchema.extend({
-          user: veterinarianSchema,
-        }),
-      }),
-    )
-    .optional(),
+  performedBy: z.array(performedUser).optional(),
+  animalVaccine: animalVaccineSchema.nullable().optional(),
 });
 
-export const createAnimalMeetingActSchema = animalMeetingActSchema
+export const createMedicalHistorySchema = medicalHistorySchema
   .omit({
     id: true,
     createdAt: true,
@@ -56,18 +59,15 @@ export const createAnimalMeetingActSchema = animalMeetingActSchema
     hospitalization: createHospitalizationSchema.optional(),
     imaging: createImagingSchema.optional(),
     analysis: createAnalysisSchema.optional(),
-    performedByIds: z.array(veterinarianIdSchema).optional(),
+    performedByIds: z.array(veterinarianProfileSchema).optional(),
+    vaccinations: createAnimalVaccineSchema.optional(),
     meetingId: meetingIdSchema,
   });
 
-export const updateAnimalMeetingActSchema = createAnimalMeetingActSchema
+export const updateMedicalHistorySchema = createMedicalHistorySchema
   .omit({ meetingId: true })
   .partial();
 
-export type AnimalMeetingAct = z.infer<typeof animalMeetingActSchema>;
-export type CreateAnimalMeetingAct = z.infer<
-  typeof createAnimalMeetingActSchema
->;
-export type UpdateAnimalMeetingAct = z.infer<
-  typeof updateAnimalMeetingActSchema
->;
+export type MedicalHistory = z.infer<typeof medicalHistorySchema>;
+export type CreateMedicalHistory = z.infer<typeof createMedicalHistorySchema>;
+export type UpdateMedicalHistory = z.infer<typeof updateMedicalHistorySchema>;

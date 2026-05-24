@@ -1,14 +1,14 @@
 import { http } from '@/lib/api'
 import {
-  actSchema,
   animalMeetigWithMeetingSchema,
-  animalMeetingActSchema,
+  animalMeetingFieldSchema,
   animalMeetingSchema,
   calendarSchema,
   internalMeetingSchema,
+  meetingBaseSchema,
   meetingMetaSchema,
   meetingSchema,
-  ownedPetWithRaceMeta,
+  animalWithRaceMeta,
   type Calendar,
   type ClientId,
   type CreateAnimalMeeting,
@@ -16,8 +16,10 @@ import {
   type Meeting,
   type MeetingId,
   type MeetingMeta,
+  type AnimalId,
   type UpdateAnimalMeeting,
   type UserId,
+  medicalHistorySchema,
 } from '@armali/schemas'
 
 export const calendarApi = {
@@ -66,10 +68,21 @@ export const calendarApi = {
       return animalMeetigWithMeetingSchema.parse(data)
     },
 
+    getAllByAnimal: async (animalId: AnimalId) => {
+      const data = await http.get(`/meetings/animals/animals/${animalId}`)
+      return animalMeetingFieldSchema
+        .extend({
+          meeting: meetingBaseSchema,
+          animalMedicalHistories: medicalHistorySchema.array(),
+        })
+        .array()
+        .parse(data)
+    },
+
     getAllByClientId: async (clientId: ClientId) => {
       const data = await http.get(`/meetings/animals/users/${clientId}`)
       return animalMeetigWithMeetingSchema
-        .extend({ ownedPet: ownedPetWithRaceMeta })
+        .extend({ animal: animalWithRaceMeta })
         .array()
         .parse(data)
     },

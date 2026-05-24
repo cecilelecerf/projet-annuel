@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   healthConditionIdSchema,
-  ownedPetIdSchema,
+  animalIdSchema,
   meetingIdSchema,
   userIdSchema,
   foodIdSchema,
@@ -13,7 +13,7 @@ import {
 export const clientPetHealthConditionSchema = z.object({
   id: clientPetHealthConditionIdSchema,
   healthConditionId: healthConditionIdSchema,
-  ownedPetId: ownedPetIdSchema,
+  animalId: animalIdSchema,
   diagnosedAt: z.coerce.date(),
   notes: z.string().min(1).max(255),
   meetingId: meetingIdSchema.nullable().optional(),
@@ -41,7 +41,7 @@ export const petFoodSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   foodId: foodIdSchema,
-  clientPetId: ownedPetIdSchema,
+  clientPetId: animalIdSchema,
   day: z.number().int().min(1).max(7), // jour de la semaine
   dateStart: z.coerce.date(),
   dateEnd: z.coerce.date().nullable().optional(),

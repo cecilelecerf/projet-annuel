@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  ownedPetIdSchema,
+  animalIdSchema,
   specialityIdSchema,
   veterinarianClinicIdSchema,
   veterinarianIdSchema,
@@ -10,21 +10,23 @@ import {
   meetingBaseSchema,
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
-import { ownedPetMetaSchema } from "../owned-pet/meta.schema";
-
-export const animalMeetingSchema = meetingBaseSchema.extend({
+import { animalMetaSchema } from "../animals/meta.schema";
+export const animalMeetingFieldSchema = z.object({
   description: z.string().nullable().optional(),
   petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
   petSize: z.coerce.number().multipleOf(0.01).nullable().optional(),
   report: z.string().nullable().optional(),
   specialityId: specialityIdSchema.nullable().optional(),
-  ownedPetId: ownedPetIdSchema,
+  animalId: animalIdSchema,
   veterinarianClinicId: veterinarianClinicIdSchema,
+});
+export const animalMeetingSchema = meetingBaseSchema.extend({
+  ...animalMeetingFieldSchema.shape,
   kind: z.literal("ANIMAL"),
 });
 
 export const animalMeetingMetaSchema = animalMeetingSchema.extend({
-  ownedPet: ownedPetMetaSchema,
+  animal: animalMetaSchema,
 });
 
 export const animalMeetigWithMeetingSchema = animalMeetingSchema
@@ -34,7 +36,7 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
     petWeight: true,
     report: true,
     specialityId: true,
-    ownedPetId: true,
+    animalId: true,
     veterinarianClinicId: true,
   })
   .extend({ meeting: meetingBaseSchema });
@@ -42,7 +44,7 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
 const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   description: true,
   specialityId: true,
-  ownedPetId: true,
+  animalId: true,
   veterinarianClinicId: true,
   petSize: true,
   petWeight: true,
@@ -62,7 +64,7 @@ export const createAnimalMeetingSchema = createAnimalMeetingFields.refine(
   timeRefineOptions,
 );
 export const updateAnimalMeetingSchema = createAnimalMeetingFields
-  .omit({ veterinarianId: true, ownedPetId: true })
+  .omit({ veterinarianId: true, animalId: true })
   .partial()
   .refine(timeRefineFn, timeRefineOptions);
 

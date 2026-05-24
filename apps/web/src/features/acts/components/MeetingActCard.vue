@@ -1,54 +1,18 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
-import type { ActType, AnimalMeetingAct } from '@armali/schemas'
+import type { AnimalMeetingAct } from '@armali/schemas'
 import dayjs from 'dayjs'
+import {
+  actTypeIcon,
+  actTypeLabel,
+  analysisTypeLabel,
+  anesthesiaLabel,
+  imagingTypeLabel,
+} from '../utils'
 defineProps<{ act: AnimalMeetingAct }>()
 
 const { user } = useAuthStore()
 const emit = defineEmits<{ edit: []; delete: [] }>()
-const actTypeIcon = (type?: ActType) => {
-  const icons: Record<string, string> = {
-    VACCINATION: 'Syringe',
-    SURGERY: 'Scissors',
-    HOSPITALIZATION: 'House',
-    IMAGING: 'Camera',
-    ANALYSIS: 'Odometer',
-    NURSING: 'FirstAidKit',
-    CONSULTATION: 'ChatDotRound',
-  }
-  return icons[type ?? ''] ?? 'Document'
-}
-
-const actTypeLabel = (type?: ActType) => {
-  const labels: Record<string, string> = {
-    VACCINATION: 'Vaccination',
-    SURGERY: 'Chirurgie',
-    HOSPITALIZATION: 'Hospitalisation',
-    IMAGING: 'Imagerie',
-    ANALYSIS: 'Analyse',
-    NURSING: 'Soins infirmiers',
-    CONSULTATION: 'Consultation',
-  }
-  return labels[type ?? ''] ?? type
-}
-
-const anesthesiaLabel = (type?: string) =>
-  ({ LOCAL: 'Locale', GENERAL: 'Générale', SEDATION: 'Sédation' })[type ?? ''] ?? type
-
-const imagingTypeLabel = (type?: string) =>
-  ({ XRAY: 'Radiographie', ULTRASOUND: 'Échographie', SCANNER: 'Scanner', MRI: 'IRM' })[
-    type ?? ''
-  ] ?? type
-
-const analysisTypeLabel = (type?: string) =>
-  ({
-    BLOOD: 'Prise de sang',
-    URINE: 'Urine',
-    STOOL: 'Selles',
-    BIOPSY: 'Biopsie',
-    CYTOLOGY: 'Cytologie',
-    OTHER: 'Autre',
-  })[type ?? ''] ?? type
 </script>
 <template>
   <div class="act-card">

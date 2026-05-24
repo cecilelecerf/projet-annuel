@@ -61,15 +61,15 @@ const onDelete = () => {
       <template v-if="meeting.kind === 'ANIMAL'">
         <div class="popup-animal-row">
           <span class="animal-cell"
-            >{{ meeting.ownedPet.race.pet.name }} - {{ meeting.ownedPet.race.name }}</span
+            >{{ meeting.animal.race.pet.name }} - {{ meeting.animal.race.name }}</span
           >
-          <span class="animal-cell">{{ meeting.ownedPet.name }}</span>
+          <span class="animal-cell">{{ meeting.animal.name }}</span>
           <span class="animal-cell">{{
-            meeting.ownedPet.age.years > 1
-              ? `${meeting.ownedPet.age.years} ans`
-              : meeting.ownedPet.age.years > 0
-                ? `${meeting.ownedPet.age.years} an et ${meeting.ownedPet.age.months} mois`
-                : `${meeting.ownedPet.age.months} mois`
+            meeting.animal.age.years > 1
+              ? `${meeting.animal.age.years} ans`
+              : meeting.animal.age.years > 0
+                ? `${meeting.animal.age.years} an et ${meeting.animal.age.months} mois`
+                : `${meeting.animal.age.months} mois`
           }}</span>
         </div>
       </template>

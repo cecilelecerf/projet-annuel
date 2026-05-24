@@ -4,14 +4,14 @@ import 'dayjs/locale/fr'
 import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import type { Client } from '@armali/schemas'
-import { ownedPetApi } from '@/features/ownedPets/api'
+import { animalApi } from '@/features/animals/api'
 import { calendarApi } from '@/features/meetings/api/calendar.api'
 
 const { client } = defineProps<{ client: Client }>()
 dayjs.locale('fr')
 const router = useRouter()
 const [animals, meetings] = await Promise.all([
-  ownedPetApi.getAllByUser(client.id),
+  animalApi.getAllByUser(client.id),
   calendarApi.animal.getAllByClientId(client.id),
 ])
 const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
@@ -71,7 +71,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
             v-for="pet in animals"
             :key="pet.id"
             class="pet-card"
-            @click="router.push(`/animals/${pet.id}`)"
+            @click="router.push({ name: 'Secretary.Animals.Detail', params: { id: pet.id } })"
           >
             <div class="pet-avatar">{{ pet.name.charAt(0) }}</div>
             <div class="pet-info">
@@ -93,10 +93,15 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 
         <div v-if="meetings.length" class="meetings-list">
           <div
-            v-for="meeting in meetings.slice(0, 3)"
+            v-for="meeting in meetings.slice(0, 5)"
             :key="meeting.meeting.id"
             class="meeting-row"
-            @click="router.push(`/meetings/${meeting.meeting.id}`)"
+            @click="
+              router.push({
+                name: 'Secretary.Calendar.Meeting.Detail',
+                params: { id: meeting.meeting.id },
+              })
+            "
           >
             <div class="meeting-date">
               <span class="meeting-day">
@@ -107,7 +112,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
               </span>
             </div>
             <div class="meeting-info">
-              <span class="meeting-pet">{{ meeting.ownedPet.name }}</span>
+              <span class="meeting-pet">{{ meeting.animal.name }}</span>
               <span class="meeting-desc">{{ meeting.description ?? 'Consultation' }}</span>
             </div>
             <el-icon><ArrowRight /></el-icon>

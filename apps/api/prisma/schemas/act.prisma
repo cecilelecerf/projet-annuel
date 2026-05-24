@@ -64,7 +64,7 @@ model AnimalMedicalHistory {
   clinicAct   ClinicAct? @relation(fields: [clinicActId], references: [id])
 
   animalId String
-  animal   Animal @relation(fields: [animalId], references: [id])
+  animal   Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
 
   // Selon le type d'acte
   surgery         Surgery?
@@ -240,7 +240,7 @@ model AnimalVaccine {
   vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
 
   medicalHistory AnimalMedicalHistory? @relation(fields: [id], references: [id], onDelete: Cascade)
-  animal         Animal?               @relation(fields: [animalId], references: [id])
+  animal         Animal?               @relation(fields: [animalId], references: [id], onDelete: Cascade)
   animalId       String?
 
   @@map("animals_vaccines")

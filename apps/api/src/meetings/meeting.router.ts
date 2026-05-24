@@ -38,7 +38,7 @@ meetingRouter.delete(
   "/:id",
   authMiddleware,
   roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),
-  meetingController.getMeeting.bind(meetingController) as RequestHandler,
+  meetingController.delete.bind(meetingController) as RequestHandler,
 );
 
 meetingRouter.use("/availabilities", availabilityRouter);

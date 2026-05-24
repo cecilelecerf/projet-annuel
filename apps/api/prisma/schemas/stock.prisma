@@ -92,7 +92,7 @@ model FoodPet {
   food   Food   @relation(fields: [foodId], references: [id])
 
   animalId String
-  animal   Animal @relation(fields: [animalId], references: [id])
+  animal   Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
 
   @@map("food_pets")
 }

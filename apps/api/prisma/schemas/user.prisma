@@ -43,6 +43,8 @@ model ClientProfile {
   address     String?
   phone       String?
 
+  country String @default("FR")
+
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
   animal         Animal[]

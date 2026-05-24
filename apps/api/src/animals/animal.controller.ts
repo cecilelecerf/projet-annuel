@@ -48,8 +48,9 @@ export class AnimalController {
     next: NextFunction,
   ) {
     try {
+      console.log("enter");
       const pet = await animalService.create({
-        data: req.body.data,
+        data: req.body,
         userId: req.user.id,
         role: req.user.role,
       });
@@ -67,7 +68,7 @@ export class AnimalController {
     try {
       const pet = await animalService.update({
         id: req.params.id,
-        data: req.body.data,
+        data: req.body,
         userId: req.user.id,
         role: req.user.role,
       });

@@ -46,6 +46,7 @@ animalRouter.patch(
 animalRouter.delete(
   "/:id",
   authMiddleware,
+  roleMiddleware(["CLIENT"]),
   controller.delete.bind(controller) as RequestHandler,
 );
 

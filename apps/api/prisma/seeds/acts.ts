@@ -85,8 +85,14 @@ export async function seedActs(
         create: {
           recommendedAge: 12,
           boosterInterval: 52,
-          mandatoryCountry: ["FR", "BE", "CH"],
           petId: petDog.id,
+          countryRules: {
+            create: [
+              { country: "FR", minAge: 12, type: "MANDATORY" },
+              { country: "BE", minAge: 16, type: "MANDATORY" },
+              { country: "CH", minAge: 12, type: "RECOMMENDED" },
+            ],
+          },
         },
       },
     },
@@ -102,6 +108,13 @@ export async function seedActs(
           recommendedAge: 8,
           boosterInterval: 52,
           petId: petDog.id,
+          countryRules: {
+            create: [
+              { country: "FR", minAge: 12, type: "MANDATORY" },
+              { country: "BE", minAge: 16, type: "MANDATORY" },
+              { country: "CH", minAge: 12, type: "RECOMMENDED" },
+            ],
+          },
         },
       },
     },
@@ -118,6 +131,13 @@ export async function seedActs(
           recommendedAge: 8,
           boosterInterval: 52,
           petId: petCat.id,
+          countryRules: {
+            create: [
+              { country: "FR", minAge: 12, type: "MANDATORY" },
+              { country: "BE", minAge: 16, type: "MANDATORY" },
+              { country: "CH", minAge: 12, type: "RECOMMENDED" },
+            ],
+          },
         },
       },
     },

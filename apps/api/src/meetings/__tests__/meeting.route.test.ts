@@ -139,18 +139,126 @@ describe("GET /api/meetings/:id", () => {
     expect(res.status).toBe(404);
   });
 
-  it("200 — retourne le meeting", async () => {
+  it("200 — VETERINARIAN retourne le meeting", async () => {
     const token = await loginAs("veto@gmail.com");
     const meeting = await getPrisma().meetingBase.findFirst();
 
     const res = await request(app)
       .get(`/api/meetings/${meeting!.id}`)
       .set("Authorization", `Bearer ${token}`);
+
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("id", meeting!.id);
   });
+  it("200 — CLIENT retourne son propre meeting animal", async () => {
+    const token = await loginAs("client@gmail.com");
+
+    const clientUser = await getPrisma().user.findUnique({
+      where: { email: "client@gmail.com" },
+      include: { clientProfile: true },
+    });
+
+    const animal = await getPrisma().animal.findFirst({
+      where: { clientId: clientUser!.clientProfile!.id },
+      include: { animalMeeting: { include: { meeting: true } } },
+    });
+
+    const meetingId = animal!.animalMeeting[0]!.meeting!.id;
+
+    const res = await request(app)
+      .get(`/api/meetings/${meetingId}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("id", meetingId);
+  });
+
+  it("403 — CLIENT n'a pas accès au meeting d'un autre client", async () => {
+    const token = await loginAs("client@gmail.com");
+
+    const clientUser = await getPrisma().user.findUnique({
+      where: { email: "client@gmail.com" },
+      include: { clientProfile: true },
+    });
+
+    const otherAnimalMeeting = await getPrisma().animalMeeting.findFirst({
+      where: {
+        animal: { clientId: { not: clientUser!.clientProfile!.id } },
+        meetingId: { not: null },
+      },
+      include: { meeting: true },
+    });
+
+    const res = await request(app)
+      .get(`/api/meetings/${otherAnimalMeeting!.meeting!.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
 });
 
+describe("DELETE /api/meetings/:id", () => {
+  it("401 — sans token", async () => {
+    const res = await request(app).delete("/api/meetings/some-id");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — rôle DIRECTOR non autorisé", async () => {
+    const token = await loginAs("directeur@gmail.com");
+    const res = await request(app)
+      .delete("/api/meetings/some-id")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("404 — meeting introuvable", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const res = await request(app)
+      .delete("/api/meetings/non-existent-id")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("403 — meeting dans le passé", async () => {
+    const token = await loginAs("veto@gmail.com");
+    // Récupère un meeting dont la date est passée
+    const pastMeeting = await getPrisma().meetingBase.findFirst({
+      where: { date: { lt: new Date() } },
+    });
+
+    const res = await request(app)
+      .delete(`/api/meetings/${pastMeeting!.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("204 — VETERINARIAN supprime un meeting futur", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const animal = await getPrisma().animal.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
+    const speciality = await getPrisma().speciality.findFirst();
+
+    // Crée un meeting futur dédié à ce test
+    const created = await request(app)
+      .post("/api/meetings/animals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        date: "2026-09-01",
+        startTime: "1970-01-01T09:00:00.000Z",
+        endTime: "1970-01-01T10:00:00.000Z",
+        animalId: animal!.id,
+        veterinarianId: vetoClinic!.veterinarianId,
+        specialityId: speciality!.id,
+      });
+
+    const res = await request(app)
+      .delete(`/api/meetings/${created.body.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(204);
+  });
+});
 // ── POST /api/meetings/availabilities ─────────────────────────────────────────
 
 describe("POST /api/meetings/availabilities", () => {

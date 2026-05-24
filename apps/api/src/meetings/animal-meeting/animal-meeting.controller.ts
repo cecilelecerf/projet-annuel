@@ -121,7 +121,6 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      console.log(meetings);
       res.status(200).json(
         animalMeetingFieldSchema
           .extend({

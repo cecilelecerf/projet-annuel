@@ -7,6 +7,9 @@ model Animal {
   description String?
   activity    Int?
 
+  outdoorAccess Boolean @default(false)
+  animalContact Boolean @default(false)
+
   attendingVeterinarianId String?
   attendingVeterinarian   VeterinarianProfile? @relation(fields: [attendingVeterinarianId], references: [id])
 
@@ -55,14 +58,31 @@ model Race {
   @@map("races")
 }
 
+enum VaccineRuleType {
+  MANDATORY
+  RECOMMENDED
+}
+
+model VaccineCountryRule {
+  id      String          @id @default(uuid())
+  country String
+  minAge  Int
+  type    VaccineRuleType
+
+  vaccineId String
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
+
+  @@unique([vaccineId, country, type])
+  @@map("vaccine_country_rules")
+}
+
 model Vaccine {
-  id                 String   @id @default(uuid())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @default(now()) @updatedAt
-  recommendedAge     Int
-  boosterInterval    Int
-  mandatoryCountry   Json?
-  recommendedCountry Json?
+  id              String               @id @default(uuid())
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @default(now()) @updatedAt
+  recommendedAge  Int
+  boosterInterval Int
+  countryRules    VaccineCountryRule[]
 
   petId          String
   pet            Pet             @relation(fields: [petId], references: [id])

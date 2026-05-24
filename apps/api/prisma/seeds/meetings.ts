@@ -278,6 +278,30 @@ export async function seedMeetings(
       animalMeeting: true,
     },
   });
+  const animalMeeting3 = await prisma.meetingBase.create({
+    data: {
+      type: "SPECIFIED",
+      kind: "ANIMAL",
+      date: new Date("2026-05-10"),
+      startTime: new Date("1970-01-01T09:00:00Z"),
+      endTime: new Date("1970-01-01T09:30:00Z"),
+      animalMeeting: {
+        create: {
+          description: "Consultation de routine",
+          petWeight: 28,
+          petSize: 58,
+          report:
+            "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
+          specialityId: specCardio.id,
+          animalId: animal1.id,
+          veterinarianClinicId: vetoClinic1.id,
+        },
+      },
+    },
+    include: {
+      animalMeeting: true,
+    },
+  });
 
   const animalMeeting2 = await prisma.meetingBase.create({
     data: {

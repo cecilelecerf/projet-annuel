@@ -46,7 +46,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'animals/:id',
         name: 'Secretary.Animals.Detail',
-        component: () => import('@/features/animals/views/AnimalView.vue'),
+        component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
       },
 
       // // ── Boutique ─────────────────────────────────────────────

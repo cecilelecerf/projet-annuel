@@ -48,7 +48,6 @@ export class AnimalController {
     next: NextFunction,
   ) {
     try {
-      console.log("enter");
       const pet = await animalService.create({
         data: req.body,
         userId: req.user.id,

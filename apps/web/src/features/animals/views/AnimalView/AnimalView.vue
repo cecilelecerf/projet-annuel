@@ -4,23 +4,19 @@ import 'dayjs/locale/fr'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import type { AnimalId } from '@armali/schemas'
-import { animalApi } from '../api'
+import { animalApi } from '../../api'
 import { calendarApi } from '@/features/meetings/api/calendar.api'
 import { actTypeLabel } from '@/features/acts/utils'
+import WeightChart from './WeightChart.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
 const pet = await animalApi.get(route.params.id as AnimalId)
-const vaccinesStatus = await animalApi.getVaccines(route.params.id as AnimalId)
-console.log(vaccinesStatus)
-// const [meetings, healthConditions, vaccines] = await Promise.all([
-//   animalApi.getMeetings(pet.id),
-//   animalApi.getHealthConditions(pet.id),
-//   animalApi.getVaccines(pet.id),
-// ])
-const [meetings] = await Promise.all([calendarApi.animal.getAllByAnimal(pet.id)])
+const [meetings, vaccinesStatus] = await Promise.all([
+  calendarApi.animal.getAllByAnimal(pet.id),
+  await animalApi.getVaccines(route.params.id as AnimalId),
+])
 const router = useRouter()
 
 const age = computed(() => {
@@ -153,26 +149,7 @@ const lastSize = computed(() => {
         </div>
       </div>
 
-      <!-- Graphique poids -->
-      <div v-if="weightData.length > 1" class="section">
-        <h3 class="section-label">Évolution du poids</h3>
-        <div class="chart-wrapper">
-          <!-- <ResponsiveContainer width="100%" :height="200">   -->
-          <LineChart :data="weightData">
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--el-border-color-lighter)" />
-            <XAxis dataKey="date" tick-style="font-size: 11px" />
-            <YAxis unit=" kg" tick-style="font-size: 11px" />
-            <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="poids"
-              stroke="var(--el-color-primary)"
-              :stroke-width="2"
-              dot
-            />
-          </LineChart>
-        </div>
-      </div>
+      <WeightChart :weight-data="weightData" />
 
       <!-- Conditions de santé -->
       <div v-if="pet.animalConditionHealths?.length" class="section">
@@ -210,14 +187,49 @@ const lastSize = computed(() => {
             <span>Prochain rappel</span>
             <span>Statut</span>
           </div>
-          <div v-for="v in vaccinesStatus" :key="v.id" class="vaccine-row">
-            <span class="vaccine-name">{{ v.vaccine?.act.name }}</span>
-            <span class="vaccine-date">{{
-              dayjs(v.medicalHistory.performedAt).format('D MMM YYYY')
-            }}</span>
-            <span class="vaccine-date">{{ dayjs(v.nextDue).format('D MMM YYYY') }}</span>
-            <el-tag :type="v.isUpToDate ? 'success' : 'danger'" size="small" round>
-              {{ v.isUpToDate ? 'À jour' : 'À renouveler' }}
+          <div
+            v-for="v in vaccinesStatus"
+            :key="v.vaccineId"
+            class="vaccine-row"
+            :class="`status-${v.status.toLowerCase()}`"
+          >
+            <span class="vaccine-name">{{ v.vaccine?.act?.name }}</span>
+            <span class="vaccine-date">
+              {{
+                v.medicalHistory.performedAt
+                  ? dayjs(v.medicalHistory.performedAt).format('D MMM YYYY')
+                  : '—'
+              }}
+            </span>
+            <span class="vaccine-date">
+              {{ v.nextDue ? dayjs(v.nextDue).format('D MMM YYYY') : '—' }}
+            </span>
+            <el-tag
+              :type="
+                v.status === 'UP_TO_DATE'
+                  ? 'success'
+                  : v.status === 'OVERDUE'
+                    ? 'danger'
+                    : v.status === 'MANDATORY_MISSING'
+                      ? 'warning'
+                      : v.status === 'RECOMMENDED_MISSING'
+                        ? 'info'
+                        : ''
+              "
+              size="small"
+              round
+            >
+              {{
+                v.status === 'UP_TO_DATE'
+                  ? 'À jour'
+                  : v.status === 'OVERDUE'
+                    ? 'En retard'
+                    : v.status === 'MANDATORY_MISSING'
+                      ? 'Obligatoire manquant'
+                      : v.status === 'RECOMMENDED_MISSING'
+                        ? 'Recommandé'
+                        : 'Non applicable'
+              }}
             </el-tag>
           </div>
         </div>

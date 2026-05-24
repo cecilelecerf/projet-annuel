@@ -15,7 +15,11 @@ import {
 } from "./hospitalization.schema";
 import { createImagingSchema, imagingSchema } from "./imaging.schema";
 import { analysisSchema, createAnalysisSchema } from "./analysis.schema";
-import { userSchema, veterinarianProfileSchema } from "../users";
+import {
+  baseUserSchema,
+  userSchema,
+  veterinarianProfileSchema,
+} from "../users";
 import {
   createAnimalVaccineSchema,
   animalVaccineSchema,
@@ -25,7 +29,7 @@ const performedUser = z.object({
   veterinarianId: veterinarianIdSchema,
   clinicId: clinicIdSchema,
   animalMedicalHistoryId: medicalHistoryIdSchema,
-  veterinarian: userSchema,
+  veterinarian: veterinarianProfileSchema.extend({ user: baseUserSchema }),
 });
 export const medicalHistorySchema = z.object({
   id: medicalHistoryIdSchema,

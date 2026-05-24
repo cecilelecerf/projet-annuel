@@ -1,7 +1,7 @@
 import { http } from '@/lib/api'
 import {
   medicalHistorySchema,
-  type AnimalMeetingActId,
+  type MedicalHistoryId,
   type MeetingId,
   type UpdateMedicalHistory,
 } from '@armali/schemas'
@@ -13,13 +13,13 @@ export const medicalHistoriesApi = {
   },
   update: async (
     meetingId: MeetingId,
-    meetingActId: AnimalMeetingActId,
+    meetingActId: MedicalHistoryId,
     body: UpdateMedicalHistory,
   ) => {
     const data = await http.patch(`/medical-histories/${meetingId}/${meetingActId}`, body)
     return medicalHistorySchema.parse(data)
   },
-  get: async (meetingId: MeetingId, meetingActId: AnimalMeetingActId) => {
+  get: async (meetingId: MeetingId, meetingActId: MedicalHistoryId) => {
     const data = await http.get(`/medical-histories/${meetingId}/${meetingActId}`)
     return medicalHistorySchema.parse(data)
   },

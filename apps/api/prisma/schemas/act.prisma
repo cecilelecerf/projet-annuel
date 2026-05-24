@@ -55,7 +55,7 @@ model AnimalMedicalHistory {
   priceApplied Decimal? @db.Decimal(8, 2) // prix au moment de l'acte
 
   animalMeetingId String?
-  animalMeeting   AnimalMeeting? @relation(fields: [animalMeetingId], references: [id])
+  animalMeeting   AnimalMeeting? @relation(fields: [animalMeetingId], references: [id], onDelete: Cascade)
 
   actId String
   act   Act    @relation(fields: [actId], references: [id])
@@ -199,7 +199,7 @@ model Prescription {
   notes     String?
 
   animalMeetingId String
-  animalMeeting   AnimalMeeting @relation(fields: [animalMeetingId], references: [id])
+  animalMeeting   AnimalMeeting @relation(fields: [animalMeetingId], references: [id], onDelete: Cascade)
 
   veterinarianId String
   veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
@@ -222,9 +222,8 @@ model PrescriptionItem {
   instructions   String? // "à donner avec la nourriture"
 
   prescriptionId String
-  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
 
-  // Vient du stock clinique
   clinicProductId String?
   clinicProduct   ClinicProduct? @relation(fields: [clinicProductId], references: [id])
 

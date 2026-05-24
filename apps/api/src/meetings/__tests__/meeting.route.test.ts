@@ -180,13 +180,12 @@ describe("GET /api/meetings/:id", () => {
       where: { email: "client@gmail.com" },
       include: { clientProfile: true },
     });
-
     const otherAnimalMeeting = await getPrisma().animalMeeting.findFirst({
       where: {
         animal: { clientId: { not: clientUser!.clientProfile!.id } },
         meetingId: { not: null },
       },
-      include: { meeting: true },
+      include: { meeting: true, animal: { include: { client: true } } },
     });
 
     const res = await request(app)
@@ -221,15 +220,12 @@ describe("DELETE /api/meetings/:id", () => {
 
   it("403 — meeting dans le passé", async () => {
     const token = await loginAs("veto@gmail.com");
-    // Récupère un meeting dont la date est passée
     const pastMeeting = await getPrisma().meetingBase.findFirst({
       where: { date: { lt: new Date() } },
     });
-
     const res = await request(app)
       .delete(`/api/meetings/${pastMeeting!.id}`)
       .set("Authorization", `Bearer ${token}`);
-
     expect(res.status).toBe(403);
   });
 
@@ -239,7 +235,6 @@ describe("DELETE /api/meetings/:id", () => {
     const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
 
-    // Crée un meeting futur dédié à ce test
     const created = await request(app)
       .post("/api/meetings/animals")
       .set("Authorization", `Bearer ${token}`)
@@ -533,12 +528,8 @@ describe("GET /api/meetings/animals/:id", () => {
 
 describe("PATCH /api/meetings/animals/:id", () => {
   beforeAll(async () => {
-    await getPrisma().prescriptionItem.deleteMany();
-    await getPrisma().prescription.deleteMany();
-    await getPrisma().animalMedicalHistory.deleteMany();
-    await getPrisma().animalMeeting.deleteMany();
     await getPrisma().meetingBase.deleteMany({
-      where: { kind: "ANIMAL" },
+      where: { kind: "ANIMAL", date: new Date("2026-04-22T00:00:00.000Z") },
     });
   });
   it("401 — sans token", async () => {
@@ -583,12 +574,8 @@ describe("PATCH /api/meetings/animals/:id", () => {
 
 describe("DELETE /api/meetings/animals/:id", () => {
   beforeAll(async () => {
-    await getPrisma().prescriptionItem.deleteMany();
-    await getPrisma().prescription.deleteMany();
-    await getPrisma().animalMedicalHistory.deleteMany();
-    await getPrisma().animalMeeting.deleteMany();
     await getPrisma().meetingBase.deleteMany({
-      where: { kind: "ANIMAL" },
+      where: { kind: "ANIMAL", date: new Date("2026-08-28T00:00:00.000Z") },
     });
   });
   // TODO : ADD si la date est déjà passé
@@ -636,12 +623,8 @@ describe("DELETE /api/meetings/animals/:id", () => {
     // TODO : ajout vérficiation si date de fin avant date de début
     // TODO : si veto déjà occupé
     beforeAll(async () => {
-      await getPrisma().prescriptionItem.deleteMany();
-      await getPrisma().prescription.deleteMany();
-      await getPrisma().animalMedicalHistory.deleteMany();
-      await getPrisma().animalMeeting.deleteMany();
       await getPrisma().meetingBase.deleteMany({
-        where: { kind: "ANIMAL" },
+        where: { kind: "ANIMAL", date: new Date("2026-04-02T00:00:00.000Z") },
       });
     });
     it("401 — sans token", async () => {

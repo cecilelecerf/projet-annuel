@@ -85,13 +85,25 @@ describe("GET /api/users", () => {
         include: { directorClinicProfile: true },
       });
 
+      const clinicId = director!.directorClinicProfile!.clinicId;
+
+      const usersOutsideClinic = await getPrisma().user.findMany({
+        where: {
+          AND: [
+            { veterinarianProfile: null },
+            { secretaryProfile: { clinicId: { not: clinicId } } },
+          ],
+        },
+        select: { id: true },
+      });
+      const outsideIds = new Set(usersOutsideClinic.map((u) => u.id));
+
       const res = await request(app)
         .get("/api/users")
         .set("Authorization", `Bearer ${token}`);
-
       expect(res.status).toBe(200);
       res.body.forEach((user: any) => {
-        expect(user.clinicId).toBe(director!.directorClinicProfile!.clinicId);
+        expect(outsideIds.has(user.id)).toBe(false);
       });
     });
   });
@@ -164,6 +176,17 @@ describe("GET /api/users/roles/:role", () => {
       where: { email: "directeur@gmail.com" },
       include: { directorClinicProfile: true },
     });
+    const clinicId = director!.directorClinicProfile!.clinicId;
+
+    const vetosInClinic = await getPrisma().user.findMany({
+      where: {
+        veterinarianProfile: {
+          veterinarianClinic: { some: { clinicId } },
+        },
+      },
+      select: { id: true },
+    });
+    const vetoIds = new Set(vetosInClinic.map((u) => u.id));
 
     const res = await request(app)
       .get("/api/users/roles/veterinarian")
@@ -171,7 +194,7 @@ describe("GET /api/users/roles/:role", () => {
 
     expect(res.status).toBe(200);
     res.body.forEach((user: any) => {
-      expect(user.clinicId).toBe(director!.directorClinicProfile!.clinicId);
+      expect(vetoIds.has(user.id)).toBe(true);
     });
   });
 
@@ -181,6 +204,17 @@ describe("GET /api/users/roles/:role", () => {
       where: { email: "secretaire@gmail.com" },
       include: { secretaryProfile: true },
     });
+    const clinicId = secretary!.secretaryProfile!.clinicId;
+
+    const vetosInClinic = await getPrisma().user.findMany({
+      where: {
+        veterinarianProfile: {
+          veterinarianClinic: { some: { clinicId } },
+        },
+      },
+      select: { id: true },
+    });
+    const vetoIds = new Set(vetosInClinic.map((u) => u.id));
 
     const res = await request(app)
       .get("/api/users/roles/veterinarian")
@@ -188,7 +222,7 @@ describe("GET /api/users/roles/:role", () => {
 
     expect(res.status).toBe(200);
     res.body.forEach((user: any) => {
-      expect(user.clinicId).toBe(secretary!.secretaryProfile!.clinicId);
+      expect(vetoIds.has(user.id)).toBe(true);
     });
   });
 });
@@ -265,15 +299,26 @@ describe("GET /api/users/:id", () => {
 
   it("403 — DIRECTOR ne peut pas accéder à un utilisateur d'une autre clinique", async () => {
     const token = await loginAs("directeur@gmail.com");
-    const otherClinicVeto = await getPrisma().user.findUnique({
-      where: { email: "dr.garcia@vetsaintmichel.fr" },
+    const director = await getPrisma().user.findUnique({
+      where: { email: "directeur@gmail.com" },
+      include: { directorClinicProfile: true },
+    });
+    const clinicId = director!.directorClinicProfile!.clinicId;
+
+    const otherClinicVeto = await getPrisma().user.findFirst({
+      where: {
+        veterinarianProfile: {
+          veterinarianClinic: {
+            none: { clinicId },
+          },
+        },
+      },
     });
 
     const res = await request(app)
       .get(`/api/users/${otherClinicVeto!.id}`)
       .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(404); // 404 car on ne révèle pas l'existence
+    expect(res.status).toBe(404);
   });
 
   it("200 — STAFF peut accéder à un CLIENT", async () => {

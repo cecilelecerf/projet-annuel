@@ -72,14 +72,12 @@ export class UserService {
     const user = await userRepository.getUserById({ id: targetId });
     if (!user) throw new NotFoundError("Utilisateur");
 
-    // ADMIN voit tout
     if (requesterRole === "ADMIN") return user;
 
-    // Personne ne peut voir un ADMIN
     if (user.role === "ADMIN") throw new ForbiddenError();
 
-    // Staff → vérifie que le user cible est dans la même clinique
     if (isStaff(user.role)) {
+      console.log("staff");
       const clinicId = await this.getClinicId({
         userId: requesterId,
         role: requesterRole,

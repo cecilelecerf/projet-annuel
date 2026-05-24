@@ -2,8 +2,7 @@ import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { MeetingController } from "@api/meetings/meeting.controller";
-import { UserRole } from "@armali/schemas";
-import availabilityRouter from "./availability/availability.route";
+import availabilityRouter from "./availability/availability.router";
 import animalMeetingRouter from "./animal-meeting/animal-meeting.router";
 import internalMeetingRouter from "./internal-meeting/internal-meeting.router";
 

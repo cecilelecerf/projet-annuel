@@ -1,6 +1,6 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
-import { OwnedPetRepository } from "./owned-pet.repository";
-import type { CreateOwnedPet, UpdateOwnedPet, UserRole } from "@armali/schemas";
+import { AnimalRepository } from "./animal.repository";
+import type { CreateAnimal, UpdateAnimal, UserRole } from "@armali/schemas";
 
 const STAFF_ROLES: UserRole[] = [
   "VETERINARIAN",
@@ -10,9 +10,9 @@ const STAFF_ROLES: UserRole[] = [
   "ADMIN",
 ];
 
-const ownedPetRepository = new OwnedPetRepository();
+const animalRepository = new AnimalRepository();
 
-export class OwnedPetService {
+export class AnimalService {
   private isStaff(role: UserRole) {
     return STAFF_ROLES.includes(role);
   }
@@ -28,15 +28,15 @@ export class OwnedPetService {
   }) {
     if (this.isStaff(role)) return;
 
-    const pet = await ownedPetRepository.findById(petId);
+    const pet = await animalRepository.findById(petId);
     if (!pet) throw new NotFoundError("Animal");
     if (pet.clientId !== userId) throw new ForbiddenError();
     return pet;
   }
 
   async getAll({ userId, role }: { userId: string; role: UserRole }) {
-    if (this.isStaff(role)) return ownedPetRepository.findAll();
-    return ownedPetRepository.findByClientId(userId);
+    if (this.isStaff(role)) return animalRepository.findAll();
+    return animalRepository.findByClientId(userId);
   }
   async getByUser({
     targetUserId,
@@ -49,7 +49,7 @@ export class OwnedPetService {
   }) {
     if (!this.isStaff(role) && targetUserId !== requesterId)
       throw new ForbiddenError();
-    return ownedPetRepository.findByClientId(targetUserId);
+    return animalRepository.findByClientId(targetUserId);
   }
 
   async getById({
@@ -61,7 +61,7 @@ export class OwnedPetService {
     userId: string;
     role: UserRole;
   }) {
-    const pet = await ownedPetRepository.findById(id);
+    const pet = await animalRepository.findById(id);
     if (!pet) throw new NotFoundError("Animal");
     if (!this.isStaff(role) && pet.clientId !== userId)
       throw new ForbiddenError();
@@ -73,7 +73,7 @@ export class OwnedPetService {
     userId,
     role,
   }: {
-    data: CreateOwnedPet;
+    data: CreateAnimal;
     userId: string;
     role: UserRole;
   }) {
@@ -81,7 +81,7 @@ export class OwnedPetService {
       ? ((data as any).clientId ?? userId)
       : userId;
 
-    return ownedPetRepository.create({ ...data, clientId });
+    return animalRepository.create({ ...data, clientId });
   }
 
   async update({
@@ -91,12 +91,12 @@ export class OwnedPetService {
     role,
   }: {
     id: string;
-    data: UpdateOwnedPet;
+    data: UpdateAnimal;
     userId: string;
     role: UserRole;
   }) {
     await this.assertAccess({ petId: id, userId, role });
-    return ownedPetRepository.update(id, data);
+    return animalRepository.update(id, data);
   }
 
   async delete({
@@ -109,6 +109,6 @@ export class OwnedPetService {
     role: UserRole;
   }) {
     await this.assertAccess({ petId: id, userId, role });
-    return ownedPetRepository.delete(id);
+    return animalRepository.delete(id);
   }
 }

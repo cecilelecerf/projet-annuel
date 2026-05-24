@@ -1,8 +1,8 @@
 import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
 import type {
   CreateAnimalMeeting,
-  OwnedPet,
-  OwnedPetId,
+  Animal,
+  AnimalId,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
@@ -102,16 +102,16 @@ export class AnimalMeetingService {
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
     if (role === "CLIENT") {
-      const isOwner = meeting.ownedPet.client.id === userId;
+      const isOwner = meeting.animal.client.id === userId;
       if (!isOwner) throw new ForbiddenError();
     }
-    const user = flatUser(meeting.ownedPet.client);
+    const user = flatUser(meeting.animal.client);
     return {
       ...meeting,
-      ownedPet: {
-        ...meeting.ownedPet,
+      animal: {
+        ...meeting.animal,
         client: user,
-        age: calculateAge(meeting.ownedPet.dateOfBirth),
+        age: calculateAge(meeting.animal.dateOfBirth),
       },
     };
   }
@@ -148,7 +148,7 @@ export class AnimalMeetingService {
       throw new ForbiddenError();
     }
 
-    if (!isStaff(role) && meeting.ownedPet.clientId !== userId) {
+    if (!isStaff(role) && meeting.animal.clientId !== userId) {
       throw new ForbiddenError();
     }
 
@@ -175,14 +175,14 @@ export class AnimalMeetingService {
 
   // TODO : add vérification
   async getByAnimal({
-    ownedPetId,
+    animalId,
     userId,
     role,
   }: {
-    ownedPetId: OwnedPetId;
+    animalId: AnimalId;
     userId: string;
     role: UserRole;
   }) {
-    return animalMeetingRepository.findByAnimal(ownedPetId);
+    return animalMeetingRepository.findByAnimal(animalId);
   }
 }

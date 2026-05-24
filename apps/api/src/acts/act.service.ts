@@ -83,8 +83,4 @@ export class ActService {
     if (!act) throw new NotFoundError("Acte clinique");
     return clinicActRepository.delete(id);
   }
-
-  async getByMeeting(meetingId: string) {
-    return actRepository.findByMeeting(meetingId);
-  }
 }

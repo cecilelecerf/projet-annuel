@@ -1,37 +1,37 @@
 import { prisma } from "@api/lib/prisma";
-import type { CreateOwnedPet, UpdateOwnedPet } from "@armali/schemas";
+import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
 
-export class OwnedPetRepository {
+export class AnimalRepository {
   async findAll() {
-    return prisma.ownedPet.findMany({
+    return prisma.animal.findMany({
       include: { race: { include: { pet: true } }, client: true },
     });
   }
 
   async findByClientId(clientId: string) {
-    return prisma.ownedPet.findMany({
+    return prisma.animal.findMany({
       where: { clientId },
       include: { race: { include: { pet: true } } },
     });
   }
 
   async findById(id: string) {
-    return prisma.ownedPet.findUnique({
+    return prisma.animal.findUnique({
       where: { id },
       include: {
         race: { include: { pet: true } },
         client: { include: { user: true } },
-        ownedPetConditionHealths: {
+        animalConditionHealths: {
           include: { healthCondition: true },
         },
         attendingVeterinarian: { include: { user: true } },
-        ownedPetVaccine: true,
+        animalVaccine: true,
       },
     });
   }
 
-  async create(data: CreateOwnedPet & { clientId: string }) {
-    return prisma.ownedPet.create({
+  async create(data: CreateAnimal & { clientId: string }) {
+    return prisma.animal.create({
       data: {
         name: data.name,
         dateOfBirth: data.dateOfBirth,
@@ -45,8 +45,8 @@ export class OwnedPetRepository {
     });
   }
 
-  async update(id: string, data: UpdateOwnedPet) {
-    return prisma.ownedPet.update({
+  async update(id: string, data: UpdateAnimal) {
+    return prisma.animal.update({
       where: { id },
       data: {
         name: data.name,
@@ -61,6 +61,6 @@ export class OwnedPetRepository {
   }
 
   async delete(id: string) {
-    return prisma.ownedPet.delete({ where: { id } });
+    return prisma.animal.delete({ where: { id } });
   }
 }

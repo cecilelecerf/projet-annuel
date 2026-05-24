@@ -287,7 +287,7 @@ CREATE TABLE "owned_pet_health_conditions" (
     "notes" TEXT NOT NULL,
     "diagnosedAt" TIMESTAMP(3) NOT NULL,
     "healthConditionId" TEXT NOT NULL,
-    "ownedPetId" TEXT NOT NULL,
+    "animalId" TEXT NOT NULL,
     "meetingId" TEXT,
     "addedById" TEXT NOT NULL,
 
@@ -381,7 +381,7 @@ CREATE TABLE "animal_meetings" (
     "recurringId" TEXT,
     "meetingId" TEXT,
     "specialityId" TEXT,
-    "ownedPetId" TEXT NOT NULL,
+    "animalId" TEXT NOT NULL,
     "veterinarianId" TEXT NOT NULL,
 
     CONSTRAINT "animal_meetings_pkey" PRIMARY KEY ("id")
@@ -447,7 +447,7 @@ CREATE TABLE "owned_pet_vaccines" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "ownedPetId" TEXT NOT NULL,
+    "animalId" TEXT NOT NULL,
     "vaccineId" TEXT NOT NULL,
     "meetingId" TEXT,
 
@@ -522,7 +522,7 @@ CREATE TABLE "food_pets" (
     "quantity" DECIMAL(65,30) NOT NULL,
     "hours" TIMESTAMP(3) NOT NULL,
     "foodId" TEXT NOT NULL,
-    "ownedPetId" TEXT NOT NULL,
+    "animalId" TEXT NOT NULL,
 
     CONSTRAINT "food_pets_pkey" PRIMARY KEY ("id")
 );
@@ -871,7 +871,7 @@ ALTER TABLE "health_conditions" ADD CONSTRAINT "health_conditions_petId_fkey" FO
 ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_healthConditionId_fkey" FOREIGN KEY ("healthConditionId") REFERENCES "health_conditions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "animal_meetings"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -925,7 +925,7 @@ ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_meetingId_fkey" FO
 ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_specialityId_fkey" FOREIGN KEY ("specialityId") REFERENCES "specialities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_veterinarianId_fkey" FOREIGN KEY ("veterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -946,7 +946,7 @@ ALTER TABLE "races" ADD CONSTRAINT "races_petId_fkey" FOREIGN KEY ("petId") REFE
 ALTER TABLE "vaccines" ADD CONSTRAINT "vaccines_petId_fkey" FOREIGN KEY ("petId") REFERENCES "pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "owned_pet_vaccines" ADD CONSTRAINT "owned_pet_vaccines_vaccineId_fkey" FOREIGN KEY ("vaccineId") REFERENCES "vaccines"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -973,7 +973,7 @@ ALTER TABLE "clinic_products" ADD CONSTRAINT "clinic_products_clientProfileId_fk
 ALTER TABLE "food_pets" ADD CONSTRAINT "food_pets_foodId_fkey" FOREIGN KEY ("foodId") REFERENCES "foods"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "food_pets" ADD CONSTRAINT "food_pets_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "food_pets" ADD CONSTRAINT "food_pets_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "orders" ADD CONSTRAINT "orders_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "client_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

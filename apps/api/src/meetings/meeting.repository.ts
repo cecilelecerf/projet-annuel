@@ -76,7 +76,7 @@ export class MeetingRepository {
     end: Date,
   ) {
     return prisma.animalMeeting.findMany({
-      where: { ownedPet: { clientId: clientProfileId } },
+      where: { animal: { clientId: clientProfileId } },
       include: {
         recurring: {
           where: recurringFilter(start, end),
@@ -89,7 +89,7 @@ export class MeetingRepository {
           },
           include: { animalMeeting: true },
         },
-        ownedPet: true,
+        animal: true,
       },
     });
   }

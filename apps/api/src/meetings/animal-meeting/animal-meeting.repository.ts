@@ -1,8 +1,8 @@
 import { prisma } from "@api/lib/prisma";
 import type {
   CreateAnimalMeeting,
-  OwnedPet,
-  OwnedPetId,
+  Animal,
+  AnimalId,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import {
@@ -16,7 +16,7 @@ export class AnimalMeetingRepository {
       where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
-        ownedPet: {
+        animal: {
           include: {
             client: { include: { user: { omit: { password: true } } } },
             race: { include: { pet: true } },
@@ -45,15 +45,15 @@ export class AnimalMeetingRepository {
           create: {
             description: data.description,
             specialityId: data.specialityId,
-            ownedPetId: data.ownedPetId,
-            veterinarianClinicId: veterinarianClinicId,
+            animalId: data.animalId,
+            veterinarianClinicId,
           },
         },
       },
       include: {
         animalMeeting: {
           include: {
-            ownedPet: true,
+            animal: true,
             speciality: true,
           },
         },
@@ -80,7 +80,7 @@ export class AnimalMeetingRepository {
           },
         },
       },
-      include: { meeting: true, ownedPet: true },
+      include: { meeting: true, animal: true },
     });
   }
 
@@ -90,9 +90,9 @@ export class AnimalMeetingRepository {
 
   async findByClient(userId: User["id"]) {
     return prisma.animalMeeting.findMany({
-      where: { ownedPet: { client: { user: { id: userId } } } },
+      where: { animal: { client: { user: { id: userId } } } },
       include: {
-        ownedPet: {
+        animal: {
           include: {
             race: { include: { pet: true } },
           },
@@ -102,12 +102,12 @@ export class AnimalMeetingRepository {
     });
   }
 
-  async findByAnimal(ownedPetId: OwnedPetId) {
+  async findByAnimal(animalId: AnimalId) {
     return prisma.animalMeeting.findMany({
-      where: { ownedPetId: ownedPetId },
+      where: { animalId: animalId },
       include: {
         meeting: true,
-        animalMeetingActs: {
+        animalMedicalHistories: {
           include: { clinicAct: { include: { act: true } } },
         },
       },

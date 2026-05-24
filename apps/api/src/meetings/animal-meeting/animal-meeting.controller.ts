@@ -2,15 +2,15 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
-  animalMeetingActSchema,
+  medicalHistorySchema,
   animalMeetingFieldSchema,
   animalMeetingSchema,
   ClientId,
   clinicActSchema,
   CreateAnimalMeeting,
   meetingBaseSchema,
-  OwnedPetId,
-  ownedPetWithRaceMeta,
+  AnimalId,
+  animalWithRaceMeta,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
@@ -101,7 +101,7 @@ export class AnimalMeetingController {
         .status(200)
         .json(
           animalMeetigWithMeetingSchema
-            .extend({ ownedPet: ownedPetWithRaceMeta })
+            .extend({ animal: animalWithRaceMeta })
             .array()
             .parse(meetings),
         );
@@ -111,21 +111,22 @@ export class AnimalMeetingController {
   }
 
   async getByAnimal(
-    req: RequestWithParams<{ id: OwnedPetId }>,
+    req: RequestWithParams<{ id: AnimalId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
       const meetings = await animalMeetingService.getByAnimal({
-        ownedPetId: req.params.id,
+        animalId: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
+      console.log(meetings);
       res.status(200).json(
         animalMeetingFieldSchema
           .extend({
             meeting: meetingBaseSchema,
-            animalMeetingActs: animalMeetingActSchema.array(),
+            animalMedicalHistories: medicalHistorySchema.array(),
           })
           .array()
           .parse(meetings),

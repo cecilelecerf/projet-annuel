@@ -1,47 +1,47 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
-import { OwnedPetController } from "./owned-pet.controller";
-import { createOwnedPetSchema, updateOwnedPetSchema } from "@armali/schemas";
+import { AnimalController } from "./animal.controller";
+import { createAnimalSchema, updateAnimalSchema } from "@armali/schemas";
 
-const ownedPetRouter: Router = Router();
-const controller = new OwnedPetController();
+const animalRouter: Router = Router();
+const controller = new AnimalController();
 
-ownedPetRouter.get(
+animalRouter.get(
   "/",
   authMiddleware,
   controller.getAll.bind(controller) as RequestHandler,
 );
-ownedPetRouter.get(
+animalRouter.get(
   "/user/:userId",
   authMiddleware,
   controller.getByUser.bind(controller) as RequestHandler,
 );
 
-ownedPetRouter.get(
+animalRouter.get(
   "/:id",
   authMiddleware,
   controller.getById.bind(controller) as RequestHandler,
 );
 
-ownedPetRouter.post(
+animalRouter.post(
   "/",
   authMiddleware,
-  validate(createOwnedPetSchema),
+  validate(createAnimalSchema),
   controller.create.bind(controller) as RequestHandler,
 );
 
-ownedPetRouter.patch(
+animalRouter.patch(
   "/:id",
   authMiddleware,
-  validate(updateOwnedPetSchema),
+  validate(updateAnimalSchema),
   controller.update.bind(controller) as RequestHandler,
 );
 
-ownedPetRouter.delete(
+animalRouter.delete(
   "/:id",
   authMiddleware,
   controller.delete.bind(controller) as RequestHandler,
 );
 
-export default ownedPetRouter;
+export default animalRouter;

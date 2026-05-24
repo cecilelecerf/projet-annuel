@@ -6,7 +6,6 @@ export async function seedActs(
     clinic1,
     clinic2,
     meetings,
-    users,
     vaccines,
   }: {
     clinic1: Clinic;
@@ -14,11 +13,6 @@ export async function seedActs(
     meetings: ReturnType<
       typeof import("./meetings").seedMeetings
     > extends Promise<infer T>
-      ? T
-      : never;
-    users: ReturnType<typeof import("./users").seedUsers> extends Promise<
-      infer T
-    >
       ? T
       : never;
     vaccines: ReturnType<
@@ -29,7 +23,6 @@ export async function seedActs(
   },
 ) {
   const { animalMeeting1, animalMeeting2 } = meetings;
-  const { vetProfile1, vetProfile2 } = users;
   const { vaccineRage, vaccineCHPPi, vaccineTyphus } = vaccines;
 
   // ── Catalogue d'actes ───────────────────────────────────────────────────────
@@ -130,15 +123,15 @@ export async function seedActs(
       performedAt: animalMeeting1.date,
       priceApplied: 70,
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
-      clinicActId: caCardioClinic1.id,
-      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      clinicActId: caVaccClinic1.id,
+      animalId: animalMeeting1.animalMeeting!.animalId,
       type: "VACCINATION",
       performedBy: {
         connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
       },
-      ownedPetVaccines: {
+      animalVaccines: {
         create: {
-          ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+          animalId: animalMeeting1.animalMeeting!.animalId,
           vaccineId: vaccineCHPPi.id,
         },
       },
@@ -150,15 +143,15 @@ export async function seedActs(
       performedAt: animalMeeting1.date,
       priceApplied: 70,
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
-      clinicActId: caCardioClinic1.id,
-      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      clinicActId: caVaccClinic1.id,
+      animalId: animalMeeting1.animalMeeting!.animalId,
       type: "VACCINATION",
       performedBy: {
         connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
       },
-      ownedPetVaccines: {
+      animalVaccines: {
         create: {
-          ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+          animalId: animalMeeting1.animalMeeting!.animalId,
           vaccineId: vaccineCHPPi.id,
         },
       },
@@ -169,11 +162,11 @@ export async function seedActs(
     data: {
       performedAt: new Date("2026-5-02"),
       priceApplied: 70,
-      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      animalId: animalMeeting1.animalMeeting!.animalId,
       type: "VACCINATION",
-      ownedPetVaccines: {
+      animalVaccines: {
         create: {
-          ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+          animalId: animalMeeting1.animalMeeting!.animalId,
           vaccineId: vaccineCHPPi.id,
         },
       },
@@ -190,7 +183,7 @@ export async function seedActs(
       performedBy: {
         connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
       },
-      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      animalId: animalMeeting1.animalMeeting!.animalId,
 
       type: "IMAGING",
       imaging: {
@@ -213,7 +206,7 @@ export async function seedActs(
       performedBy: {
         connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
       },
-      ownedPetId: animalMeeting1.animalMeeting!.ownedPetId,
+      animalId: animalMeeting1.animalMeeting!.animalId,
 
       type: "ANALYSIS",
       analysis: {
@@ -240,7 +233,7 @@ export async function seedActs(
       performedBy: {
         connect: [{ id: animalMeeting2.animalMeeting?.veterinarianClinicId }],
       },
-      ownedPetId: animalMeeting2.animalMeeting!.ownedPetId,
+      animalId: animalMeeting2.animalMeeting!.animalId,
 
       type: "IMAGING",
       imaging: {
@@ -260,7 +253,7 @@ export async function seedActs(
       priceApplied: 28,
       animalMeetingId: animalMeeting2.animalMeeting?.id!,
       clinicActId: caNursingClinic1.id,
-      ownedPetId: animalMeeting2.animalMeeting!.ownedPetId,
+      animalId: animalMeeting2.animalMeeting!.animalId,
       type: "IMAGING",
       performedBy: {
         connect: [{ id: animalMeeting2.animalMeeting?.veterinarianClinicId }],

@@ -67,7 +67,7 @@ const makeAnimalSpecific = (overrides = {}) => ({
   specialityId: null,
   recurringId: null,
   meetingId: "base-1",
-  ownedPetId: "pet-1",
+  animalId: "pet-1",
   veterinarianId: "veto-1",
   ...overrides,
 });

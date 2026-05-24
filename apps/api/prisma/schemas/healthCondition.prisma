@@ -9,13 +9,13 @@ model HealthCondition {
   petId String
   pet   Pet    @relation(fields: [petId], references: [id])
 
-  ownedPetConditionHealths OwnedPetHealthCondition[]
-  foodHealthConditions     FoodHealthCondition[]
+  animalConditionHealths AnimalHealthCondition[]
+  foodHealthConditions   FoodHealthCondition[]
 
   @@map("health_conditions")
 }
 
-model OwnedPetHealthCondition {
+model AnimalHealthCondition {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -25,8 +25,8 @@ model OwnedPetHealthCondition {
 
   healthConditionId String
   healthCondition   HealthCondition @relation(fields: [healthConditionId], references: [id])
-  ownedPetId        String
-  ownedPet          OwnedPet        @relation(fields: [ownedPetId], references: [id])
+  animalId          String
+  animal            Animal          @relation(fields: [animalId], references: [id])
   meetingId         String?
   animalMeeting     AnimalMeeting?  @relation(fields: [meetingId], references: [id])
   addedById         String

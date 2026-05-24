@@ -1,20 +1,20 @@
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
-  ownedPetDetailSchema,
-  ownedPetMetaSchema,
-  ownedPetWithRaceMeta,
-  type CreateOwnedPet,
-  type UpdateOwnedPet,
+  animalDetailSchema,
+  animalMetaSchema,
+  animalWithRaceMeta,
+  type CreateAnimal,
+  type UpdateAnimal,
 } from "@armali/schemas";
-import { OwnedPetService } from "./owned-pet.service";
+import { AnimalService } from "./animal.service";
 
-const ownedPetService = new OwnedPetService();
+const animalService = new AnimalService();
 
-export class OwnedPetController {
+export class AnimalController {
   async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const pets = await ownedPetService.getAll({
+      const pets = await animalService.getAll({
         userId: req.user.id,
         role: req.user.role,
       });
@@ -30,25 +30,24 @@ export class OwnedPetController {
     next: NextFunction,
   ) {
     try {
-      const pet = await ownedPetService.getById({
+      const pet = await animalService.getById({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
-      console.log(pet);
-      res.status(200).json(ownedPetDetailSchema.parse(pet));
+      res.status(200).json(animalDetailSchema.parse(pet));
     } catch (err) {
       next(err);
     }
   }
 
   async create(
-    req: AuthenticatedRequest & { body: CreateOwnedPet },
+    req: AuthenticatedRequest & { body: CreateAnimal },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const pet = await ownedPetService.create({
+      const pet = await animalService.create({
         data: req.body.data,
         userId: req.user.id,
         role: req.user.role,
@@ -60,12 +59,12 @@ export class OwnedPetController {
   }
 
   async update(
-    req: RequestWithParams<{ id: string }> & { body: UpdateOwnedPet },
+    req: RequestWithParams<{ id: string }> & { body: UpdateAnimal },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const pet = await ownedPetService.update({
+      const pet = await animalService.update({
         id: req.params.id,
         data: req.body.data,
         userId: req.user.id,
@@ -83,7 +82,7 @@ export class OwnedPetController {
     next: NextFunction,
   ) {
     try {
-      await ownedPetService.delete({
+      await animalService.delete({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -100,12 +99,12 @@ export class OwnedPetController {
     next: NextFunction,
   ) {
     try {
-      const pets = await ownedPetService.getByUser({
+      const pets = await animalService.getByUser({
         targetUserId: req.params.userId,
         requesterId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(ownedPetWithRaceMeta.array().parse(pets));
+      res.status(200).json(animalWithRaceMeta.array().parse(pets));
     } catch (err) {
       next(err);
     }

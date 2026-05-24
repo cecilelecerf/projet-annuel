@@ -1,4 +1,4 @@
-model OwnedPet {
+model Animal {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
@@ -16,13 +16,13 @@ model OwnedPet {
   raceId String
   race   Race   @relation(fields: [raceId], references: [id])
 
-  ownedPetVaccine          OwnedPetVaccine[]
-  animalMeeting            AnimalMeeting[]
-  foodPets                 FoodPet[]
-  ownedPetConditionHealths OwnedPetHealthCondition[]
-  animalMedicalHistories   AnimalMedicalHistory[]
+  animalVaccine          AnimalVaccine[]
+  animalMeeting          AnimalMeeting[]
+  foodPets               FoodPet[]
+  animalConditionHealths AnimalHealthCondition[]
+  animalMedicalHistories AnimalMedicalHistory[]
 
-  @@map("owned_pets")
+  @@map("animals")
 }
 
 model Pet {
@@ -48,9 +48,9 @@ model Race {
   name      String
   picture   String?
 
-  petId    String
-  pet      Pet        @relation(fields: [petId], references: [id])
-  ownedPet OwnedPet[]
+  petId  String
+  pet    Pet      @relation(fields: [petId], references: [id])
+  animal Animal[]
 
   @@map("races")
 }
@@ -66,9 +66,9 @@ model Vaccine {
   mandatoryCountry   Json?
   recommendedCountry Json?
 
-  petId           String
-  pet             Pet               @relation(fields: [petId], references: [id])
-  ownedPetVaccine OwnedPetVaccine[]
+  petId         String
+  pet           Pet             @relation(fields: [petId], references: [id])
+  animalVaccine AnimalVaccine[]
 
   @@map("vaccines")
 }

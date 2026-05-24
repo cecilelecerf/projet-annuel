@@ -56,7 +56,7 @@ CREATE TABLE "animal_medical_histories" (
     "priceApplied" DECIMAL(8,2),
     "animalMeetingId" TEXT,
     "clinicActId" TEXT,
-    "ownedPetId" TEXT NOT NULL,
+    "animalId" TEXT NOT NULL,
 
     CONSTRAINT "animal_medical_histories_pkey" PRIMARY KEY ("id")
 );
@@ -68,7 +68,7 @@ ALTER TABLE "animal_medical_histories" ADD CONSTRAINT "animal_medical_histories_
 ALTER TABLE "animal_medical_histories" ADD CONSTRAINT "animal_medical_histories_clinicActId_fkey" FOREIGN KEY ("clinicActId") REFERENCES "clinic_acts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "animal_medical_histories" ADD CONSTRAINT "animal_medical_histories_ownedPetId_fkey" FOREIGN KEY ("ownedPetId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "animal_medical_histories" ADD CONSTRAINT "animal_medical_histories_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "owned_pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "surgeries" ADD CONSTRAINT "surgeries_id_fkey" FOREIGN KEY ("id") REFERENCES "animal_medical_histories"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -2,13 +2,13 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
-  createAnimalMeetingActSchema,
+  createMedicalHistorySchema,
   MeetingId,
-  updateAnimalMeetingActSchema,
-  type CreateAnimalMeetingAct,
-  type UpdateAnimalMeetingAct,
+  updateMedicalHistorySchema,
+  type CreateMedicalHistory,
+  type UpdateMedicalHistory,
 } from "@armali/schemas";
-import { AnimalMeetingActService } from "./animal-meeting-act.service";
+import { AnimalMeetingActService } from "./medical-history.service";
 
 const service = new AnimalMeetingActService();
 
@@ -40,12 +40,12 @@ export class AnimalMeetingActController {
   }
 
   async create(
-    req: AuthenticatedRequest & { body: CreateAnimalMeetingAct },
+    req: AuthenticatedRequest & { body: CreateMedicalHistory },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const result = createAnimalMeetingActSchema.safeParse(req.body);
+      const result = createMedicalHistorySchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
       const act = await service.create(result.data, req.user.role);
       res.status(201).json(act);
@@ -55,12 +55,12 @@ export class AnimalMeetingActController {
   }
 
   async update(
-    req: RequestWithParams<{ id: string }> & { body: UpdateAnimalMeetingAct },
+    req: RequestWithParams<{ id: string }> & { body: UpdateMedicalHistory },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const result = updateAnimalMeetingActSchema.safeParse(req.body);
+      const result = updateMedicalHistorySchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
       const act = await service.update(
         req.params.id,

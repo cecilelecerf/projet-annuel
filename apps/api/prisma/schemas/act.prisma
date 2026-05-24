@@ -33,7 +33,7 @@ model ClinicAct {
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
 
-  animalMeetingActs AnimalMedicalHistory[]
+  animalMedicalHistories AnimalMedicalHistory[]
 
   @@unique([actId, clinicId])
   @@map("clinic_acts")
@@ -56,8 +56,8 @@ model AnimalMedicalHistory {
   clinicActId String?
   clinicAct   ClinicAct? @relation(fields: [clinicActId], references: [id])
 
-  ownedPetId String
-  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
+  animalId String
+  animal   Animal @relation(fields: [animalId], references: [id])
 
   // Selon le type d'acte
   surgery         Surgery?
@@ -65,8 +65,8 @@ model AnimalMedicalHistory {
   imaging         Imaging?
   analysis        Analysis?
 
-  performedBy      VeterinarianClinic[]
-  ownedPetVaccines OwnedPetVaccine[]
+  performedBy    VeterinarianClinic[]
+  animalVaccines AnimalVaccine[]
 
   @@map("animal_medical_histories")
 }
@@ -224,7 +224,7 @@ model PrescriptionItem {
   @@map("prescription_items")
 }
 
-model OwnedPetVaccine {
+model AnimalVaccine {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -234,8 +234,8 @@ model OwnedPetVaccine {
 
   medicalHistoryId String
   medicalHistory   AnimalMedicalHistory @relation(fields: [medicalHistoryId], references: [id], onDelete: Cascade)
-  ownedPet         OwnedPet?            @relation(fields: [ownedPetId], references: [id])
-  ownedPetId       String?
+  animal           Animal?              @relation(fields: [animalId], references: [id])
+  animalId         String?
 
-  @@map("owned_pet_vaccines")
+  @@map("animals_vaccines")
 }

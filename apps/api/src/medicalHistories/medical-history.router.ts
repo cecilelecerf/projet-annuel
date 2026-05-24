@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { AnimalMeetingActController } from "./animal-meeting-act.controller";
+import { AnimalMeetingActController } from "./medical-history.controller";
 import { UserRole } from "@armali/schemas";
 
 const animalMeetingActRouter: Router = Router();

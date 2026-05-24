@@ -1,10 +1,15 @@
 import { prisma } from "@api/lib/prisma";
 import type {
-  CreateAnimalMeetingAct,
+  CreateMedicalHistory,
   MeetingId,
-  UpdateAnimalMeetingAct,
+  UpdateMedicalHistory,
 } from "@armali/schemas";
-import { AnimalMeeting } from "../../../prisma/generated/prisma/client";
+import {
+  ActType,
+  AnimalMeeting,
+  Animal,
+  VeterinarianClinic,
+} from "../../prisma/generated/prisma/client";
 
 const meetingActInclude = {
   clinicAct: { include: { act: true } },
@@ -15,11 +20,12 @@ const meetingActInclude = {
   hospitalization: { include: { dailyReports: true } },
   imaging: true,
   analysis: true,
+  animalVaccines: true,
 } as const;
 
-export class AnimalMeetingActRepository {
-  async findByMeeting(meetingId: MeetingId) {
-    return prisma.animalMeetingAct.findMany({
+export class AnimalMedicalHistoryRepository {
+  async findByMeeting(meetingId: string) {
+    return prisma.animalMedicalHistory.findMany({
       where: { animalMeeting: { meetingId } },
       include: meetingActInclude,
       orderBy: { performedAt: "asc" },
@@ -27,27 +33,38 @@ export class AnimalMeetingActRepository {
   }
 
   async findById(id: string) {
-    return prisma.animalMeetingAct.findUnique({
+    return prisma.animalMedicalHistory.findUnique({
       where: { id },
       include: meetingActInclude,
     });
   }
 
-  async create(
-    animalMeetingId: AnimalMeeting["id"],
-    data: CreateAnimalMeetingAct,
-  ) {
-    return prisma.animalMeetingAct.create({
+  async create({
+    animalMeetingId,
+    performedBy,
+    data,
+    type,
+    animalId,
+  }: {
+    animalMeetingId: AnimalMeeting["id"];
+    performedBy: VeterinarianClinic["id"][];
+    data: CreateMedicalHistory;
+    type: ActType;
+    animalId: Animal["id"];
+  }) {
+    return prisma.animalMedicalHistory.create({
       data: {
         performedAt: data.performedAt,
         notes: data.notes,
         priceApplied: data.priceApplied,
         animalMeetingId: animalMeetingId,
         clinicActId: data.clinicActId,
-        performedBy: data.performedByIds?.length
+        type,
+        animalId,
+        performedBy: performedBy.length
           ? {
-              create: data.performedByIds.map((veterinarianId) => ({
-                veterinarianId,
+              connect: performedBy.map((veterinarianId) => ({
+                id: veterinarianId,
               })),
             }
           : undefined,
@@ -57,13 +74,16 @@ export class AnimalMeetingActRepository {
           : undefined,
         imaging: data.imaging ? { create: data.imaging } : undefined,
         analysis: data.analysis ? { create: data.analysis } : undefined,
+        animalVaccines: data.animalVaccines
+          ? { create: data.animalVaccines }
+          : undefined,
       },
       include: meetingActInclude,
     });
   }
 
-  async update(id: string, data: UpdateAnimalMeetingAct) {
-    return prisma.animalMeetingAct.update({
+  async update(id: string, data: UpdateMedicalHistory) {
+    return prisma.animalMedicalHistory.update({
       where: { id },
       data: {
         notes: data.notes,
@@ -92,6 +112,6 @@ export class AnimalMeetingActRepository {
   }
 
   async delete(id: string) {
-    return prisma.animalMeetingAct.delete({ where: { id } });
+    return prisma.animalMedicalHistory.delete({ where: { id } });
   }
 }

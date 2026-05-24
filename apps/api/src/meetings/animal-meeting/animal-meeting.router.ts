@@ -24,7 +24,7 @@ animalMeetingRouter.get(
   animalController.getByClient.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
-  "/owned-pet/:id",
+  "/animals/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalController.getByAnimal.bind(animalController) as RequestHandler,

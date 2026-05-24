@@ -449,7 +449,7 @@ describe("PATCH /api/meetings/animals/:id", () => {
 
   it("200 — VETERINARIAN met à jour un rendez-vous", async () => {
     const token = await loginAs("veto@gmail.com");
-    const ownedPet = await getPrisma().ownedPet.findFirst();
+    const animal = await getPrisma().animal.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
     const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
     const resCreate = await request(app)
@@ -459,7 +459,7 @@ describe("PATCH /api/meetings/animals/:id", () => {
         date: "2026-04-22",
         startTime: "1970-01-01T13:00:00.000Z",
         endTime: "1970-01-01T15:30:00.000Z",
-        ownedPetId: ownedPet!.id,
+        animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
@@ -501,7 +501,7 @@ describe("DELETE /api/meetings/animals/:id", () => {
   it("204 — VETERINARIAN supprime un rendez-vous animal", async () => {
     const token = await loginAs("veto@gmail.com");
     const vetoProfile = await getPrisma().veterinarianProfile.findFirst();
-    const ownedPet = await getPrisma().ownedPet.findFirst();
+    const animal = await getPrisma().animal.findFirst();
     const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
 
@@ -512,7 +512,7 @@ describe("DELETE /api/meetings/animals/:id", () => {
         date: "2026-08-28",
         startTime: "1970-01-01T15:00:00.000Z",
         endTime: "1970-01-01T15:30:00.000Z",
-        ownedPetId: ownedPet!.id,
+        animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
@@ -561,7 +561,7 @@ describe("DELETE /api/meetings/animals/:id", () => {
 
     it("201 — SECRETARY crée un rendez-vous animal", async () => {
       const token = await loginAs("secretaire@gmail.com");
-      const ownedPet = await getPrisma().ownedPet.findFirst();
+      const animal = await getPrisma().animal.findFirst();
       const speciality = await getPrisma().speciality.findFirst();
       const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
 
@@ -572,7 +572,7 @@ describe("DELETE /api/meetings/animals/:id", () => {
           date: "2026-04-02",
           startTime: "1970-01-01T10:30:00.000Z",
           endTime: "1970-01-01T11:30:00.000Z",
-          ownedPetId: ownedPet!.id,
+          animalId: animal!.id,
           veterinarianId: vetoClinic?.veterinarianId,
           specialityId: speciality!.id,
           clinicId: vetoClinic?.clinicId,

@@ -59,16 +59,16 @@ model Vaccine {
   id                 String   @id @default(uuid())
   createdAt          DateTime @default(now())
   updatedAt          DateTime @default(now()) @updatedAt
-  name               String
-  description        String?
   recommendedAge     Int
   boosterInterval    Int
   mandatoryCountry   Json?
   recommendedCountry Json?
 
-  petId         String
-  pet           Pet             @relation(fields: [petId], references: [id])
-  animalVaccine AnimalVaccine[]
+  petId          String
+  pet            Pet             @relation(fields: [petId], references: [id])
+  animalVaccines AnimalVaccine[]
+
+  act Act?
 
   @@map("vaccines")
 }

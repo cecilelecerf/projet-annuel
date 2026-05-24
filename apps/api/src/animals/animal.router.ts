@@ -23,6 +23,11 @@ animalRouter.get(
   authMiddleware,
   controller.getById.bind(controller) as RequestHandler,
 );
+animalRouter.get(
+  "/:id/vaccines",
+  authMiddleware,
+  controller.getVaccines.bind(controller) as RequestHandler,
+);
 
 animalRouter.post(
   "/",

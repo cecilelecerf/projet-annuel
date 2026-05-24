@@ -4,6 +4,7 @@ import {
   animalDetailSchema,
   animalMetaSchema,
   animalWithRaceMeta,
+  vaccineMetaSchema,
   type CreateAnimal,
   type UpdateAnimal,
 } from "@armali/schemas";
@@ -105,6 +106,19 @@ export class AnimalController {
         role: req.user.role,
       });
       res.status(200).json(animalWithRaceMeta.array().parse(pets));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getVaccines(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const vaccines = await animalService.getVaccinesByAnimal(req.params.id);
+      res.status(200).json(vaccineMetaSchema.array().parse(vaccines));
     } catch (err) {
       next(err);
     }

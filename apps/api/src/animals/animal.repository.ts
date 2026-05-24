@@ -63,4 +63,19 @@ export class AnimalRepository {
   async delete(id: string) {
     return prisma.animal.delete({ where: { id } });
   }
+
+  async findVaccinesByAnimal(animalId: string) {
+    return prisma.animalVaccine.findMany({
+      where: { animalId },
+      include: {
+        vaccine: {
+          include: { act: true },
+        },
+        medicalHistory: {
+          select: { performedAt: true, clinicActId: true },
+        },
+      },
+      orderBy: { medicalHistory: { performedAt: "desc" } },
+    });
+  }
 }

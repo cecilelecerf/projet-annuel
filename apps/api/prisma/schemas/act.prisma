@@ -17,7 +17,11 @@ model Act {
   type        ActType
   basePrice   Decimal  @db.Decimal(8, 2)
 
-  clinicActs ClinicAct[]
+  vaccineId String?  @unique
+  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id])
+
+  clinicActs             ClinicAct[]
+  animalMedicalHistories AnimalMedicalHistory[]
 
   @@map("acts")
 }
@@ -53,6 +57,9 @@ model AnimalMedicalHistory {
   animalMeetingId String?
   animalMeeting   AnimalMeeting? @relation(fields: [animalMeetingId], references: [id])
 
+  actId String
+  act   Act    @relation(fields: [actId], references: [id])
+
   clinicActId String?
   clinicAct   ClinicAct? @relation(fields: [clinicActId], references: [id])
 
@@ -64,9 +71,9 @@ model AnimalMedicalHistory {
   hospitalization Hospitalization?
   imaging         Imaging?
   analysis        Analysis?
+  animalVaccine   AnimalVaccine?
 
-  performedBy    VeterinarianClinic[]
-  animalVaccines AnimalVaccine[]
+  performedBy VeterinarianClinic[]
 
   @@map("animal_medical_histories")
 }
@@ -232,10 +239,9 @@ model AnimalVaccine {
   vaccineId String
   vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
 
-  medicalHistoryId String
-  medicalHistory   AnimalMedicalHistory @relation(fields: [medicalHistoryId], references: [id], onDelete: Cascade)
-  animal           Animal?              @relation(fields: [animalId], references: [id])
-  animalId         String?
+  medicalHistory AnimalMedicalHistory? @relation(fields: [id], references: [id], onDelete: Cascade)
+  animal         Animal?               @relation(fields: [animalId], references: [id])
+  animalId       String?
 
   @@map("animals_vaccines")
 }

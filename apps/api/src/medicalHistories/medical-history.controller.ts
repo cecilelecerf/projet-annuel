@@ -20,6 +20,7 @@ export class AnimalMeetingActController {
   ) {
     try {
       const acts = await service.getByMeeting(req.params.meetingId);
+      console.log(acts.map((act) => act.performedBy));
       res.status(200).json(acts);
     } catch (err) {
       next(err);

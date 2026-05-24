@@ -10,7 +10,6 @@ import { seedPets } from "./pets";
 import { seedSpecialities } from "./specialities";
 import { seedVeterinarianClinics } from "./veterinarian-clinics";
 import { seedHealthConditions } from "./health-conditions";
-import { seedVaccines } from "./vaccines";
 import { seedProducts } from "./products";
 import { seedOrders } from "./orders";
 import { seedMessaging } from "./messagging";
@@ -36,7 +35,6 @@ async function main() {
   await seedBankingInfo(prisma, { users });
   const pets = await seedPets(prisma);
   const specialities = await seedSpecialities(prisma);
-  const vaccines = await seedVaccines(prisma, pets);
   const vetoClinic = await seedVeterinarianClinics(prisma, {
     users,
     clinic1,
@@ -51,14 +49,14 @@ async function main() {
     veterinarianClinics: vetoClinic,
     specialities,
     healthConditions,
-    vaccines,
     pets,
   });
   await seedActs(prisma, {
+    petCat: pets.petCat,
+    petDog: pets.petDog,
     clinic1,
     clinic2,
     meetings,
-    vaccines,
   });
   const products = await seedProducts(prisma, {
     clinic1,

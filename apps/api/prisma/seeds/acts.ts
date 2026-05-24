@@ -1,13 +1,16 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient, Clinic, Pet } from "../generated/prisma/client";
 
 export async function seedActs(
   prisma: PrismaClient,
   {
     clinic1,
+    petCat,
+    petDog,
     clinic2,
     meetings,
-    vaccines,
   }: {
+    petDog: Pet;
+    petCat: Pet;
     clinic1: Clinic;
     clinic2: Clinic;
     meetings: ReturnType<
@@ -15,15 +18,9 @@ export async function seedActs(
     > extends Promise<infer T>
       ? T
       : never;
-    vaccines: ReturnType<
-      typeof import("./vaccines").seedVaccines
-    > extends Promise<infer T>
-      ? T
-      : never;
   },
 ) {
   const { animalMeeting1, animalMeeting2 } = meetings;
-  const { vaccineRage, vaccineCHPPi, vaccineTyphus } = vaccines;
 
   // ── Catalogue d'actes ───────────────────────────────────────────────────────
   const actConsultation = await prisma.act.create({
@@ -78,8 +75,52 @@ export async function seedActs(
   const actNursing = await prisma.act.create({
     data: { name: "Soins infirmiers", type: "NURSING", basePrice: 25 },
   });
-  const actVaccination = await prisma.act.create({
-    data: { name: "Vaccination", type: "VACCINATION", basePrice: 30 },
+  const actRageVaccination = await prisma.act.create({
+    data: {
+      name: "Rage",
+      description: "Vaccin antirabique obligatoire",
+      type: "VACCINATION",
+      basePrice: 30,
+      vaccine: {
+        create: {
+          recommendedAge: 12,
+          boosterInterval: 52,
+          mandatoryCountry: ["FR", "BE", "CH"],
+          petId: petDog.id,
+        },
+      },
+    },
+  });
+  const actCHPPRIVaccination = await prisma.act.create({
+    data: {
+      name: "CHPPi",
+      description: "Maladie de Carré, Hépatite, Parvovirose, Parainfluenza",
+      type: "VACCINATION",
+      basePrice: 30,
+      vaccine: {
+        create: {
+          recommendedAge: 8,
+          boosterInterval: 52,
+          petId: petDog.id,
+        },
+      },
+    },
+  });
+
+  const actTyphusVaccination = await prisma.act.create({
+    data: {
+      name: "Typhus",
+      description: "Panleucopénie féline",
+      type: "VACCINATION",
+      basePrice: 30,
+      vaccine: {
+        create: {
+          recommendedAge: 8,
+          boosterInterval: 52,
+          petId: petCat.id,
+        },
+      },
+    },
   });
 
   // ── Prix par clinique ───────────────────────────────────────────────────────
@@ -105,7 +146,8 @@ export async function seedActs(
     data: { actId: actNursing.id, clinicId: clinic1.id, price: 28 },
   });
   const caVaccClinic1 = await prisma.clinicAct.create({
-    data: { actId: actVaccination.id, clinicId: clinic1.id, price: 32 },
+    data: { actId: actCHPPRIVaccination.id, clinicId: clinic1.id, price: 32 },
+    include: { act: true },
   });
 
   await prisma.clinicAct.createMany({
@@ -121,71 +163,40 @@ export async function seedActs(
   await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting1.date,
-      priceApplied: 70,
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
-      clinicActId: caVaccClinic1.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      type: "VACCINATION",
       performedBy: {
         connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
       },
-      animalVaccines: {
-        create: {
-          animalId: animalMeeting1.animalMeeting!.animalId,
-          vaccineId: vaccineCHPPi.id,
-        },
-      },
-    },
-  });
-
-  const actCardioPerformed = await prisma.animalMedicalHistory.create({
-    data: {
-      performedAt: animalMeeting1.date,
       priceApplied: 70,
-      animalMeetingId: animalMeeting1.animalMeeting?.id!,
+      type: "VACCINATION",
       clinicActId: caVaccClinic1.id,
-      animalId: animalMeeting1.animalMeeting!.animalId,
-      type: "VACCINATION",
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
-      },
-      animalVaccines: {
+      actId: caVaccClinic1.actId,
+      animalVaccine: {
         create: {
           animalId: animalMeeting1.animalMeeting!.animalId,
-          vaccineId: vaccineCHPPi.id,
+          vaccineId: caVaccClinic1.act.vaccineId!,
         },
       },
     },
   });
 
-  await prisma.animalMedicalHistory.create({
-    data: {
-      performedAt: new Date("2026-5-02"),
-      priceApplied: 70,
-      animalId: animalMeeting1.animalMeeting!.animalId,
-      type: "VACCINATION",
-      animalVaccines: {
-        create: {
-          animalId: animalMeeting1.animalMeeting!.animalId,
-          vaccineId: vaccineCHPPi.id,
-        },
-      },
-    },
-  });
+  // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
 
+  // Échographie cardiaque
   const actEchoPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting1.date,
       priceApplied: 95,
       notes: "Échographie cardiaque — légère dilatation ventriculaire gauche",
-      animalMeetingId: animalMeeting1.animalMeeting?.id!,
-      clinicActId: caEchoClinic1.id,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
-      },
-      animalId: animalMeeting1.animalMeeting!.animalId,
-
       type: "IMAGING",
+      actId: actEcho.id,
+      clinicActId: caEchoClinic1.id,
+      animalMeetingId: animalMeeting1.animalMeeting!.id,
+      animalId: animalMeeting1.animalMeeting!.animalId,
+      performedBy: {
+        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
+      },
       imaging: {
         create: {
           imagingType: "ULTRASOUND",
@@ -197,18 +208,19 @@ export async function seedActs(
     },
   });
 
+  // Prise de sang
   const actBloodPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting1.date,
       priceApplied: 50,
-      animalMeetingId: animalMeeting1.animalMeeting?.id!,
-      clinicActId: caBloodClinic1.id,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting?.veterinarianClinicId }],
-      },
-      animalId: animalMeeting1.animalMeeting!.animalId,
-
       type: "ANALYSIS",
+      actId: actBlood.id,
+      clinicActId: caBloodClinic1.id,
+      animalMeetingId: animalMeeting1.animalMeeting!.id,
+      animalId: animalMeeting1.animalMeeting!.animalId,
+      performedBy: {
+        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
+      },
       analysis: {
         create: {
           analysisType: "BLOOD",
@@ -222,20 +234,39 @@ export async function seedActs(
     },
   });
 
+  // Vaccination Rage (historique externe — sans clinicAct, sans meeting)
+  await prisma.animalMedicalHistory.create({
+    data: {
+      performedAt: new Date("2025-03-15"),
+      type: "VACCINATION",
+      actId: actRageVaccination.id,
+      animalId: animalMeeting1.animalMeeting!.animalId,
+      notes: "Vaccin antirabique effectué chez un autre vétérinaire",
+      animalVaccine: {
+        create: {
+          animalId: animalMeeting1.animalMeeting!.animalId,
+          vaccineId: actRageVaccination.vaccineId!,
+        },
+      },
+    },
+  });
+
   // ── Actes réalisés sur RDV 2 (Luna — dermatologie) ─────────────────────────
+
+  // Radiographie thoracique
   await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting2.date,
       priceApplied: 80,
       notes: "Radiographie thoracique de contrôle",
-      animalMeetingId: animalMeeting2.animalMeeting?.id!,
-      clinicActId: caXrayClinic1.id,
-      performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting?.veterinarianClinicId }],
-      },
-      animalId: animalMeeting2.animalMeeting!.animalId,
-
       type: "IMAGING",
+      actId: actXray.id,
+      clinicActId: caXrayClinic1.id,
+      animalMeetingId: animalMeeting2.animalMeeting!.id,
+      animalId: animalMeeting2.animalMeeting!.animalId,
+      performedBy: {
+        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId }],
+      },
       imaging: {
         create: {
           imagingType: "XRAY",
@@ -247,27 +278,39 @@ export async function seedActs(
     },
   });
 
+  // Soins infirmiers
   await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting2.date,
       priceApplied: 28,
-      animalMeetingId: animalMeeting2.animalMeeting?.id!,
+      type: "NURSING",
+      actId: actNursing.id,
       clinicActId: caNursingClinic1.id,
+      animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
-      type: "IMAGING",
       performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting?.veterinarianClinicId }],
+        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId }],
       },
-      imaging: {
+      notes: "Nettoyage et désinfection des plaies cutanées",
+    },
+  });
+
+  // Vaccination Typhus (historique Luna)
+  await prisma.animalMedicalHistory.create({
+    data: {
+      performedAt: new Date("2024-06-10"),
+      type: "VACCINATION",
+      actId: actTyphusVaccination.id,
+      animalId: animalMeeting2.animalMeeting!.animalId,
+      notes: "Vaccin typhus effectué chez un autre vétérinaire",
+      animalVaccine: {
         create: {
-          imagingType: "ULTRASOUND",
-          bodyPart: "Cœur",
-          findings: "Dilatation ventriculaire gauche légère, FEVG conservée",
-          fileUrl: "https://storage.vetparc.fr/echo-rex-20260210.pdf",
+          animalId: animalMeeting2.animalMeeting!.animalId,
+          vaccineId: actTyphusVaccination.vaccineId!,
         },
       },
     },
   });
 
-  return { actCardioPerformed, actEchoPerformed, actBloodPerformed };
+  return { actEchoPerformed, actBloodPerformed };
 }

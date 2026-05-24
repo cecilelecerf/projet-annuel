@@ -1,22 +1,12 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { AnimalRepository } from "./animal.repository";
 import type { CreateAnimal, UpdateAnimal, UserRole } from "@armali/schemas";
-
-const STAFF_ROLES: UserRole[] = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "DIRECTOR",
-  "REFERANT",
-  "ADMIN",
-];
+import { isStaff, STAFF_ROLES } from "@api/utils";
+import dayjs from "dayjs";
 
 const animalRepository = new AnimalRepository();
 
 export class AnimalService {
-  private isStaff(role: UserRole) {
-    return STAFF_ROLES.includes(role);
-  }
-
   private async assertAccess({
     petId,
     userId,
@@ -26,7 +16,7 @@ export class AnimalService {
     userId: string;
     role: UserRole;
   }) {
-    if (this.isStaff(role)) return;
+    if (isStaff(role)) return;
 
     const pet = await animalRepository.findById(petId);
     if (!pet) throw new NotFoundError("Animal");
@@ -35,7 +25,7 @@ export class AnimalService {
   }
 
   async getAll({ userId, role }: { userId: string; role: UserRole }) {
-    if (this.isStaff(role)) return animalRepository.findAll();
+    if (isStaff(role)) return animalRepository.findAll();
     return animalRepository.findByClientId(userId);
   }
   async getByUser({
@@ -47,7 +37,7 @@ export class AnimalService {
     requesterId: string;
     role: UserRole;
   }) {
-    if (!this.isStaff(role) && targetUserId !== requesterId)
+    if (!isStaff(role) && targetUserId !== requesterId)
       throw new ForbiddenError();
     return animalRepository.findByClientId(targetUserId);
   }
@@ -63,8 +53,7 @@ export class AnimalService {
   }) {
     const pet = await animalRepository.findById(id);
     if (!pet) throw new NotFoundError("Animal");
-    if (!this.isStaff(role) && pet.clientId !== userId)
-      throw new ForbiddenError();
+    if (!isStaff(role) && pet.clientId !== userId) throw new ForbiddenError();
     return pet;
   }
 
@@ -77,7 +66,7 @@ export class AnimalService {
     userId: string;
     role: UserRole;
   }) {
-    const clientId = this.isStaff(role)
+    const clientId = isStaff(role)
       ? ((data as any).clientId ?? userId)
       : userId;
 
@@ -110,5 +99,24 @@ export class AnimalService {
   }) {
     await this.assertAccess({ petId: id, userId, role });
     return animalRepository.delete(id);
+  }
+  async getVaccinesByAnimal(animalId: string) {
+    const vaccines = await animalRepository.findVaccinesByAnimal(animalId);
+
+    return vaccines.map((v) => {
+      const nextDue = dayjs(v.act?.performedAt).add(
+        v.vaccine.boosterInterval,
+        "week",
+      );
+      const isUpToDate = nextDue.isAfter(dayjs());
+      const daysUntilDue = nextDue.diff(dayjs(), "day");
+
+      return {
+        ...v,
+        nextDue: nextDue.toDate(),
+        isUpToDate,
+        daysUntilDue,
+      };
+    });
   }
 }

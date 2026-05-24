@@ -9,7 +9,6 @@ export async function seedMeetings(
     specialities,
     healthConditions,
     pets,
-    vaccines,
   }: {
     users: ReturnType<typeof import("./users").seedUsers> extends Promise<
       infer T
@@ -35,11 +34,6 @@ export async function seedMeetings(
     pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
       ? T
       : never;
-    vaccines: ReturnType<
-      typeof import("./vaccines").seedVaccines
-    > extends Promise<infer T>
-      ? T
-      : never;
   },
 ) {
   const {
@@ -57,7 +51,6 @@ export async function seedMeetings(
   const { specCardio, specDerma } = specialities;
   const { conditionCardio, conditionRenal } = healthConditions;
   const { raceLab, racePersan, raceGolden } = pets;
-  const { vaccineRage, vaccineCHPPi, vaccineTyphus } = vaccines;
 
   // ── Owned Pets ──────────────────────────────────────────────────────────────
   const animal1 = await prisma.animal.create({

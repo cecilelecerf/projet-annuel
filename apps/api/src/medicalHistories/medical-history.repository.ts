@@ -1,7 +1,6 @@
 import { prisma } from "@api/lib/prisma";
 import type {
   CreateMedicalHistory,
-  MeetingId,
   UpdateMedicalHistory,
 } from "@armali/schemas";
 import {
@@ -9,6 +8,7 @@ import {
   AnimalMeeting,
   Animal,
   VeterinarianClinic,
+  Act,
 } from "../../prisma/generated/prisma/client";
 
 const meetingActInclude = {
@@ -20,7 +20,7 @@ const meetingActInclude = {
   hospitalization: { include: { dailyReports: true } },
   imaging: true,
   analysis: true,
-  animalVaccines: true,
+  animalVaccine: true,
 } as const;
 
 export class AnimalMedicalHistoryRepository {
@@ -45,12 +45,14 @@ export class AnimalMedicalHistoryRepository {
     data,
     type,
     animalId,
+    actId,
   }: {
     animalMeetingId: AnimalMeeting["id"];
     performedBy: VeterinarianClinic["id"][];
     data: CreateMedicalHistory;
     type: ActType;
     animalId: Animal["id"];
+    actId: Act["id"];
   }) {
     return prisma.animalMedicalHistory.create({
       data: {
@@ -61,6 +63,7 @@ export class AnimalMedicalHistoryRepository {
         clinicActId: data.clinicActId,
         type,
         animalId,
+        actId: actId,
         performedBy: performedBy.length
           ? {
               connect: performedBy.map((veterinarianId) => ({
@@ -74,8 +77,13 @@ export class AnimalMedicalHistoryRepository {
           : undefined,
         imaging: data.imaging ? { create: data.imaging } : undefined,
         analysis: data.analysis ? { create: data.analysis } : undefined,
-        animalVaccines: data.animalVaccines
-          ? { create: data.animalVaccines }
+        animalVaccine: data.animalVaccine
+          ? {
+              create: {
+                vaccineId: data.animalVaccine.vaccineId,
+                animalId,
+              },
+            }
           : undefined,
       },
       include: meetingActInclude,

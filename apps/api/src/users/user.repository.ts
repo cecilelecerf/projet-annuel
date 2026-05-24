@@ -11,6 +11,12 @@ export class UserRepository {
     role: UserRole;
   }): Promise<string | null> {
     switch (role) {
+      case "VETERINARIAN": {
+        const profile = await prisma.veterinarianClinic.findFirst({
+          where: { veterinarianId: id },
+        });
+        return profile?.clinicId ?? null;
+      }
       case "SECRETARY": {
         const profile = await prisma.secretaryProfile.findUnique({
           where: { id },
@@ -79,6 +85,13 @@ export class UserRepository {
     return prisma.user.findUnique({
       where: { id },
       omit: { password: true },
+      include: {
+        secretaryProfile: true,
+        directorClinicProfile: true,
+        referentClinicProfile: true,
+        veterinarianProfile: true,
+        clientProfile: true,
+      },
     });
   }
 

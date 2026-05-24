@@ -3,14 +3,16 @@ import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
   animalMeetingSchema,
+  ClientId,
   CreateAnimalMeeting,
+  ownedPetWithRaceMeta,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { ForbiddenError } from "@api/errors";
+import { ForbiddenError, NotFoundError } from "@api/errors";
+import { UserRepository } from "@api/users/user.repository";
 
 const animalMeetingService = new AnimalMeetingService();
-
 export class AnimalMeetingController {
   async create(
     req: AuthenticatedRequest & { body: CreateAnimalMeeting },
@@ -75,6 +77,32 @@ export class AnimalMeetingController {
         role: req.user.role,
       });
       res.status(204).json();
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByClient(
+    req: RequestWithParams<{ id: ClientId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      console.log("client");
+      console.log(req.params.id);
+      const meetings = await animalMeetingService.getByClient({
+        id: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res
+        .status(200)
+        .json(
+          animalMeetigWithMeetingSchema
+            .extend({ ownedPet: ownedPetWithRaceMeta })
+            .array()
+            .parse(meetings),
+        );
     } catch (err) {
       next(err);
     }

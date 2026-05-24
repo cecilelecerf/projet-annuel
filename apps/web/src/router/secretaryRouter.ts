@@ -37,6 +37,17 @@ export const secretaryRouter: RouteRecordRaw[] = [
         // Type de RDV (chirurgies, castration…)
         // Actions : Modification | Suppression | Création
       },
+      {
+        path: 'users',
+        name: 'Secretary.Users.List',
+        component: () => import('@/features/users/views/UsersView.vue'),
+      },
+      {
+        path: 'users/:id',
+        name: 'Secretary.Users.Detail',
+        component: () => import('@/features/users/views/UserView.vue'),
+      },
+
       // // ── Boutique ─────────────────────────────────────────────
       // {
       //   path: 'boutique',
@@ -51,11 +62,11 @@ export const secretaryRouter: RouteRecordRaw[] = [
       //     },
       //   ],
       // },
-      // // ── Animaux ──────────────────────────────────────────────
+      // ── Animaux ──────────────────────────────────────────────
       // {
-      //   path: 'animaux',
+      //   path: 'animals',
       //   name: 'Secretary.Animaux',
-      //   //        component: () => import('@/views/secretary/animaux/Animaux.vue'),
+      //          component: () => import('@/views/secretary/animaux/Animaux.vue'),
       //   children: [
       //     {
       //       path: '',

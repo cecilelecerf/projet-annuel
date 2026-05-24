@@ -18,14 +18,14 @@ export const veterinarianRouter: RouteRecordRaw[] = [
         name: 'Veto.Calendar',
         component: () => import('@/features/meetings/views/MeCalendarView.vue'),
       },
-      // {
-      //   path: 'agenda/rdv/:id',
-      //   name: 'Veto.Agenda.RDV.Detail',
-      //   //        component: () => import('@/views/veto/agenda/DetailRDV.vue'),
-      //   // Contient : Horaires, Infos résumé de l'animal (Nom, Type),
-      //   //            Type de RDV (chirurgies, castration…)
-      //   // Actions : Modification | Suppression | Création
-      // },
+      {
+        path: 'meetings/:id',
+        name: 'Veto.Agenda.RDV.Detail',
+        component: () => import('@/features/meetings/views/MeetingView.vue'),
+        // Contient : Horaires, Infos résumé de l'animal (Nom, Type),
+        //            Type de RDV (chirurgies, castration…)
+        // Actions : Modification | Suppression | Création
+      },
       // {
       //   path: 'agenda/rdv/:id/fiche-animal',
       //   name: 'Veto.Agenda.FicheAnimal',

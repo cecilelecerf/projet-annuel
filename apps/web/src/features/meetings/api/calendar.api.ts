@@ -8,7 +8,9 @@ import {
   internalMeetingSchema,
   meetingMetaSchema,
   meetingSchema,
+  ownedPetWithRaceMeta,
   type Calendar,
+  type ClientId,
   type CreateAnimalMeeting,
   type CreateInternalMeeting,
   type Meeting,
@@ -53,15 +55,23 @@ export const calendarApi = {
   },
   animal: {
     new: async (meeting: CreateAnimalMeeting) => {
-      const data = await http.post(`/meetings/animal`, meeting)
+      const data = await http.post(`/meetings/animals`, meeting)
     },
     get: async (meetingId: MeetingId) => {
-      const data = await http.get(`/meetings/animal/${meetingId}`)
+      const data = await http.get(`/meetings/animals/${meetingId}`)
       return animalMeetingSchema.parse(data)
     },
     update: async (meetingId: MeetingId, meeting: UpdateAnimalMeeting) => {
-      const data = await http.patch(`/meetings/animal/${meetingId}`, meeting)
+      const data = await http.patch(`/meetings/animals/${meetingId}`, meeting)
       return animalMeetigWithMeetingSchema.parse(data)
+    },
+
+    getAllByClientId: async (clientId: ClientId) => {
+      const data = await http.get(`/meetings/animals/users/${clientId}`)
+      return animalMeetigWithMeetingSchema
+        .extend({ ownedPet: ownedPetWithRaceMeta })
+        .array()
+        .parse(data)
     },
   },
 }

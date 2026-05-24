@@ -7,10 +7,7 @@ import {
   raceIdSchema,
   vaccineIdSchema,
   veterinarianIdSchema,
-} from "./ids";
-import { userSchema } from "./users";
-import { raceMetaSchema } from "./pet.schema";
-
+} from "../ids";
 // ── OwnedPet (animal d'un client) ─────────────────────────────────────────────
 export const ownedPetSchema = z.object({
   id: ownedPetIdSchema,
@@ -24,25 +21,12 @@ export const ownedPetSchema = z.object({
   //   picture: z.url().max(255).nullable().optional(),
 });
 
-export const ownedPetWithUserSchema = ownedPetSchema.extend({
-  client: userSchema,
-});
-export const ownedPetMetaSchema = ownedPetSchema.extend({
-  client: userSchema,
-  age: z.object({
-    years: z.number().nonnegative(),
-    months: z.number().nonnegative(),
-  }),
-  race: raceMetaSchema,
-});
-
 export const createOwnedPetSchema = ownedPetSchema.omit({
   id: true,
   clientId: true,
 });
 export const updateOwnedPetSchema = createOwnedPetSchema.partial();
 
-export type OwnedPetWithUser = z.infer<typeof ownedPetWithUserSchema>;
 export type OwnedPet = z.infer<typeof ownedPetSchema>;
 export type CreateOwnedPet = z.infer<typeof createOwnedPetSchema>;
 export type UpdateOwnedPet = z.infer<typeof updateOwnedPetSchema>;

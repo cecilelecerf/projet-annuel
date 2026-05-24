@@ -114,9 +114,12 @@ describe("GET /api/users/:id", () => {
   });
 
   it("403 — rôle CLIENT non autorisé", async () => {
+    const admin = await getPrisma().user.findFirst({
+      where: { role: "ADMIN" },
+    });
     const token = await loginAs("client@gmail.com");
     const res = await request(app)
-      .get("/api/users/some-id")
+      .get(`/api/users/${admin!.id}`)
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });

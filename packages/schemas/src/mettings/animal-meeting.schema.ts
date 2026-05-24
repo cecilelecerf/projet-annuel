@@ -10,7 +10,7 @@ import {
   meetingBaseSchema,
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
-import { ownedPetMetaSchema } from "../owned-pet.schema";
+import { ownedPetMetaSchema } from "../owned-pet/meta.schema";
 
 export const animalMeetingSchema = meetingBaseSchema.extend({
   description: z.string().nullable().optional(),

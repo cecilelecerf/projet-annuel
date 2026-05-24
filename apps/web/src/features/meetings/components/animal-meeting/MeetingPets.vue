@@ -7,7 +7,6 @@ import type { AnimalMeetingMeta } from '@armali/schemas'
 
 const props = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
-
 const petAge = computed(() => {
   if (!props.meeting.ownedPet?.dateOfBirth) return null
   const years = dayjs().diff(dayjs(props.meeting.ownedPet.dateOfBirth), 'year')
@@ -44,7 +43,13 @@ const petAge = computed(() => {
         {{ meeting.ownedPet?.client?.firstname }} {{ meeting.ownedPet?.client?.lastname }}
       </span>
     </p>
-    <el-button text size="small" @click="router.push(`/clients/${meeting.ownedPet?.clientId}`)">
+    <el-button
+      text
+      size="small"
+      @click="
+        router.push({ name: 'Secretary.Users.Detail', params: { id: meeting.ownedPet.clientId } })
+      "
+    >
       Voir la fiche <el-icon><ArrowRight /></el-icon>
     </el-button>
   </div>

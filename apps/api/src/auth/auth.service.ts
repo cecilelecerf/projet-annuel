@@ -1,12 +1,5 @@
 import { hash, compare } from "bcryptjs";
-import {
-  baseUserSchema,
-  ClinicId,
-  Login,
-  ReferantClinic,
-  Register,
-  User,
-} from "@armali/schemas";
+import { baseUserSchema, ClinicId, Login, Register } from "@armali/schemas";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -15,14 +8,6 @@ import {
 } from "@api/utils";
 import { prisma } from "@api/lib/prisma";
 import { ConflictError, NotFoundError, UnauthorizedError } from "@api/errors";
-import {
-  Clinic,
-  DirectorClinicProfile,
-  SecretaryProfile,
-  VeterinarianClinic,
-  VeterinarianProfile,
-  User as UserPrisma,
-} from "../../prisma/generated/prisma/client";
 
 export class AuthService {
   private getClinicId(user: {
@@ -59,7 +44,6 @@ export class AuthService {
     const user = await prisma.user.create({
       data: { ...data, password: hashedPassword },
     });
-
     const parsedUser = baseUserSchema.parse(user);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);

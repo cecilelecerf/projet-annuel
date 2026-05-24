@@ -36,8 +36,27 @@ const menuItems: MenuItem[] = [
   <FormError />
   <main>
     <Navbar :menu-items="menuItems" />
-    <router-view />
+    <Suspense>
+      <div class="content">
+        <router-view />
+      </div>
+    </Suspense>
   </main>
 </template>
 
-<style scoped lang="scss"></style>
+<style lang="scss" scoped>
+.content {
+  margin-inline: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  @include above('sm') {
+    margin-inline: var(--spacing-lg);
+  }
+  @include above('md') {
+    margin-inline: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+  }
+  @include above('lg') {
+    margin-inline: var(--spacing-3xl);
+  }
+}
+</style>

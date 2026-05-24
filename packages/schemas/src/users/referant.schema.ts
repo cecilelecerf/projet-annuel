@@ -1,16 +1,22 @@
-import z from "zod";
-import { clinicIdSchema, referantClinicIdSchema } from "../ids";
+import { z } from "zod";
+import { referantClinicIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema } from "./base-user.schema";
 
-export const referantClinicSchema = baseUserSchema.extend({
+export const referantProfileSchema = z.object({
   id: referantClinicIdSchema,
   clinicId: clinicIdSchema.nullable().optional(),
+});
+
+export const referantSchema = baseUserSchema.extend({
   role: z.literal("REFERANT"),
+  referentClinicProfile: referantProfileSchema.nullable().optional(),
+  clinicId: clinicIdSchema.nullable().optional(),
 });
 
-export const createReferantClinicSchema = referantClinicSchema.omit({
-  id: true,
-});
+export const createReferantSchema = referantProfileSchema.omit({ id: true });
+export const updateReferantSchema = createReferantSchema.partial();
 
-export type ReferantClinic = z.infer<typeof referantClinicSchema>;
-export type CreateReferantClinic = z.infer<typeof createReferantClinicSchema>;
+export type ReferantProfile = z.infer<typeof referantProfileSchema>;
+export type Referant = z.infer<typeof referantSchema>;
+export type CreateReferant = z.infer<typeof createReferantSchema>;
+export type UpdateReferant = z.infer<typeof updateReferantSchema>;

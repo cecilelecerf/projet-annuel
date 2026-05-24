@@ -3,7 +3,7 @@ import type { MeetingKind, OwnedPet, User, UserId } from '@armali/schemas'
 import { computed, ref, watch } from 'vue'
 import { calendarApi } from '../../api/calendar.api'
 import { useAuthStore } from '@/stores/authStore'
-import { userApi } from '@/features/users/api/user.api'
+import { usersApi } from '@/features/users/api/user.api'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { toUserId } from '@/features/users/utils'
@@ -14,7 +14,7 @@ import { useFormErrorStore } from '@/stores/formErrorStore'
 
 const route = useRoute()
 const id = route.params.id as string
-const veterinarian: User | null = id ? await userApi.getUser(id) : null
+const veterinarian: User | null = id ? await usersApi.get(id) : null
 const authStore = useAuthStore()
 const { initialDate } = defineProps<{
   initialDate: Date | null
@@ -50,14 +50,14 @@ watch(
   async (t) => {
     if (t === 'ANIMAL') {
       const [clientsData, vetsData] = await Promise.all([
-        userApi.getUsersByRole(['CLIENT']),
-        userApi.getUsersByRole(['VETERINARIAN']),
+        usersApi.getUsersByRole(['CLIENT']),
+        usersApi.getUsersByRole(['VETERINARIAN']),
       ])
 
       clients.value = clientsData
       vets.value = vetsData
     } else {
-      staffs.value = await userApi.getUsersByRole(['STAFF'])
+      staffs.value = await usersApi.getUsersByRole(['STAFF'])
     }
   },
   { immediate: true },

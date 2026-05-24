@@ -7,8 +7,11 @@ import { prisma } from "@api/lib/prisma";
 import { UserService } from "@api/users";
 import { flatUser } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
+import { UserRepository } from "@api/users/user.repository";
 
 const animalMeetingRepository = new AnimalMeetingRepository();
+const userRepository = new UserRepository();
+
 export class AnimalMeetingService {
   async create({
     data,
@@ -135,17 +138,34 @@ export class AnimalMeetingService {
     const meeting = await animalMeetingRepository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
-    // Vérifie que le RDV n'est pas passé
     const meetingDate = new Date(meeting.meeting!.date);
     if (meetingDate < new Date()) {
       throw new ForbiddenError();
     }
 
-    // Vérifie les droits
     if (!isStaff(role) && meeting.ownedPet.clientId !== userId) {
       throw new ForbiddenError();
     }
 
     return animalMeetingRepository.delete(id);
+  }
+
+  async getByClient({
+    id,
+    userId,
+    role,
+  }: {
+    id: string;
+    userId: string;
+    role: UserRole;
+  }) {
+    console.log(id);
+    const user = await userRepository.getUserById({ id });
+    if (!user) throw new NotFoundError("Utilisateur");
+    if (user.role !== "CLIENT") throw new ForbiddenError();
+
+    if (!isStaff(role) && id !== userId) throw new ForbiddenError();
+
+    return animalMeetingRepository.findByClient(id);
   }
 }

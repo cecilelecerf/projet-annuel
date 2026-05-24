@@ -42,7 +42,7 @@ meetingRouter.delete(
 );
 
 meetingRouter.use("/availabilities", availabilityRouter);
-meetingRouter.use("/animal", animalMeetingRouter);
+meetingRouter.use("/animals", animalMeetingRouter);
 meetingRouter.use("/internal", internalMeetingRouter);
 
 export default meetingRouter;

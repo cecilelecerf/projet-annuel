@@ -1,8 +1,8 @@
 export * from "./ids";
-export * from "./users";
+export * from "./users/index";
 export * from "./clinic.schema";
 export * from "./pet.schema";
-export * from "./owned-pet.schema";
+export * from "./owned-pet/index.schema";
 export * from "./product.schema";
 export * from "./order.schema";
 export * from "./messagerie.schema";
@@ -13,3 +13,4 @@ export * from "./mettings";
 export * from "./requests";
 export * from "./acts";
 export * from "./prescription.schema";
+export * from "./owned-pet/meta.schema";

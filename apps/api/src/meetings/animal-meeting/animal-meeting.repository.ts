@@ -1,6 +1,9 @@
 import { prisma } from "@api/lib/prisma";
 import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
-import { VeterinarianClinic } from "../../../prisma/generated/prisma/client";
+import {
+  User,
+  VeterinarianClinic,
+} from "../../../prisma/generated/prisma/client";
 
 export class AnimalMeetingRepository {
   async findById(id: string) {
@@ -78,5 +81,19 @@ export class AnimalMeetingRepository {
 
   async delete(id: string) {
     return prisma.meetingBase.delete({ where: { id } });
+  }
+
+  async findByClient(userId: User["id"]) {
+    return prisma.animalMeeting.findMany({
+      where: { ownedPet: { client: { user: { id: userId } } } },
+      include: {
+        ownedPet: {
+          include: {
+            race: { include: { pet: true } },
+          },
+        },
+        meeting: true,
+      },
+    });
   }
 }

@@ -1,6 +1,11 @@
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
-import { type CreateOwnedPet, type UpdateOwnedPet } from "@armali/schemas";
+import {
+  ownedPetMetaSchema,
+  ownedPetWithRaceMeta,
+  type CreateOwnedPet,
+  type UpdateOwnedPet,
+} from "@armali/schemas";
 import { OwnedPetService } from "./owned-pet.service";
 
 const ownedPetService = new OwnedPetService();
@@ -98,7 +103,7 @@ export class OwnedPetController {
         requesterId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(pets);
+      res.status(200).json(ownedPetWithRaceMeta.array().parse(pets));
     } catch (err) {
       next(err);
     }

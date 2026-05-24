@@ -18,6 +18,12 @@ animalMeetingRouter.post(
   animalController.create.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
+  "/users/:id",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  animalController.getByClient.bind(animalController) as RequestHandler,
+);
+animalMeetingRouter.get(
   "/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),

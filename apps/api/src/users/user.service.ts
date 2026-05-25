@@ -77,7 +77,6 @@ export class UserService {
     if (user.role === "ADMIN") throw new ForbiddenError();
 
     if (isStaff(user.role)) {
-      console.log("staff");
       const clinicId = await this.getClinicId({
         userId: requesterId,
         role: requesterRole,

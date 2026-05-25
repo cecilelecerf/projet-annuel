@@ -58,6 +58,7 @@ export const createMedicalHistorySchema = medicalHistorySchema
     updatedAt: true,
     clinicAct: true,
     performedBy: true,
+    priceApplied: true,
     animalMeetingId: true,
   })
   .extend({
@@ -68,6 +69,7 @@ export const createMedicalHistorySchema = medicalHistorySchema
     performedByIds: z.array(veterinarianProfileSchema).optional(),
     vaccination: createAnimalVaccineSchema.optional(),
     meetingId: meetingIdSchema,
+    priceApplied: medicalHistorySchema.shape.priceApplied.optional(),
   });
 
 export const updateMedicalHistorySchema = createMedicalHistorySchema

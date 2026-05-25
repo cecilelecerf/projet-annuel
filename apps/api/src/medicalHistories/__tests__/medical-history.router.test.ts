@@ -74,7 +74,7 @@ describe("GET /api/medical-histories/:id", () => {
   });
 });
 
-// ── POST /api/medical-histories/:meetingId ────────────────────────────────────
+// ── POST /api/medical-histories ────────────────────────────────────
 describe("POST /api/medical-histories", () => {
   it("401 — sans token", async () => {
     const res = await request(app).post(`/api/medical-histories`);
@@ -138,20 +138,21 @@ describe("POST /api/medical-histories", () => {
   });
 });
 
-// ── PATCH /api/medical-histories/:meetingId/:id ───────────────────────────────
+// ── PATCH /api/medical-histories/:id ───────────────────────────────
 
-describe("PATCH /api/medical-histories/:meetingId/:id", () => {
+describe("PATCH /api/medical-histories/:id", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).patch(
-      "/api/medical-histories/some-meeting/some-id",
-    );
+    const res = await request(app).patch("/api/medical-histories/some-id");
     expect(res.status).toBe(401);
   });
 
   it("403 — rôle SECRETARY non autorisé", async () => {
     const token = await loginAs("secretaire@gmail.com");
+    const history = await getPrisma().animalMedicalHistory.findFirst({
+      include: { animalMeeting: { include: { meeting: true } } },
+    });
     const res = await request(app)
-      .patch("/api/medical-histories/some-meeting/some-id")
+      .patch(`/api/medical-histories/${history?.id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({});
     expect(res.status).toBe(403);
@@ -184,20 +185,18 @@ describe("PATCH /api/medical-histories/:meetingId/:id", () => {
   });
 });
 
-// ── DELETE /api/medical-histories/:meetingId/:id ──────────────────────────────
+// ── DELETE /api/medical-histories/:id ──────────────────────────────
 
-describe("DELETE /api/medical-histories/:meetingId/:id", () => {
+describe("DELETE /api/medical-histories/:id", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).delete(
-      "/api/medical-histories/some-meeting/some-id",
-    );
+    const res = await request(app).delete("/api/medical-histories/some-id");
     expect(res.status).toBe(401);
   });
 
   it("403 — rôle DIRECTOR non autorisé", async () => {
     const token = await loginAs("directeur@gmail.com");
     const res = await request(app)
-      .delete("/api/medical-histories/some-meeting/some-id")
+      .delete("/api/medical-histories/some-id")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });

@@ -57,8 +57,9 @@ export class AnimalMedicalHistoryService {
 
     let type: ActType | undefined;
     let performedBy: string[] = [];
-    let priceApplied: Decimal | undefined =
-      new Decimal(data.priceApplied) ?? undefined;
+    let priceApplied: Decimal | undefined = data.priceApplied
+      ? new Decimal(data.priceApplied)
+      : undefined;
     let actId: string | undefined = data.actId ?? undefined;
 
     if (data.clinicActId) {
@@ -126,7 +127,7 @@ export class AnimalMedicalHistoryService {
     }
 
     if (!actId) throw new BadRequestError("actId est obligatoire");
-
+    if (!priceApplied) throw new BadRequestError("price applied");
     // performedAt = date du meeting si disponible, sinon celle passée dans data
     const performedAt = animalMeeting.meeting?.date ?? data.performedAt;
     if (!performedAt) throw new BadRequestError("performedAt est obligatoire");

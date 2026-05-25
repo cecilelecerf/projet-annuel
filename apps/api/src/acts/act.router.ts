@@ -2,31 +2,24 @@ import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { ActController } from "./act.controller";
+import { STAFF_ROLES } from "@api/utils";
 
 const actRouter: Router = Router();
 const controller = new ActController();
-
-const allStaff = [
-  "ADMIN",
-  "DIRECTOR",
-  "SECRETARY",
-  "REFERANT",
-  "VETERINARIAN",
-] as const;
 
 // ── Acts (catalogue global) ───────────────────────────────────────────────────
 
 actRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware([...allStaff]),
+  roleMiddleware(STAFF_ROLES),
   controller.getAll.bind(controller) as RequestHandler,
 );
 
 actRouter.get(
   "/:id",
   authMiddleware,
-  roleMiddleware([...allStaff]),
+  roleMiddleware(STAFF_ROLES),
   controller.getById.bind(controller) as RequestHandler,
 );
 
@@ -50,44 +43,38 @@ actRouter.delete(
   roleMiddleware(["ADMIN"]),
   controller.delete.bind(controller) as RequestHandler,
 );
-// actRouter.get(
-//   "/meeting/:meetingId",
-//   authMiddleware,
-//   roleMiddleware([...allStaff]),
-//   controller.getByMeeting.bind(controller) as RequestHandler,
-// );
 // ── ClinicActs ────────────────────────────────────────────────────────────────
 
 actRouter.get(
-  "/clinic/:clinicId",
+  "/clinic-acts/:clinicId",
   authMiddleware,
-  roleMiddleware([...allStaff]),
+  roleMiddleware(STAFF_ROLES),
   controller.getClinicActs.bind(controller) as RequestHandler,
 );
 
 actRouter.get(
-  "/clinic-act/:id",
+  "/clinic-acts/:id",
   authMiddleware,
-  roleMiddleware([...allStaff]),
+  roleMiddleware(STAFF_ROLES),
   controller.getClinicActById.bind(controller) as RequestHandler,
 );
 
 actRouter.post(
-  "/clinic",
+  "/clinic-acts",
   authMiddleware,
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.createClinicAct.bind(controller) as RequestHandler,
 );
 
 actRouter.patch(
-  "/clinic-act/:id",
+  "/clinic-acts/:id",
   authMiddleware,
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.updateClinicAct.bind(controller) as RequestHandler,
 );
 
 actRouter.delete(
-  "/clinic-act/:id",
+  "/clinic-acts/:id",
   authMiddleware,
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.deleteClinicAct.bind(controller) as RequestHandler,

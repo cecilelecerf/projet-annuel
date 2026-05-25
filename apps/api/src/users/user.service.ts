@@ -3,6 +3,7 @@ import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId } from "./user.utils";
+import { isStaff } from "@api/utils";
 const userRepository = new UserRepository();
 
 export class UserService {
@@ -44,7 +45,6 @@ export class UserService {
 
     const clinicId = await this.getClinicId({ userId, role });
     const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
-
     const [clients, staffs] = await Promise.all([
       targetRole.includes("CLIENT")
         ? userRepository.getAllUsersByRole({ roles: ["CLIENT"] })
@@ -69,21 +69,24 @@ export class UserService {
     requesterRole: UserRole;
     targetId: string;
   }) {
-    // ADMIN voit tout
-    if (requesterRole === "ADMIN") {
-      const user = await userRepository.getUserById({ id: targetId });
-      if (!user) throw new NotFoundError("Utilisateur");
-      return user;
+    const user = await userRepository.getUserById({ id: targetId });
+    if (!user) throw new NotFoundError("Utilisateur");
+
+    if (requesterRole === "ADMIN") return user;
+
+    if (user.role === "ADMIN") throw new ForbiddenError();
+
+    if (isStaff(user.role)) {
+      const clinicId = await this.getClinicId({
+        userId: requesterId,
+        role: requesterRole,
+      });
+      const usersInClinic = await userRepository.getUsersByClinic({ clinicId });
+      if (!usersInClinic.some((u) => u.id === targetId))
+        throw new NotFoundError("Utilisateur");
     }
 
-    // Les autres vérifient que le user cible est dans leur clinic
-    const clinicId = await this.getClinicId({
-      userId: requesterId,
-      role: requesterRole,
-    });
-    const usersInClinic = await userRepository.getUsersByClinic({ clinicId });
-    const user = usersInClinic.find((u) => u.id === targetId);
-    if (!user) throw new NotFoundError("Utilisateur");
+    // CLIENT → accessible par tout staff
     return user;
   }
 }

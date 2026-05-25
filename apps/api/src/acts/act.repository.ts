@@ -42,21 +42,4 @@ export class ActRepository {
   async delete(id: string) {
     return prisma.act.delete({ where: { id } });
   }
-
-  async findByMeeting(meetingId: string) {
-    return prisma.animalMeetingAct.findMany({
-      where: { animalMeetingId: meetingId },
-      include: {
-        clinicAct: { include: { act: true } },
-        performedBy: {
-          include: { veterinarian: { include: { user: true } } },
-        },
-        surgery: true,
-        hospitalization: { include: { dailyReports: true } },
-        imaging: true,
-        analysis: true,
-      },
-      orderBy: { performedAt: "asc" },
-    });
-  }
 }

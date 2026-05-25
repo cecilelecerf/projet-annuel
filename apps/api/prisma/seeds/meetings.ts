@@ -9,7 +9,6 @@ export async function seedMeetings(
     specialities,
     healthConditions,
     pets,
-    vaccines,
   }: {
     users: ReturnType<typeof import("./users").seedUsers> extends Promise<
       infer T
@@ -35,11 +34,6 @@ export async function seedMeetings(
     pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
       ? T
       : never;
-    vaccines: ReturnType<
-      typeof import("./vaccines").seedVaccines
-    > extends Promise<infer T>
-      ? T
-      : never;
   },
 ) {
   const {
@@ -57,10 +51,9 @@ export async function seedMeetings(
   const { specCardio, specDerma } = specialities;
   const { conditionCardio, conditionRenal } = healthConditions;
   const { raceLab, racePersan, raceGolden } = pets;
-  const { vaccineRage, vaccineCHPPi, vaccineTyphus } = vaccines;
 
   // ── Owned Pets ──────────────────────────────────────────────────────────────
-  const ownedPet1 = await prisma.ownedPet.create({
+  const animal1 = await prisma.animal.create({
     data: {
       name: "Rex",
       dateOfBirth: new Date("2020-03-10"),
@@ -70,7 +63,7 @@ export async function seedMeetings(
       attendingVeterinarianId: vetProfile1.id,
     },
   });
-  const ownedPet2 = await prisma.ownedPet.create({
+  const animal2 = await prisma.animal.create({
     data: {
       name: "Luna",
       dateOfBirth: new Date("2021-07-22"),
@@ -79,7 +72,7 @@ export async function seedMeetings(
       raceId: racePersan.id,
     },
   });
-  const ownedPet3 = await prisma.ownedPet.create({
+  const animal3 = await prisma.animal.create({
     data: {
       name: "Max",
       dateOfBirth: new Date("2019-01-15"),
@@ -276,7 +269,31 @@ export async function seedMeetings(
           report:
             "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
           specialityId: specCardio.id,
-          ownedPetId: ownedPet1.id,
+          animalId: animal1.id,
+          veterinarianClinicId: vetoClinic1.id,
+        },
+      },
+    },
+    include: {
+      animalMeeting: true,
+    },
+  });
+  const animalMeeting3 = await prisma.meetingBase.create({
+    data: {
+      type: "SPECIFIED",
+      kind: "ANIMAL",
+      date: new Date("2026-05-10"),
+      startTime: new Date("1970-01-01T09:00:00Z"),
+      endTime: new Date("1970-01-01T09:30:00Z"),
+      animalMeeting: {
+        create: {
+          description: "Consultation de routine",
+          petWeight: 28,
+          petSize: 58,
+          report:
+            "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
+          specialityId: specCardio.id,
+          animalId: animal1.id,
           veterinarianClinicId: vetoClinic1.id,
         },
       },
@@ -299,7 +316,7 @@ export async function seedMeetings(
           petWeight: 4,
           petSize: 32,
           specialityId: specDerma.id,
-          ownedPetId: ownedPet2.id,
+          animalId: animal2.id,
           veterinarianClinicId: vetoClinic1.id,
         },
       },
@@ -319,7 +336,7 @@ export async function seedMeetings(
       animalMeeting: {
         create: {
           specialityId: specDerma.id,
-          ownedPetId: ownedPet3.id,
+          animalId: animal3.id,
           veterinarianClinicId: vetoClinic1.id,
         },
       },
@@ -424,38 +441,25 @@ export async function seedMeetings(
   });
 
   // ── Health conditions owned pets ────────────────────────────────────────────
-  await prisma.ownedPetHealthCondition.create({
+  await prisma.animalHealthCondition.create({
     data: {
       notes: "Diagnostiqué lors de la consultation du 10 février",
       diagnosedAt: new Date("2026-02-10"),
       healthConditionId: conditionCardio.id,
-      ownedPetId: ownedPet1.id,
+      animalId: animal1.id,
       meetingId: animalMeeting1.animalMeeting?.id,
       addedById: vetoUser1.id,
     },
   });
-  await prisma.ownedPetHealthCondition.create({
+  await prisma.animalHealthCondition.create({
     data: {
       notes: "Déclaré par le propriétaire, à confirmer",
       diagnosedAt: new Date("2026-01-15"),
       healthConditionId: conditionRenal.id,
-      ownedPetId: ownedPet3.id,
+      animalId: animal3.id,
       addedById: clientUser2.id,
     },
   });
 
-  // ── Vaccines owned pets ─────────────────────────────────────────────────────
-  await prisma.ownedPetVaccine.createMany({
-    data: [
-      {
-        ownedPetId: ownedPet1.id,
-        vaccineId: vaccineRage.id,
-        meetingId: animalMeeting1.animalMeeting?.id,
-      },
-      { ownedPetId: ownedPet1.id, vaccineId: vaccineCHPPi.id },
-      { ownedPetId: ownedPet2.id, vaccineId: vaccineTyphus.id },
-    ],
-  });
-
-  return { animalMeeting1, animalMeeting2, ownedPet1, ownedPet2, ownedPet3 };
+  return { animalMeeting1, animalMeeting2, animal1, animal2, animal3 };
 }

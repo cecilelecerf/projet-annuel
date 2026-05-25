@@ -5,14 +5,14 @@ import { ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { calendarApi } from '../../api/calendar.api'
-import { actsApi } from '@/features/acts/api'
 import { prescriptionApi } from '@/features/prescriptions/api'
-import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
 import MeetingHeader from './MeetingHeader.vue'
 import MeetingPets from './MeetingPets.vue'
 import MeetingInfo from './MeetingInfo.vue'
 import MeetingActs from './MeetingActs.vue'
 import MeetingPrescriptions from './MeetingPrescriptions.vue'
+import { medicalHistoriesApi } from '@/features/medicalHistories/api'
+import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
@@ -20,7 +20,7 @@ const { user } = useAuthStore()
 const { handle } = useFormErrorStore()
 
 const [acts, prescriptions] = await Promise.all([
-  actsApi.meetingActs.getAll(meeting.id),
+  medicalHistoriesApi.getAll(meeting.id),
   prescriptionApi.getByMeeting(meeting.id),
 ])
 
@@ -59,7 +59,7 @@ const onDelete = async () => {
 }
 
 const onActSaved = async () => {
-  localActs.value = await actsApi.meetingActs.getAll(meeting.id)
+  localActs.value = await medicalHistoriesApi.getAll(meeting.id)
 }
 
 const onPrescriptionSaved = async () => {

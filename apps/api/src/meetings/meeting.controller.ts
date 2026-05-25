@@ -201,11 +201,7 @@ export class MeetingController {
     next: NextFunction,
   ) {
     try {
-      await animalMeetingService.delete({
-        id: req.params.id,
-        userId: req.user.id,
-        role: req.user.role,
-      });
+      await meetingService.delete(req.params.id);
       res.status(204).send();
     } catch (err) {
       next(err);

@@ -166,6 +166,7 @@ describe("UserService.getUserById", () => {
   });
 
   it("non-ADMIN — retourne l'utilisateur s'il est dans la clinique", async () => {
+    mockUserRepository.getUserById.mockResolvedValue(mockUser);
     mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockUserRepository.getUsersByClinic.mockResolvedValue([mockUser]);
 
@@ -174,12 +175,12 @@ describe("UserService.getUserById", () => {
       requesterRole: "DIRECTOR",
       targetId: "user-1",
     });
-
     expect(result).toEqual(mockUser);
   });
 
   it("non-ADMIN — lève NotFoundError si l'utilisateur n'est pas dans la clinique", async () => {
     const { NotFoundError } = await import("@api/errors");
+    mockUserRepository.getUserById.mockResolvedValue(mockUser);
     mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockUserRepository.getUsersByClinic.mockResolvedValue([
       { ...mockUser, id: "other-user" },
@@ -196,6 +197,7 @@ describe("UserService.getUserById", () => {
 
   it("non-ADMIN — lève ForbiddenError si pas de clinique", async () => {
     const { ForbiddenError } = await import("@api/errors");
+    mockUserRepository.getUserById.mockResolvedValue(mockUser);
     mockUserRepository.getClinicIdByUserId.mockResolvedValue(null);
 
     await expect(

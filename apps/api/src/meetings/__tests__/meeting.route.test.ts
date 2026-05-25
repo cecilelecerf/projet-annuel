@@ -139,18 +139,121 @@ describe("GET /api/meetings/:id", () => {
     expect(res.status).toBe(404);
   });
 
-  it("200 — retourne le meeting", async () => {
+  it("200 — VETERINARIAN retourne le meeting", async () => {
     const token = await loginAs("veto@gmail.com");
     const meeting = await getPrisma().meetingBase.findFirst();
 
     const res = await request(app)
       .get(`/api/meetings/${meeting!.id}`)
       .set("Authorization", `Bearer ${token}`);
+
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("id", meeting!.id);
   });
+  it("200 — CLIENT retourne son propre meeting animal", async () => {
+    const token = await loginAs("client@gmail.com");
+
+    const clientUser = await getPrisma().user.findUnique({
+      where: { email: "client@gmail.com" },
+      include: { clientProfile: true },
+    });
+
+    const animal = await getPrisma().animal.findFirst({
+      where: { clientId: clientUser!.clientProfile!.id },
+      include: { animalMeeting: { include: { meeting: true } } },
+    });
+
+    const meetingId = animal!.animalMeeting[0]!.meeting!.id;
+
+    const res = await request(app)
+      .get(`/api/meetings/${meetingId}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("id", meetingId);
+  });
+
+  it("403 — CLIENT n'a pas accès au meeting d'un autre client", async () => {
+    const token = await loginAs("client@gmail.com");
+
+    const clientUser = await getPrisma().user.findUnique({
+      where: { email: "client@gmail.com" },
+      include: { clientProfile: true },
+    });
+    const otherAnimalMeeting = await getPrisma().animalMeeting.findFirst({
+      where: {
+        animal: { clientId: { not: clientUser!.clientProfile!.id } },
+        meetingId: { not: null },
+      },
+      include: { meeting: true, animal: { include: { client: true } } },
+    });
+
+    const res = await request(app)
+      .get(`/api/meetings/${otherAnimalMeeting!.meeting!.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
 });
 
+describe("DELETE /api/meetings/:id", () => {
+  it("401 — sans token", async () => {
+    const res = await request(app).delete("/api/meetings/some-id");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — rôle DIRECTOR non autorisé", async () => {
+    const token = await loginAs("directeur@gmail.com");
+    const res = await request(app)
+      .delete("/api/meetings/some-id")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("404 — meeting introuvable", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const res = await request(app)
+      .delete("/api/meetings/non-existent-id")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("403 — meeting dans le passé", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const pastMeeting = await getPrisma().meetingBase.findFirst({
+      where: { date: { lt: new Date() } },
+    });
+    const res = await request(app)
+      .delete(`/api/meetings/${pastMeeting!.id}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("204 — VETERINARIAN supprime un meeting futur", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const animal = await getPrisma().animal.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
+    const speciality = await getPrisma().speciality.findFirst();
+
+    const created = await request(app)
+      .post("/api/meetings/animals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        date: "2026-09-01",
+        startTime: "1970-01-01T09:00:00.000Z",
+        endTime: "1970-01-01T10:00:00.000Z",
+        animalId: animal!.id,
+        veterinarianId: vetoClinic!.veterinarianId,
+        specialityId: speciality!.id,
+      });
+
+    const res = await request(app)
+      .delete(`/api/meetings/${created.body.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(204);
+  });
+});
 // ── POST /api/meetings/availabilities ─────────────────────────────────────────
 
 describe("POST /api/meetings/availabilities", () => {
@@ -394,18 +497,18 @@ describe("DELETE /api/meetings/internal/:id", () => {
   });
 });
 
-// ── GET /api/meetings/animal/:id ──────────────────────────────────────────────
+// ── GET /api/meetings/animals/:id ──────────────────────────────────────────────
 
-describe("GET /api/meetings/animal/:id", () => {
+describe("GET /api/meetings/animals/:id", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).get("/api/meetings/animal/some-id");
+    const res = await request(app).get("/api/meetings/animals/some-id");
     expect(res.status).toBe(401);
   });
 
   it("404 — rendez-vous introuvable", async () => {
     const token = await loginAs("veto@gmail.com");
     const res = await request(app)
-      .get("/api/meetings/animal/non-existent-id")
+      .get("/api/meetings/animals/non-existent-id")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(404);
   });
@@ -414,34 +517,29 @@ describe("GET /api/meetings/animal/:id", () => {
     const token = await loginAs("veto@gmail.com");
     const animalMeeting = await getPrisma().animalMeeting.findFirst();
     const res = await request(app)
-      .get(`/api/meetings/animal/${animalMeeting!.meetingId}`)
+      .get(`/api/meetings/animals/${animalMeeting!.meetingId}`)
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("id", animalMeeting!.id);
   });
 });
 
-// ── PATCH /api/meetings/animal/:id ────────────────────────────────────────────
+// ── PATCH /api/meetings/animals/:id ────────────────────────────────────────────
 
-describe("PATCH /api/meetings/animal/:id", () => {
+describe("PATCH /api/meetings/animals/:id", () => {
   beforeAll(async () => {
-    await getPrisma().prescriptionItem.deleteMany();
-    await getPrisma().prescription.deleteMany();
-    await getPrisma().animalMeetingActPerformer.deleteMany();
-    await getPrisma().animalMeetingAct.deleteMany();
-    await getPrisma().animalMeeting.deleteMany();
     await getPrisma().meetingBase.deleteMany({
-      where: { kind: "ANIMAL" },
+      where: { kind: "ANIMAL", date: new Date("2026-04-22T00:00:00.000Z") },
     });
   });
   it("401 — sans token", async () => {
-    const res = await request(app).patch("/api/meetings/animal/some-id");
+    const res = await request(app).patch("/api/meetings/animals/some-id");
     expect(res.status).toBe(401);
   });
   it("404 — Meeting n'existe pas", async () => {
     const token = await loginAs("veto@gmail.com");
     const res = await request(app)
-      .patch("/api/meetings/animal/some-id")
+      .patch("/api/meetings/animals/some-id")
       .set("Authorization", `Bearer ${token}`)
       .send({});
 
@@ -450,51 +548,46 @@ describe("PATCH /api/meetings/animal/:id", () => {
 
   it("200 — VETERINARIAN met à jour un rendez-vous", async () => {
     const token = await loginAs("veto@gmail.com");
-    const ownedPet = await getPrisma().ownedPet.findFirst();
+    const animal = await getPrisma().animal.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
     const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
     const resCreate = await request(app)
-      .post("/api/meetings/animal")
+      .post("/api/meetings/animals")
       .set("Authorization", `Bearer ${token}`)
       .send({
         date: "2026-04-22",
         startTime: "1970-01-01T13:00:00.000Z",
         endTime: "1970-01-01T15:30:00.000Z",
-        ownedPetId: ownedPet!.id,
+        animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
     const res = await request(app)
-      .patch(`/api/meetings/animal/${resCreate.body.id}`)
+      .patch(`/api/meetings/animals/${resCreate.body.id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({ report: "Mise à jour du rapport" });
     expect(res.status).toBe(200);
   });
 });
 
-// ── DELETE /api/meetings/animal/:id ───────────────────────────────────────────
+// ── DELETE /api/meetings/animals/:id ───────────────────────────────────────────
 
-describe("DELETE /api/meetings/animal/:id", () => {
+describe("DELETE /api/meetings/animals/:id", () => {
   beforeAll(async () => {
-    await getPrisma().prescriptionItem.deleteMany();
-    await getPrisma().prescription.deleteMany();
-    await getPrisma().animalMeetingActPerformer.deleteMany();
-    await getPrisma().animalMeetingAct.deleteMany();
-    await getPrisma().animalMeeting.deleteMany();
     await getPrisma().meetingBase.deleteMany({
-      where: { kind: "ANIMAL" },
+      where: { kind: "ANIMAL", date: new Date("2026-08-28T00:00:00.000Z") },
     });
   });
   // TODO : ADD si la date est déjà passé
   it("401 — sans token", async () => {
-    const res = await request(app).delete("/api/meetings/animal/some-id");
+    const res = await request(app).delete("/api/meetings/animals/some-id");
     expect(res.status).toBe(401);
   });
 
   it("403 — rôle DIRECTOR non autorisé", async () => {
     const token = await loginAs("directeur@gmail.com");
     const res = await request(app)
-      .delete("/api/meetings/animal/some-id")
+      .delete("/api/meetings/animals/some-id")
       .set("Authorization", `Bearer ${token}`)
       .send({});
     expect(res.status).toBe(403);
@@ -503,51 +596,46 @@ describe("DELETE /api/meetings/animal/:id", () => {
   it("204 — VETERINARIAN supprime un rendez-vous animal", async () => {
     const token = await loginAs("veto@gmail.com");
     const vetoProfile = await getPrisma().veterinarianProfile.findFirst();
-    const ownedPet = await getPrisma().ownedPet.findFirst();
+    const animal = await getPrisma().animal.findFirst();
     const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
 
     const created = await request(app)
-      .post("/api/meetings/animal")
+      .post("/api/meetings/animals")
       .set("Authorization", `Bearer ${token}`)
       .send({
         date: "2026-08-28",
         startTime: "1970-01-01T15:00:00.000Z",
         endTime: "1970-01-01T15:30:00.000Z",
-        ownedPetId: ownedPet!.id,
+        animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
     const res = await request(app)
-      .delete(`/api/meetings/animal/${created.body.id}`)
+      .delete(`/api/meetings/animals/${created.body.id}`)
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(204);
   });
-  // ── POST /api/meetings/animal ─────────────────────────────────────────────────
+  // ── POST /api/meetings/animals ─────────────────────────────────────────────────
 
-  describe("POST /api/meetings/animal", () => {
+  describe("POST /api/meetings/animals", () => {
     // TODO : ajout vérficiation si date de fin avant date de début
     // TODO : si veto déjà occupé
     beforeAll(async () => {
-      await getPrisma().prescriptionItem.deleteMany();
-      await getPrisma().prescription.deleteMany();
-      await getPrisma().animalMeetingActPerformer.deleteMany();
-      await getPrisma().animalMeetingAct.deleteMany();
-      await getPrisma().animalMeeting.deleteMany();
       await getPrisma().meetingBase.deleteMany({
-        where: { kind: "ANIMAL" },
+        where: { kind: "ANIMAL", date: new Date("2026-04-02T00:00:00.000Z") },
       });
     });
     it("401 — sans token", async () => {
-      const res = await request(app).post("/api/meetings/animal");
+      const res = await request(app).post("/api/meetings/animals");
       expect(res.status).toBe(401);
     });
 
     it("403 — rôle DIRECTOR non autorisé", async () => {
       const token = await loginAs("directeur@gmail.com");
       const res = await request(app)
-        .post("/api/meetings/animal")
+        .post("/api/meetings/animals")
         .set("Authorization", `Bearer ${token}`)
         .send({});
       expect(res.status).toBe(403);
@@ -556,7 +644,7 @@ describe("DELETE /api/meetings/animal/:id", () => {
     it("400 — body invalide", async () => {
       const token = await loginAs("veto@gmail.com");
       const res = await request(app)
-        .post("/api/meetings/animal")
+        .post("/api/meetings/animals")
         .set("Authorization", `Bearer ${token}`)
         .send({});
       expect(res.status).toBe(400);
@@ -564,18 +652,18 @@ describe("DELETE /api/meetings/animal/:id", () => {
 
     it("201 — SECRETARY crée un rendez-vous animal", async () => {
       const token = await loginAs("secretaire@gmail.com");
-      const ownedPet = await getPrisma().ownedPet.findFirst();
+      const animal = await getPrisma().animal.findFirst();
       const speciality = await getPrisma().speciality.findFirst();
       const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
 
       const res = await request(app)
-        .post("/api/meetings/animal")
+        .post("/api/meetings/animals")
         .set("Authorization", `Bearer ${token}`)
         .send({
           date: "2026-04-02",
           startTime: "1970-01-01T10:30:00.000Z",
           endTime: "1970-01-01T11:30:00.000Z",
-          ownedPetId: ownedPet!.id,
+          animalId: animal!.id,
           veterinarianId: vetoClinic?.veterinarianId,
           specialityId: speciality!.id,
           clinicId: vetoClinic?.clinicId,

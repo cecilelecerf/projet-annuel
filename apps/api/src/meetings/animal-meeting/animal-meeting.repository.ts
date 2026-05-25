@@ -1,6 +1,13 @@
 import { prisma } from "@api/lib/prisma";
-import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
-import { VeterinarianClinic } from "../../../prisma/generated/prisma/client";
+import type {
+  CreateAnimalMeeting,
+  AnimalId,
+  UpdateAnimalMeeting,
+} from "@armali/schemas";
+import {
+  User,
+  VeterinarianClinic,
+} from "../../../prisma/generated/prisma/client";
 
 export class AnimalMeetingRepository {
   async findById(id: string) {
@@ -8,13 +15,12 @@ export class AnimalMeetingRepository {
       where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
-        ownedPet: {
+        animal: {
           include: {
             client: { include: { user: { omit: { password: true } } } },
             race: { include: { pet: true } },
           },
         },
-
         speciality: true,
       },
     });
@@ -37,15 +43,15 @@ export class AnimalMeetingRepository {
           create: {
             description: data.description,
             specialityId: data.specialityId,
-            ownedPetId: data.ownedPetId,
-            veterinarianClinicId: veterinarianClinicId,
+            animalId: data.animalId,
+            veterinarianClinicId,
           },
         },
       },
       include: {
         animalMeeting: {
           include: {
-            ownedPet: true,
+            animal: true,
             speciality: true,
           },
         },
@@ -72,11 +78,37 @@ export class AnimalMeetingRepository {
           },
         },
       },
-      include: { meeting: true, ownedPet: true },
+      include: { meeting: true, animal: true },
     });
   }
 
   async delete(id: string) {
     return prisma.meetingBase.delete({ where: { id } });
+  }
+
+  async findByClient(userId: User["id"]) {
+    return prisma.animalMeeting.findMany({
+      where: { animal: { client: { user: { id: userId } } } },
+      include: {
+        animal: {
+          include: {
+            race: { include: { pet: true } },
+          },
+        },
+        meeting: true,
+      },
+    });
+  }
+
+  async findByAnimal(animalId: AnimalId) {
+    return prisma.animalMeeting.findMany({
+      where: { animalId: animalId },
+      include: {
+        meeting: true,
+        animalMedicalHistories: {
+          include: { clinicAct: { include: { act: true } } },
+        },
+      },
+    });
   }
 }

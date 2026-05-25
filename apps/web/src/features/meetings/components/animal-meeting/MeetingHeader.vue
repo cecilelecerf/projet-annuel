@@ -54,16 +54,4 @@ const router = useRouter()
   </div>
 </template>
 
-<style lang="scss" scoped>
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-xl);
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-</style>
+<style lang="scss" scoped></style>

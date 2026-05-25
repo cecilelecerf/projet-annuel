@@ -1,21 +1,25 @@
 import { http } from '@/lib/api'
 import {
-  actSchema,
   animalMeetigWithMeetingSchema,
-  animalMeetingActSchema,
+  animalMeetingFieldSchema,
   animalMeetingSchema,
   calendarSchema,
   internalMeetingSchema,
+  meetingBaseSchema,
   meetingMetaSchema,
   meetingSchema,
+  animalWithRaceMeta,
   type Calendar,
+  type ClientId,
   type CreateAnimalMeeting,
   type CreateInternalMeeting,
   type Meeting,
   type MeetingId,
   type MeetingMeta,
+  type AnimalId,
   type UpdateAnimalMeeting,
   type UserId,
+  medicalHistorySchema,
 } from '@armali/schemas'
 
 export const calendarApi = {
@@ -53,15 +57,34 @@ export const calendarApi = {
   },
   animal: {
     new: async (meeting: CreateAnimalMeeting) => {
-      const data = await http.post(`/meetings/animal`, meeting)
+      const data = await http.post(`/meetings/animals`, meeting)
     },
     get: async (meetingId: MeetingId) => {
-      const data = await http.get(`/meetings/animal/${meetingId}`)
+      const data = await http.get(`/meetings/animals/${meetingId}`)
       return animalMeetingSchema.parse(data)
     },
     update: async (meetingId: MeetingId, meeting: UpdateAnimalMeeting) => {
-      const data = await http.patch(`/meetings/animal/${meetingId}`, meeting)
+      const data = await http.patch(`/meetings/animals/${meetingId}`, meeting)
       return animalMeetigWithMeetingSchema.parse(data)
+    },
+
+    getAllByAnimal: async (animalId: AnimalId) => {
+      const data = await http.get(`/meetings/animals/animals/${animalId}`)
+      return animalMeetingFieldSchema
+        .extend({
+          meeting: meetingBaseSchema,
+          animalMedicalHistories: medicalHistorySchema.array(),
+        })
+        .array()
+        .parse(data)
+    },
+
+    getAllByClientId: async (clientId: ClientId) => {
+      const data = await http.get(`/meetings/animals/users/${clientId}`)
+      return animalMeetigWithMeetingSchema
+        .extend({ animal: animalWithRaceMeta })
+        .array()
+        .parse(data)
     },
   },
 }

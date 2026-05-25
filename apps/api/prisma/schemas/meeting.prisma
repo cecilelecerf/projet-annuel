@@ -140,17 +140,16 @@ model AnimalMeeting {
 
   specialityId         String?
   speciality           Speciality?        @relation(fields: [specialityId], references: [id])
-  ownedPetId           String
-  ownedPet             OwnedPet           @relation(fields: [ownedPetId], references: [id])
+  animalId             String
+  animal               Animal             @relation(fields: [animalId], references: [id], onDelete: Cascade)
   veterinarianClinicId String
   veterinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id])
 
-  ownedPetVaccines         OwnedPetVaccine[]
-  ownedPetHealthConditions OwnedPetHealthCondition[]
-  animalMeetingActs        AnimalMeetingAct[]
-  prescriptions            Prescription[]
-  veterinarianProfile      VeterinarianProfile?      @relation(fields: [veterinarianProfileId], references: [id])
-  veterinarianProfileId    String?
+  animalHealthConditions AnimalHealthCondition[]
+  animalMedicalHistories AnimalMedicalHistory[]
+  prescriptions          Prescription[]
+  veterinarianProfile    VeterinarianProfile?    @relation(fields: [veterinarianProfileId], references: [id])
+  veterinarianProfileId  String?
 
   @@map("animal_meetings")
 }

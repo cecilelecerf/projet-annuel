@@ -36,7 +36,6 @@ export class UserController {
   ) {
     try {
       const { id, role } = req.user;
-
       const targetRoles = (
         Array.isArray(req.params.role) ? req.params.role : [req.params.role]
       ).map((r) => r.toUpperCase()) as (UserRole | "STAFF")[];
@@ -52,9 +51,7 @@ export class UserController {
       const rolesToSearch: UserRole[] = targetRoles.includes("STAFF")
         ? ["DIRECTOR", "REFERANT", "SECRETARY", "VETERINARIAN"]
         : (targetRoles as UserRole[]);
-
       const users = await userService.getUsersByRoles(id, role, rolesToSearch);
-
       res.status(200).json(users);
     } catch (err) {
       next(err);
@@ -71,6 +68,7 @@ export class UserController {
       const targetId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
+
       const user = await userService.getUserById({
         requesterId: id,
         requesterRole: role,

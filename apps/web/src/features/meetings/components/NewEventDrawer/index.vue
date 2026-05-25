@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { MeetingKind, OwnedPet, User, UserId } from '@armali/schemas'
+import type { MeetingKind, Animal, User, UserId } from '@armali/schemas'
 import { computed, ref, watch } from 'vue'
 import { calendarApi } from '../../api/calendar.api'
 import { useAuthStore } from '@/stores/authStore'
-import { userApi } from '@/features/users/api/user.api'
+import { usersApi } from '@/features/users/api/user.api'
 import dayjs from 'dayjs'
 import { useRoute } from 'vue-router'
 import { toUserId } from '@/features/users/utils'
 import SearchSelectSingle from './SearchSelectSingle.vue'
 import SearchSelectMultiple from './SearchSelectMultiple.vue'
-import { ownedPetApi } from '@/features/ownedPets/api'
+import { animalApi } from '@/features/animals/api'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 
 const route = useRoute()
 const id = route.params.id as string
-const veterinarian: User | null = id ? await userApi.getUser(id) : null
+const veterinarian: User | null = id ? await usersApi.get(id) : null
 const authStore = useAuthStore()
 const { initialDate } = defineProps<{
   initialDate: Date | null
@@ -34,30 +34,30 @@ const participants = ref<User[]>([])
 const selectedClient = ref<User | null>(null)
 const selectedVet = ref<User | null>(veterinarian ?? null)
 
-const selectOwnedPet = ref<OwnedPet | null>(null)
+const selectAnimal = ref<Animal | null>(null)
 
 const clients = ref<User[]>([])
 const vets = ref<User[]>([])
 const staffs = ref<User[]>([])
-const ownedPets = ref<OwnedPet[]>([])
+const animals = ref<Animal[]>([])
 
 watch(selectedClient, async (client) => {
-  selectOwnedPet.value = null
-  ownedPets.value = client ? await ownedPetApi.getAllByUser(client.id) : []
+  selectAnimal.value = null
+  animals.value = client ? await animalApi.getAllByUser(client.id) : []
 })
 watch(
   type,
   async (t) => {
     if (t === 'ANIMAL') {
       const [clientsData, vetsData] = await Promise.all([
-        userApi.getUsersByRole(['CLIENT']),
-        userApi.getUsersByRole(['VETERINARIAN']),
+        usersApi.getUsersByRole(['CLIENT']),
+        usersApi.getUsersByRole(['VETERINARIAN']),
       ])
 
       clients.value = clientsData
       vets.value = vetsData
     } else {
-      staffs.value = await userApi.getUsersByRole(['STAFF'])
+      staffs.value = await usersApi.getUsersByRole(['STAFF'])
     }
   },
   { immediate: true },
@@ -82,13 +82,13 @@ const handleSubmit = async () => {
         clinicId: authStore.user?.clinicId,
       })
     } else {
-      if (!selectedVet.value || !selectedClient.value || !selectOwnedPet.value) return
+      if (!selectedVet.value || !selectedClient.value || !selectAnimal.value) return
       await calendarApi.animal.new({
         date: date.value,
         startTime: new Date(`1970-01-01T${start.value}`),
         endTime: new Date(`1970-01-01T${end.value}`),
         veterinarianId: selectedVet.value.id,
-        ownedPetId: selectOwnedPet.value?.id,
+        animalId: selectAnimal.value?.id,
       })
     }
     emit('close')
@@ -143,8 +143,8 @@ const handleSubmit = async () => {
           placeholder="Rechercher un client..."
         />
         <SearchSelectSingle
-          v-model="selectOwnedPet"
-          :items="ownedPets"
+          v-model="selectAnimal"
+          :items="animals"
           display-key="name"
           placeholder="Rechercher un animal..."
         />

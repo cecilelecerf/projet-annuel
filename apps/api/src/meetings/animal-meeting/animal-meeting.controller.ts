@@ -2,15 +2,21 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
+  medicalHistorySchema,
+  animalMeetingFieldSchema,
   animalMeetingSchema,
+  ClientId,
+  clinicActSchema,
   CreateAnimalMeeting,
+  meetingBaseSchema,
+  AnimalId,
+  animalWithRaceMeta,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
 import { ForbiddenError } from "@api/errors";
 
 const animalMeetingService = new AnimalMeetingService();
-
 export class AnimalMeetingController {
   async create(
     req: AuthenticatedRequest & { body: CreateAnimalMeeting },
@@ -75,6 +81,55 @@ export class AnimalMeetingController {
         role: req.user.role,
       });
       res.status(204).json();
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByClient(
+    req: RequestWithParams<{ id: ClientId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const meetings = await animalMeetingService.getByClient({
+        id: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res
+        .status(200)
+        .json(
+          animalMeetigWithMeetingSchema
+            .extend({ animal: animalWithRaceMeta })
+            .array()
+            .parse(meetings),
+        );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByAnimal(
+    req: RequestWithParams<{ id: AnimalId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const meetings = await animalMeetingService.getByAnimal({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res.status(200).json(
+        animalMeetingFieldSchema
+          .extend({
+            meeting: meetingBaseSchema,
+            animalMedicalHistories: medicalHistorySchema.array(),
+          })
+          .array()
+          .parse(meetings),
+      );
     } catch (err) {
       next(err);
     }

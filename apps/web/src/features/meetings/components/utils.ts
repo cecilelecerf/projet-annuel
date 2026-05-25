@@ -26,7 +26,7 @@ export const toCalendarEvent = (base: FlatMeeting) => {
       title: b.description ?? '',
       extendedProps: {
         kind: base.kind,
-        description: b.ownedPetId,
+        description: b.animalId,
 
         date: b.recurringId ? b.date : undefined,
       },

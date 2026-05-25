@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { actIdSchema } from "../ids";
+import { actIdSchema, vaccineIdSchema } from "../ids";
+import { vaccineSchema } from "./vaccine";
+import { minVaccineSchema } from "./vaccine/vaccine.schema";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -40,12 +42,15 @@ export const actSchema = z.object({
   description: z.string().nullable().optional(),
   type: actTypeSchema,
   basePrice: z.coerce.number().multipleOf(0.01),
+  vaccineId: vaccineIdSchema.nullable().optional(),
+  vaccine: minVaccineSchema.nullable().optional(),
 });
 
 export const createActSchema = actSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  vaccine: true,
 });
 export const updateActSchema = createActSchema.partial();
 

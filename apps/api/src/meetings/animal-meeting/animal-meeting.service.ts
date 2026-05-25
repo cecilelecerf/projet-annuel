@@ -1,5 +1,10 @@
 import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
-import type { CreateAnimalMeeting, UpdateAnimalMeeting } from "@armali/schemas";
+import type {
+  CreateAnimalMeeting,
+  Animal,
+  AnimalId,
+  UpdateAnimalMeeting,
+} from "@armali/schemas";
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { Clinic } from "../../../prisma/generated/prisma/client";
@@ -7,8 +12,11 @@ import { prisma } from "@api/lib/prisma";
 import { UserService } from "@api/users";
 import { flatUser } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
+import { UserRepository } from "@api/users/user.repository";
 
 const animalMeetingRepository = new AnimalMeetingRepository();
+const userRepository = new UserRepository();
+
 export class AnimalMeetingService {
   async create({
     data,
@@ -94,16 +102,16 @@ export class AnimalMeetingService {
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
     if (role === "CLIENT") {
-      const isOwner = meeting.ownedPet.client.id === userId;
+      const isOwner = meeting.animal.client.id === userId;
       if (!isOwner) throw new ForbiddenError();
     }
-    const user = flatUser(meeting.ownedPet.client);
+    const user = flatUser(meeting.animal.client);
     return {
       ...meeting,
-      ownedPet: {
-        ...meeting.ownedPet,
+      animal: {
+        ...meeting.animal,
         client: user,
-        age: calculateAge(meeting.ownedPet.dateOfBirth),
+        age: calculateAge(meeting.animal.dateOfBirth),
       },
     };
   }
@@ -135,17 +143,46 @@ export class AnimalMeetingService {
     const meeting = await animalMeetingRepository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
-    // Vérifie que le RDV n'est pas passé
     const meetingDate = new Date(meeting.meeting!.date);
     if (meetingDate < new Date()) {
       throw new ForbiddenError();
     }
 
-    // Vérifie les droits
-    if (!isStaff(role) && meeting.ownedPet.clientId !== userId) {
+    if (!isStaff(role) && meeting.animal.clientId !== userId) {
       throw new ForbiddenError();
     }
 
     return animalMeetingRepository.delete(id);
+  }
+
+  async getByClient({
+    id,
+    userId,
+    role,
+  }: {
+    id: string;
+    userId: string;
+    role: UserRole;
+  }) {
+    const user = await userRepository.getUserById({ id });
+    if (!user) throw new NotFoundError("Utilisateur");
+    if (user.role !== "CLIENT") throw new ForbiddenError();
+
+    if (!isStaff(role) && id !== userId) throw new ForbiddenError();
+
+    return animalMeetingRepository.findByClient(id);
+  }
+
+  // TODO : add vérification
+  async getByAnimal({
+    animalId,
+    userId,
+    role,
+  }: {
+    animalId: AnimalId;
+    userId: string;
+    role: UserRole;
+  }) {
+    return animalMeetingRepository.findByAnimal(animalId);
   }
 }

@@ -8,7 +8,7 @@ export const directorClinicIdSchema = userIdSchema;
 export const referantClinicIdSchema = userIdSchema;
 export const clinicIdSchema = z.uuid().brand("ClinicId");
 export const petIdSchema = z.uuid().brand("PetId");
-export const ownedPetIdSchema = z.uuid().brand("OwnedPetId");
+export const animalIdSchema = z.uuid().brand("AnimalId");
 export const raceIdSchema = z.uuid().brand("RaceId");
 export const meetingIdSchema = z.uuid().brand("MeetingId");
 export const meetingRecurringIdSchema = z.uuid().brand("MeetingRecurringId");
@@ -24,8 +24,7 @@ export const productClinicIdSchema = z.uuid().brand("ProductClinicId");
 export const reviewIdSchema = z.uuid().brand("ReviewId");
 export const petFoodIdSchema = z.number().int().brand("PetFoodId");
 export const clientPetHealthConditionIdSchema = z
-  .number()
-  .int()
+  .uuid()
   .brand("ClientPetHealthConditionId");
 export const veterinarianClinicIdSchema = z
   .uuid()
@@ -45,7 +44,7 @@ export const messageReadIdSchema = z.uuid().brand("MessageReadId");
 export const healthConditionIdSchema = z.uuid().brand("HealthConditionId");
 export const actIdSchema = z.uuid().brand("ActId");
 export const clinicActIdSchema = z.uuid().brand("ClinicActId");
-export const animalMeetingActIdSchema = z.uuid().brand("AnimalMeetingActId");
+export const medicalHistoryIdSchema = z.uuid().brand("AnimalMeetingActId");
 export const prescriptionIdSchema = z.uuid().brand("PrescriptionId");
 export const prescriptionItemIdSchema = z.uuid().brand("PrescriptionItemId");
 export const hospitalizationIdSchema = z.uuid().brand("HospitalizationId");
@@ -65,7 +64,7 @@ export type DirectorClinicId = z.infer<typeof directorClinicIdSchema>;
 export type ReferantClinicId = z.infer<typeof referantClinicIdSchema>;
 export type ClinicId = z.infer<typeof clinicIdSchema>;
 export type PetId = z.infer<typeof petIdSchema>;
-export type OwnedPetId = z.infer<typeof ownedPetIdSchema>;
+export type AnimalId = z.infer<typeof animalIdSchema>;
 export type RaceId = z.infer<typeof raceIdSchema>;
 export type MeetingId = z.infer<typeof meetingIdSchema>;
 export type VaccineId = z.infer<typeof vaccineIdSchema>;
@@ -90,7 +89,7 @@ export type MessageReadId = z.infer<typeof messageReadIdSchema>;
 export type HealthConditionId = z.infer<typeof healthConditionIdSchema>;
 export type ActId = z.infer<typeof actIdSchema>;
 export type ClinicActId = z.infer<typeof clinicActIdSchema>;
-export type AnimalMeetingActId = z.infer<typeof animalMeetingActIdSchema>;
+export type MedicalHistoryId = z.infer<typeof medicalHistoryIdSchema>;
 export type PrescriptionId = z.infer<typeof prescriptionIdSchema>;
 export type PrescriptionItemId = z.infer<typeof prescriptionItemIdSchema>;
 export type HospitalizationId = z.infer<typeof hospitalizationIdSchema>;

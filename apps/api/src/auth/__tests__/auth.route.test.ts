@@ -27,7 +27,7 @@ describe("POST /api/auth/register", () => {
       where: { email: "nouveau@test.com" },
     });
     expect(user).not.toBeNull();
-    expect(user!.password).not.toBe("Password1!"); // hashé
+    expect(user!.password).not.toBe("Password1!");
   });
 
   it("409 — email déjà utilisé", async () => {

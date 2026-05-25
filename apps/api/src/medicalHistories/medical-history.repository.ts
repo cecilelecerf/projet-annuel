@@ -9,6 +9,7 @@ import {
   Animal,
   VeterinarianClinic,
   Act,
+  AnimalMedicalHistory,
 } from "../../prisma/generated/prisma/client";
 
 const meetingActInclude = {
@@ -46,19 +47,30 @@ export class AnimalMedicalHistoryRepository {
     type,
     animalId,
     actId,
+    priceApplied,
+    performedAt,
   }: {
+    data: Pick<
+      CreateMedicalHistory,
+      | "notes"
+      | "clinicActId"
+      | "surgery"
+      | "hospitalization"
+      | "imaging"
+      | "analysis"
+      | "animalVaccine"
+    >;
     animalMeetingId: AnimalMeeting["id"];
     performedBy: VeterinarianClinic["id"][];
-    data: CreateMedicalHistory;
     type: ActType;
     animalId: Animal["id"];
     actId: Act["id"];
-  }) {
+  } & Pick<AnimalMedicalHistory, "priceApplied" | "performedAt">) {
     return prisma.animalMedicalHistory.create({
       data: {
-        performedAt: data.performedAt,
+        performedAt: performedAt,
         notes: data.notes,
-        priceApplied: data.priceApplied,
+        priceApplied: priceApplied,
         animalMeetingId: animalMeetingId,
         clinicActId: data.clinicActId,
         type,

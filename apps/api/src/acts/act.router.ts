@@ -46,35 +46,35 @@ actRouter.delete(
 // ── ClinicActs ────────────────────────────────────────────────────────────────
 
 actRouter.get(
-  "/clinic/:clinicId",
+  "/clinic-acts/:clinicId",
   authMiddleware,
   roleMiddleware(STAFF_ROLES),
   controller.getClinicActs.bind(controller) as RequestHandler,
 );
 
 actRouter.get(
-  "/clinic-act/:id",
+  "/clinic-acts/:id",
   authMiddleware,
   roleMiddleware(STAFF_ROLES),
   controller.getClinicActById.bind(controller) as RequestHandler,
 );
 
 actRouter.post(
-  "/clinic",
+  "/clinic-acts",
   authMiddleware,
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.createClinicAct.bind(controller) as RequestHandler,
 );
 
 actRouter.patch(
-  "/clinic-act/:id",
+  "/clinic-acts/:id",
   authMiddleware,
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.updateClinicAct.bind(controller) as RequestHandler,
 );
 
 actRouter.delete(
-  "/clinic-act/:id",
+  "/clinic-acts/:id",
   authMiddleware,
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.deleteClinicAct.bind(controller) as RequestHandler,

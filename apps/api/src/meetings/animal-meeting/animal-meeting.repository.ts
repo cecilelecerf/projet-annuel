@@ -1,7 +1,6 @@
 import { prisma } from "@api/lib/prisma";
 import type {
   CreateAnimalMeeting,
-  Animal,
   AnimalId,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
@@ -22,7 +21,6 @@ export class AnimalMeetingRepository {
             race: { include: { pet: true } },
           },
         },
-
         speciality: true,
       },
     });

@@ -6,10 +6,14 @@ import {
   updateAnimalMeetingSchema,
 } from "@armali/schemas";
 import { AnimalMeetingController } from "./animal-meeting.controller";
+import { AnimalMedicalHistoryController } from "@api/medicalHistories/medical-history.controller";
+import { STAFF_ROLES } from "@api/utils";
 
 const animalMeetingRouter: RouterType = Router();
 
 const animalController = new AnimalMeetingController();
+const animalMedicalHistory = new AnimalMedicalHistoryController();
+
 animalMeetingRouter.post(
   "/",
   authMiddleware,
@@ -18,16 +22,23 @@ animalMeetingRouter.post(
   animalController.create.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
-  "/users/:id",
+  "/:id/user",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalController.getByClient.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
-  "/animals/:id",
+  "/:id/animal",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalController.getByAnimal.bind(animalController) as RequestHandler,
+);
+animalMeetingRouter.get(
+  "/:id/medical-histories",
+  authMiddleware,
+  animalMedicalHistory.getByMeeting.bind(
+    animalMedicalHistory,
+  ) as RequestHandler,
 );
 animalMeetingRouter.get(
   "/:id",

@@ -1,53 +1,38 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { AnimalMeetingActController } from "./medical-history.controller";
-import { UserRole } from "@armali/schemas";
+import { AnimalMedicalHistoryController } from "./medical-history.controller";
+import { STAFF_ROLES } from "@api/utils";
 
-const animalMeetingActRouter: Router = Router();
-const controller = new AnimalMeetingActController();
+const animalMedicalHistoryRouter: Router = Router();
+const controller = new AnimalMedicalHistoryController();
 
-const allowedRoles: UserRole[] = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "DIRECTOR",
-  "REFERANT",
-  "ADMIN",
-];
-
-animalMeetingActRouter.get(
-  "/:meetingId",
+animalMedicalHistoryRouter.get(
+  "/:id",
   authMiddleware,
-  roleMiddleware(allowedRoles),
-  controller.getByMeeting.bind(controller) as RequestHandler,
-);
-
-animalMeetingActRouter.get(
-  "/:meetingId/:id",
-  authMiddleware,
-  roleMiddleware(allowedRoles),
+  roleMiddleware(STAFF_ROLES),
   controller.getById.bind(controller) as RequestHandler,
 );
 
-animalMeetingActRouter.post(
-  "/:meetingId",
+animalMedicalHistoryRouter.post(
+  "/",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY"]),
   controller.create.bind(controller) as RequestHandler,
 );
 
-animalMeetingActRouter.patch(
-  "/:meetingId/:id",
+animalMedicalHistoryRouter.patch(
+  "/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN"]),
   controller.update.bind(controller) as RequestHandler,
 );
 
-animalMeetingActRouter.delete(
-  "/:meetingId/:id",
+animalMedicalHistoryRouter.delete(
+  "/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY"]),
   controller.delete.bind(controller) as RequestHandler,
 );
 
-export default animalMeetingActRouter;
+export default animalMedicalHistoryRouter;

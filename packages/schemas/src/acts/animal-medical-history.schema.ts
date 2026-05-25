@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  actIdSchema,
   clinicActIdSchema,
   clinicIdSchema,
   medicalHistoryIdSchema,
@@ -41,6 +42,7 @@ export const medicalHistorySchema = z.object({
   animalMeetingId: meetingIdSchema,
   clinicActId: clinicActIdSchema.nullable().optional(),
   clinicAct: clinicActSchema.nullable().optional(),
+  actId: actIdSchema.nullable().optional(),
   surgery: surgerySchema.nullable().optional(),
   hospitalization: hospitalizationSchema.nullable().optional(),
   imaging: imagingSchema.nullable().optional(),
@@ -64,7 +66,7 @@ export const createMedicalHistorySchema = medicalHistorySchema
     imaging: createImagingSchema.optional(),
     analysis: createAnalysisSchema.optional(),
     performedByIds: z.array(veterinarianProfileSchema).optional(),
-    vaccinations: createAnimalVaccineSchema.optional(),
+    vaccination: createAnimalVaccineSchema.optional(),
     meetingId: meetingIdSchema,
   });
 

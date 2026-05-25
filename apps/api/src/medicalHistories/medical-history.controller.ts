@@ -8,11 +8,11 @@ import {
   type CreateMedicalHistory,
   type UpdateMedicalHistory,
 } from "@armali/schemas";
-import { AnimalMeetingActService } from "./medical-history.service";
+import { AnimalMedicalHistoryService } from "./medical-history.service";
 
-const service = new AnimalMeetingActService();
+const service = new AnimalMedicalHistoryService();
 
-export class AnimalMeetingActController {
+export class AnimalMedicalHistoryController {
   async getByMeeting(
     req: RequestWithParams<{ meetingId: MeetingId }>,
     res: Response,
@@ -47,7 +47,7 @@ export class AnimalMeetingActController {
     try {
       const result = createMedicalHistorySchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await service.create(result.data, req.user.role);
+      const act = await service.create(result.data, req.user.role, req.user.id);
       res.status(201).json(act);
     } catch (err) {
       next(err);

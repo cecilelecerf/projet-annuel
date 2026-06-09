@@ -20,6 +20,22 @@ export class AuthController {
     }
   }
 
+  async registerDirector(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, password, firstname, lastname, clinic } = req.body;
+      const result = await authService.registerDirector({
+        email,
+        password,
+        firstname,
+        lastname,
+        clinic,
+      });
+      res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
@@ -50,6 +66,37 @@ export class AuthController {
       const token = authorization.split(" ")[1];
       const user = await authService.me(token);
       res.status(200).json(user);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async refresh(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { refreshToken } = req.body;
+      const result = await authService.refresh(refreshToken);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async requestDeleteAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const result = await authService.requestDeleteAccount(userId);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async confirmDeleteAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const { code } = req.body;
+      await authService.confirmDeleteAccount(userId, code);
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

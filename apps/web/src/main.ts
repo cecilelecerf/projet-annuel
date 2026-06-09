@@ -5,6 +5,8 @@ import './styles/fonts.scss'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import router from './router/index'
 import { useAuthStore } from './stores/authStore'
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
 
 const app = createApp(App)
 app.use(createPinia())
@@ -15,5 +17,15 @@ const { init } = useAuthStore()
 await init()
 
 app.use(router)
+app.use(Toast, {
+  position: 'bottom-center',
+  timeout: 3000,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+  hideProgressBar: true,
+  maxToasts: 5,
+  newestOnTop: true,
+})
 
 app.mount('#app')

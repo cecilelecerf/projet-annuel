@@ -1,23 +1,25 @@
 import { useAuthStore, type UserStore } from '@/stores/authStore'
-import { storeToRefs } from 'pinia'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { clientRouter } from './clientRouter'
 import { veterinarianRouter } from './veterinarianRouter'
 import { directorRouter } from './directorRouter'
 import { secretaryRouter } from './secretaryRouter'
+import { referantRouter } from './referantRouter'
+import { adminRouter } from './adminRouter'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
   DIRECTOR: '/director',
   VETERINARIAN: '/veterinarian',
   SECRETARY: '/secretary',
   REFERANT: '/referent',
-  CLIENT: '/',
+  CLIENT: '/mon-espace',
+  ADMIN: '/admin',
 } as const
 
+// Routes accessibles uniquement si non connecté (redirection si déjà connecté)
+const AUTH_ONLY_ROUTES = ['Login', 'Register', 'Landing']
+
 const routes: RouteRecordRaw[] = [
-  // ══════════════════════════════════════════════════════════════
-  // 🌐 LANDING PAGE (public)
-  // ══════════════════════════════════════════════════════════════
   {
     path: '/',
     name: 'Landing',
@@ -28,10 +30,8 @@ const routes: RouteRecordRaw[] = [
   ...veterinarianRouter,
   ...directorRouter,
   ...secretaryRouter,
-
-  // // ══════════════════════════════════════════════════════════════
-  // // 🔓 AUTH (public)
-  // // ══════════════════════════════════════════════════════════════
+  ...referantRouter,
+  ...adminRouter,
   {
     path: '/login',
     name: 'Login',
@@ -50,10 +50,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/Unauthorized.vue'),
     meta: { public: true },
   },
-
-  // ══════════════════════════════════════════════════════════════
-  // 🔀 REDIRECTIONS
-  // ══════════════════════════════════════════════════════════════
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -66,17 +62,34 @@ const router = createRouter({
   routes,
 })
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Global guard : redirige chaque rôle vers son espace si besoin
-// ─────────────────────────────────────────────────────────────────────────────
-router.beforeEach((to, from, next) => {
-  const { user } = storeToRefs(useAuthStore())
-  const role = user.value?.role
-  const publicRoutes = ['Login', 'Register', 'Unauthorized', 'NotFound']
-  if (publicRoutes.includes(to.name as string) || to.meta?.public) return next()
-  if (!role) return next({ name: 'Login' })
+let authInitialized = false
 
-  next()
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore()
+
+  // Initialise l'auth une seule fois (garde défensive en plus de main.ts)
+  if (!authInitialized) {
+    authInitialized = true
+    await authStore.init()
+  }
+
+  const role = authStore.user?.role
+
+  // Connecté → ne peut plus accéder à landing / login / register
+  if (role && AUTH_ONLY_ROUTES.includes(to.name as string)) {
+    return roleHomeMap[role]
+  }
+
+  // Routes toujours accessibles (peu importe l'état d'auth)
+  if (to.name === 'Unauthorized' || to.name === 'NotFound') return true
+
+  // Route publique (non interceptée ci-dessus)
+  if (to.meta?.public) return true
+
+  // Route privée sans auth → login
+  if (!role) return { name: 'Login' }
+
+  return true
 })
 
 export default router

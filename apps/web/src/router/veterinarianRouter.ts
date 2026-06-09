@@ -18,6 +18,11 @@ export const veterinarianRouter: RouteRecordRaw[] = [
         name: 'Veto.Calendar',
         component: () => import('@/views/calendar/CalendarView.vue'),
       },
+      {
+        path: 'profil',
+        name: 'Veto.Profil',
+        component: () => import('@/views/veterinarian/Profil.vue'),
+      },
       // {
       //   path: 'agenda/rdv/:id',
       //   name: 'Veto.Agenda.RDV.Detail',

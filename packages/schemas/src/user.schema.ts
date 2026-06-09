@@ -127,3 +127,36 @@ export const registerSchema = baseUserSchema
   })
   .extend({ password: userPasswordSchema });
 export type Register = z.infer<typeof registerSchema>;
+
+export const clinicRegistrationSchema = z.object({
+  name: z.string().min(1, "Nom requis"),
+  address: z.string().min(1, "Adresse requise"),
+  siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+  phone: z.string().min(10, "Téléphone invalide"),
+  website: z.string().min(1, "Site web requis"),
+  description: z.string().max(500).optional(),
+});
+export type ClinicRegistration = z.infer<typeof clinicRegistrationSchema>;
+
+export const registerDirectorSchema = registerSchema.extend({
+  clinic: clinicRegistrationSchema,
+});
+export type RegisterDirectorSchema = z.infer<typeof registerDirectorSchema>;
+
+export const deleteAccountConfirmSchema = z.object({
+  code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+});
+export type DeleteAccountConfirm = z.infer<typeof deleteAccountConfirmSchema>;
+
+// ── Director staff creation ───────────────────────────────────────────────────
+export const createReferentStaffSchema = registerSchema;
+export type CreateReferentStaff = z.infer<typeof createReferentStaffSchema>;
+
+export const createVeterinarianStaffSchema = registerSchema.extend({
+  licenseNumber: z.string().min(1, "Numéro de licence requis"),
+  bio: z.string().max(500).optional(),
+});
+export type CreateVeterinarianStaff = z.infer<typeof createVeterinarianStaffSchema>;
+
+export const createSecretaryStaffSchema = registerSchema;
+export type CreateSecretaryStaff = z.infer<typeof createSecretaryStaffSchema>;

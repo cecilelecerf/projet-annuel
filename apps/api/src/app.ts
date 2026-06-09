@@ -5,6 +5,11 @@ import cors from "cors";
 import meetingRouter from "./routes/metting.route";
 import { errorHandler } from "./middlewares/error.middleware";
 import userRouter from "./routes/user.route";
+import clinicRouter from "./routes/clinic.route";
+import directorRouter from "./routes/director.route";
+import referentRouter from "./routes/referent.route";
+import adminRouter from "./routes/admin.route";
+import reviewRouter from "./routes/review.route";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
 
@@ -43,4 +48,9 @@ app.get("/api/test", async (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
+app.use("/api/clinics", clinicRouter);
+app.use("/api/director", directorRouter);
+app.use("/api/referent", referentRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/reviews", reviewRouter);
 app.use(errorHandler);

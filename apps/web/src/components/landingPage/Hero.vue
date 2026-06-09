@@ -1,3 +1,18 @@
+<script setup lang="ts">
+import { useAuthStore } from '@/stores/authStore'
+import { useRouter } from 'vue-router'
+import { roleHomeMap } from '@/router/index'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+function goToMySpace() {
+  const role = authStore.user?.role
+  if (role) router.push(roleHomeMap[role])
+  else router.push('/login')
+}
+</script>
+
 <template>
   <section class="hero">
     <div class="hero__bg"></div>
@@ -5,8 +20,13 @@
     <nav class="nav">
       <span class="nav__logo brand">CECOULE</span>
       <div class="nav__actions">
-        <el-button round plain>Se connecter</el-button>
-        <el-button type="primary" round>Inscription</el-button>
+        <template v-if="!authStore.isAuthenticated">
+          <el-button round plain @click="router.push('/login')">Se connecter</el-button>
+          <el-button type="primary" round @click="router.push('/register')">Inscription</el-button>
+        </template>
+        <template v-else>
+          <el-button type="primary" round @click="goToMySpace()">Mon espace →</el-button>
+        </template>
       </div>
     </nav>
 

@@ -12,8 +12,8 @@ export const api = async (endpoint: string, options: RequestInit = {}) => {
   })
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message ?? 'Erreur serveur')
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error ?? error.message ?? 'Erreur serveur')
   }
   if (response.status === 204) return null
 

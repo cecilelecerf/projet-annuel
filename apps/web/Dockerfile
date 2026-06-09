@@ -17,6 +17,9 @@ COPY packages/schemas ./packages/schemas
 COPY apps/web ./apps/web
 COPY tsconfig.base.json ./
 
+ARG VITE_API_URL=/api
+RUN echo "VITE_API_URL=${VITE_API_URL}" > /app/.env.prod
+
 WORKDIR /app/packages/schemas
 RUN pnpm build
 

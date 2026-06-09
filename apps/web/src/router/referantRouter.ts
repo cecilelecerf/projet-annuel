@@ -1,6 +1,7 @@
+import type { RouteRecordRaw } from 'vue-router'
 import { requireRole } from './utils'
 
-const referantRouter = [
+export const referantRouter: RouteRecordRaw[] = [
   {
     path: '/referent',
     component: () => import('@/layouts/ReferentLayout.vue'),
@@ -10,6 +11,21 @@ const referantRouter = [
         path: '',
         name: 'Referent.Home',
         //        component: () => import('@/views/referent/Home.vue'),
+      },
+      {
+        path: 'profil',
+        name: 'Referent.Profil',
+        component: () => import('@/views/referent/Profil.vue'),
+      },
+      {
+        path: 'staff',
+        name: 'Referent.Staff',
+        component: () => import('@/views/referent/Staff.vue'),
+      },
+      {
+        path: 'clinic',
+        name: 'Referent.Clinic',
+        component: () => import('@/views/referent/Clinic.vue'),
       },
 
       // ── Administration & Configuration ────────────────────────

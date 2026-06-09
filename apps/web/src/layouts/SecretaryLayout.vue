@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
+import { House, Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
+  {
+    index: 'Secretary.Home',
+    label: 'Accueil',
+    icon: House,
+  },
   {
     index: 'Secretary.Calendar',
     label: 'Agenda',

@@ -10,18 +10,25 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
   const isAuthenticated = computed(() => !!accessToken.value)
 
+  const setAuth = (userData: UserStore, access: string, refresh: string) => {
+    user.value = userData
+    accessToken.value = access
+    refreshToken.value = refresh
+    localStorage.setItem('accessToken', access)
+    localStorage.setItem('refreshToken', refresh)
+  }
+
   const init = async () => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated.value) return
     try {
       const data = await api('/auth/me')
-      const userData: UserStore = {
+      user.value = {
         id: data.id,
         email: data.email,
         firstname: data.firstname,
         lastname: data.lastname,
         role: data.role,
       }
-      user.value = userData
     } catch {
       user.value = null
       accessToken.value = null
@@ -36,12 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
-    user.value = data.user
-    accessToken.value = data.accessToken
-    refreshToken.value = data.refreshToken
-
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
+    setAuth(data.user, data.accessToken, data.refreshToken)
   }
 
   const logout = async () => {
@@ -49,7 +51,6 @@ export const useAuthStore = defineStore('auth', () => {
       method: 'POST',
       body: JSON.stringify({ refreshToken: refreshToken.value }),
     })
-
     user.value = null
     accessToken.value = null
     refreshToken.value = null
@@ -57,5 +58,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refreshToken')
   }
 
-  return { user, accessToken, isAuthenticated, login, logout, init }
+  return { user, accessToken, isAuthenticated, login, logout, init, setAuth }
 })

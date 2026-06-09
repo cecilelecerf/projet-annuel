@@ -3,7 +3,6 @@ import { PrismaClient } from "../generated/prisma/client";
 import { config } from "dotenv";
 import { resolve } from "path";
 
-import { cleanup } from "./cleanup";
 import { seedClinics } from "./clinics";
 import { seedUsers } from "./users";
 import { seedPets } from "./pets";
@@ -25,9 +24,16 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 export const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  const existingUser = await prisma.user.findUnique({
+    where: { email: "admin@gmail.com" },
+  });
 
-  await cleanup(prisma);
+  if (existingUser) {
+    console.log("⏭️  Base de données déjà peuplée, seed ignoré.");
+    return;
+  }
+
+  console.log("🌱 Seeding database...");
 
   const { clinic1, clinic2 } = await seedClinics(prisma);
   const users = await seedUsers(prisma, [clinic1, clinic2]);

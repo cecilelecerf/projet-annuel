@@ -1,0 +1,16 @@
+model VetReview {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  rating    Int
+  comment   String?
+
+  clientId String
+  client   User   @relation("ClientReviews", fields: [clientId], references: [id], onDelete: Cascade)
+
+  veterinarianId String
+  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, veterinarianId])
+  @@map("veterinarian_reviews")
+}

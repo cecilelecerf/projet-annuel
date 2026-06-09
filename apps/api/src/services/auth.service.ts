@@ -8,6 +8,14 @@ import {
 } from "@api/utils/jwt";
 import { prisma } from "@api/lib/prisma";
 import { ConflictError, NotFoundError, UnauthorizedError } from "@api/errors";
+import { EmailService } from "@api/services/email.service";
+import type { RegisterDirector } from "@api/types/auth.types";
+
+const emailService = new EmailService();
+
+function generateOtp(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 export class AuthService {
   async register(data: Register) {
@@ -33,6 +41,66 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
+
+    emailService.sendWelcome(user.email, user.firstname).catch(() => {});
+
+    const { password: _, ...userWithoutPassword } = user;
+    return { user: userWithoutPassword, accessToken, refreshToken };
+  }
+
+  async registerDirector(data: RegisterDirector) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (existingUser) throw new ConflictError("Cet email est déjà utilisé");
+
+    const existingClinic = await prisma.clinic.findUnique({
+      where: { siret: data.clinic.siret },
+    });
+    if (existingClinic) throw new ConflictError("Une clinique avec ce numéro SIRET existe déjà");
+
+    const existingRequest = await prisma.clinicCreationRequest.findFirst({
+      where: { siret: data.clinic.siret, status: "PENDING" },
+    });
+    if (existingRequest) throw new ConflictError("Une demande avec ce numéro SIRET est déjà en attente");
+
+    const hashedPassword = await hash(data.password, 10);
+
+    const { clinic, email, password: _pw, firstname, lastname } = data;
+
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: { email, password: hashedPassword, firstname, lastname, role: "DIRECTOR" },
+      });
+
+      await tx.clinicCreationRequest.create({
+        data: {
+          name: clinic.name,
+          address: clinic.address,
+          siret: clinic.siret,
+          phone: clinic.phone,
+          website: clinic.website,
+          description: clinic.description,
+          directorId: createdUser.id,
+        },
+      });
+
+      return createdUser;
+    });
+
+    const parsedUser = baseUserSchema.parse(user);
+    const accessToken = generateAccessToken(parsedUser);
+    const refreshToken = generateRefreshToken(parsedUser);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    emailService.sendWelcome(user.email, user.firstname).catch(() => {});
 
     const { password: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword, accessToken, refreshToken };
@@ -98,7 +166,14 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
-    await prisma.refreshToken.delete({ where: { token: refreshToken } });
+    try {
+      await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "P2025") {
+        return;
+      }
+      throw err;
+    }
   }
 
   async me(accessToken: string) {
@@ -109,5 +184,42 @@ export class AuthService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     return user;
+  }
+
+  async requestDeleteAccount(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError("Utilisateur");
+
+    await prisma.otpCode.deleteMany({
+      where: { userId, action: "DELETE_ACCOUNT" },
+    });
+
+    const code = generateOtp();
+    await prisma.otpCode.create({
+      data: {
+        code,
+        action: "DELETE_ACCOUNT",
+        userId,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      },
+    });
+
+    await emailService.sendOtpDeleteAccount(user.email, code);
+    return { message: "Code envoyé par email" };
+  }
+
+  async confirmDeleteAccount(userId: string, code: string) {
+    const otp = await prisma.otpCode.findFirst({
+      where: { userId, action: "DELETE_ACCOUNT", code },
+    });
+
+    if (!otp) throw new UnauthorizedError("Code invalide");
+
+    if (otp.expiresAt < new Date()) {
+      await prisma.otpCode.delete({ where: { id: otp.id } });
+      throw new UnauthorizedError("Code expiré");
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
   }
 }

@@ -5,6 +5,10 @@ import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import Sidebar, { type MenuItem } from './Sidebar.vue'
 import { getStringRole } from '@/utils/role.utils'
+import type { UserRole } from '@armali/schemas'
+import { useNotify } from '@/composables/useNotify'
+
+const notify = useNotify()
 
 defineProps<{ menuItems: MenuItem[] }>()
 
@@ -13,13 +17,27 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 
+const profilRouteMap: Partial<Record<UserRole, string>> = {
+  CLIENT: 'Client.Profil',
+  VETERINARIAN: 'Veto.Profil',
+  SECRETARY: 'Secretary.Profil',
+  DIRECTOR: 'Director.Profil',
+  REFERANT: 'Referent.Profil',
+}
+
+const profilRoute = computed(() => {
+  const role = user.value?.role
+  return role ? profilRouteMap[role] : undefined
+})
+
 const userInitials = computed(() => {
   if (!user.value) return '?'
   return `${user.value.firstname[0]}${user.value.lastname[0]}`.toUpperCase()
 })
 
-const handleLogout = () => {
-  authStore.logout()
+const handleLogout = async () => {
+  await authStore.logout()
+  notify.success('Déconnexion réussie')
   router.push('/')
 }
 </script>
@@ -51,13 +69,12 @@ const handleLogout = () => {
 
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item @click="router.push({ name: 'Veto.Profil.Parametres' })">
-              <el-icon><Setting /></el-icon>
-              Paramètres
-            </el-dropdown-item>
-            <el-dropdown-item @click="router.push({ name: 'Veto.Profil.FicheVeterinaire' })">
-              <el-icon><Document /></el-icon>
-              Fiche {{ user && getStringRole(user.role) }}
+            <el-dropdown-item
+              v-if="profilRoute"
+              @click="router.push({ name: profilRoute })"
+            >
+              <el-icon><User /></el-icon>
+              Mon profil
             </el-dropdown-item>
             <el-dropdown-item divided @click="handleLogout()">
               <el-icon><SwitchButton /></el-icon>

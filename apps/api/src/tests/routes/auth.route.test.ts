@@ -30,6 +30,13 @@ vi.mock("@armali/schemas", async (importOriginal) => {
   };
 });
 
+vi.mock("@api/services/email.service", () => ({
+  EmailService: vi.fn().mockImplementation(() => ({
+    sendWelcome: vi.fn().mockResolvedValue(undefined),
+    sendOtpDeleteAccount: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 const getPrisma = async () => {
   const { prisma } = await import("@api/lib/prisma");
   return prisma as DeepMockProxy<PrismaClient>;
@@ -49,12 +56,40 @@ const mockUser = {
   updatedAt: new Date(),
 };
 
+const mockDirectorUser = {
+  ...mockUser,
+  id: "2",
+  email: "director@test.com",
+  role: UserRole.DIRECTOR,
+};
+
+const mockClinic = {
+  id: "clinic-1",
+  name: "Clinique Vétérinaire du Centre",
+  address: "12 rue de la Paix, 75001 Paris",
+  siret: "12345678901234",
+  phone: "0102030405",
+  website: "https://clinique-centre.fr",
+  description: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 const mockRefreshToken = {
   token: "refresh_token",
   userId: "1",
   id: "1",
   createdAt: new Date(),
   expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+};
+
+const mockOtp = {
+  id: "otp-1",
+  code: "123456",
+  action: "DELETE_ACCOUNT",
+  userId: "1",
+  createdAt: new Date(),
+  expiresAt: new Date(Date.now() + 15 * 60 * 1000),
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -132,6 +167,79 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(400);
     expect(res.body.errors).toHaveProperty("password");
+  });
+});
+
+// -------------------------------------------------------------------
+describe("POST /api/auth/register-director", () => {
+  const validDirectorPayload = {
+    email: "director@test.com",
+    password: "Password1!",
+    firstname: "Jean",
+    lastname: "Directeur",
+    clinic: {
+      name: "Clinique Vétérinaire du Centre",
+      address: "12 rue de la Paix, 75001 Paris",
+      siret: "12345678901234",
+      phone: "0102030405",
+      website: "https://clinique-centre.fr",
+    },
+  };
+
+  it("201 — crée un directeur avec sa clinique", async () => {
+    const prisma = await getPrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    (prisma.$transaction as ReturnType<typeof vi.fn>).mockImplementation(
+      async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+        prisma.clinic.create.mockResolvedValue(mockClinic);
+        prisma.user.create.mockResolvedValue({
+          ...mockDirectorUser,
+          directorClinicProfile: { id: "2", clinicId: "clinic-1" },
+        });
+        return fn(prisma);
+      },
+    );
+    prisma.refreshToken.create.mockResolvedValue(mockRefreshToken);
+
+    const res = await request(app)
+      .post("/api/auth/register-director")
+      .send(validDirectorPayload);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("accessToken");
+  });
+
+  it("400 — clinic manquante", async () => {
+    const res = await request(app).post("/api/auth/register-director").send({
+      email: "director@test.com",
+      password: "Password1!",
+      firstname: "Jean",
+      lastname: "Directeur",
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("400 — siret invalide (pas 14 chiffres)", async () => {
+    const res = await request(app)
+      .post("/api/auth/register-director")
+      .send({
+        ...validDirectorPayload,
+        clinic: { ...validDirectorPayload.clinic, siret: "123" },
+      });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("409 — email déjà utilisé", async () => {
+    const prisma = await getPrisma();
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+
+    const res = await request(app)
+      .post("/api/auth/register-director")
+      .send(validDirectorPayload);
+
+    expect(res.status).toBe(409);
   });
 });
 
@@ -274,6 +382,86 @@ describe("GET /api/auth/me", () => {
       .get("/api/auth/me")
       .set("Authorization", "Bearer invalid_token");
 
+    expect(res.status).toBe(401);
+  });
+});
+
+// -------------------------------------------------------------------
+describe("POST /api/auth/delete-account/request", () => {
+  it("200 — envoie le code OTP", async () => {
+    const prisma = await getPrisma();
+    const { verifyAccessToken } = await import("@api/utils/jwt");
+    vi.mocked(verifyAccessToken).mockReturnValue({ id: "1" } as never);
+
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+    prisma.otpCode.deleteMany.mockResolvedValue({ count: 0 });
+    prisma.otpCode.create.mockResolvedValue(mockOtp);
+
+    const res = await request(app)
+      .post("/api/auth/delete-account/request")
+      .set("Authorization", "Bearer access_token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("message");
+  });
+
+  it("401 — sans token", async () => {
+    const res = await request(app).post("/api/auth/delete-account/request");
+    expect(res.status).toBe(401);
+  });
+});
+
+// -------------------------------------------------------------------
+describe("DELETE /api/auth/delete-account", () => {
+  it("204 — supprime le compte avec code valide", async () => {
+    const prisma = await getPrisma();
+    const { verifyAccessToken } = await import("@api/utils/jwt");
+    vi.mocked(verifyAccessToken).mockReturnValue({ id: "1" } as never);
+
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+    prisma.otpCode.findFirst.mockResolvedValue(mockOtp);
+    prisma.user.delete.mockResolvedValue(mockUser);
+
+    const res = await request(app)
+      .delete("/api/auth/delete-account")
+      .set("Authorization", "Bearer access_token")
+      .send({ code: "123456" });
+
+    expect(res.status).toBe(204);
+  });
+
+  it("401 — code invalide", async () => {
+    const prisma = await getPrisma();
+    const { verifyAccessToken } = await import("@api/utils/jwt");
+    vi.mocked(verifyAccessToken).mockReturnValue({ id: "1" } as never);
+
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+    prisma.otpCode.findFirst.mockResolvedValue(null);
+
+    const res = await request(app)
+      .delete("/api/auth/delete-account")
+      .set("Authorization", "Bearer access_token")
+      .send({ code: "000000" });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("400 — code manquant", async () => {
+    const { verifyAccessToken } = await import("@api/utils/jwt");
+    vi.mocked(verifyAccessToken).mockReturnValue({ id: "1" } as never);
+
+    const res = await request(app)
+      .delete("/api/auth/delete-account")
+      .set("Authorization", "Bearer access_token")
+      .send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it("401 — sans token", async () => {
+    const res = await request(app)
+      .delete("/api/auth/delete-account")
+      .send({ code: "123456" });
     expect(res.status).toBe(401);
   });
 });

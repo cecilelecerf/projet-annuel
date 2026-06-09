@@ -1,8 +1,10 @@
 import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedClinics(prisma: PrismaClient) {
-  const clinic1 = await prisma.clinic.create({
-    data: {
+  const clinic1 = await prisma.clinic.upsert({
+    where: { siret: "12345678901234" },
+    update: {},
+    create: {
       name: "Clinique Vétérinaire du Parc",
       address: "12 Avenue du Parc",
       siret: "12345678901234",
@@ -12,8 +14,10 @@ export async function seedClinics(prisma: PrismaClient) {
     },
   });
 
-  const clinic2 = await prisma.clinic.create({
-    data: {
+  const clinic2 = await prisma.clinic.upsert({
+    where: { siret: "98765432109876" },
+    update: {},
+    create: {
       name: "Cabinet Vétérinaire Saint-Michel",
       address: "5 Rue Saint-Michel",
       siret: "98765432109876",

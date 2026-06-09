@@ -1,9 +1,8 @@
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
-import type { roleHomeMap } from '.'
 
-export const requireRole = (role: keyof typeof roleHomeMap) => {
+export const requireRole = (role: string) => {
   const guard = (
     _to: RouteLocationNormalized,
     _from: RouteLocationNormalized,
@@ -11,9 +10,16 @@ export const requireRole = (role: keyof typeof roleHomeMap) => {
   ): void => {
     const { user } = storeToRefs(useAuthStore())
     const userRole = user.value?.role
-    if (!userRole) next({ name: 'Unauthorized' })
-    else if (role === userRole) next()
-    else next({ name: 'Unauthorized' })
+
+    if (!userRole) {
+      // Pas authentifié → le beforeEach global aurait dû rediriger, mais par sécurité
+      next({ name: 'Login' })
+    } else if (userRole === role) {
+      next()
+    } else {
+      // Authentifié mais mauvais rôle → accès refusé
+      next({ name: 'Unauthorized' })
+    }
   }
   return guard
 }

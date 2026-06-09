@@ -12,6 +12,16 @@ export const clientRouter: RouteRecordRaw[] = [
         name: 'Client.Home',
         component: () => import('@/views/client/MySpace.vue'),
       },
+      {
+        path: 'profil',
+        name: 'Client.Profil',
+        component: () => import('@/views/client/Profil.vue'),
+      },
+      {
+        path: 'veterinaires',
+        name: 'Client.Reviews',
+        component: () => import('@/views/client/Reviews.vue'),
+      },
 
       // // ── Animal ───────────────────────────────────────────────
       // {

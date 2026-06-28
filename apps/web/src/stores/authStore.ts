@@ -63,7 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    await http.post('/auth/logout', JSON.stringify({ refreshToken: refreshToken.value }))
+    await http.post('/auth/logout', { refreshToken: refreshToken.value })
     user.value = null
     accessToken.value = null
     refreshToken.value = null
@@ -72,5 +72,5 @@ export const useAuthStore = defineStore('auth', () => {
 
     clearAuth()
   }
-  return { user, accessToken, isAuthenticated, login, logout, init, clearAuth }
+  return { user, accessToken, isAuthenticated, login, logout, init, clearAuth, setAuth }
 })

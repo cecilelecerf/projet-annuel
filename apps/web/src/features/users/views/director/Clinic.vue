@@ -65,7 +65,7 @@ function startEdit() {
 async function saveClinic() {
   saving.value = true
   try {
-    clinic.value = await http.patch('/clinics/me', JSON.stringify(editClinic.value))
+    clinic.value = await http.patch('/clinics/me', editClinic.value)
     editMode.value = false
     notify.success('Clinique mise à jour')
   } catch (err: unknown) {
@@ -85,15 +85,12 @@ async function submitRequest() {
 
   submitting.value = true
   try {
-    await http.post(
-      '/director/clinics/request',
-      JSON.stringify({
-        ...form,
-        siret: form.siret.replace(/\s/g, ''),
-        phone: form.phone.replace(/\s/g, ''),
-        description: form.description || undefined,
-      }),
-    )
+    await http.post('/director/clinics/request', {
+      ...form,
+      siret: form.siret.replace(/\s/g, ''),
+      phone: form.phone.replace(/\s/g, ''),
+      description: form.description || undefined,
+    })
     notify.success('Demande envoyée, en attente de validation')
     const data = await http.get('/director/clinic')
     status.value = data.status
@@ -280,9 +277,6 @@ async function submitRequest() {
 
 <style scoped>
 .clinic-page {
-  padding: 32px;
-  max-width: 720px;
-  margin: auto;
 }
 .card {
   background: white;

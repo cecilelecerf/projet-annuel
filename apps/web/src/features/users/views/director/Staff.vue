@@ -80,7 +80,7 @@ const loadingSecretary = ref(false)
 async function submitReferent() {
   loadingReferent.value = true
   try {
-    await http.post('/director/staff/referents', JSON.stringify(referentForm))
+    await http.post('/director/staff/referents', referentForm)
     notify.success('Compte référent créé avec succès')
     Object.assign(referentForm, { firstname: '', lastname: '', email: '', password: '' })
     await loadStaff()
@@ -94,7 +94,7 @@ async function submitReferent() {
 async function submitVet() {
   loadingVet.value = true
   try {
-    await http.post('/director/staff/veterinarians', JSON.stringify(vetForm))
+    await http.post('/director/staff/veterinarians', vetForm)
     notify.success('Compte vétérinaire créé avec succès')
     Object.assign(vetForm, {
       firstname: '',
@@ -115,7 +115,7 @@ async function submitVet() {
 async function submitSecretary() {
   loadingSecretary.value = true
   try {
-    await http.post('/director/staff/secretaries', JSON.stringify(secretaryForm))
+    await http.post('/director/staff/secretaries', secretaryForm)
     notify.success('Compte secrétaire créé avec succès')
     Object.assign(secretaryForm, { firstname: '', lastname: '', email: '', password: '' })
     await loadStaff()
@@ -324,9 +324,6 @@ async function submitSecretary() {
 
 <style scoped>
 .staff-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 32px 24px;
 }
 .page-header {
   margin-bottom: 32px;

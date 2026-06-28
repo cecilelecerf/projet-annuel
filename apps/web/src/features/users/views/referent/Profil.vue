@@ -19,9 +19,7 @@ async function handleLogout() {
   <div class="profil-page">
     <div class="profil-card">
       <div class="profil-header">
-        <div class="profil-avatar">
-          {{ user?.firstname?.[0] }}{{ user?.lastname?.[0] }}
-        </div>
+        <div class="profil-avatar">{{ user?.firstname?.[0] }}{{ user?.lastname?.[0] }}</div>
         <div>
           <h1 class="profil-name">{{ user?.firstname }} {{ user?.lastname }}</h1>
           <span class="profil-role">Référent clinique</span>
@@ -59,15 +57,67 @@ async function handleLogout() {
 </template>
 
 <style scoped>
-.profil-page { padding: 32px; max-width: 600px; margin: auto; }
-.profil-card { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
-.profil-header { display: flex; align-items: center; gap: 20px; margin-bottom: 8px; }
-.profil-avatar { width: 72px; height: 72px; border-radius: 50%; background: #909399; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex-shrink: 0; }
-.profil-name { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
-.profil-role { background: #f4f4f5; color: #909399; border-radius: 6px; padding: 2px 10px; font-size: 13px; font-weight: 500; }
-.profil-info { display: flex; flex-direction: column; gap: 16px; }
-.info-row { display: flex; justify-content: space-between; align-items: center; }
-.info-label { color: #888; font-size: 14px; }
-.info-value { font-weight: 500; color: #1a1a1a; }
-.profil-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.profil-page {
+}
+.profil-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+.profil-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 8px;
+}
+.profil-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #909399;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.profil-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.profil-role {
+  background: #f4f4f5;
+  color: #909399;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.profil-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.info-label {
+  color: #888;
+  font-size: 14px;
+}
+.info-value {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+.profil-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 </style>

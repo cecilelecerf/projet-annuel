@@ -45,10 +45,7 @@ async function confirmDelete() {
   loading.value = true
   errorMsg.value = ''
   try {
-    await api('/auth/delete-account', {
-      method: 'DELETE',
-      body: JSON.stringify({ code: otp.value }),
-    })
+    await http.delete('/auth/delete-account', { code: otp.value })
     authStore.logout().catch(() => {})
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')

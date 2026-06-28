@@ -29,9 +29,25 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
-  <FormError />
-  <main>
+  <div class="layout">
+    <FormError />
     <Navbar :menu-items="menuItems" />
-    <router-view />
-  </main>
+    <main class="main">
+      <router-view />
+    </main>
+  </div>
 </template>
+<style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
+}
+</style>

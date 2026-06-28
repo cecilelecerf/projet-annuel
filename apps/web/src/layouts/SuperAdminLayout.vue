@@ -33,9 +33,12 @@ const menuItems: MenuItem[] = [
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #f8f9fa;
 }
 .main {
-  flex: 1;
-  background: #f8f9fa;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
 }
 </style>

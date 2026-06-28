@@ -65,14 +65,11 @@ async function submitReview() {
   }
   submitting.value = true
   try {
-    const review = await http.post(
-      '/reviews',
-      JSON.stringify({
-        veterinarianId: selectedVet.value.id,
-        rating: formRating.value,
-        comment: formComment.value || undefined,
-      }),
-    )
+    const review = await http.post('/reviews', {
+      veterinarianId: selectedVet.value.id,
+      rating: formRating.value,
+      comment: formComment.value || undefined,
+    })
     const idx = myReviews.value.findIndex((r) => r.veterinarianId === selectedVet.value!.id)
     if (idx >= 0) {
       myReviews.value[idx] = review
@@ -180,9 +177,6 @@ async function submitReview() {
 
 <style scoped>
 .reviews-page {
-  padding: 32px;
-  max-width: 900px;
-  margin: auto;
 }
 .page-title {
   font-size: 26px;

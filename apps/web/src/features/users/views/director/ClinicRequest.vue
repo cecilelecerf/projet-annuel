@@ -43,7 +43,7 @@ async function loadRequests() {
 async function submit() {
   loading.value = true
   try {
-    await http.post('/director/clinics/request', JSON.stringify(form))
+    await http.post('/director/clinics/request', form)
     notify.success('Demande envoyée, en attente de validation par un administrateur')
     Object.assign(form, {
       name: '',
@@ -143,9 +143,6 @@ onMounted(loadRequests)
 
 <style scoped>
 .clinic-request-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 32px 24px;
 }
 .page-header {
   margin-bottom: 32px;

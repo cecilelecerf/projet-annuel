@@ -1,123 +1,89 @@
-import { z } from 'zod'
-import { petIdSchema, ownedPetIdSchema, raceIdSchema, clientIdSchema, veterinarianIdSchema, clinicIdSchema, meetingIdSchema, vaccineIdSchema, petVaccineIdSchema, clinicPetIdSchema, veterinarianPetIdSchema, healthConditionIdSchema } from './ids'
+import { z } from "zod";
+import {
+  petIdSchema,
+  animalIdSchema,
+  raceIdSchema,
+  clientIdSchema,
+  veterinarianIdSchema,
+  clinicIdSchema,
+  meetingIdSchema,
+  vaccineIdSchema,
+  petVaccineIdSchema,
+  clinicPetIdSchema,
+  veterinarianPetIdSchema,
+  healthConditionIdSchema,
+} from "./ids";
 
 // ── Pet (espèce/type générique) ───────────────────────────────────────────────
 export const petSchema = z.object({
-  id:      petIdSchema,
+  id: petIdSchema,
   picture: z.string().url().nullable().optional(),
-  name:    z.string().min(1),
-})
+  name: z.string().min(1),
+});
 
-export const createPetSchema = petSchema.omit({ id: true })
-export const updatePetSchema = createPetSchema.partial()
+export const createPetSchema = petSchema.omit({ id: true });
+export const updatePetSchema = createPetSchema.partial();
 
-export type Pet       = z.infer<typeof petSchema>
-export type CreatePet = z.infer<typeof createPetSchema>
-export type UpdatePet = z.infer<typeof updatePetSchema>
+export type Pet = z.infer<typeof petSchema>;
+export type CreatePet = z.infer<typeof createPetSchema>;
+export type UpdatePet = z.infer<typeof updatePetSchema>;
 
 // ── Race ──────────────────────────────────────────────────────────────────────
 export const raceSchema = z.object({
-  id:      raceIdSchema,
-  petId:   petIdSchema,
-  name:    z.string().min(1),
+  id: raceIdSchema,
+  petId: petIdSchema,
+  name: z.string().min(1),
   picture: z.string().url().nullable().optional(),
-})
+});
+export const raceMetaSchema = raceSchema.extend({ pet: petSchema });
 
-export const createRaceSchema = raceSchema.omit({ id: true })
-export const updateRaceSchema = createRaceSchema.partial()
+export const createRaceSchema = raceSchema.omit({ id: true });
+export const updateRaceSchema = createRaceSchema.partial();
 
-export type Race       = z.infer<typeof raceSchema>
-export type CreateRace = z.infer<typeof createRaceSchema>
-export type UpdateRace = z.infer<typeof updateRaceSchema>
-
-// ── OwnedPet (animal d'un client) ─────────────────────────────────────────────
-export const ownedPetSchema = z.object({
-  id:                       ownedPetIdSchema,
-  clientId:                 clientIdSchema,
-  raceId:                   raceIdSchema,
-  name:                     z.string().min(1).max(30),
-  dateOfBirth:              z.string().datetime(),
-  description:              z.string().max(255).nullable().optional(),
-  attendingVeterinarianId:  veterinarianIdSchema.nullable().optional(),
-  activity:                 z.number().int().min(1).max(10).nullable().optional(),
-  picture:                  z.string().url().max(255).nullable().optional(),
-})
-
-export const createOwnedPetSchema = ownedPetSchema.omit({ id: true })
-export const updateOwnedPetSchema = createOwnedPetSchema.partial()
-
-export type OwnedPet       = z.infer<typeof ownedPetSchema>
-export type CreateOwnedPet = z.infer<typeof createOwnedPetSchema>
-export type UpdateOwnedPet = z.infer<typeof updateOwnedPetSchema>
-
-// ── Vaccine ───────────────────────────────────────────────────────────────────
-export const vaccineSchema = z.object({
-  id:                  vaccineIdSchema,
-  name:                z.string().min(1),
-  description:         z.string().max(255).nullable().optional(),
-  petId:               petIdSchema,
-  recommendedAge:      z.number().int().positive(),   // en semaine
-  boosterInterval:     z.number().int().positive(),   // en semaine
-  mandatoryCountry:    z.array(z.string()).nullable().optional(),
-  recommendedCountry:  z.array(z.string()).nullable().optional(),
-})
-
-export const createVaccineSchema = vaccineSchema.omit({ id: true })
-export const updateVaccineSchema = createVaccineSchema.partial()
-
-export type Vaccine       = z.infer<typeof vaccineSchema>
-export type CreateVaccine = z.infer<typeof createVaccineSchema>
-export type UpdateVaccine = z.infer<typeof updateVaccineSchema>
-
-// ── PetVaccine (vaccination réalisée) ─────────────────────────────────────────
-export const petVaccineSchema = z.object({
-  id:        petVaccineIdSchema,
-  petId:     ownedPetIdSchema,
-  date:      z.string().datetime(),
-  vaccineId: vaccineIdSchema,
-  meetingId: meetingIdSchema.nullable().optional(),
-})
-
-export const createPetVaccineSchema = petVaccineSchema.omit({ id: true })
-
-export type PetVaccine       = z.infer<typeof petVaccineSchema>
-export type CreatePetVaccine = z.infer<typeof createPetVaccineSchema>
+export type Race = z.infer<typeof raceSchema>;
+export type CreateRace = z.infer<typeof createRaceSchema>;
+export type UpdateRace = z.infer<typeof updateRaceSchema>;
 
 // ── ClinicPet (junction clinique ↔ espèce) ────────────────────────────────────
 export const clinicPetSchema = z.object({
-  id:       clinicPetIdSchema,
-  petId:    petIdSchema,
+  id: clinicPetIdSchema,
+  petId: petIdSchema,
   clinicId: clinicIdSchema,
-})
+});
 
-export const createClinicPetSchema = clinicPetSchema.omit({ id: true })
+export const createClinicPetSchema = clinicPetSchema.omit({ id: true });
 
-export type ClinicPet       = z.infer<typeof clinicPetSchema>
-export type CreateClinicPet = z.infer<typeof createClinicPetSchema>
+export type ClinicPet = z.infer<typeof clinicPetSchema>;
+export type CreateClinicPet = z.infer<typeof createClinicPetSchema>;
 
 // ── VeterinarianPet (junction vétérinaire ↔ espèce) ──────────────────────────
 export const veterinarianPetSchema = z.object({
-  id:             veterinarianPetIdSchema,
+  id: veterinarianPetIdSchema,
   veterinarianId: veterinarianIdSchema,
-  petId:          petIdSchema,
-})
+  petId: petIdSchema,
+});
 
-export const createVeterinarianPetSchema = veterinarianPetSchema.omit({ id: true })
+export const createVeterinarianPetSchema = veterinarianPetSchema.omit({
+  id: true,
+});
 
-export type VeterinarianPet       = z.infer<typeof veterinarianPetSchema>
-export type CreateVeterinarianPet = z.infer<typeof createVeterinarianPetSchema>
+export type VeterinarianPet = z.infer<typeof veterinarianPetSchema>;
+export type CreateVeterinarianPet = z.infer<typeof createVeterinarianPetSchema>;
 
 // ── HealthCondition ───────────────────────────────────────────────────────────
 export const healthConditionSchema = z.object({
-  id:          healthConditionIdSchema,
-  name:        z.string().min(1).max(255),
+  id: healthConditionIdSchema,
+  name: z.string().min(1).max(255),
   description: z.string().min(1).max(255),
-  petId:       petIdSchema.nullable().optional(),
-})
+  petId: petIdSchema.nullable().optional(),
+});
 
-export const createHealthConditionSchema = healthConditionSchema.omit({ id: true })
-export const updateHealthConditionSchema = createHealthConditionSchema.partial()
+export const createHealthConditionSchema = healthConditionSchema.omit({
+  id: true,
+});
+export const updateHealthConditionSchema =
+  createHealthConditionSchema.partial();
 
-export type HealthCondition       = z.infer<typeof healthConditionSchema>
-export type CreateHealthCondition = z.infer<typeof createHealthConditionSchema>
-export type UpdateHealthCondition = z.infer<typeof updateHealthConditionSchema>
+export type HealthCondition = z.infer<typeof healthConditionSchema>;
+export type CreateHealthCondition = z.infer<typeof createHealthConditionSchema>;
+export type UpdateHealthCondition = z.infer<typeof updateHealthConditionSchema>;

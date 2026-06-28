@@ -10,7 +10,6 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
-    "baseUrl": ".",
     "paths": {
       "@api/*": ["./apps/api/src/*"],
       "@web/*": ["./apps/web/src/*"],

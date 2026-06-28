@@ -111,20 +111,21 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
   ]);
 
   // ── Profiles clinic ───────────────────────────────────────────────────────────
-  await Promise.all([
-    prisma.directorClinicProfile.createMany({
-      data: [
-        { id: directorUser1.id, clinicId: clinic1.id },
-        { id: directorUser2.id, clinicId: clinic2.id },
-      ],
-    }),
-    prisma.referentClinicProfile.create({
-      data: { id: referentUser1.id, clinicId: clinic1.id },
-    }),
-    prisma.secretaryProfile.create({
-      data: { id: secretaryUser1.id, clinicId: clinic1.id },
-    }),
-  ]);
+  await prisma.directorClinicProfile.createMany({
+    data: [
+      { id: directorUser1.id, clinicId: clinic1.id },
+      { id: directorUser2.id, clinicId: clinic2.id },
+    ],
+  });
+
+  await prisma.referentClinicProfile.create({
+    data: { id: referentUser1.id, clinicId: clinic1.id },
+  });
+
+  const secretaryProfile = await prisma.secretaryProfile.create({
+    data: { id: secretaryUser1.id, clinicId: clinic1.id },
+    include: { user: true },
+  });
 
   // ── Veterinarian profiles ─────────────────────────────────────────────────────
   const [vetProfile1, vetProfile2, vetProfile3] = await Promise.all([
@@ -179,6 +180,7 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
     vetProfile2,
     vetProfile3,
     secretaryUser1,
+    secretaryProfile,
     clientUser1,
     clientUser2,
     clientProfile1,

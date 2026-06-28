@@ -2,6 +2,7 @@
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
 import { House, List } from '@element-plus/icons-vue'
+import FormError from '@/components/ui/FormError.vue'
 
 const menuItems: MenuItem[] = [
   {
@@ -19,6 +20,7 @@ const menuItems: MenuItem[] = [
 
 <template>
   <div class="layout">
+    <FormError />
     <Navbar :menu-items="menuItems" />
     <main class="main">
       <router-view />

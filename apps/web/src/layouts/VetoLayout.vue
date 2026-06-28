@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
 import { House, Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
@@ -37,10 +38,30 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
+  <FormError />
   <main>
     <Navbar :menu-items="menuItems" />
-    <router-view />
+    <Suspense>
+      <div class="content">
+        <router-view />
+      </div>
+    </Suspense>
   </main>
 </template>
 
-<style scoped lang="scss"></style>
+<style lang="scss" scoped>
+.content {
+  margin-inline: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  @include above('sm') {
+    margin-inline: var(--spacing-lg);
+  }
+  @include above('md') {
+    margin-inline: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+  }
+  @include above('lg') {
+    margin-inline: var(--spacing-3xl);
+  }
+}
+</style>

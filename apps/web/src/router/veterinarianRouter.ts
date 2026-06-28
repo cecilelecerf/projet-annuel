@@ -10,13 +10,21 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'Veto.Home',
-        component: () => import('@/views/veterinarian/Home.vue'),
+        component: () => import('@/features/users/views/veterinarian/VeterinarianHomeView.vue'),
       },
       // ── Agenda ───────────────────────────────────────────────
       {
         path: 'calendar',
         name: 'Veto.Calendar',
-        component: () => import('@/views/calendar/CalendarView.vue'),
+        component: () => import('@/features/meetings/views/MeCalendarView.vue'),
+      },
+      {
+        path: 'meetings/:id',
+        name: 'Veto.Agenda.RDV.Detail',
+        component: () => import('@/features/meetings/views/MeetingView.vue'),
+        // Contient : Horaires, Infos résumé de l'animal (Nom, Type),
+        //            Type de RDV (chirurgies, castration…)
+        // Actions : Modification | Suppression | Création
       },
       {
         path: 'profil',

@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Landing',
-    component: () => import('@/views/LandingPage.vue'),
+    component: () => import('@/views/LandingPageView.vue'),
     meta: { public: true },
   },
   ...clientRouter,
@@ -35,25 +35,25 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/Login.vue'),
+    component: () => import('@/features/auth/views/LoginView.vue'),
     meta: { public: true },
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/auth/Register.vue'),
+    component: () => import('@/features/auth/views/RegisterView.vue'),
     meta: { public: true },
   },
   {
     path: '/unauthorized',
     name: 'Unauthorized',
-    component: () => import('@/views/auth/Unauthorized.vue'),
+    component: () => import('@/features/auth/views/UnauthorizedView.vue'),
     meta: { public: true },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/views/NotFound.vue'),
+    component: () => import('@/views/NotFoundView.vue'),
   },
 ]
 

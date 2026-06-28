@@ -24,15 +24,16 @@ model User {
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
-  vetReviews                  VetReview[] @relation("ClientReviews")
+  vetReviews                  VetReview[]                  @relation("ClientReviews")
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]
   clinicCreationRequests      ClinicCreationRequest[]
-  ownedPetConditionHealths    OwnedPetHealthCondition[]
+  animalConditionHealths      AnimalHealthCondition[]
   conversationMembers         ConversationMember[]
-  internalMettingParticipants InternalMettingParticipant[]
-  availabilities              Availability[]
+  internalMeetingParticipants InternalMeetingParticipant[]
   meticalVisites              MedicalVisit[]
+  availabilities              Availability[]
+  adminInternalMeetings       InternalMeeting[]
 
   @@index([email])
   @@index([role])
@@ -45,13 +46,13 @@ model ClientProfile {
   address     String?
   phone       String?
 
+  country String @default("FR")
+
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  // appointments  Appointment[]
-  ownedPet           OwnedPet[]
-  clinicProducts     ClinicProduct[]
-  order              Order[]
-  secretaryProfileId String?
+  animal         Animal[]
+  clinicProducts ClinicProduct[]
+  order          Order[]
 
   @@map("client_profiles")
 }
@@ -63,17 +64,16 @@ model VeterinarianProfile {
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  ownedPet                   OwnedPet[]
-  animalMeeting              AnimalMetting[]
-  speciality                 Speciality[]
-  veterinarianClinic         VeterinarianClinic[]
-  pet                        Pet[]
-  animalMettingActPerformers AnimalMettingActPerformer[]
-  hospitalizationReports     HospitalizationReport[]
-  prescriptions              Prescription[]
-  veterinarianIdentity       VeterinarianIdentity?
-  bankingInfo                BankingInfo?
-  reviews                    VetReview[]
+  animal                 Animal[]
+  animalMeeting          AnimalMeeting[]
+  speciality             Speciality[]
+  veterinarianClinic     VeterinarianClinic[]
+  pet                    Pet[]
+  hospitalizationReports HospitalizationReport[]
+  prescriptions          Prescription[]
+  veterinarianIdentity   VeterinarianIdentity?
+  bankingInfo            BankingInfo?
+  reviews                VetReview[]
 
   @@map("veterinarian_profiles")
 }

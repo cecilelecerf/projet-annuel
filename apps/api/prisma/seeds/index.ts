@@ -8,15 +8,15 @@ import { seedUsers } from "./users";
 import { seedPets } from "./pets";
 import { seedSpecialities } from "./specialities";
 import { seedVeterinarianClinics } from "./veterinarian-clinics";
-import { seedMettings } from "./mettings";
 import { seedHealthConditions } from "./health-conditions";
-import { seedVaccines } from "./vaccines";
 import { seedProducts } from "./products";
 import { seedOrders } from "./orders";
 import { seedMessaging } from "./messagging";
 import { seedActs } from "./acts";
 import { seedBankingInfo } from "./banking-info";
 import { seedMedicalVisits } from "./medical-visit";
+import { seedMeetings } from "./meetings";
+import { seedPrescriptions } from "./prescriptions";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -37,11 +37,10 @@ async function main() {
 
   const { clinic1, clinic2 } = await seedClinics(prisma);
   const users = await seedUsers(prisma, [clinic1, clinic2]);
-  const medicalVisit = await seedMedicalVisits(prisma, { users });
-  const bankingInfo = await seedBankingInfo(prisma, { users });
+  await seedMedicalVisits(prisma, { users });
+  await seedBankingInfo(prisma, { users });
   const pets = await seedPets(prisma);
   const specialities = await seedSpecialities(prisma);
-  const vaccines = await seedVaccines(prisma, pets);
   const vetoClinic = await seedVeterinarianClinics(prisma, {
     users,
     clinic1,
@@ -50,17 +49,27 @@ async function main() {
   const healthConditions = await seedHealthConditions(prisma, {
     petDog: pets.petDog,
   });
-  const mettings = await seedMettings(prisma, {
+  const meetings = await seedMeetings(prisma, {
     users,
     clinic1,
     veterinarianClinics: vetoClinic,
     specialities,
     healthConditions,
-    vaccines,
     pets,
   });
-  const acts = await seedActs(prisma, { clinic1, clinic2, mettings });
-  await seedProducts(prisma, { clinic1, clinic2, healthConditions });
+  await seedActs(prisma, {
+    petCat: pets.petCat,
+    petDog: pets.petDog,
+    clinic1,
+    clinic2,
+    meetings,
+  });
+  const products = await seedProducts(prisma, {
+    clinic1,
+    clinic2,
+    healthConditions,
+  });
+  await seedPrescriptions(prisma, { meetings, products, users });
   await seedOrders(prisma, { users, clinic1 });
   await seedMessaging(prisma, { users });
 

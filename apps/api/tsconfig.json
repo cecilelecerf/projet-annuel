@@ -2,8 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "noEmit": false
+    "noEmit": false,
+    "esModuleInterop": true
   },
-  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts"],
+  "include": ["src/**/*", "prisma/**/*", "prisma.config.ts", "__tests__/**/*"],
   "references": [{ "path": "../../packages/schemas" }]
 }

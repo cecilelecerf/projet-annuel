@@ -29,7 +29,6 @@ export const authMiddleware = (
     res.status(401).json({ message: "Token invalide ou expiré" });
     return;
   }
-
   req.user = payload;
   next();
 };

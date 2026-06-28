@@ -1,17 +1,17 @@
 import express, { type Express } from "express";
 import { prisma } from "./lib/prisma";
-import authRouter from "./routes/auth.route";
 import cors from "cors";
-import meetingRouter from "./routes/metting.route";
-import { errorHandler } from "./middlewares/error.middleware";
-import userRouter from "./routes/user.route";
-import clinicRouter from "./routes/clinic.route";
-import directorRouter from "./routes/director.route";
-import referentRouter from "./routes/referent.route";
-import adminRouter from "./routes/admin.route";
-import reviewRouter from "./routes/review.route";
+import clinicRouter from "./clinics/clinic.route";
+import directorRouter from "./directors/director.route";
+import referentRouter from "./referents/referent.route";
+import adminRouter from "./admins/admin.route";
+import reviewRouter from "./reviews/review.route";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
+import { default as authRouter } from "./auth/auth.router";
+import { default as userRouter } from "./users/user.router";
+import { errorHandler } from "./middlewares";
+import { default as meetingRouter } from "./meetings/meeting.router";
 
 collectDefaultMetrics();
 

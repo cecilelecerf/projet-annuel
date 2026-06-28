@@ -1,4 +1,4 @@
-import { BaseUser, UserRole } from "@armali/schemas";
+import { BaseUser, ClinicId, UserRole } from "@armali/schemas";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 
@@ -9,11 +9,17 @@ export interface JwtPayload {
   id: BaseUser["id"];
   email: BaseUser["email"];
   role: UserRole;
+  clinicId?: ClinicId;
 }
 
 export const generateAccessToken = (user: JwtPayload): string => {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      clinicId: user.clinicId,
+    },
     ACCESS_SECRET,
     { expiresIn: "15m" },
   );

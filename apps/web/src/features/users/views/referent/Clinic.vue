@@ -33,7 +33,7 @@ async function loadClinic() {
 async function save() {
   loading.value = true
   try {
-    const updated: Clinic = await http.patch<Clinic>('/referent/clinic', JSON.stringify(form))
+    const updated: Clinic = await http.patch<Clinic>('/referent/clinic', form)
     clinic.value = updated
     notify.success('Clinique mise à jour avec succès')
   } catch (err: unknown) {
@@ -85,9 +85,6 @@ onMounted(loadClinic)
 
 <style scoped>
 .clinic-page {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 32px 24px;
 }
 .page-header {
   margin-bottom: 32px;

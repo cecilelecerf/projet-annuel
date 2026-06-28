@@ -1,5 +1,6 @@
 import { AuthService } from "@api/auth/auth.service";
 import { UnauthorizedError } from "@api/errors";
+import { AuthenticatedRequest } from "@api/middlewares";
 import type { Request, Response, NextFunction } from "express";
 
 const authService = new AuthService();
@@ -46,7 +47,7 @@ export class AuthController {
     }
   }
 
-  async logout(req: Request, res: Response, next: NextFunction) {
+  async logout(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { refreshToken } = req.body;
       await authService.logout(refreshToken);

@@ -15,12 +15,12 @@ export const clientRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'Client.Profil',
-        component: () => import('@/views/client/Profil.vue'),
+        component: () => import('@/features/users/views/client/Profil.vue'),
       },
       {
         path: 'veterinaires',
         name: 'Client.Reviews',
-        component: () => import('@/views/client/Reviews.vue'),
+        component: () => import('@/features/users/views/client/Reviews.vue'),
       },
 
       // // ── Animal ───────────────────────────────────────────────

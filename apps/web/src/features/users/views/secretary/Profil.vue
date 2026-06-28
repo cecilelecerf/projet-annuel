@@ -164,9 +164,6 @@ async function handleLogout() {
 
 <style scoped>
 .profil-page {
-  padding: 32px;
-  max-width: 600px;
-  margin: auto;
 }
 .profil-card {
   background: white;

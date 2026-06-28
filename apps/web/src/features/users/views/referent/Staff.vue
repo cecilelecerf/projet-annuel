@@ -65,7 +65,7 @@ const loadingSecretary = ref(false)
 async function submitVet() {
   loadingVet.value = true
   try {
-    await http.post('/referent/staff/veterinarians', JSON.stringify(vetForm))
+    await http.post('/referent/staff/veterinarians', vetForm)
     notify.success('Compte vétérinaire créé avec succès')
     Object.assign(vetForm, {
       firstname: '',
@@ -86,7 +86,7 @@ async function submitVet() {
 async function submitSecretary() {
   loadingSecretary.value = true
   try {
-    await http.post('/referent/staff/secretaries', JSON.stringify(secretaryForm))
+    await http.post('/referent/staff/secretaries', secretaryForm)
     notify.success('Compte secrétaire créé avec succès')
     Object.assign(secretaryForm, { firstname: '', lastname: '', email: '', password: '' })
     await loadStaff()
@@ -234,9 +234,6 @@ async function submitSecretary() {
 
 <style scoped>
 .staff-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 32px 24px;
 }
 .page-header {
   margin-bottom: 32px;

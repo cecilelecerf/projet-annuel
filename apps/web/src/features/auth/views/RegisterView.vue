@@ -94,33 +94,27 @@ async function handleSubmit() {
     let data: { user: Record<string, unknown>; accessToken: string; refreshToken: string }
 
     if (selectedRole.value === 'DIRECTOR') {
-      data = await http.post(
-        '/auth/register-director',
-        JSON.stringify({
-          email: form.value.email,
-          password: form.value.password,
-          firstname: form.value.firstname,
-          lastname: form.value.lastname,
-          clinic: {
-            name: clinic.value.name,
-            address: clinic.value.address,
-            siret: clinic.value.siret.replace(/\s/g, ''),
-            phone: clinic.value.phone.replace(/\s/g, ''),
-            website: clinic.value.website,
-            description: clinic.value.description || undefined,
-          },
-        }),
-      )
+      data = await http.post('/auth/register-director', {
+        email: form.value.email,
+        password: form.value.password,
+        firstname: form.value.firstname,
+        lastname: form.value.lastname,
+        clinic: {
+          name: clinic.value.name,
+          address: clinic.value.address,
+          siret: clinic.value.siret.replace(/\s/g, ''),
+          phone: clinic.value.phone.replace(/\s/g, ''),
+          website: clinic.value.website,
+          description: clinic.value.description || undefined,
+        },
+      })
     } else {
-      data = await http.post(
-        '/auth/register',
-        JSON.stringify({
-          email: form.value.email,
-          password: form.value.password,
-          firstname: form.value.firstname,
-          lastname: form.value.lastname,
-        }),
-      )
+      data = await http.post('/auth/register', {
+        email: form.value.email,
+        password: form.value.password,
+        firstname: form.value.firstname,
+        lastname: form.value.lastname,
+      })
     }
 
     authStore.setAuth(data.user as UserStore, data.accessToken, data.refreshToken)

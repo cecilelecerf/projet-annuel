@@ -26,7 +26,6 @@ const menuItems: MenuItem[] = [
 <template>
   <div class="layout">
     <FormError />
-
     <Navbar :menu-items="menuItems" />
     <main class="main">
       <router-view />
@@ -41,6 +40,9 @@ const menuItems: MenuItem[] = [
   min-height: 100vh;
 }
 .main {
+  padding: 32px;
+  max-width: 600px;
+  margin: auto;
   flex: 1;
   background: #f8f9fa;
 }

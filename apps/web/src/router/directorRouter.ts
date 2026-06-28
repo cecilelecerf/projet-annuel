@@ -15,17 +15,17 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'Director.Profil',
-        component: () => import('@/views/director/Profil.vue'),
+        component: () => import('@/features/users/views/director/Profil.vue'),
       },
       {
         path: 'staff',
         name: 'Director.Staff',
-        component: () => import('@/views/director/Staff.vue'),
+        component: () => import('@/features/users/views/director/Staff.vue'),
       },
       {
         path: 'clinique',
         name: 'Director.Clinic',
-        component: () => import('@/views/director/Clinic.vue'),
+        component: () => import('@/features/users/views/director/Clinic.vue'),
       },
       // ── Administration & Configuration ────────────────────────
       // {

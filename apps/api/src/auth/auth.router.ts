@@ -1,7 +1,7 @@
 import { validate, authMiddleware } from "@api/middlewares";
 import { AuthController } from "@api/auth/auth.controller";
 import { Router } from "express";
-import type { Router as RouterType } from "express";
+import type { RequestHandler, Router as RouterType } from "express";
 import {
   loginSchema,
   registerSchema,
@@ -27,7 +27,11 @@ authRouter.post(
   validate(loginSchema),
   controller.login.bind(controller),
 );
-authRouter.post("/logout", authMiddleware, controller.logout.bind(controller));
+authRouter.post(
+  "/logout",
+  authMiddleware,
+  controller.logout.bind(controller) as RequestHandler,
+);
 authRouter.post("/refresh", controller.refresh.bind(controller));
 authRouter.get("/me", authMiddleware, controller.me.bind(controller));
 

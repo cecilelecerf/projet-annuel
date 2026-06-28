@@ -34,34 +34,32 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
-  <FormError />
-  <main>
+  <div class="layout">
+    <FormError />
     <Navbar :menu-items="menuItems" />
     <Suspense>
-      <div class="content">
+      <main class="main">
         <router-view />
-      </div>
+      </main>
 
       <template #fallback>
         <div class="loading">Chargement...</div>
       </template>
     </Suspense>
-  </main>
+  </div>
 </template>
 
-<style lang="scss" scoped>
-.content {
-  margin-inline: var(--spacing-md);
-  margin-top: var(--spacing-lg);
-  @include above('sm') {
-    margin-inline: var(--spacing-lg);
-  }
-  @include above('md') {
-    margin-inline: var(--spacing-xl);
-    margin-top: var(--spacing-xl);
-  }
-  @include above('lg') {
-    margin-inline: var(--spacing-3xl);
-  }
+<style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
 }
 </style>

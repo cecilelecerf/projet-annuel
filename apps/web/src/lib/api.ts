@@ -31,7 +31,7 @@ const refreshAccessToken = async (): Promise<string> => {
   localStorage.setItem('refreshToken', data.refreshToken)
   return data.accessToken
 }
-export const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   const token = localStorage.getItem('accessToken')
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -105,5 +105,6 @@ export const http = {
   patch: <T>(endpoint: string, body: unknown) =>
     api<T>(endpoint, { method: 'PATCH', body: JSON.stringify(body) }),
 
-  delete: <T>(endpoint: string) => api<T>(endpoint, { method: 'DELETE' }),
+  delete: <T>(endpoint: string, body?: unknown) =>
+    api<T>(endpoint, { method: 'DELETE', body: JSON.stringify(body) }),
 }

@@ -24,7 +24,10 @@ model User {
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
+  vetReviews                  VetReview[]                  @relation("ClientReviews")
   refreshTokens               RefreshToken[]
+  otpCodes                    OtpCode[]
+  clinicCreationRequests      ClinicCreationRequest[]
   animalConditionHealths      AnimalHealthCondition[]
   conversationMembers         ConversationMember[]
   internalMeetingParticipants InternalMeetingParticipant[]
@@ -70,6 +73,7 @@ model VeterinarianProfile {
   prescriptions          Prescription[]
   veterinarianIdentity   VeterinarianIdentity?
   bankingInfo            BankingInfo?
+  reviews                VetReview[]
 
   @@map("veterinarian_profiles")
 }
@@ -166,6 +170,20 @@ model RefreshToken {
   @@index([userId])
   @@index([token])
   @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  code      String
+  action    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("otp_codes")
 }
 
 enum MedicalVisitType {

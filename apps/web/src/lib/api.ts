@@ -86,7 +86,8 @@ export const api = async <T = unknown>(endpoint: string, options: RequestInit = 
   const data = await response.json()
 
   if (!response.ok) {
-    throw new ApiError(response.status, data.message ?? 'Erreur serveur', data.errors)
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error ?? error.message ?? 'Erreur serveur')
   }
 
   return data as T

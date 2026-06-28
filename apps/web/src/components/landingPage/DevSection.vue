@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
-import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { RouterLink, useRouter } from 'vue-router'
+import { useNotify } from '@/composables/useNotify'
+
 const router = useRouter()
+const notify = useNotify()
 
 interface Role {
   key: string
@@ -72,11 +74,7 @@ const handleLogin = async ({ email }: { email: string }) => {
 }
 const loginAs = async (role: Role) => {
   await handleLogin({ email: role.email })
-  ElMessage({
-    message: `Connexion en tant que ${role.label}...`,
-    type: 'success',
-    duration: 2000,
-  })
+  notify.success(`Connexion en tant que ${role.label}`)
   router.push({ name: `${role.path}.Home` })
 }
 </script>

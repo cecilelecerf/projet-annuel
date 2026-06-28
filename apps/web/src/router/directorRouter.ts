@@ -12,6 +12,21 @@ export const directorRouter: RouteRecordRaw[] = [
         name: 'Director.Home',
         component: () => import('@/features/users/views/director/DirectorHomeView.vue'),
       },
+      {
+        path: 'profil',
+        name: 'Director.Profil',
+        component: () => import('@/views/director/Profil.vue'),
+      },
+      {
+        path: 'staff',
+        name: 'Director.Staff',
+        component: () => import('@/views/director/Staff.vue'),
+      },
+      {
+        path: 'clinique',
+        name: 'Director.Clinic',
+        component: () => import('@/views/director/Clinic.vue'),
+      },
       // ── Administration & Configuration ────────────────────────
       // {
       //   path: 'administration',

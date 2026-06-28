@@ -26,6 +26,19 @@ export const veterinarianRouter: RouteRecordRaw[] = [
         //            Type de RDV (chirurgies, castration…)
         // Actions : Modification | Suppression | Création
       },
+      {
+        path: 'profil',
+        name: 'Veto.Profil',
+        component: () => import('@/features/users/views/veterinarian/Profil.vue'),
+      },
+      // {
+      //   path: 'agenda/rdv/:id',
+      //   name: 'Veto.Agenda.RDV.Detail',
+      //   //        component: () => import('@/views/veto/agenda/DetailRDV.vue'),
+      //   // Contient : Horaires, Infos résumé de l'animal (Nom, Type),
+      //   //            Type de RDV (chirurgies, castration…)
+      //   // Actions : Modification | Suppression | Création
+      // },
       // {
       //   path: 'agenda/rdv/:id/fiche-animal',
       //   name: 'Veto.Agenda.FicheAnimal',

@@ -76,7 +76,7 @@ model Availability {
   userId   String?
   user     User?   @relation(fields: [userId], references: [id])
   clinicId String
-  clinic   Clinic  @relation(fields: [clinicId], references: [id])
+  clinic   Clinic  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("availabilities")
 }

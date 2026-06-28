@@ -11,8 +11,8 @@
     }
   },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch"
+    "build": "pnpm exec tsup",
+    "dev": "pnpm exec tsup --watch"
   },
   "dependencies": {
     "tsup": "^8.5.1",

@@ -1,13 +1,14 @@
 model Clinic {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
-  name        String
-  address     String
-  siret       String   @unique
-  phone       String
-  description String?
-  website     String
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  name         String
+  address      String
+  siret        String   @unique
+  phone        String
+  description  String?
+  website      String
+  openingHours String?
 
   speciality             Speciality[]
   veterinarianClinic     VeterinarianClinic[]
@@ -22,6 +23,30 @@ model Clinic {
   availabilities         Availability[]
 
   @@map("clinics")
+}
+
+enum ClinicRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ClinicCreationRequest {
+  id          String              @id @default(uuid())
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @default(now()) @updatedAt
+  status      ClinicRequestStatus @default(PENDING)
+  name        String
+  address     String
+  siret       String
+  phone       String
+  website     String
+  description String?
+
+  directorId String
+  director   User   @relation(fields: [directorId], references: [id], onDelete: Cascade)
+
+  @@map("clinic_creation_requests")
 }
 
 model Speciality {

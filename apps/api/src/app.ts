@@ -1,16 +1,21 @@
 import express, { type Express } from "express";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
+import clinicRouter from "./clinics/clinic.route";
+import directorRouter from "./directors/director.route";
+import referentRouter from "./referents/referent.route";
+import adminRouter from "./admins/admin.route";
+import reviewRouter from "./reviews/review.route";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
 import { default as authRouter } from "./auth/auth.router";
 import { default as userRouter } from "./users/user.router";
 import { errorHandler } from "./middlewares";
-import { default as meetingRouter } from "./meetings/meeting.router";
-import animalsRouter from "./animals/animal.router";
 import actRouter from "./acts/act.router";
+import { default as meetingRouter } from "./meetings/meeting.router";
+import animalRouter from "./animals/animal.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
-import medicalHistories from "./medicalHistories/medical-history.router";
+import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
 
 collectDefaultMetrics();
 
@@ -47,9 +52,13 @@ app.get("/api/test", async (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
-app.use("/api/animals", animalsRouter);
-app.use("/api/acts", actRouter);
-app.use("/api/medical-histories", medicalHistories);
+app.use("/api/clinics", clinicRouter);
+app.use("/api/director", directorRouter);
+app.use("/api/referent", referentRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/reviews", reviewRouter);
+app.use("/api/animals", animalRouter);
 app.use("/api/prescriptions", prescriptionRouter);
-
+app.use("/api/medical-histories", animalMedicalHistoryRouter);
+app.use("/api/acts", actRouter);
 app.use(errorHandler);

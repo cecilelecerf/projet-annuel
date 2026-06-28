@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
+import { MeetingBase } from "../../../prisma/generated/prisma/client";
 
 const validQuery = "startDate=2026-01-01&endDate=2026-12-31";
 
@@ -157,18 +158,18 @@ describe("GET /api/meetings/:id", () => {
       where: { email: "client@gmail.com" },
       include: { clientProfile: true },
     });
-
-    const animal = await getPrisma().animal.findFirst({
-      where: { clientId: clientUser!.clientProfile!.id },
+    const animal = await getPrisma().animal.findMany({
+      where: {
+        clientId: clientUser!.clientProfile!.id,
+        animalMeeting: { some: {} },
+      },
       include: { animalMeeting: { include: { meeting: true } } },
     });
-
-    const meetingId = animal!.animalMeeting[0]!.meeting!.id;
+    const meetingId = animal![1].animalMeeting[0].meeting!.id;
 
     const res = await request(app)
       .get(`/api/meetings/${meetingId}`)
       .set("Authorization", `Bearer ${token}`);
-
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("id", meetingId);
   });
@@ -230,27 +231,37 @@ describe("DELETE /api/meetings/:id", () => {
   });
 
   it("204 — VETERINARIAN supprime un meeting futur", async () => {
+    let meetingId: string | undefined = undefined;
+    afterAll(async () => {
+      if (meetingId)
+        await getPrisma().meetingBase.deleteMany({ where: { id: meetingId } });
+    });
     const token = await loginAs("veto@gmail.com");
     const animal = await getPrisma().animal.findFirst();
-    const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
+      where: { veterinarian: { user: { email: "veto@gmail.com" } } },
+      include: {
+        veterinarian: {
+          include: { user: { include: { availabilities: true } } },
+        },
+      },
+    });
     const speciality = await getPrisma().speciality.findFirst();
-
     const created = await request(app)
       .post("/api/meetings/animals")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        date: "2026-09-01",
+        date: "2026-08-30",
         startTime: "1970-01-01T09:00:00.000Z",
-        endTime: "1970-01-01T10:00:00.000Z",
+        endTime: "1970-01-01T09:05:00.000Z",
         animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
-
+    meetingId = created.body.id;
     const res = await request(app)
       .delete(`/api/meetings/${created.body.id}`)
       .set("Authorization", `Bearer ${token}`);
-
     expect(res.status).toBe(204);
   });
 });
@@ -527,10 +538,16 @@ describe("GET /api/meetings/animals/:id", () => {
 // ── PATCH /api/meetings/animals/:id ────────────────────────────────────────────
 
 describe("PATCH /api/meetings/animals/:id", () => {
+  let meetingId: MeetingBase["id"] | undefined = undefined;
+
   beforeAll(async () => {
     await getPrisma().meetingBase.deleteMany({
       where: { kind: "ANIMAL", date: new Date("2026-04-22T00:00:00.000Z") },
     });
+  });
+  afterEach(async () => {
+    if (meetingId)
+      await getPrisma().meetingBase.deleteMany({ where: { id: meetingId } });
   });
   it("401 — sans token", async () => {
     const res = await request(app).patch("/api/meetings/animals/some-id");
@@ -550,18 +567,21 @@ describe("PATCH /api/meetings/animals/:id", () => {
     const token = await loginAs("veto@gmail.com");
     const animal = await getPrisma().animal.findFirst();
     const speciality = await getPrisma().speciality.findFirst();
-    const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
+      where: { veterinarian: { user: { email: "veto@gmail.com" } } },
+    });
     const resCreate = await request(app)
       .post("/api/meetings/animals")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        date: "2026-04-22",
-        startTime: "1970-01-01T13:00:00.000Z",
-        endTime: "1970-01-01T15:30:00.000Z",
+        date: "2026-08-30",
+        startTime: "1970-01-01T09:30:01.000Z",
+        endTime: "1970-01-01T09:40:00.000Z",
         animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
+    meetingId = resCreate.body.id;
     const res = await request(app)
       .patch(`/api/meetings/animals/${resCreate.body.id}`)
       .set("Authorization", `Bearer ${token}`)
@@ -573,6 +593,11 @@ describe("PATCH /api/meetings/animals/:id", () => {
 // ── DELETE /api/meetings/animals/:id ───────────────────────────────────────────
 
 describe("DELETE /api/meetings/animals/:id", () => {
+  let meetingId: string;
+  afterAll(async () => {
+    if (meetingId)
+      await getPrisma().meetingBase.deleteMany({ where: { id: meetingId } });
+  });
   beforeAll(async () => {
     await getPrisma().meetingBase.deleteMany({
       where: { kind: "ANIMAL", date: new Date("2026-08-28T00:00:00.000Z") },
@@ -595,22 +620,24 @@ describe("DELETE /api/meetings/animals/:id", () => {
 
   it("204 — VETERINARIAN supprime un rendez-vous animal", async () => {
     const token = await loginAs("veto@gmail.com");
-    const vetoProfile = await getPrisma().veterinarianProfile.findFirst();
     const animal = await getPrisma().animal.findFirst();
-    const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
+      where: { veterinarian: { user: { email: "veto@gmail.com" } } },
+    });
     const speciality = await getPrisma().speciality.findFirst();
 
     const created = await request(app)
       .post("/api/meetings/animals")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        date: "2026-08-28",
-        startTime: "1970-01-01T15:00:00.000Z",
-        endTime: "1970-01-01T15:30:00.000Z",
+        date: "2026-08-30",
+        startTime: "1970-01-01T09:42:00.000Z",
+        endTime: "1970-01-01T09:45:00.000Z",
         animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
       });
+    meetingId = created.body.id;
     const res = await request(app)
       .delete(`/api/meetings/animals/${created.body.id}`)
       .set("Authorization", `Bearer ${token}`);
@@ -620,8 +647,12 @@ describe("DELETE /api/meetings/animals/:id", () => {
   // ── POST /api/meetings/animals ─────────────────────────────────────────────────
 
   describe("POST /api/meetings/animals", () => {
-    // TODO : ajout vérficiation si date de fin avant date de début
-    // TODO : si veto déjà occupé
+    let meetingId: string;
+    afterAll(async () => {
+      if (meetingId)
+        await getPrisma().meetingBase.deleteMany({ where: { id: meetingId } });
+    });
+
     beforeAll(async () => {
       await getPrisma().meetingBase.deleteMany({
         where: { kind: "ANIMAL", date: new Date("2026-04-02T00:00:00.000Z") },
@@ -654,20 +685,23 @@ describe("DELETE /api/meetings/animals/:id", () => {
       const token = await loginAs("secretaire@gmail.com");
       const animal = await getPrisma().animal.findFirst();
       const speciality = await getPrisma().speciality.findFirst();
-      const vetoClinic = await getPrisma().veterinarianClinic.findFirst();
+      const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
+        where: { veterinarian: { user: { email: "veto@gmail.com" } } },
+      });
 
       const res = await request(app)
         .post("/api/meetings/animals")
         .set("Authorization", `Bearer ${token}`)
         .send({
-          date: "2026-04-02",
-          startTime: "1970-01-01T10:30:00.000Z",
-          endTime: "1970-01-01T11:30:00.000Z",
+          date: "2026-08-30",
+          startTime: "1970-01-01T09:50:00.000Z",
+          endTime: "1970-01-01T09:55:00.000Z",
           animalId: animal!.id,
           veterinarianId: vetoClinic?.veterinarianId,
           specialityId: speciality!.id,
           clinicId: vetoClinic?.clinicId,
         });
+      meetingId = res.body.id;
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty("id");
     });

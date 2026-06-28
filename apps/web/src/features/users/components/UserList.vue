@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import { api } from '@/lib/api'
+import { http } from '@/lib/api'
 import { veterinarianSchema } from '@armali/schemas'
 import { useRouter } from 'vue-router'
 import z from 'zod'
 const router = useRouter()
-const veterinarians = await api('/users/roles/veterinarian').then((data) =>
-  z.array(veterinarianSchema).parse(data),
-)
+const veterinarians = await http
+  .get('/users/roles/veterinarian')
+  .then((data) => z.array(veterinarianSchema).parse(data))
 </script>
 
 <template>

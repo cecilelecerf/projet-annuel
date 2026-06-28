@@ -90,6 +90,8 @@ describe("errorHandler", () => {
     errorHandler(err, mockReq, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: "Internal server error" });
+    expect(res.json).toHaveBeenCalledWith({
+      error: "Erreur interne du serveur",
+    });
   });
 });

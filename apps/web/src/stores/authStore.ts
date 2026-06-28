@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api, http } from '../lib/api'
+import { http } from '../lib/api'
 import { type ClinicId, type User } from '@armali/schemas'
 export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'> & {
   clinicId?: ClinicId
@@ -19,11 +19,19 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refreshToken')
   }
 
+  const setAuth = (userData: UserStore, access: string, refresh: string) => {
+    user.value = userData
+    accessToken.value = access
+    refreshToken.value = refresh
+    localStorage.setItem('accessToken', access)
+    localStorage.setItem('refreshToken', refresh)
+  }
+
   const init = async () => {
     if (!isAuthenticated.value) return
     try {
       const data = await http.get<UserStore>('/auth/me')
-      const userData: UserStore = {
+      user.value = {
         id: data.id,
         email: data.email,
         firstname: data.firstname,
@@ -31,7 +39,6 @@ export const useAuthStore = defineStore('auth', () => {
         role: data.role,
         clinicId: data.clinicId,
       }
-      user.value = userData
     } catch {
       clearAuth()
     }
@@ -45,6 +52,8 @@ export const useAuthStore = defineStore('auth', () => {
         password,
       },
     )
+    setAuth(data.user, data.accessToken, data.refreshToken)
+
     user.value = data.user
     accessToken.value = data.accessToken
     refreshToken.value = data.refreshToken
@@ -54,13 +63,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    await api('/auth/logout', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken: refreshToken.value }),
-    })
+    await http.post('/auth/logout', JSON.stringify({ refreshToken: refreshToken.value }))
+    user.value = null
+    accessToken.value = null
+    refreshToken.value = null
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
 
     clearAuth()
   }
-
   return { user, accessToken, isAuthenticated, login, logout, init, clearAuth }
 })

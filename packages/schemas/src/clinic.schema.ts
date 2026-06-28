@@ -3,25 +3,43 @@ import {
   clinicIdSchema,
   veterinarianIdSchema,
   veterinarianClinicIdSchema,
-  availabilityIdSchema,
   specialityIdSchema,
 } from "./ids";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
   id: clinicIdSchema,
-  adress: z.string().min(1),
-  description: z.string().max(255).nullable().optional(),
-  websiteUrl: z.string().url().max(255),
-  picture: z.string().url().nullable().optional(),
+  name: z.string().min(1, "Nom requis"),
+  address: z.string().min(1, "Adresse requise"),
+  siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+  phone: z.string().min(10, "Téléphone invalide"),
+  website: z.string().min(1, "Site web requis"),
+  description: z.string().max(500).nullable().optional(),
+  openingHours: z.string().max(500).nullable().optional(),
 });
 
 export const createClinicSchema = clinicSchema.omit({ id: true });
 export const updateClinicSchema = createClinicSchema.partial();
 
+export const updateClinicReferentSchema = z.object({
+  address: z.string().min(1, "Adresse requise").optional(),
+  openingHours: z.string().max(500).optional(),
+});
+
+export const createClinicRequestSchema = z.object({
+  name: z.string().min(1, "Nom requis"),
+  address: z.string().min(1, "Adresse requise"),
+  siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+  phone: z.string().min(10, "Téléphone invalide"),
+  website: z.string().min(1, "Site web requis"),
+  description: z.string().max(500).optional(),
+});
+
 export type Clinic = z.infer<typeof clinicSchema>;
 export type CreateClinic = z.infer<typeof createClinicSchema>;
 export type UpdateClinic = z.infer<typeof updateClinicSchema>;
+export type UpdateClinicReferent = z.infer<typeof updateClinicReferentSchema>;
+export type CreateClinicRequest = z.infer<typeof createClinicRequestSchema>;
 
 // ── VeterinarianClinic (junction) ─────────────────────────────────────────────
 export const veterinarianClinicSchema = z.object({
@@ -38,13 +56,6 @@ export type VeterinarianClinic = z.infer<typeof veterinarianClinicSchema>;
 export type CreateVeterinarianClinic = z.infer<
   typeof createVeterinarianClinicSchema
 >;
-
-// ── VeterinarianClinicAvailability ────────────────────────────────────────────
-export const availabilityTypeSchema = z.enum([
-  "recurring",
-  "specified",
-  "exception",
-]);
 
 // ── Speciality ────────────────────────────────────────────────────────────────
 export const specialitySchema = z.object({

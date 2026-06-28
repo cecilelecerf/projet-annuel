@@ -23,3 +23,16 @@ export const baseUserSchema = z.object({
 });
 
 export type BaseUser = z.infer<typeof baseUserSchema>;
+export const userPasswordSchema = z
+  .string()
+  .min(8, "Minimum 8 caractères")
+  .max(255);
+
+export const registerSchema = baseUserSchema
+  .pick({
+    email: true,
+    firstname: true,
+    lastname: true,
+  })
+  .extend({ password: userPasswordSchema });
+export type Register = z.infer<typeof registerSchema>;

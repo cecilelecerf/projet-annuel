@@ -1,18 +1,47 @@
 <script setup lang="ts">
+import Navbar from '@/components/ui/nav/Navbar.vue'
+import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
+import { House, User, Star } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
+
+const menuItems: MenuItem[] = [
+  {
+    index: 'Client.Home',
+    label: 'Accueil',
+    icon: House,
+  },
+  {
+    index: 'Client.Reviews',
+    label: 'Vétérinaires',
+    icon: Star,
+  },
+  {
+    index: 'Client.Profil',
+    label: 'Profil',
+    icon: User,
+  },
+]
 </script>
 
 <template>
-  <FormError />
-  <div>
-    <nav>
-      <router-link to="/client/rdv">Mes rendez-vous</router-link>
-      <router-link to="/client/animaux">Mes animaux</router-link>
-      <router-link to="/client/messages">Messages</router-link>
-    </nav>
+  <div class="layout">
+    <FormError />
 
-    <main>
+    <Navbar :menu-items="menuItems" />
+    <main class="main">
       <router-view />
     </main>
   </div>
 </template>
+
+<style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.main {
+  flex: 1;
+  background: #f8f9fa;
+}
+</style>

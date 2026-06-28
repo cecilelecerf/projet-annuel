@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { secretaryIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema } from "./base-user.schema";
+import { registerSchema } from ".";
 
 export const secretaryProfileSchema = z.object({
   id: secretaryIdSchema,
@@ -15,6 +16,9 @@ export const secretarySchema = baseUserSchema.extend({
 
 export const createSecretarySchema = secretaryProfileSchema.omit({ id: true });
 export const updateSecretarySchema = createSecretarySchema.partial();
+
+export const createSecretaryStaffSchema = registerSchema;
+export type CreateSecretaryStaff = z.infer<typeof createSecretaryStaffSchema>;
 
 export type SecretaryProfile = z.infer<typeof secretaryProfileSchema>;
 export type Secretary = z.infer<typeof secretarySchema>;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { veterinarianIdSchema, clinicIdSchema } from "../ids";
-import { baseUserSchema } from "./base-user.schema";
+import { baseUserSchema, registerSchema } from "./base-user.schema";
 import { specialitySchema, veterinarianClinicSchema } from "../clinic.schema";
 
 export const veterinarianProfileSchema = z.object({
@@ -23,6 +23,13 @@ export const createVeterinarianSchema = veterinarianProfileSchema.omit({
   veterinarianClinic: true,
 });
 export const updateVeterinarianSchema = createVeterinarianSchema.partial();
+export const createVeterinarianStaffSchema = registerSchema.extend({
+  licenseNumber: z.string().min(1, "Numéro de licence requis"),
+  bio: z.string().max(500).optional(),
+});
+export type CreateVeterinarianStaff = z.infer<
+  typeof createVeterinarianStaffSchema
+>;
 
 export type VeterinarianProfile = z.infer<typeof veterinarianProfileSchema>;
 export type Veterinarian = z.infer<typeof veterinarianSchema>;

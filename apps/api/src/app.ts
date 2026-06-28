@@ -11,7 +11,11 @@ import express_prom_bundle from "express-prom-bundle";
 import { default as authRouter } from "./auth/auth.router";
 import { default as userRouter } from "./users/user.router";
 import { errorHandler } from "./middlewares";
+import actRouter from "./acts/act.router";
 import { default as meetingRouter } from "./meetings/meeting.router";
+import animalRouter from "./animals/animal.router";
+import prescriptionRouter from "./prescriptions/prescription.router";
+import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
 
 collectDefaultMetrics();
 
@@ -53,4 +57,8 @@ app.use("/api/director", directorRouter);
 app.use("/api/referent", referentRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/reviews", reviewRouter);
+app.use("/api/animals", animalRouter);
+app.use("/api/prescriptions", prescriptionRouter);
+app.use("/api/medical-histories", animalMedicalHistoryRouter);
+app.use("/api/acts", actRouter);
 app.use(errorHandler);

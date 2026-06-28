@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore, type UserStore } from '@/stores/authStore'
-import { api } from '@/lib/api'
+import { http } from '@/lib/api'
 import { roleHomeMap } from '@/router/index'
 import { useNotify } from '@/composables/useNotify'
 
@@ -50,14 +50,16 @@ function validateUserForm(): string | null {
   if (!form.value.lastname.trim()) return 'Le nom est requis'
   if (!form.value.email.includes('@')) return 'Email invalide'
   if (form.value.password.length < 8) return 'Mot de passe : minimum 8 caractères'
-  if (form.value.password !== form.value.passwordConfirm) return 'Les mots de passe ne correspondent pas'
+  if (form.value.password !== form.value.passwordConfirm)
+    return 'Les mots de passe ne correspondent pas'
   return null
 }
 
 function validateClinicForm(): string | null {
   if (!clinic.value.name.trim()) return 'Le nom de la clinique est requis'
   if (!clinic.value.address.trim()) return "L'adresse est requise"
-  if (clinic.value.siret.replace(/\s/g, '').length !== 14) return 'Le SIRET doit contenir 14 chiffres'
+  if (clinic.value.siret.replace(/\s/g, '').length !== 14)
+    return 'Le SIRET doit contenir 14 chiffres'
   if (clinic.value.phone.replace(/\s/g, '').length < 10) return 'Téléphone invalide'
   if (!clinic.value.website.trim()) return 'Le site web est requis'
   return null
@@ -65,17 +67,26 @@ function validateClinicForm(): string | null {
 
 function nextToClinic() {
   const err = validateUserForm()
-  if (err) { notify.error(err); return }
+  if (err) {
+    notify.error(err)
+    return
+  }
   step.value = 'clinic'
 }
 
 async function handleSubmit() {
   const userErr = validateUserForm()
-  if (userErr) { notify.error(userErr); return }
+  if (userErr) {
+    notify.error(userErr)
+    return
+  }
 
   if (selectedRole.value === 'DIRECTOR') {
     const clinicErr = validateClinicForm()
-    if (clinicErr) { notify.error(clinicErr); return }
+    if (clinicErr) {
+      notify.error(clinicErr)
+      return
+    }
   }
 
   loading.value = true
@@ -83,9 +94,9 @@ async function handleSubmit() {
     let data: { user: Record<string, unknown>; accessToken: string; refreshToken: string }
 
     if (selectedRole.value === 'DIRECTOR') {
-      data = await api('/auth/register-director', {
-        method: 'POST',
-        body: JSON.stringify({
+      data = await http.post(
+        '/auth/register-director',
+        JSON.stringify({
           email: form.value.email,
           password: form.value.password,
           firstname: form.value.firstname,
@@ -99,24 +110,23 @@ async function handleSubmit() {
             description: clinic.value.description || undefined,
           },
         }),
-      })
+      )
     } else {
-      data = await api('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({
+      data = await http.post(
+        '/auth/register',
+        JSON.stringify({
           email: form.value.email,
           password: form.value.password,
           firstname: form.value.firstname,
           lastname: form.value.lastname,
         }),
-      })
+      )
     }
 
     authStore.setAuth(data.user as UserStore, data.accessToken, data.refreshToken)
     notify.success('Compte créé avec succès !')
     const role = authStore.user?.role
     router.push(role && roleHomeMap[role] ? roleHomeMap[role] : '/')
-
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : "Erreur lors de l'inscription")
   } finally {
@@ -128,7 +138,6 @@ async function handleSubmit() {
 <template>
   <div class="auth-page">
     <div class="auth-card">
-
       <!-- ÉTAPE 1 : Choix du rôle -->
       <template v-if="step === 'role'">
         <h1 class="auth-title">Créer un compte</h1>
@@ -158,7 +167,10 @@ async function handleSubmit() {
         <button class="back-btn" @click="goBack">← Retour</button>
         <h1 class="auth-title">Vos informations</h1>
 
-        <el-form @submit.prevent="selectedRole === 'DIRECTOR' ? nextToClinic() : handleSubmit()" label-position="top">
+        <el-form
+          @submit.prevent="selectedRole === 'DIRECTOR' ? nextToClinic() : handleSubmit()"
+          label-position="top"
+        >
           <div class="form-row">
             <el-form-item label="Prénom">
               <el-input v-model="form.firstname" placeholder="Alice" size="large" />
@@ -173,11 +185,23 @@ async function handleSubmit() {
           </el-form-item>
 
           <el-form-item label="Mot de passe">
-            <el-input v-model="form.password" type="password" show-password placeholder="Minimum 8 caractères" size="large" />
+            <el-input
+              v-model="form.password"
+              type="password"
+              show-password
+              placeholder="Minimum 8 caractères"
+              size="large"
+            />
           </el-form-item>
 
           <el-form-item label="Confirmer le mot de passe">
-            <el-input v-model="form.passwordConfirm" type="password" show-password placeholder="••••••••" size="large" />
+            <el-input
+              v-model="form.passwordConfirm"
+              type="password"
+              show-password
+              placeholder="••••••••"
+              size="large"
+            />
           </el-form-item>
 
           <el-button
@@ -199,16 +223,29 @@ async function handleSubmit() {
 
         <el-form @submit.prevent="handleSubmit" label-position="top">
           <el-form-item label="Nom de la clinique">
-            <el-input v-model="clinic.name" placeholder="Clinique Vétérinaire du Centre" size="large" />
+            <el-input
+              v-model="clinic.name"
+              placeholder="Clinique Vétérinaire du Centre"
+              size="large"
+            />
           </el-form-item>
 
           <el-form-item label="Adresse">
-            <el-input v-model="clinic.address" placeholder="12 rue de la Paix, 75001 Paris" size="large" />
+            <el-input
+              v-model="clinic.address"
+              placeholder="12 rue de la Paix, 75001 Paris"
+              size="large"
+            />
           </el-form-item>
 
           <div class="form-row">
             <el-form-item label="SIRET (14 chiffres)">
-              <el-input v-model="clinic.siret" placeholder="123 456 789 01234" size="large" maxlength="17" />
+              <el-input
+                v-model="clinic.siret"
+                placeholder="123 456 789 01234"
+                size="large"
+                maxlength="17"
+              />
             </el-form-item>
             <el-form-item label="Téléphone">
               <el-input v-model="clinic.phone" placeholder="01 02 03 04 05" size="large" />
@@ -241,7 +278,6 @@ async function handleSubmit() {
           </el-button>
         </el-form>
       </template>
-
     </div>
   </div>
 </template>

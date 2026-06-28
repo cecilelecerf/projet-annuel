@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { referantClinicIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema } from "./base-user.schema";
+import { registerSchema } from ".";
 
 export const referantProfileSchema = z.object({
   id: referantClinicIdSchema,
@@ -15,6 +16,8 @@ export const referantSchema = baseUserSchema.extend({
 
 export const createReferantSchema = referantProfileSchema.omit({ id: true });
 export const updateReferantSchema = createReferantSchema.partial();
+export const createReferentStaffSchema = registerSchema;
+export type CreateReferentStaff = z.infer<typeof createReferentStaffSchema>;
 
 export type ReferantProfile = z.infer<typeof referantProfileSchema>;
 export type Referant = z.infer<typeof referantSchema>;

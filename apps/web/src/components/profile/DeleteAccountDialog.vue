@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { api } from '@/lib/api'
+import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
 
 const notify = useNotify()
@@ -27,7 +27,7 @@ async function requestOtp() {
   loading.value = true
   errorMsg.value = ''
   try {
-    await api('/auth/delete-account/request', { method: 'POST' })
+    await http.post('/auth/delete-account/request', {})
     step.value = 'otp'
     notify.info('Un code vous a été envoyé par email')
   } catch (err: unknown) {
@@ -65,7 +65,12 @@ defineExpose({ open })
 </script>
 
 <template>
-  <el-dialog v-model="visible" title="Supprimer mon compte" width="420px" :close-on-click-modal="false">
+  <el-dialog
+    v-model="visible"
+    title="Supprimer mon compte"
+    width="420px"
+    :close-on-click-modal="false"
+  >
     <template v-if="step === 'confirm'">
       <el-alert
         title="Cette action est irréversible. Toutes vos données seront définitivement supprimées."
@@ -76,7 +81,14 @@ defineExpose({ open })
       />
       <p>Un code de confirmation vous sera envoyé par email.</p>
 
-      <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon :closable="false" style="margin-top: 12px" />
+      <el-alert
+        v-if="errorMsg"
+        :title="errorMsg"
+        type="error"
+        show-icon
+        :closable="false"
+        style="margin-top: 12px"
+      />
     </template>
 
     <template v-else>
@@ -88,25 +100,22 @@ defineExpose({ open })
         size="large"
         style="letter-spacing: 8px; font-size: 20px; text-align: center"
       />
-      <el-alert v-if="errorMsg" :title="errorMsg" type="error" show-icon :closable="false" style="margin-top: 12px" />
+      <el-alert
+        v-if="errorMsg"
+        :title="errorMsg"
+        type="error"
+        show-icon
+        :closable="false"
+        style="margin-top: 12px"
+      />
     </template>
 
     <template #footer>
       <el-button @click="visible = false">Annuler</el-button>
-      <el-button
-        v-if="step === 'confirm'"
-        type="danger"
-        :loading="loading"
-        @click="requestOtp"
-      >
+      <el-button v-if="step === 'confirm'" type="danger" :loading="loading" @click="requestOtp">
         Recevoir le code de confirmation
       </el-button>
-      <el-button
-        v-else
-        type="danger"
-        :loading="loading"
-        @click="confirmDelete"
-      >
+      <el-button v-else type="danger" :loading="loading" @click="confirmDelete">
         Supprimer définitivement mon compte
       </el-button>
     </template>

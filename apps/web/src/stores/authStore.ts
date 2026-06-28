@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api, http } from '../lib/api'
+import { http } from '../lib/api'
 import { type ClinicId, type User } from '@armali/schemas'
 export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'> & {
   clinicId?: ClinicId
@@ -63,10 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    await api('/auth/logout', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken: refreshToken.value }),
-    })
+    await http.post('/auth/logout', JSON.stringify({ refreshToken: refreshToken.value }))
     user.value = null
     accessToken.value = null
     refreshToken.value = null
@@ -74,6 +71,6 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refreshToken')
 
     clearAuth()
-    return { user, accessToken, isAuthenticated, login, logout, init, clearAuth }
   }
+  return { user, accessToken, isAuthenticated, login, logout, init, clearAuth }
 })

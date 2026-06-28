@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
-import { api } from '@/lib/api'
+import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
 
 const notify = useNotify()
@@ -21,7 +21,7 @@ const loading = ref(false)
 
 async function loadClinic() {
   try {
-    const data: Clinic = await api('/clinics/me')
+    const data = await http.get<Clinic>('/clinics/me')
     clinic.value = data
     form.address = data.address ?? ''
     form.openingHours = data.openingHours ?? ''
@@ -33,10 +33,7 @@ async function loadClinic() {
 async function save() {
   loading.value = true
   try {
-    const updated: Clinic = await api('/referent/clinic', {
-      method: 'PATCH',
-      body: JSON.stringify(form),
-    })
+    const updated: Clinic = await http.patch<Clinic>('/referent/clinic', JSON.stringify(form))
     clinic.value = updated
     notify.success('Clinique mise à jour avec succès')
   } catch (err: unknown) {
@@ -70,9 +67,7 @@ onMounted(loadClinic)
             placeholder="Lundi - Vendredi : 9h00 - 19h00&#10;Samedi : 9h00 - 13h00&#10;Dimanche : Fermé"
           />
         </el-form-item>
-        <el-button type="primary" native-type="submit" :loading="loading">
-          Enregistrer
-        </el-button>
+        <el-button type="primary" native-type="submit" :loading="loading"> Enregistrer </el-button>
       </el-form>
     </div>
 
@@ -83,23 +78,49 @@ onMounted(loadClinic)
         <strong>Horaires :</strong><br />
         <span style="white-space: pre-line">{{ clinic.openingHours }}</span>
       </p>
-      <p v-else style="color:#6b7280">Aucun horaire renseigné</p>
+      <p v-else style="color: #6b7280">Aucun horaire renseigné</p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.clinic-page { max-width: 640px; margin: 0 auto; padding: 32px 24px; }
-.page-header { margin-bottom: 32px; }
-.page-header h1 { font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 4px; }
-.page-header p { color: #6b7280; margin: 0; font-size: 14px; }
-.form-card, .info-card {
+.clinic-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+.page-header {
+  margin-bottom: 32px;
+}
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+.page-header p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 14px;
+}
+.form-card,
+.info-card {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 24px;
   margin-bottom: 24px;
 }
-.form-card h2, .info-card h2 { font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0 0 20px; }
-.info-card p { margin: 0 0 12px; font-size: 14px; line-height: 1.6; }
+.form-card h2,
+.info-card h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 20px;
+}
+.info-card p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
 </style>

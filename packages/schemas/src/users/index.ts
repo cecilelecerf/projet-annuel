@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { clientSchema } from "./client.schema";
 import { secretarySchema } from "./secretary.schema";
-import { directorSchema } from "./director.schema";
 import { referantSchema } from "./referant.schema";
 import { veterinarianSchema } from "./veterinarian.schema";
-import { baseUserSchema } from "./base-user.schema";
+import { baseUserSchema, userPasswordSchema } from "./base-user.schema";
+import { directorClinicSchema } from "./director.schema";
 
 export const adminSchema = baseUserSchema.extend({
   role: z.literal("ADMIN"),
@@ -14,7 +14,7 @@ export const adminSchema = baseUserSchema.extend({
 export const userSchema = z.discriminatedUnion("role", [
   clientSchema,
   secretarySchema,
-  directorSchema,
+  directorClinicSchema,
   referantSchema,
   veterinarianSchema,
   adminSchema,
@@ -23,21 +23,16 @@ export const userSchema = z.discriminatedUnion("role", [
 export type User = z.infer<typeof userSchema>;
 export type Admin = z.infer<typeof adminSchema>;
 
-const userPasswordSchema = z.string().min(8, "Minimum 8 caractères").max(255);
-
 export const loginSchema = baseUserSchema
   .pick({ email: true })
   .extend({ password: userPasswordSchema });
 
-export const registerSchema = baseUserSchema
-  .pick({
-    email: true,
-    firstname: true,
-    lastname: true,
-  })
-  .extend({ password: userPasswordSchema });
 export type Login = z.infer<typeof loginSchema>;
-export type Register = z.infer<typeof registerSchema>;
+
+export const deleteAccountConfirmSchema = z.object({
+  code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+});
+export type DeleteAccountConfirm = z.infer<typeof deleteAccountConfirmSchema>;
 
 export * from "./base-user.schema";
 export * from "./client.schema";

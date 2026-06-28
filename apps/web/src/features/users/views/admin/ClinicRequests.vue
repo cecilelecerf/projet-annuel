@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { api } from '@/lib/api'
+import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
 
 const notify = useNotify()
@@ -35,16 +35,19 @@ const dialog = ref<{ visible: boolean; type: 'approve' | 'reject'; row: ClinicRe
 })
 const actionLoading = ref(false)
 
-const statusLabel: Record<string, { label: string; type: 'warning' | 'success' | 'danger' | 'info' }> = {
-  PENDING:  { label: 'En attente',  type: 'warning' },
-  APPROVED: { label: 'Approuvée',   type: 'success' },
-  REJECTED: { label: 'Refusée',     type: 'danger'  },
+const statusLabel: Record<
+  string,
+  { label: string; type: 'warning' | 'success' | 'danger' | 'info' }
+> = {
+  PENDING: { label: 'En attente', type: 'warning' },
+  APPROVED: { label: 'Approuvée', type: 'success' },
+  REJECTED: { label: 'Refusée', type: 'danger' },
 }
 
 async function load() {
   loading.value = true
   try {
-    requests.value = await api('/admin/clinic-requests')
+    requests.value = await http.get('/admin/clinic-requests')
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur de chargement')
   } finally {
@@ -61,7 +64,10 @@ async function confirm() {
   actionLoading.value = true
   const { type, row } = dialog.value
   try {
-    await api(`/admin/clinic-requests/${row.id}/${type === 'approve' ? 'approve' : 'reject'}`, { method: 'PATCH' })
+    await http.patch(
+      `/admin/clinic-requests/${row.id}/${type === 'approve' ? 'approve' : 'reject'}`,
+      {},
+    )
     notify.success(type === 'approve' ? 'Clinique créée avec succès' : 'Demande refusée')
     dialog.value.visible = false
     await load()
@@ -86,7 +92,7 @@ onMounted(load)
       <el-table-column label="Directeur" min-width="160">
         <template #default="{ row }">
           {{ row.director.firstname }} {{ row.director.lastname }}<br />
-          <small style="color:#6b7280">{{ row.director.email }}</small>
+          <small style="color: #6b7280">{{ row.director.email }}</small>
         </template>
       </el-table-column>
       <el-table-column prop="name" label="Clinique" min-width="160" />
@@ -106,11 +112,15 @@ onMounted(load)
       </el-table-column>
       <el-table-column label="Actions" width="210" fixed="right">
         <template #default="{ row }">
-          <div v-if="row.status === 'PENDING'" style="display:flex;gap:6px">
-            <el-button size="small" type="success" @click="openDialog(row, 'approve')">Approuver</el-button>
-            <el-button size="small" type="danger"  @click="openDialog(row, 'reject')">Refuser</el-button>
+          <div v-if="row.status === 'PENDING'" style="display: flex; gap: 6px">
+            <el-button size="small" type="success" @click="openDialog(row, 'approve')"
+              >Approuver</el-button
+            >
+            <el-button size="small" type="danger" @click="openDialog(row, 'reject')"
+              >Refuser</el-button
+            >
           </div>
-          <span v-else style="color:#6b7280;font-size:13px">Traitée</span>
+          <span v-else style="color: #6b7280; font-size: 13px">Traitée</span>
         </template>
       </el-table-column>
     </el-table>
@@ -127,7 +137,8 @@ onMounted(load)
           Une fois approuvée, la clinique sera enregistrée dans le système.
         </template>
         <template v-else>
-          Refuser la demande de création de la clinique <strong>« {{ dialog.row.name }} »</strong> ?<br />
+          Refuser la demande de création de la clinique
+          <strong>« {{ dialog.row.name }} »</strong> ?<br />
           Cette action est définitive.
         </template>
       </p>
@@ -146,9 +157,24 @@ onMounted(load)
 </template>
 
 <style scoped>
-.requests-page { padding: 32px 24px; }
-.page-header { margin-bottom: 32px; }
-.page-header h1 { font-size: 24px; font-weight: 700; margin: 0 0 6px; }
-.page-header p { color: #6b7280; margin: 0; }
-.dialog-body { margin: 0; line-height: 1.7; color: #374151; }
+.requests-page {
+  padding: 32px 24px;
+}
+.page-header {
+  margin-bottom: 32px;
+}
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+.page-header p {
+  color: #6b7280;
+  margin: 0;
+}
+.dialog-body {
+  margin: 0;
+  line-height: 1.7;
+  color: #374151;
+}
 </style>

@@ -228,16 +228,25 @@ describe("AuthService.refresh", () => {
 describe("AuthService.logout", () => {
   it("supprime le refresh token", async () => {
     const prisma = await getPrisma();
-    prisma.refreshToken.delete.mockResolvedValue(mockRefreshToken);
+    prisma.refreshToken.deleteMany.mockResolvedValue({ count: 1 });
 
     await authService.logout("refresh_token");
 
-    expect(prisma.refreshToken.delete).toHaveBeenCalledWith({
+    expect(prisma.refreshToken.deleteMany).toHaveBeenCalledWith({
       where: { token: "refresh_token" },
     });
   });
-});
 
+  it("ne lève pas d'erreur si le token n'existe déjà plus", async () => {
+    const prisma = await getPrisma();
+    // deleteMany ne lève jamais si rien ne matche, contrairement à delete — count: 0 est le comportement normal
+    prisma.refreshToken.deleteMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      authService.logout("token_inexistant"),
+    ).resolves.toBeUndefined();
+  });
+});
 // ── me ────────────────────────────────────────────────────────────────────────
 
 describe("AuthService.me", () => {

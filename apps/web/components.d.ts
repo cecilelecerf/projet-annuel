@@ -13,6 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
     DevSection: typeof import('./src/components/landingPage/DevSection.vue')['default']
+    ElButton: typeof import('element-plus/es')['ElButton']
+    ElIcon: typeof import('element-plus/es')['ElIcon']
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
     Navbar: typeof import('./src/components/ui/nav/Navbar.vue')['default']

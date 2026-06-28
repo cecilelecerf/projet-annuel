@@ -22,7 +22,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'Secretary.Profil',
-        component: () => import('@/views/secretary/Profil.vue'),
+        component: () => import('@/features/users/views/secretary/Profil.vue'),
       },
       {
         path: 'veterinarian',

@@ -66,8 +66,10 @@ export function useCalendar(userId?: UserId) {
       dateSelect.value = info.date
     },
     eventClick: (info: EventClickArg) => {
+      const [id] = info.event.id.split('_')
+      if (!id) return
       selectedMeeting.value = {
-        id: info.event.id,
+        id: id,
         date: info.event.extendedProps.date,
       }
     },

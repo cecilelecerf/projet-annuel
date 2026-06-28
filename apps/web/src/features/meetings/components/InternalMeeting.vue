@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import RecurringComponent from './RecurringComponent.vue'
 
 dayjs.locale('fr')
 
@@ -158,14 +159,7 @@ const onDelete = async () => {
       </div>
     </div>
 
-    <!-- Récurrence -->
-    <div v-if="meeting.recurringId" class="section">
-      <h3 class="section-label">
-        <el-icon><RefreshRight /></el-icon>
-        Récurrence
-      </h3>
-      <p class="info-value">Réunion récurrente</p>
-    </div>
+    <RecurringComponent v-if="meeting.recurringId" :recurring-id="meeting.recurringId" />
   </div>
 </template>
 

@@ -10,7 +10,7 @@ import {
 
 export const prescriptionApi = {
   getByMeeting: async (meetingId: MeetingId): Promise<Prescription[]> => {
-    const data = await http.get(`/prescriptions/meeting/${meetingId}`)
+    const data = await http.get(`/meetings/animals/${meetingId}/prescriptions`)
     return prescriptionSchema.array().parse(data)
   },
 

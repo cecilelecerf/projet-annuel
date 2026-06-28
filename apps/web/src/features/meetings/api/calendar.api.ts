@@ -20,6 +20,9 @@ import {
   type UpdateAnimalMeeting,
   type UserId,
   medicalHistorySchema,
+  meetingRecurringSchema,
+  type MeetingRecurringId,
+  type UpdateRecurring,
 } from '@armali/schemas'
 
 export const calendarApi = {
@@ -85,6 +88,16 @@ export const calendarApi = {
         .extend({ animal: animalWithRaceMeta })
         .array()
         .parse(data)
+    },
+  },
+  recurring: {
+    get: async (reccuringId: MeetingRecurringId) => {
+      const data = await http.get(`/meetings/recurrings/${reccuringId}`)
+      return meetingRecurringSchema.parse(data)
+    },
+    update: async (reccuringId: MeetingRecurringId, body: UpdateRecurring) => {
+      const data = await http.patch(`/meetings/recurrings/${reccuringId}`, body)
+      return meetingRecurringSchema.parse(data)
     },
   },
 }

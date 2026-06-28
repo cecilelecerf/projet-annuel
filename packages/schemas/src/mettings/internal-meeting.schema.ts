@@ -38,10 +38,10 @@ export const internalMeetingSchema = meetingBaseSchema.extend({
   clinicId: clinicIdSchema,
   participants: internalMeetingParticipantSchema.array(),
   kind: z.literal("INTERNAL"),
+  recurringId: meetingRecurringIdSchema.nullable(),
 });
 export const internalMeetingMetaSchema = internalMeetingSchema.extend({
   participants: z.array(internalMeetingParticipantMetaSchema),
-  recurringId: meetingRecurringIdSchema.nullable(),
 });
 
 const createInternalMeetingBaseFields = internalMeetingSchema

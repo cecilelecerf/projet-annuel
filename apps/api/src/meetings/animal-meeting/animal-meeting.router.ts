@@ -8,11 +8,13 @@ import {
 import { AnimalMeetingController } from "./animal-meeting.controller";
 import { AnimalMedicalHistoryController } from "@api/medicalHistories/medical-history.controller";
 import { STAFF_ROLES } from "@api/utils";
+import { PrescriptionController } from "@api/prescriptions/prescription.controller";
 
 const animalMeetingRouter: RouterType = Router();
 
 const animalController = new AnimalMeetingController();
 const animalMedicalHistory = new AnimalMedicalHistoryController();
+const prescriptionController = new PrescriptionController();
 
 animalMeetingRouter.post(
   "/",
@@ -38,6 +40,14 @@ animalMeetingRouter.get(
   authMiddleware,
   animalMedicalHistory.getByMeeting.bind(
     animalMedicalHistory,
+  ) as RequestHandler,
+);
+animalMeetingRouter.get(
+  "/:id/prescriptions",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  prescriptionController.getByMeeting.bind(
+    prescriptionController,
   ) as RequestHandler,
 );
 animalMeetingRouter.get(

@@ -42,6 +42,11 @@ const onNewEventDrawerClose = () => {
           openNewEvent = true
         }
       "
+      @on-click-event="
+        (id, date) => {
+          selectedMeeting = { id, date: new Date(date) }
+        }
+      "
     />
   </el-drawer>
 

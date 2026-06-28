@@ -16,7 +16,7 @@ export const toCalendarEvent = (base: FlatMeeting) => {
       ? new Date(`${date.toISOString().split('T')[0]}T${base.endTime.toISOString().split('T')[1]}`)
       : undefined
   const resultBase = {
-    id: base.id,
+    id: `${base.id}_${date.toISOString()}`,
     start: start?.toISOString(),
     end: end?.toISOString(),
   }

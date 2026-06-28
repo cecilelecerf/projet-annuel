@@ -17,6 +17,7 @@ import { seedBankingInfo } from "./banking-info";
 import { seedMedicalVisits } from "./medical-visit";
 import { seedMeetings } from "./meetings";
 import { seedPrescriptions } from "./prescriptions";
+import { cleanup } from "./cleanup";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -24,14 +25,15 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 export const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  await cleanup(prisma);
   const existingUser = await prisma.user.findUnique({
     where: { email: "admin@gmail.com" },
   });
 
-  if (existingUser) {
-    console.log("⏭️  Base de données déjà peuplée, seed ignoré.");
-    return;
-  }
+  // if (existingUser) {
+  //   console.log("⏭️  Base de données déjà peuplée, seed ignoré.");
+  //   return;
+  // }
 
   console.log("🌱 Seeding database...");
 

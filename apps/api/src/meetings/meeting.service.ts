@@ -182,6 +182,7 @@ export class MeetingService {
       start,
       end,
     );
+    console.log(participants);
     const flat = participants.flatMap(
       ({
         meeting: { recurring, meeting },
@@ -191,6 +192,7 @@ export class MeetingService {
         return [];
       },
     );
+    console.log(flat);
     return this.expandAll(flat, start, end);
   }
 

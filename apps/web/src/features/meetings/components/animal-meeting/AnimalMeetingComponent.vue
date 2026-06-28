@@ -13,6 +13,7 @@ import MeetingActs from './MeetingActs.vue'
 import MeetingPrescriptions from './MeetingPrescriptions.vue'
 import { medicalHistoriesApi } from '@/features/medicalHistories/api'
 import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
+import RecurringComponent from '../RecurringComponent.vue'
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
@@ -20,7 +21,7 @@ const { user } = useAuthStore()
 const { handle } = useFormErrorStore()
 
 const [acts, prescriptions] = await Promise.all([
-  medicalHistoriesApi.getAll(meeting.id),
+  medicalHistoriesApi.getByMeeting(meeting.id),
   prescriptionApi.getByMeeting(meeting.id),
 ])
 
@@ -59,7 +60,7 @@ const onDelete = async () => {
 }
 
 const onActSaved = async () => {
-  localActs.value = await medicalHistoriesApi.getAll(meeting.id)
+  localActs.value = await medicalHistoriesApi.getByMeeting(meeting.id)
 }
 
 const onPrescriptionSaved = async () => {
@@ -92,6 +93,7 @@ const onPrescriptionSaved = async () => {
         @saved="onPrescriptionSaved"
       />
     </div>
+    <RecurringComponent v-if="meeting.recurringId" :recurring-id="meeting.recurringId" />
   </div>
 </template>
 

@@ -172,7 +172,6 @@ export class MeetingController {
           const data = recurringBase
             ? { ...meeting, ...recurringBase }
             : { ...meeting, ...meeting.meeting };
-
           return res.status(200).json(internalMeetingMetaSchema.parse(data));
         }
         case "AVAILABILITY": {

@@ -15,13 +15,6 @@ const allowedRoles = [
 ] as const;
 
 prescriptionRouter.get(
-  "/meeting/:meetingId",
-  authMiddleware,
-  roleMiddleware([...allowedRoles]),
-  controller.getByMeeting.bind(controller) as RequestHandler,
-);
-
-prescriptionRouter.get(
   "/:id",
   authMiddleware,
   roleMiddleware([...allowedRoles]),

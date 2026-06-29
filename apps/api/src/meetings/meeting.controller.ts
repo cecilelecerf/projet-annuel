@@ -15,6 +15,7 @@ import { UserService } from "@api/users";
 import { AnimalMeetingService } from "./animal-meeting";
 import { InternalMeetingService } from "./internal-meeting";
 import { AvailabilityService } from "./availability";
+import dayjs from "dayjs";
 
 const meetingService = new MeetingService();
 const animalMeetingService = new AnimalMeetingService();
@@ -139,7 +140,6 @@ export class MeetingController {
                 throw new BadRequestError("date invalide");
               return {
                 id: base.id,
-                recurringId: base.id,
                 createdAt: base.createdAt,
                 updatedAt: base.updatedAt,
                 startTime: base.startTime,
@@ -147,7 +147,7 @@ export class MeetingController {
                 kind: base.kind,
                 date: date.toISOString(),
                 type: "SPECIFIED" as const,
-                parentId: null,
+                parentId: base.id,
               };
             })
         : null;
@@ -195,12 +195,15 @@ export class MeetingController {
   }
 
   async delete(
-    req: RequestWithParams<{ id: MeetingId }>,
+    req: RequestWithParams<{ id: MeetingId }> & { query: { date?: string } },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      await meetingService.delete(req.params.id);
+      await meetingService.delete(
+        req.params.id,
+        dayjs(req.query.date).toDate() ?? undefined,
+      );
       res.status(204).send();
     } catch (err) {
       next(err);

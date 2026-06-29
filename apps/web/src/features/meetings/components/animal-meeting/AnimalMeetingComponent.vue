@@ -43,6 +43,7 @@ const onSave = async () => {
     await calendarApi.animal.update(meeting.id, { ...edit.value })
     isEditing.value = false
   } catch (err) {
+    console.log(err)
     handle(err)
   }
 }
@@ -75,7 +76,7 @@ const onPrescriptionSaved = async () => {
     :user="user"
     @edit="isEditing = true"
     @cancel="isEditing = false"
-    @save="onSave"
+    @save="onSave()"
     @delete="onDelete"
   />
 

@@ -33,7 +33,12 @@ const router = useRouter()
       <el-button
         v-if="isEditing && user?.role !== 'CLIENT'"
         type="primary"
-        @click="emit('save')"
+        @click="
+          () => {
+            emit('save')
+            console.log('test')
+          }
+        "
         :icon="Check"
       >
         Enregistrer

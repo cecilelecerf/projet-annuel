@@ -1,13 +1,16 @@
+import { MeetingKind, UpdateRecurring } from "@armali/schemas";
 import {
   MeetingReccuring,
   PrismaClient,
   Prisma,
 } from "../../../prisma/generated/prisma/client";
+import dayjs from "dayjs";
 
 const recurringInclude = {
   availabilty: { select: { userId: true, clinicId: true } },
   internalMeeting: {
     select: {
+      id: true,
       title: true,
       description: true,
       adminId: true,
@@ -22,6 +25,7 @@ const recurringInclude = {
   },
   animalMeeting: {
     select: {
+      id: true,
       specialityId: true,
       animalId: true,
       veterinarianClinicId: true,
@@ -33,10 +37,7 @@ const recurringInclude = {
 type RecurringWithRelations = Prisma.MeetingReccuringGetPayload<{
   include: typeof recurringInclude;
 }>;
-type RecurringEditableFields = Pick<
-  MeetingReccuring,
-  "dayOfWeek" | "startTime" | "endTime" | "dateStart" | "dateEnd" | "frequency"
->;
+type RecurringEditableFields = Omit<UpdateRecurring, "dateToActionStart">;
 
 export class RecurringRepository {
   constructor(private prisma: PrismaClient) {}
@@ -52,17 +53,29 @@ export class RecurringRepository {
     id: string,
     data: Partial<RecurringEditableFields>,
   ): Promise<MeetingReccuring> {
-    return this.prisma.meetingReccuring.update({ where: { id }, data });
+    return this.prisma.meetingReccuring.update({
+      where: { id },
+      data,
+      include: {
+        availabilty: true,
+        animalMeeting: true,
+        internalMeeting: true,
+      },
+    });
   }
 
   // ── Split en 2 séries : ancienne (passé) + nouvelle (futur, avec les modifs) ─
   async splitFromDate(
     current: RecurringWithRelations,
-    changes: Partial<RecurringEditableFields>,
+    changes: Partial<
+      RecurringEditableFields & { internal?: UpdateRecurring["internal"] } & {
+        animal?: UpdateRecurring["animal"];
+      }
+    >,
     splitDate: Date,
   ): Promise<MeetingReccuring> {
-    const dayBeforeSplit = new Date(splitDate);
-    dayBeforeSplit.setUTCDate(dayBeforeSplit.getUTCDate() - 1);
+    // TODO : add utc in global app
+    const dayBeforeSplit = dayjs(splitDate).subtract(1, "day").toDate();
 
     return this.prisma.$transaction(async (tx) => {
       // 1. On arrête l'ancienne série la veille du split
@@ -99,10 +112,14 @@ export class RecurringRepository {
             current.internalMeeting && {
               internalMeeting: {
                 create: {
-                  title: current.internalMeeting.title,
-                  description: current.internalMeeting.description,
+                  title:
+                    changes.internal?.title ?? current.internalMeeting.title,
+                  description:
+                    changes.internal?.description ??
+                    current.internalMeeting.description,
                   adminId: current.internalMeeting.adminId,
                   clinicId: current.internalMeeting.clinicId,
+                  // Add change status if change date or hours
                   participants: {
                     create: current.internalMeeting.participants.map(
                       (participant) => ({
@@ -127,6 +144,11 @@ export class RecurringRepository {
                 },
               },
             }),
+        },
+        include: {
+          internalMeeting: true,
+          animalMeeting: true,
+          availabilty: true,
         },
       });
 

@@ -1,4 +1,5 @@
 import { prisma } from "@api/lib/prisma";
+import { MeetingKind } from "../../prisma/generated/prisma/enums";
 
 const recurringFilter = (start: Date, end: Date) => ({
   dateStart: { lte: end },
@@ -201,5 +202,29 @@ export class MeetingRepository {
 
   async delete(id: string) {
     return prisma.meetingBase.delete({ where: { id } });
+  }
+  async createException({
+    parentId,
+    date,
+    kind,
+    startTime,
+    endTime,
+  }: {
+    parentId: string;
+    date: Date;
+    kind: MeetingKind;
+    startTime: Date;
+    endTime: Date;
+  }) {
+    return prisma.meetingBase.create({
+      data: {
+        type: "EXCEPTION",
+        date,
+        startTime,
+        endTime,
+        kind,
+        parentId,
+      },
+    });
   }
 }

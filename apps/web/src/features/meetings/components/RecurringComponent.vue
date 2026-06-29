@@ -3,12 +3,13 @@ import { ref, reactive, watch } from 'vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Edit, RefreshRight, InfoFilled, Calendar, Clock } from '@element-plus/icons-vue'
+import { Edit, RefreshRight, InfoFilled, Calendar } from '@element-plus/icons-vue'
 import { type MeetingRecurring, type MeetingRecurringId } from '@armali/schemas'
 import { calendarApi } from '../api/calendar.api'
 
 const props = defineProps<{
   recurringId: MeetingRecurringId
+  date: Date
 }>()
 
 const DAYS = [
@@ -37,20 +38,6 @@ const form = reactive({
 
 const rules: FormRules = {
   dayOfWeek: [{ required: true, message: 'Sélectionne au moins un jour', trigger: 'change' }],
-  startTime: [{ required: true, message: 'Heure de début requise', trigger: 'change' }],
-  endTime: [
-    { required: true, message: 'Heure de fin requise', trigger: 'change' },
-    {
-      validator: (_rule, value, callback) => {
-        if (value && form.startTime && value <= form.startTime) {
-          callback(new Error("L'heure de fin doit être après l'heure de début"))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'change',
-    },
-  ],
 }
 
 async function fetchMeeting() {
@@ -70,10 +57,6 @@ watch(() => props.recurringId, fetchMeeting, { immediate: true })
 function startEditing() {
   if (!meeting.value) return
   form.dayOfWeek = meeting.value.dayOfWeek ?? [1]
-  form.startTime = meeting.value.startTime
-    ? dayjs(meeting.value.startTime).format('HH:mm')
-    : '08:00'
-  form.endTime = meeting.value.endTime ? dayjs(meeting.value.endTime).format('HH:mm') : '12:00'
   form.dateRange = [
     meeting.value.dateStart ? dayjs(meeting.value.dateStart).format('YYYY-MM-DD') : null,
     meeting.value.dateEnd ? dayjs(meeting.value.dateEnd).format('YYYY-MM-DD') : null,
@@ -93,9 +76,8 @@ async function save() {
   saving.value = true
   try {
     await calendarApi.recurring.update(props.recurringId, {
+      dateToStartAction: props.date,
       dayOfWeek: form.dayOfWeek,
-      startTime: dayjs(`1970-01-01T${form.startTime}`).toDate(),
-      endTime: dayjs(`1970-01-01T${form.endTime}`).toDate(),
       dateStart: form.dateRange[0] ? new Date(form.dateRange[0]) : undefined,
       dateEnd: form.dateRange[1] ? new Date(form.dateRange[1]) : undefined,
     })
@@ -150,14 +132,6 @@ async function save() {
         </span>
       </div>
 
-      <div class="summary-row">
-        <el-icon class="row-icon"><Clock /></el-icon>
-        <span
-          >{{ dayjs(meeting.startTime).format('HH:mm') }} –
-          {{ dayjs(meeting.endTime).format('HH:mm') }}</span
-        >
-      </div>
-
       <div v-if="meeting.dateStart || meeting.dateEnd" class="summary-row">
         <el-icon class="row-icon"><Calendar /></el-icon>
         <span>
@@ -193,26 +167,6 @@ async function save() {
         >
           <el-option v-for="d in DAYS" :key="d.value" :label="d.label" :value="d.value" />
         </el-select>
-      </el-form-item>
-
-      <el-form-item label="Horaires" prop="endTime">
-        <div class="time-range">
-          <el-time-select
-            v-model="form.startTime"
-            start="06:00"
-            end="22:00"
-            step="00:15"
-            placeholder="Début"
-          />
-          <span class="time-separator">à</span>
-          <el-time-select
-            v-model="form.endTime"
-            start="06:00"
-            end="22:00"
-            step="00:15"
-            placeholder="Fin"
-          />
-        </div>
       </el-form-item>
 
       <el-form-item label="Période de validité">

@@ -3,7 +3,6 @@ import {
   clinicIdSchema,
   internalMeetingParticipantIdSchema,
   meetingIdSchema,
-  meetingRecurringIdSchema,
   userIdSchema,
 } from "../ids";
 import {
@@ -31,14 +30,15 @@ export const internalMeetingParticipantMetaSchema = z.object({
   user: userSchema,
   status: meetingStatusSchema,
 });
-
-export const internalMeetingSchema = meetingBaseSchema.extend({
+export const internalMeetingField = z.object({
   title: z.string().max(255),
   description: z.string().nullable().optional(),
   clinicId: clinicIdSchema,
   participants: internalMeetingParticipantSchema.array(),
+});
+export const internalMeetingSchema = meetingBaseSchema.extend({
+  ...internalMeetingField.shape,
   kind: z.literal("INTERNAL"),
-  recurringId: meetingRecurringIdSchema.nullable(),
 });
 export const internalMeetingMetaSchema = internalMeetingSchema.extend({
   participants: z.array(internalMeetingParticipantMetaSchema),
@@ -49,11 +49,12 @@ const createInternalMeetingBaseFields = internalMeetingSchema
     description: true,
     title: true,
     clinicId: true,
+    parentId: true,
   })
   .partial({ clinicId: true })
   .extend({ userIds: userIdSchema.array() });
 
-const createInternalMeetingFields = createMeetingBaseSchema
+export const createInternalMeetingFields = createMeetingBaseSchema
   .omit({ kind: true, type: true, parentId: true })
   .extend(createInternalMeetingBaseFields.shape);
 

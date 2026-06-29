@@ -51,7 +51,7 @@ const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   report: true,
 });
 
-const createAnimalMeetingFields = createMeetingBaseSchema
+export const createAnimalMeetingFields = createMeetingBaseSchema
   .omit({ kind: true, type: true })
   .extend(
     createAnimalMeetingBaseFields.omit({ veterinarianClinicId: true }).extend({

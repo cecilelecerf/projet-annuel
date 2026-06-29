@@ -2,6 +2,8 @@ import { prisma } from "@api/lib/prisma";
 import { userWithProfileAndClinicIdInclude } from "@api/users/user.types";
 import type {
   CreateInternalMeeting,
+  MeetingId,
+  MeetingRecurringId,
   MeetingStatus,
   UpdateInternalMeeting,
 } from "@armali/schemas";
@@ -12,6 +14,7 @@ export class InternalMeetingRepository {
       where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
+        recurring: true,
         participants: {
           include: { user: { include: userWithProfileAndClinicIdInclude } },
         },
@@ -34,6 +37,8 @@ export class InternalMeetingRepository {
         date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
+        type: "SPECIFIED",
+        parentId: data.parentId,
         internalMeeting: {
           create: {
             title: data.title,
@@ -59,17 +64,23 @@ export class InternalMeetingRepository {
 
   async update({ id, data }: { id: string; data: UpdateInternalMeeting }) {
     return prisma.internalMeeting.update({
-      where: { id },
+      where: { meetingId: id },
       data: {
-        title: data.title,
-        description: data.description,
-        meeting: {
-          update: {
-            date: data.date,
-            startTime: data.startTime,
-            endTime: data.endTime,
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+        ...((data.date || data.startTime || data.endTime) && {
+          meeting: {
+            update: {
+              data: {
+                ...(data.date && { date: data.date }),
+                ...(data.startTime && { startTime: data.startTime }),
+                ...(data.endTime && { endTime: data.endTime }),
+              },
+            },
           },
-        },
+        }),
       },
       include: { meeting: true, participants: true },
     });

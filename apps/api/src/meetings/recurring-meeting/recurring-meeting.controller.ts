@@ -1,16 +1,20 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
 import { RecurringService } from "./recurring-meeting.service";
 import { RecurringRepository } from "./recurring-meeting.repository";
 import { prisma } from "@api/lib/prisma";
-import {
-  meetingRecurringSchema,
-  UpdateRecurring,
-  updateRecurringSchema,
-} from "@armali/schemas";
+import { meetingRecurringSchema, UpdateRecurring } from "@armali/schemas";
 import { RequestWithParams } from "@api/middlewares";
+import { InternalMeetingRepository } from "../internal-meeting";
+import { AnimalMeetingRepository } from "../animal-meeting";
 
 const recurringRepository = new RecurringRepository(prisma);
-const recurringService = new RecurringService(recurringRepository);
+const internalRepository = new InternalMeetingRepository();
+const animalMeetingRepository = new AnimalMeetingRepository();
+const recurringService = new RecurringService(
+  recurringRepository,
+  internalRepository,
+  animalMeetingRepository,
+);
 export class RecurringMeetingController {
   async getRecurring(
     req: RequestWithParams<{ id: string }>,

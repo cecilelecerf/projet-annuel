@@ -3,8 +3,8 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { useRoute } from 'vue-router'
 import { calendarApi } from '../api/calendar.api'
-import InternalMeeting from '../components/InternalMeeting.vue'
 import AnimalMeeting from '../components/animal-meeting/AnimalMeetingComponent.vue'
+import InternalMeeting from '../components/internal-meeting/InternalMeeting.vue'
 
 dayjs.locale('fr')
 

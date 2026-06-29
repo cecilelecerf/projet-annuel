@@ -34,9 +34,13 @@ const title = computed(() => {
 })
 
 const goToDetail = () => {
-  router.push(
-    `/${user?.role.toLowerCase()}/meetings/${meeting.id}${date ? `?date=${date.toISOString()}` : ''}`,
-  )
+  router.push({
+    path: `/${user?.role.toLowerCase()}/meetings/${meeting.id}`,
+    query:
+      date && String(meeting.id) === String(meeting.parentId)
+        ? { date: date.toISOString() }
+        : undefined,
+  })
 }
 const onEdit = () => {}
 const onDelete = () => {

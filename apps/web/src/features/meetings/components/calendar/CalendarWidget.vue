@@ -5,13 +5,19 @@ import NewEvent from '../NewEventDrawer/index.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
-import type { UserId } from '@armali/schemas'
+import type { MeetingId, UserId } from '@armali/schemas'
+import { calendarApi } from '../../api/calendar.api.ts'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
+const router = useRouter()
 const { calendarOptions, dateSelect, openNewEvent, selectedMeeting } = useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
+const showDeleteDialog = ref(false)
+const deleting = ref(false)
 const isDateDrawerOpen = computed({
   get: () => dateSelect.value !== null,
   set: (val) => {
@@ -22,6 +28,23 @@ const isDateDrawerOpen = computed({
 const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
+}
+const onDelete = async () => {
+  if (!selectedMeeting.value) return
+  deleting.value = true
+  try {
+    await calendarApi.delete(
+      selectedMeeting.value?.id as MeetingId,
+      selectedMeeting.value?.date.toISOString(),
+    )
+    ElMessage.success('Rendez-vous supprimé')
+    showDeleteDialog.value = false
+    router.back()
+  } catch {
+    ElMessage.error('Erreur lors de la suppression')
+  } finally {
+    deleting.value = false
+  }
 }
 </script>
 
@@ -68,7 +91,14 @@ const onNewEventDrawerClose = () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
-    @delete="selectedMeeting = null"
+    @delete="showDeleteDialog = true"
+  />
+  <ConfirmDeleteDialog
+    v-model="showDeleteDialog"
+    title="Supprimer le rendez-vous ?"
+    message="Cette action est définitive et ne peut pas être annulée."
+    :loading="deleting"
+    @confirm="onDelete"
   />
 </template>
 

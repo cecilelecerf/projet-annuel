@@ -1,6 +1,8 @@
 import z from "zod";
 import { meetingRecurringIdSchema } from "../ids";
 import { meetingKindSchema } from "./meeting-base.schema";
+import { createInternalMeetingFields } from "./internal-meeting.schema";
+import { createAnimalMeetingFields } from "./animal-meeting.schema";
 export const meetingFrequencySchema = z.enum([
   "DAILY",
   "WEEKLY",
@@ -24,14 +26,31 @@ export const meetingRecurringSchema = z.object({
   kind: meetingKindSchema,
 });
 
-export const updateRecurringSchema = z.object({
-  dayOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
-  startTime: z.coerce.date().optional(),
-  endTime: z.coerce.date().optional(),
-  dateStart: z.coerce.date().optional(),
-  dateEnd: z.coerce.date().optional(),
-  frequency: meetingFrequencySchema.optional(),
-});
+export const updateRecurringSchema = z
+  .object({
+    dayOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
+    startTime: z.coerce.date().optional(),
+    endTime: z.coerce.date().optional(),
+    dateStart: z.coerce.date().optional(),
+    dateEnd: z.coerce.date().optional(),
+    frequency: meetingFrequencySchema.optional(),
+    dateToStartAction: z.coerce.date(),
+  })
+  .extend({
+    internal: createInternalMeetingFields
+      .pick({
+        description: true,
+        title: true,
+        userIds: true,
+      })
+      .optional(),
+    animal: createAnimalMeetingFields
+      .pick({
+        description: true,
+        specialityId: true,
+      })
+      .optional(),
+  });
 
 export type UpdateRecurring = z.infer<typeof updateRecurringSchema>;
 export type MeetingFrequency = z.infer<typeof meetingFrequencySchema>;

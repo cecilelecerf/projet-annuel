@@ -18,8 +18,7 @@ export const meetingBaseSchema = z.object({
   date: z.coerce.date(),
   startTime: z.coerce.date(),
   endTime: z.coerce.date(),
-  parentId: meetingRecurringIdSchema.nullable().optional(),
-  recurringId: meetingRecurringIdSchema.nullable().optional(),
+  parentId: meetingRecurringIdSchema.nullable(),
 });
 
 export const createMeetingBaseSchema = meetingBaseSchema.omit({

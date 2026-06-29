@@ -23,6 +23,8 @@ import {
   meetingRecurringSchema,
   type MeetingRecurringId,
   type UpdateRecurring,
+  type UpdateInternalMeeting,
+  internalMeetingField,
 } from '@armali/schemas'
 
 export const calendarApi = {
@@ -45,8 +47,8 @@ export const calendarApi = {
     return meetingMetaSchema.parse(data)
   },
 
-  delete: async (meetingId: MeetingId) => {
-    return await http.delete(`/meetings/${meetingId}`)
+  delete: async (meetingId: MeetingId, date?: string) => {
+    return await http.delete(`/meetings/${meetingId}${date ? `?date=${date}` : ''}`)
   },
 
   internal: {
@@ -56,6 +58,10 @@ export const calendarApi = {
     get: async (meetingId: MeetingId) => {
       const data = await http.get(`/meetings/internal/${meetingId}`)
       return internalMeetingSchema.parse(data)
+    },
+    update: async (meetingId: MeetingId, meeting: UpdateInternalMeeting) => {
+      const data = await http.patch(`/meetings/internal/${meetingId}`, meeting)
+      return internalMeetingField.extend({ meeting: meetingBaseSchema }).parse(data)
     },
   },
   animal: {

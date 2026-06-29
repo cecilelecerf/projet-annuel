@@ -1,8 +1,11 @@
-import { ForbiddenError, NotFoundError } from "@api/errors";
-import type {
-  CreateInternalMeeting,
-  MeetingStatus,
-  UpdateInternalMeeting,
+import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
+import {
+  createInternalMeetingSchema,
+  MeetingId,
+  MeetingRecurringId,
+  type CreateInternalMeeting,
+  type MeetingStatus,
+  type UpdateInternalMeeting,
 } from "@armali/schemas";
 import { InternalMeetingRepository } from "./internal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
@@ -38,13 +41,35 @@ export class InternalMeetingService {
   }) {
     const existing = await internalMeetingRepository.findById(id);
     if (!existing) throw new NotFoundError("Réunion");
-
     const isParticipant = existing.participants.some(
       (p) => p.userId === userId,
     );
     if (!isParticipant) throw new ForbiddenError();
 
-    return internalMeetingRepository.update({ id, data });
+    const isVirtualOccurrence = existing.recurringId === id;
+
+    if (isVirtualOccurrence) {
+      const parsed = createInternalMeetingSchema.safeParse({
+        title: data.title ?? existing.title,
+        description: data.description ?? existing.description,
+        date: data.date,
+        startTime:
+          data.startTime ?? existing.recurring?.startTime.toISOString(),
+        endTime: data.endTime ?? existing.recurring?.endTime.toISOString(),
+        clinicId: existing.clinicId,
+        userIds: existing.participants.map((p) => p.userId),
+        parentId: id,
+      });
+      if (!parsed.success) throw new ConflictError("Champs manquants");
+
+      const internalMeeting = await internalMeetingRepository.create({
+        data: parsed.data,
+        authorId: existing.adminId,
+        clinicId: existing.clinicId,
+      });
+      return internalMeetingRepository.findById(internalMeeting.id);
+    }
+    return internalMeetingRepository.update({ id: id as MeetingId, data });
   }
 
   async delete({ id, userId }: { id: string; userId: string }) {

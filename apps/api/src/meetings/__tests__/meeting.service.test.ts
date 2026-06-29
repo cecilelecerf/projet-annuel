@@ -33,7 +33,7 @@ const makeBase = (overrides = {}) => ({
   startTime: new Date("1970-01-01T08:00:00.000Z"),
   endTime: new Date("1970-01-01T09:00:00.000Z"),
   date: new Date("2026-01-10T00:00:00.000Z"),
-  parentId: null,
+  recurringId: null,
   animalMeeting: null,
   internalMeeting: null,
   availabilty: null,

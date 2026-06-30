@@ -133,7 +133,6 @@ const onDelete = async () => {
   border: 1px solid var(--el-border-color) !important;
   color: var(--el-text-color-regular) !important;
   border-radius: var(--radius-md) !important;
-  font-family: 'DM Sans', sans-serif !important;
   font-size: 13px !important;
   padding: 4px 10px !important;
   box-shadow: none !important;

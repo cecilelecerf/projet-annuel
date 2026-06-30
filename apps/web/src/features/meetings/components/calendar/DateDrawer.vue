@@ -118,7 +118,6 @@ const calendarOptions = ref<CalendarOptions>({
 }
 
 .drawer-date {
-  font-family: 'Nunito', sans-serif;
   font-weight: var(--fw-bold);
   font-size: 16px;
   color: var(--el-text-color-primary);

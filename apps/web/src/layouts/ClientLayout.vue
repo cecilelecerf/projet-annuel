@@ -1,24 +1,29 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, User, Star } from '@element-plus/icons-vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import { House, User, Star, Calendar } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'Client.Home',
+    index: 'CLIENT.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Client.Reviews',
+    index: 'CLIENT.Reviews',
     label: 'Vétérinaires',
     icon: Star,
   },
   {
-    index: 'Client.Profil',
+    index: 'CLIENT.Profil',
     label: 'Profil',
     icon: User,
+  },
+  {
+    index: 'CLIENT.Meetings',
+    label: 'Rendez-vous',
+    icon: Calendar,
   },
 ]
 </script>
@@ -28,7 +33,12 @@ const menuItems: MenuItem[] = [
     <FormError />
     <Navbar :menu-items="menuItems" />
     <main class="main">
-      <router-view />
+      <Suspense>
+        <router-view />
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
     </main>
   </div>
 </template>
@@ -38,12 +48,12 @@ const menuItems: MenuItem[] = [
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #f8f9fa;
 }
 .main {
-  padding: 32px;
-  max-width: 600px;
-  margin: auto;
-  flex: 1;
-  background: #f8f9fa;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
 }
 </style>

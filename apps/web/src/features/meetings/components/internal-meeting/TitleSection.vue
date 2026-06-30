@@ -48,7 +48,6 @@ const title = defineModel<string>('title', { default: '' })
 }
 
 .meeting-title {
-  font-family: 'Nunito', sans-serif;
   font-size: 28px;
   font-weight: var(--fw-bold);
   color: var(--el-color-purple-dark-3);

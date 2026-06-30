@@ -341,7 +341,7 @@ export class AnimalMeetingService {
     return deleted;
   }
 
-  async getByClient({
+  async getByUser({
     id,
     userId,
     role,
@@ -350,13 +350,12 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
+    if (!id) throw new BadRequestError("L'id est obligatoire");
     const user = await userRepository.getUserById({ id });
     if (!user) throw new NotFoundError("Utilisateur");
-    if (user.role !== "CLIENT") throw new ForbiddenError();
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-
-    return animalMeetingRepository.findByClient(id);
+    return animalMeetingRepository.findByUser(id);
   }
 
   async getByAnimal({

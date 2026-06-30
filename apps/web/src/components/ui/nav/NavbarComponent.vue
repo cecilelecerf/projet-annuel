@@ -1,33 +1,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
-import Sidebar, { type MenuItem } from './Sidebar.vue'
+import Sidebar, { type MenuItem } from './SidebarComponent.vue'
 import { getStringRole } from '@/utils/role.utils'
-import type { UserRole } from '@armali/schemas'
 import { useNotify } from '@/composables/useNotify'
 
 const notify = useNotify()
 
 defineProps<{ menuItems: MenuItem[] }>()
 
-const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 
-const profilRouteMap: Partial<Record<UserRole, string>> = {
-  CLIENT: 'Client.Profil',
-  VETERINARIAN: 'Veto.Profil',
-  SECRETARY: 'Secretary.Profil',
-  DIRECTOR: 'Director.Profil',
-  REFERANT: 'Referent.Profil',
-}
-
 const profilRoute = computed(() => {
   const role = user.value?.role
-  return role ? profilRouteMap[role] : undefined
+  return `${role?.toUpperCase()}.Profil`
 })
 
 const userInitials = computed(() => {
@@ -69,10 +59,7 @@ const handleLogout = async () => {
 
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item
-              v-if="profilRoute"
-              @click="router.push({ name: profilRoute })"
-            >
+            <el-dropdown-item v-if="profilRoute" @click="router.push({ name: profilRoute })">
               <el-icon><User /></el-icon>
               Mon profil
             </el-dropdown-item>

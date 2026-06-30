@@ -153,7 +153,6 @@ const onInput = (val: string) => {
   background: transparent;
   font-size: 14px;
   color: var(--el-text-color-primary);
-  font-family: inherit;
 
   &::placeholder {
     color: var(--el-text-color-placeholder);

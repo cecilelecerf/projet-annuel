@@ -9,44 +9,40 @@ export const clientRouter: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        name: 'Client.Home',
+        name: 'CLIENT.Home',
         component: () => import('@/features/users/views/client/MySpaceView.vue'),
       },
       {
         path: 'profil',
-        name: 'Client.Profil',
+        name: 'CLIENT.Profil',
         component: () => import('@/features/users/views/client/Profil.vue'),
       },
       {
         path: 'veterinaires',
-        name: 'Client.Reviews',
+        name: 'CLIENT.Reviews',
         component: () => import('@/features/users/views/client/Reviews.vue'),
       },
 
-      // // ── Animal ───────────────────────────────────────────────
+      // ── Animal ───────────────────────────────────────────────
       // {
       //   path: 'animaux',
-      //   name: 'Client.Animaux',
-      //   //        component: () => import('@/views/client/animal/Animaux.vue'),
+      //   name: 'CLIENT.Animaux',
+      //   component: () => import('@/features/animals/views/AnimalView/'),
       // },
       // {
       //   path: 'animaux/nouveau',
-      //   name: 'Client.Animal.Nouveau',
+      //   name: 'CLIENT.Animal.Nouveau',
       //   //        component: () => import('@/views/client/animal/NouvelAnimal.vue'),
       //   // Champs : Nom, Photo, Description
       // },
-      // {
-      //   path: 'animaux/:id',
-      //   name: 'Client.Animal.Vue',
-      //   //        component: () => import('@/views/client/animal/VueAnimal.vue'),
-      //   // Contient : Description, Graphique évolution poids/taille,
-      //   //            Liste de tous les RDV, Nom du véto, Nouveau RDV,
-      //   //            Supprimer l'animal, Modifier les infos,
-      //   //            Voir les vaccins, Alerter si info anormales (prise de poids)
-      // },
+      {
+        path: 'animal/:id',
+        name: 'CLIENT.Animals.Detail',
+        component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
+      },
       // {
       //   path: 'animaux/:id/regime-alimentaire',
-      //   name: 'Client.Animal.RegimeAlimentaire',
+      //   name: 'CLIENT.Animal.RegimeAlimentaire',
       //   //        component: () => import('@/views/client/animal/RegimeAlimentaire.vue'),
       //   // Contient : Enregistrer le régime alimentaire,
       //   //            Enregistrer la marque de nourriture avec algo pour proposer un dosage,
@@ -54,14 +50,19 @@ export const clientRouter: RouteRecordRaw[] = [
       // },
 
       // // ── RDV ──────────────────────────────────────────────────
-      // {
-      //   path: 'rdv',
-      //   name: 'Client.RDV',
-      //   //        component: () => import('@/views/client/rdv/RDV.vue'),
-      // },
+      {
+        path: 'meetings',
+        name: 'CLIENT.Meetings',
+        component: () => import('@/features/meetings/views/Client/ListMeetingView.vue'),
+      },
+      {
+        path: 'meetings/:id',
+        name: 'CLIENT.Meetings.Detail',
+        component: () => import('@/features/meetings/views/MeetingView.vue'),
+      },
       // {
       //   path: 'rdv/prendre',
-      //   name: 'Client.RDV.Prendre',
+      //   name: 'CLIENT.RDV.Prendre',
       //   //        component: () => import('@/views/client/rdv/PrendreRDV.vue'),
       //   // Formulaire étape par étape :
       //   //   1. Choix de l'animal (possibilité d'en créer un nouveau)
@@ -73,7 +74,7 @@ export const clientRouter: RouteRecordRaw[] = [
       // },
       // {
       //   path: 'rdv/recherche-veto',
-      //   name: 'Client.RDV.RechercheVeto',
+      //   name: 'CLIENT.RDV.RechercheVeto',
       //   //        component: () => import('@/views/client/rdv/RechercheVeto.vue'),
       //   // Recherche par nom du vétérinaire, Choix de l'animal, Dispos du véto (choix de la date)
       // },
@@ -81,18 +82,18 @@ export const clientRouter: RouteRecordRaw[] = [
       // // ── Map ──────────────────────────────────────────────────
       // {
       //   path: 'map',
-      //   name: 'Client.Map',
+      //   name: 'CLIENT.Map',
       //   //        component: () => import('@/views/client/map/Map.vue'),
       //   children: [
       //     {
       //       path: 'cliniques',
-      //       name: 'Client.Map.Cliniques',
+      //       name: 'CLIENT.Map.Cliniques',
       //       //            component: () => import('@/views/client/map/MapCliniques.vue'),
       //       // Input avec adresse, Possibilité de filtrer sur les vétos d'urgence
       //     },
       //     {
       //       path: 'cliniques/:id',
-      //       name: 'Client.Map.Clinique.Detail',
+      //       name: 'CLIENT.Map.Clinique.Detail',
       //       //            component: () => import('@/views/client/map/DetailClinique.vue'),
       //       // Contient : Adresse, Horaire d'ouverture, Liste des vétos (avec spécialité),
       //       //            Image, Description, Note globale de tous les vétos (?),
@@ -100,7 +101,7 @@ export const clientRouter: RouteRecordRaw[] = [
       //     },
       //     {
       //       path: 'vetos/:id',
-      //       name: 'Client.Map.Veto.Detail',
+      //       name: 'CLIENT.Map.Veto.Detail',
       //       //            component: () => import('@/views/client/map/DetailVeto.vue'),
       //       // Contient : Clinique.s associée.s, Image, Description,
       //       //            Notes et avis du véto, Spécialité.s,
@@ -113,19 +114,19 @@ export const clientRouter: RouteRecordRaw[] = [
       // // ── Boutique ─────────────────────────────────────────────
       // {
       //   path: 'boutique',
-      //   name: 'Client.Boutique',
+      //   name: 'CLIENT.Boutique',
       //   //        component: () => import('@/views/client/boutique/Boutique.vue'),
       //   children: [
       //     {
       //       path: '',
-      //       name: 'Client.Boutique.Produits',
+      //       name: 'CLIENT.Boutique.Produits',
       //       //            component: () => import('@/views/client/boutique/TousLesProduits.vue'),
       //       // Vue de tous les produits, Filtre : marque, type animal, prix…
       //       // + Recherche d'un produit
       //     },
       //     {
       //       path: 'produits/:id',
-      //       name: 'Client.Boutique.Produit.Detail',
+      //       name: 'CLIENT.Boutique.Produit.Detail',
       //       //            component: () => import('@/views/client/boutique/FicheProduit.vue'),
       //       // Contient : Image, Description, Notes et avis d'autres clients, Prix
       //       // Action : Ajout au panier
@@ -136,17 +137,17 @@ export const clientRouter: RouteRecordRaw[] = [
       // // ── Panier ───────────────────────────────────────────────
       // {
       //   path: 'panier',
-      //   name: 'Client.Panier',
+      //   name: 'CLIENT.Panier',
       //   //        component: () => import('@/views/client/panier/Panier.vue'),
       //   children: [
       //     {
       //       path: '',
-      //       name: 'Client.Panier.Recap',
+      //       name: 'CLIENT.Panier.Recap',
       //       //            component: () => import('@/views/client/panier/RecapProduits.vue'),
       //     },
       //     {
       //       path: 'paiement',
-      //       name: 'Client.Panier.Paiement',
+      //       name: 'CLIENT.Panier.Paiement',
       //       //            component: () => import('@/views/client/panier/Paiement.vue'),
       //     },
       //   ],
@@ -155,25 +156,25 @@ export const clientRouter: RouteRecordRaw[] = [
       // // ── Profil ───────────────────────────────────────────────
       // {
       //   path: 'profil',
-      //   name: 'Client.Profil',
+      //   name: 'CLIENT.Profil',
       //   //        component: () => import('@/views/client/profil/Profil.vue'),
       //   children: [
       //     {
       //       path: 'parametres',
-      //       name: 'Client.Profil.Parametres',
+      //       name: 'CLIENT.Profil.Parametres',
       //       //            component: () => import('@/views/client/profil/Parametres.vue'),
       //       // Informations personnelles, Modification des infos,
       //       // Suppression du compte, Déconnexion
       //     },
       //     {
       //       path: 'historique',
-      //       name: 'Client.Profil.Historique',
+      //       name: 'CLIENT.Profil.Historique',
       //       //            component: () => import('@/views/client/profil/Historique.vue'),
       //       // Commandes et paiements
       //     },
       //     {
       //       path: 'rgpd',
-      //       name: 'Client.Profil.RGPD',
+      //       name: 'CLIENT.Profil.RGPD',
       //       //            component: () => import('@/views/client/profil/RGPD.vue'),
       //       // Utilisation des données perso, Suppressions des données perso
       //     },

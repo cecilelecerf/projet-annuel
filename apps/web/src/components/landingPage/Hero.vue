@@ -200,7 +200,6 @@ function goToMySpace() {
 }
 
 .hero__stat-number {
-  font-family: 'Nunito', sans-serif;
   font-size: 2rem;
   font-weight: var(--fw-bold);
   color: var(--el-color-primary);

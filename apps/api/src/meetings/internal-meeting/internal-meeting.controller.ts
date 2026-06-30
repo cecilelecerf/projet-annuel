@@ -21,7 +21,6 @@ export class InternalMeetingController {
     res: Response,
     next: NextFunction,
   ) {
-    console.log("enter");
     try {
       if (!req.user.clinicId) throw new ForbiddenError();
 

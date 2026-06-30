@@ -13,6 +13,7 @@ import {
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
 import { ForbiddenError } from "@api/errors";
+import { flatUser } from "@api/users/user.utils";
 
 const animalMeetingService = new AnimalMeetingService();
 export class AnimalMeetingController {
@@ -62,7 +63,7 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(animalMeetigWithMeetingSchema.parse(meeting));
+      res.status(200).json(animalMeetingFieldSchema.parse(meeting));
     } catch (err) {
       next(err);
     }
@@ -91,19 +92,26 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await animalMeetingService.getByClient({
+      const meetings = await animalMeetingService.getByUser({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
-      res
-        .status(200)
-        .json(
-          animalMeetigWithMeetingSchema
-            .extend({ animal: animalWithRaceMeta })
-            .array()
-            .parse(meetings),
-        );
+      res.status(200).json(
+        animalMeetigWithMeetingSchema.array().parse(
+          meetings.map((meeting) => ({
+            ...meeting,
+            animal: {
+              ...meeting.animal,
+              client: flatUser(meeting.animal.client),
+            },
+            veterinarianClinic: {
+              ...meeting.veterinarianClinic,
+              veterinarian: flatUser(meeting.veterinarianClinic.veterinarian),
+            },
+          })),
+        ),
+      );
     } catch (err) {
       next(err);
     }

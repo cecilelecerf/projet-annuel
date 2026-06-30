@@ -9,15 +9,17 @@ import { animalApi } from '../../api'
 import { calendarApi } from '@/features/meetings/api/calendar.api'
 import { actTypeLabel } from '@/features/acts/utils'
 import WeightChart from './WeightChart.vue'
+import { useAuthStore } from '@/stores/authStore.ts'
 dayjs.locale('fr')
 
 const route = useRoute()
+const router = useRouter()
+const { user } = useAuthStore()
 const pet = await animalApi.get(route.params.id as AnimalId)
 const [meetings, vaccinesStatus] = await Promise.all([
   calendarApi.animal.getAllByAnimal(pet.id),
   await animalApi.getVaccines(route.params.id as AnimalId),
 ])
-const router = useRouter()
 
 const age = computed(() => {
   const years = dayjs().diff(dayjs(pet.dateOfBirth), 'year')
@@ -251,7 +253,7 @@ const lastSize = computed(() => {
             class="meeting-row"
             @click="
               router.push({
-                name: 'Secretary.Calendar.Meeting.Detail',
+                name: `${user?.role.toUpperCase()}.Meetings.Detail`,
                 params: { id: meeting.meeting.id },
               })
             "

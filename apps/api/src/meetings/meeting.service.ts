@@ -12,6 +12,7 @@ import {
 import { MeetingRepository } from "./meeting.repository";
 import type { MeetingId, UserRole } from "@armali/schemas";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
+import { AnimalMeetingService } from "./animal-meeting";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ export type FlatMeeting = MeetingBase &
   (AnimalMeeting | InternalMeeting | Availability);
 
 const meetingRepository = new MeetingRepository();
-
+const animalMeetingService = new AnimalMeetingService();
 const RRULE_DAYS: Weekday[] = [
   RRule.SU,
   RRule.MO,
@@ -55,11 +56,15 @@ const RRULE_FREQ: Record<string, Frequency> = {
 };
 
 export class MeetingService {
+  private isUpcoming(date: Date) {
+    return new Date(date) >= new Date();
+  }
   private isRecurring(
     m: MeetingBaseWithSpecific | MeetingRecurringWithChildren,
   ): m is MeetingRecurringWithChildren {
     return "dateStart" in m;
   }
+
   // ── Flatten ────────────────────────────────────────────────────────────────
 
   private flattenBase({
@@ -327,47 +332,5 @@ export class MeetingService {
     const meeting = await meetingRepository.getMeetingById(id);
     if (!meeting) throw new NotFoundError("Meeting");
     return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
-  }
-
-  async delete(id: MeetingId, date?: Date) {
-    const meeting = await meetingRepository.getMeetingById(id);
-
-    if (meeting) {
-      const meetingDate = new Date(meeting.date);
-      if (meetingDate < new Date()) throw new ForbiddenError();
-
-      if (meeting.parentId) {
-        // C'est l'override d'une occurrence récurrente → on le supprime
-        // et on transforme cette date en EXCEPTION sur la récurrence
-        await meetingRepository.delete(meeting.id);
-        return meetingRepository.createException({
-          parentId: meeting.parentId,
-          date: meeting.date,
-          kind: meeting.kind,
-          startTime: meeting.startTime,
-          endTime: meeting.endTime,
-        });
-      }
-
-      // RDV ponctuel classique → suppression simple
-      return meetingRepository.delete(meeting.id);
-    }
-
-    // Aucun MeetingBase trouvé → id correspond à une récurrence,
-    // et cette occurrence n'a jamais été matérialisée (ni override, ni exception)
-    if (!date) throw new BadRequestError("La date de l'occurrence est requise");
-
-    const recurring = await meetingRepository.getRecurringById(id);
-    if (!recurring) throw new NotFoundError("Rendez-vous");
-
-    if (date < new Date()) throw new ForbiddenError();
-
-    return meetingRepository.createException({
-      parentId: id,
-      date,
-      kind: recurring.kind,
-      startTime: recurring.startTime,
-      endTime: recurring.endTime,
-    });
   }
 }

@@ -85,7 +85,6 @@ function onConfirm() {
 }
 
 .confirm-title {
-  font-family: 'Nunito', sans-serif;
   font-size: var(--el-font-size-large);
   font-weight: var(--fw-bold);
   color: var(--el-text-color-primary);

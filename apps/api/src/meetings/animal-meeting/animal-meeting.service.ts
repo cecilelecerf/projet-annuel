@@ -350,11 +350,11 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
+    if (!id) throw new BadRequestError("L'id est obligatoire");
     const user = await userRepository.getUserById({ id });
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-    console.log(id);
     return animalMeetingRepository.findByUser(id);
   }
 

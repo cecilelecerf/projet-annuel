@@ -20,7 +20,7 @@ animalMeetingRouter.post(
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   validate(createAnimalMeetingSchema),
-  animalController.getByClient.bind(animalController) as RequestHandler,
+  animalController.create.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
   "/",

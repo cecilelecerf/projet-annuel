@@ -63,7 +63,7 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(animalMeetigWithMeetingSchema.parse(meeting));
+      res.status(200).json(animalMeetingFieldSchema.parse(meeting));
     } catch (err) {
       next(err);
     }
@@ -91,14 +91,12 @@ export class AnimalMeetingController {
     res: Response,
     next: NextFunction,
   ) {
-    console.log("enter");
     try {
       const meetings = await animalMeetingService.getByUser({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
-      console.log(meetings[0].animal.client.user);
       res.status(200).json(
         animalMeetigWithMeetingSchema.array().parse(
           meetings.map((meeting) => ({

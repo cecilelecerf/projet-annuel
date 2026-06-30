@@ -6,7 +6,7 @@ import type {
   UpdateMedicalHistory,
   UserRole,
 } from "@armali/schemas";
-import { AnimalMeetingRepository } from "@api/meetings";
+import { AnimalMeetingRepository } from "@api/meetings/animal-meeting/animal-meeting.repository";
 import { VeterinarianClinicRepository } from "@api/clinics/veterinarian-clinics/veterinarian-clinic.repository";
 import { ClinicActRepository } from "@api/acts/clinic-act.repository";
 import { AnimalRepository } from "@api/animals/animal.repository";

@@ -7,8 +7,8 @@ import {
 } from '@armali/schemas'
 
 export const medicalHistoriesApi = {
-  getAll: async (meetingId: MeetingId) => {
-    const data = await http.get(`/medical-histories/${meetingId}`)
+  getByMeeting: async (meetingId: MeetingId) => {
+    const data = await http.get(`/meetings/animals/${meetingId}/medical-histories`)
     return medicalHistorySchema.array().parse(data)
   },
   update: async (

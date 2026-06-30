@@ -39,7 +39,7 @@ export const medicalHistorySchema = z.object({
   performedAt: z.coerce.date(),
   notes: z.string().nullable().optional(),
   priceApplied: z.coerce.number().multipleOf(0.01),
-  animalMeetingId: meetingIdSchema,
+  animalMeetingId: meetingIdSchema.nullable(),
   clinicActId: clinicActIdSchema.nullable().optional(),
   clinicAct: clinicActSchema.nullable().optional(),
   actId: actIdSchema.nullable().optional(),

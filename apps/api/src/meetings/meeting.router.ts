@@ -5,11 +5,11 @@ import { MeetingController } from "@api/meetings/meeting.controller";
 import availabilityRouter from "./availability/availability.router";
 import animalMeetingRouter from "./animal-meeting/animal-meeting.router";
 import internalMeetingRouter from "./internal-meeting/internal-meeting.router";
+import recurringMeetingRouter from "./recurring-meeting/recurring-meeting.router";
 
 const meetingRouter: RouterType = Router();
 
 const meetingController = new MeetingController();
-
 // ── Calendrier ────────────────────────────────────────────────────────────────
 meetingRouter.get(
   "/calendar",
@@ -33,13 +33,7 @@ meetingRouter.get(
   meetingController.getMeeting.bind(meetingController) as RequestHandler,
 );
 
-meetingRouter.delete(
-  "/:id",
-  authMiddleware,
-  roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),
-  meetingController.delete.bind(meetingController) as RequestHandler,
-);
-
+meetingRouter.use("/recurrings", recurringMeetingRouter);
 meetingRouter.use("/availabilities", availabilityRouter);
 meetingRouter.use("/animals", animalMeetingRouter);
 meetingRouter.use("/internal", internalMeetingRouter);

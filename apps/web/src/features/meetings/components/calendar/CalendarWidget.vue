@@ -5,13 +5,19 @@ import NewEvent from '../NewEventDrawer/index.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
-import type { UserId } from '@armali/schemas'
+import type { MeetingId, UserId } from '@armali/schemas'
+import { calendarApi } from '../../api/calendar.api.ts'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
+const router = useRouter()
 const { calendarOptions, dateSelect, openNewEvent, selectedMeeting } = useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
+const showDeleteDialog = ref(false)
+const deleting = ref(false)
 const isDateDrawerOpen = computed({
   get: () => dateSelect.value !== null,
   set: (val) => {
@@ -22,6 +28,23 @@ const isDateDrawerOpen = computed({
 const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
+}
+const onDelete = async () => {
+  if (!selectedMeeting.value) return
+  deleting.value = true
+  try {
+    await calendarApi.delete(
+      selectedMeeting.value?.id as MeetingId,
+      selectedMeeting.value?.date.toISOString(),
+    )
+    ElMessage.success('Rendez-vous supprimé')
+    showDeleteDialog.value = false
+    router.back()
+  } catch {
+    ElMessage.error('Erreur lors de la suppression')
+  } finally {
+    deleting.value = false
+  }
 }
 </script>
 
@@ -40,6 +63,11 @@ const onNewEventDrawerClose = () => {
         (date) => {
           newEventDate = date
           openNewEvent = true
+        }
+      "
+      @on-click-event="
+        (id, date) => {
+          selectedMeeting = { id, date: new Date(date) }
         }
       "
     />
@@ -63,7 +91,14 @@ const onNewEventDrawerClose = () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
-    @delete="selectedMeeting = null"
+    @delete="showDeleteDialog = true"
+  />
+  <ConfirmDeleteDialog
+    v-model="showDeleteDialog"
+    title="Supprimer le rendez-vous ?"
+    message="Cette action est définitive et ne peut pas être annulée."
+    :loading="deleting"
+    @confirm="onDelete"
   />
 </template>
 
@@ -187,25 +222,25 @@ const onNewEventDrawerClose = () => {
   padding: var(--spacing-xs);
 }
 :deep(.kind-ANIMAL) {
-  background: color-mix(in srgb, var(--el-color-teal-light) 25%, transparent) !important;
+  background: var(--el-color-teal-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-teal) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-teal-dark);
+    color: var(--el-color-teal-dark-5);
   }
 }
 :deep(.kind-INTERNAL) {
-  background: color-mix(in srgb, var(--el-color-purple-light) 25%, transparent) !important;
+  background: var(--el-color-purple-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-purple) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-purple-dark);
+    color: var(--el-color-purple-dark-5);
   }
 }
 

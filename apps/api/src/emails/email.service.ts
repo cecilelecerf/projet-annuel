@@ -1,4 +1,9 @@
 import transporter from "@api/lib/mailer";
+import {
+  AppointmentEmailType,
+  appointmentTemplates,
+} from "./templates/appointment.templates";
+import { emailLayout } from "./templates/layout";
 
 export class EmailService {
   private from = process.env.MAIL_USER || "noreply@armali.fr";
@@ -36,6 +41,20 @@ export class EmailService {
           <p>Vous pouvez maintenant vous connecter et profiter de nos services.</p>
         </div>
       `,
+    });
+  }
+  async sendAppointmentEmail(
+    type: AppointmentEmailType,
+    email: string,
+    data: Parameters<(typeof appointmentTemplates)[typeof type]>[0],
+  ) {
+    const { subject, titleColor, title, body } =
+      appointmentTemplates[type](data);
+    await transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject,
+      html: emailLayout(titleColor, title, body),
     });
   }
 }

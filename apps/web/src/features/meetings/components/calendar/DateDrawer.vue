@@ -24,7 +24,11 @@ const { date, userId } = defineProps<{
   date: Date
   userId?: UserId
 }>()
-const emit = defineEmits<{ close: []; newEvent: [date: Date] }>()
+const emit = defineEmits<{
+  close: []
+  newEvent: [date: Date]
+  onClickEvent: [id: string, date: string]
+}>()
 
 const calendar = ref<Calendar | null>(null)
 const formatted = dayjs(date).format('YYYY-MM-DD')
@@ -49,7 +53,12 @@ const calendarOptions = ref<CalendarOptions>({
     `kind-${arg.event.extendedProps.kind}`,
     `status-${arg.event.extendedProps.status}`,
   ],
-  eventClick: (info: EventClickArg) => console.log('RDV cliqué', info.event.title),
+  eventClick: (info: EventClickArg) => {
+    const [id] = info.event.id.split('_')
+    if (!id) return
+    emit('onClickEvent', id, info.event.extendedProps.date)
+    emit('close')
+  },
   dateClick: (info: DateClickArg) => {
     emit('newEvent', info.date)
   },

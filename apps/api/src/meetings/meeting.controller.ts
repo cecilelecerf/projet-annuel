@@ -7,18 +7,29 @@ import {
   MeetingId,
 } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
-import { BadRequestError, NotFoundError } from "@api/errors";
+import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
 import { prisma } from "@api/lib/prisma";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { MeetingService } from "./meeting.service";
 import { UserService } from "@api/users";
 import { AnimalMeetingService } from "./animal-meeting";
-import { InternalMeetingService } from "./internal-meeting";
+import {
+  InternalMeetingRepository,
+  InternalMeetingService,
+} from "./internal-meeting";
 import { AvailabilityService } from "./availability";
+import dayjs from "dayjs";
+import { RecurringRepository } from "./recurring-meeting/recurring-meeting.repository";
 
 const meetingService = new MeetingService();
 const animalMeetingService = new AnimalMeetingService();
-const internalMeetingService = new InternalMeetingService();
+const internalMeetingRepository = new InternalMeetingRepository(prisma);
+const recurringRepository = new RecurringRepository(prisma);
+
+const internalMeetingService = new InternalMeetingService(
+  internalMeetingRepository,
+  recurringRepository,
+);
 const availabilityService = new AvailabilityService();
 const userService = new UserService();
 
@@ -139,7 +150,6 @@ export class MeetingController {
                 throw new BadRequestError("date invalide");
               return {
                 id: base.id,
-                recurringId: base.id,
                 createdAt: base.createdAt,
                 updatedAt: base.updatedAt,
                 startTime: base.startTime,
@@ -147,7 +157,7 @@ export class MeetingController {
                 kind: base.kind,
                 date: date.toISOString(),
                 type: "SPECIFIED" as const,
-                parentId: null,
+                parentId: base.id,
               };
             })
         : null;
@@ -159,9 +169,9 @@ export class MeetingController {
             userId: req.user.id,
             role: req.user.role,
           });
-          const data = recurringBase
-            ? { ...meeting, ...recurringBase }
-            : { ...meeting, ...meeting.meeting };
+          if (recurringBase)
+            throw new ConflictError("Animal meeting nor recurrent");
+          const data = { ...meeting, ...meeting.meeting };
           return res.status(200).json(animalMeetingMetaSchema.parse(data));
         }
         case "INTERNAL": {
@@ -172,7 +182,6 @@ export class MeetingController {
           const data = recurringBase
             ? { ...meeting, ...recurringBase }
             : { ...meeting, ...meeting.meeting };
-
           return res.status(200).json(internalMeetingMetaSchema.parse(data));
         }
         case "AVAILABILITY": {
@@ -190,19 +199,6 @@ export class MeetingController {
         default:
           throw new NotFoundError("Meeting");
       }
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async delete(
-    req: RequestWithParams<{ id: MeetingId }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      await meetingService.delete(req.params.id);
-      res.status(204).send();
     } catch (err) {
       next(err);
     }

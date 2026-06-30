@@ -21,6 +21,14 @@ internalMeetingRouter.post(
   internalController.create.bind(internalController) as RequestHandler,
 );
 internalMeetingRouter.patch(
+  "/:id/participants",
+  authMiddleware,
+  roleMiddleware(STAFF_ROLES),
+  internalController.updateParticipantStatus.bind(
+    internalController,
+  ) as RequestHandler,
+);
+internalMeetingRouter.patch(
   "/:id",
   authMiddleware,
   roleMiddleware(STAFF_ROLES),
@@ -31,14 +39,6 @@ internalMeetingRouter.delete(
   authMiddleware,
   roleMiddleware(STAFF_ROLES),
   internalController.delete.bind(internalController) as RequestHandler,
-);
-internalMeetingRouter.patch(
-  "/:id/participants/:userId",
-  authMiddleware,
-  roleMiddleware(STAFF_ROLES),
-  internalController.updateParticipantStatus.bind(
-    internalController,
-  ) as RequestHandler,
 );
 
 export default internalMeetingRouter;

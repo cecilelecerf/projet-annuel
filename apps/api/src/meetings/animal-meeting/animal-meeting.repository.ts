@@ -12,7 +12,7 @@ import {
 export class AnimalMeetingRepository {
   async findById(id: string) {
     return prisma.animalMeeting.findFirst({
-      where: { OR: [{ meetingId: id }, { recurringId: id }] },
+      where: { OR: [{ meetingId: id }] },
       include: {
         meeting: true,
         animal: {
@@ -22,6 +22,7 @@ export class AnimalMeetingRepository {
           },
         },
         speciality: true,
+        veterinarianClinic: true,
       },
     });
   }
@@ -63,20 +64,28 @@ export class AnimalMeetingRepository {
     return prisma.animalMeeting.update({
       where: { id },
       data: {
-        description: data.description,
-        petWeight: data.petWeight,
-        petSize: data.petSize,
-        report: data.report,
-        speciality: data.specialityId
-          ? { connect: { id: data.specialityId } }
-          : { disconnect: true },
-        meeting: {
-          update: {
-            date: data.date,
-            startTime: data.startTime,
-            endTime: data.endTime,
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
+        ...(data.petWeight !== undefined && { petWeight: data.petWeight }),
+        ...(data.petSize !== undefined && { petSize: data.petSize }),
+        ...(data.report !== undefined && { report: data.report }),
+        ...(data.specialityId !== undefined && {
+          speciality: data.specialityId
+            ? { connect: { id: data.specialityId } }
+            : { disconnect: true },
+        }),
+        ...((data.date || data.startTime || data.endTime) && {
+          meeting: {
+            update: {
+              data: {
+                ...(data.date && { date: data.date }),
+                ...(data.startTime && { startTime: data.startTime }),
+                ...(data.endTime && { endTime: data.endTime }),
+              },
+            },
           },
-        },
+        }),
       },
       include: { meeting: true, animal: true },
     });

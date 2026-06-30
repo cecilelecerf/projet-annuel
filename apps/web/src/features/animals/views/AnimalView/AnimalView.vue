@@ -196,7 +196,7 @@ const lastSize = computed(() => {
             <span class="vaccine-name">{{ v.vaccine?.act?.name }}</span>
             <span class="vaccine-date">
               {{
-                v.medicalHistory.performedAt
+                v.medicalHistory?.performedAt
                   ? dayjs(v.medicalHistory.performedAt).format('D MMM YYYY')
                   : '—'
               }}
@@ -640,13 +640,6 @@ const lastSize = computed(() => {
 }
 
 // ── Description ───────────────────────────────────────────────────────────────
-
-.description-text {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
 
 .empty-text {
   font-size: 13px;

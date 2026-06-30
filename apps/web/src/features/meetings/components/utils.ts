@@ -16,19 +16,18 @@ export const toCalendarEvent = (base: FlatMeeting) => {
       ? new Date(`${date.toISOString().split('T')[0]}T${base.endTime.toISOString().split('T')[1]}`)
       : undefined
   const resultBase = {
-    id: base.id,
+    id: `${base.id}_${date.toISOString()}`,
     start: start?.toISOString(),
     end: end?.toISOString(),
   }
   return match(base)
     .with({ kind: 'ANIMAL' }, (b) => ({
       ...resultBase,
-      title: b.description ?? '',
+      title: b.speciality?.name ?? 'Consultation',
       extendedProps: {
         kind: base.kind,
         description: b.animalId,
-
-        date: b.recurringId ? b.date : undefined,
+        date: undefined,
       },
     }))
     .with({ kind: 'INTERNAL' }, (b) => ({

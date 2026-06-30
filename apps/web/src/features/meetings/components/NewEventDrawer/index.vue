@@ -310,19 +310,19 @@ const handleSubmit = async () => {
     color: var(--el-color-purple-dark);
   }
   &:hover.type-animal {
-    border-color: var(--el-color-teal-dark);
-    color: var(--el-color-teal-dark);
+    border-color: var(--el-color-teal-dark-2);
+    color: var(--el-color-teal-dark-2);
   }
 
   &.active.type-internal {
     background: var(--el-color-purple-light);
     border-color: var(--el-color-purple);
-    color: var(--el-color-purple-dark);
+    color: var(--el-color-purple-dark-3);
     font-weight: var(--fw-semibold);
   }
 
   &.active.type-animal {
-    background: var(--el-color-teal-light);
+    background: var(--el-color-teal-light-5);
     border-color: var(--el-color-teal);
     color: var(--el-color-teal-dark);
     font-weight: var(--fw-semibold);

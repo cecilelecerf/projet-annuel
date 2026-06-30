@@ -20,6 +20,13 @@ import {
   type UpdateAnimalMeeting,
   type UserId,
   medicalHistorySchema,
+  meetingRecurringSchema,
+  type MeetingRecurringId,
+  type UpdateRecurring,
+  type UpdateInternalMeeting,
+  internalMeetingField,
+  type MeetingParticipantStatus,
+  type UpdateParticipantStatus,
 } from '@armali/schemas'
 
 export const calendarApi = {
@@ -42,8 +49,8 @@ export const calendarApi = {
     return meetingMetaSchema.parse(data)
   },
 
-  delete: async (meetingId: MeetingId) => {
-    return await http.delete(`/meetings/${meetingId}`)
+  delete: async (meetingId: MeetingId, date?: string) => {
+    return await http.delete(`/meetings/${meetingId}${date ? `?date=${date}` : ''}`)
   },
 
   internal: {
@@ -53,6 +60,13 @@ export const calendarApi = {
     get: async (meetingId: MeetingId) => {
       const data = await http.get(`/meetings/internal/${meetingId}`)
       return internalMeetingSchema.parse(data)
+    },
+    update: async (meetingId: MeetingId, meeting: UpdateInternalMeeting) => {
+      const data = await http.patch(`/meetings/internal/${meetingId}`, meeting)
+      return internalMeetingField.extend({ meeting: meetingBaseSchema }).parse(data)
+    },
+    participantUpdate: async (meetingId: MeetingId, data: UpdateParticipantStatus) => {
+      await http.patch(`/meetings/internal/${meetingId}/participants`, data)
     },
   },
   animal: {
@@ -69,7 +83,7 @@ export const calendarApi = {
     },
 
     getAllByAnimal: async (animalId: AnimalId) => {
-      const data = await http.get(`/meetings/animals/animals/${animalId}`)
+      const data = await http.get(`/animals/${animalId}/meetings`)
       return animalMeetingFieldSchema
         .extend({
           meeting: meetingBaseSchema,
@@ -80,11 +94,21 @@ export const calendarApi = {
     },
 
     getAllByClientId: async (clientId: ClientId) => {
-      const data = await http.get(`/meetings/animals/users/${clientId}`)
+      const data = await http.get(`/users/${clientId}/animal-meetings`)
       return animalMeetigWithMeetingSchema
         .extend({ animal: animalWithRaceMeta })
         .array()
         .parse(data)
+    },
+  },
+  recurring: {
+    get: async (reccuringId: MeetingRecurringId) => {
+      const data = await http.get(`/meetings/recurrings/${reccuringId}`)
+      return meetingRecurringSchema.parse(data)
+    },
+    update: async (reccuringId: MeetingRecurringId, body: UpdateRecurring) => {
+      const data = await http.patch(`/meetings/recurrings/${reccuringId}`, body)
+      return meetingRecurringSchema.parse(data)
     },
   },
 }

@@ -163,8 +163,6 @@ async function handleLogout() {
 </template>
 
 <style scoped>
-.profil-page {
-}
 .profil-card {
   background: white;
   border-radius: 12px;
@@ -181,7 +179,7 @@ async function handleLogout() {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #e6a23c;
+  background: var(--el-color-yellow);
   color: white;
   display: flex;
   align-items: center;
@@ -197,7 +195,7 @@ async function handleLogout() {
 }
 .profil-role {
   background: #fdf6ec;
-  color: #e6a23c;
+  color: var(--el-color-yellow);
   border-radius: 6px;
   padding: 2px 10px;
   font-size: 13px;

@@ -39,10 +39,10 @@ const timeRange = `${dayjs(start).format('H[h]mm')} - ${dayjs(end).format('H[h]m
   gap: var(--spacing-xs);
   flex-direction: row-reverse;
   &.kind-ANIMAL {
-    border-color: var(--el-color-teal-dark);
+    border-color: var(--el-color-teal-dark-2);
   }
   &.kind-INTERNAL {
-    border-color: var(--el-color-purple-dark);
+    border-color: var(--el-color-purple-dark-2);
   }
 }
 

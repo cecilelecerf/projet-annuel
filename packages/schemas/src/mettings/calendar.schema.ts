@@ -1,12 +1,15 @@
 import { z } from "zod";
-import { meetingStatusSchema } from "./meeting-base.schema";
+import { meetingParticipantStatusSchema } from "./meeting-base.schema";
 import { internalMeetingSchema } from "./internal-meeting.schema";
 import { availabilitiesSchema } from "./availability.schema";
-import { animalMeetingSchema } from "./animal-meeting.schema";
+import {
+  animalMeetingMetaSchema,
+  animalMeetingSchema,
+} from "./animal-meeting.schema";
 import { meetingRecurringIdSchema } from "../ids";
 
 export const flatInternalMeetingSchema = internalMeetingSchema.extend({
-  status: meetingStatusSchema.optional(),
+  status: meetingParticipantStatusSchema.optional(),
   recurringId: meetingRecurringIdSchema.nullable(),
 });
 export const flatMeetingSchema = z.discriminatedUnion("kind", [
@@ -14,9 +17,7 @@ export const flatMeetingSchema = z.discriminatedUnion("kind", [
     recurringId: meetingRecurringIdSchema.nullable(),
   }),
   flatInternalMeetingSchema,
-  animalMeetingSchema.extend({
-    recurringId: meetingRecurringIdSchema.nullable(),
-  }),
+  animalMeetingSchema,
 ]);
 
 export const meetingWithExceptionSchema = flatMeetingSchema;

@@ -7,8 +7,13 @@ import {
   updateParticipantStatusSchema,
 } from "@armali/schemas";
 import { InternalMeetingService } from "./internal-meeting.service";
+import { prisma } from "@api/lib/prisma";
+import { InternalMeetingRepository } from "./internal-meeting.repository";
+const internalMeetingRepository = new InternalMeetingRepository(prisma);
 
-const internalMeetingService = new InternalMeetingService();
+const internalMeetingService = new InternalMeetingService(
+  internalMeetingRepository,
+);
 
 export class InternalMeetingController {
   async create(
@@ -16,6 +21,7 @@ export class InternalMeetingController {
     res: Response,
     next: NextFunction,
   ) {
+    console.log("enter");
     try {
       if (!req.user.clinicId) throw new ForbiddenError();
 
@@ -74,9 +80,10 @@ export class InternalMeetingController {
 
       const participant = await internalMeetingService.updateParticipantStatus({
         meetingId: req.params.id,
-        userId: req.params.userId,
+        userId: req.user.id,
         status: result.data.status,
-        requesterId: req.user.id,
+        date: result.data.date,
+        scope: result.data.scope,
       });
       res.status(200).json(participant);
     } catch (err) {

@@ -125,11 +125,7 @@ const onDelete = () => {
             Supprimer
           </el-button>
         </el-row>
-        <el-button
-          @click="goToDetail"
-          type="primary"
-          :color="meeting.kind === 'ANIMAL' ? 'var(--el-color-teal)' : ' var(--el-color-purple)'"
-        >
+        <el-button @click="goToDetail" :type="meeting.kind === 'ANIMAL' ? 'teal' : 'purple'">
           <el-icon><Plus /></el-icon>
           Voir plus
         </el-button>
@@ -205,7 +201,7 @@ const onDelete = () => {
   align-items: center;
   justify-content: space-around;
   background: color-mix(in srgb, var(--el-color-teal) 8%, transparent);
-  border: 1.5px solid var(--el-color-teal-light);
+  border: 1.5px solid var(--el-color-teal-light-5);
   border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-lg);
   gap: var(--spacing-md);
@@ -225,9 +221,7 @@ const onDelete = () => {
 }
 
 .participant-avatar {
-  background: var(--el-color-purple-light);
-  color: var(--el-color-purple-dark);
-  font-size: 12px;
+  background: var(--el-color-purple);
   border: 2px solid var(--el-bg-color);
   margin-left: -6px;
   &:first-child {

@@ -223,25 +223,25 @@ const onDelete = async () => {
   padding: var(--spacing-xs);
 }
 :deep(.kind-ANIMAL) {
-  background: color-mix(in srgb, var(--el-color-teal-light) 25%, transparent) !important;
+  background: var(--el-color-teal-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-teal) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-teal-dark);
+    color: var(--el-color-teal-dark-5);
   }
 }
 :deep(.kind-INTERNAL) {
-  background: color-mix(in srgb, var(--el-color-purple-light) 25%, transparent) !important;
+  background: var(--el-color-purple-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-purple) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-purple-dark);
+    color: var(--el-color-purple-dark-5);
   }
 }
 

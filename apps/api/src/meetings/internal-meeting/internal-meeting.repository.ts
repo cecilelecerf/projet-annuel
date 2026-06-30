@@ -1,16 +1,22 @@
-import { prisma } from "@api/lib/prisma";
 import { userWithProfileAndClinicIdInclude } from "@api/users/user.types";
 import type {
   CreateInternalMeeting,
-  MeetingId,
-  MeetingRecurringId,
-  MeetingStatus,
+  MeetingParticipantStatus,
   UpdateInternalMeeting,
 } from "@armali/schemas";
+import {
+  InternalMeeting,
+  InternalMeetingParticipant,
+  MeetingReccuring,
+  PrismaClient,
+} from "../../../prisma/generated/prisma/client";
+import { RecurringWithRelations } from "../recurring-meeting/recurring-meeting.repository";
 
 export class InternalMeetingRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findById(id: string) {
-    return prisma.internalMeeting.findFirst({
+    return this.prisma.internalMeeting.findFirst({
       where: { OR: [{ meetingId: id }, { recurringId: id }] },
       include: {
         meeting: true,
@@ -31,7 +37,7 @@ export class InternalMeetingRepository {
     authorId: string;
     clinicId: string;
   }) {
-    return prisma.meetingBase.create({
+    return this.prisma.meetingBase.create({
       data: {
         kind: "INTERNAL",
         date: data.date,
@@ -63,7 +69,7 @@ export class InternalMeetingRepository {
   }
 
   async update({ id, data }: { id: string; data: UpdateInternalMeeting }) {
-    return prisma.internalMeeting.update({
+    return this.prisma.internalMeeting.update({
       where: { meetingId: id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
@@ -87,19 +93,82 @@ export class InternalMeetingRepository {
   }
 
   async delete(id: string) {
-    return prisma.meetingBase.delete({ where: { id } });
+    return this.prisma.meetingBase.delete({ where: { id } });
   }
-
+  async findParticipant(internalMeetingId: string, userId: string) {
+    return this.prisma.internalMeetingParticipant.findFirst({
+      where: { meetingId: internalMeetingId, userId },
+    });
+  }
   async updateParticipantStatus({
-    participantId,
+    internalMeetingId,
+    userId,
     status,
   }: {
-    participantId: string;
-    status: MeetingStatus;
+    internalMeetingId: string;
+    userId: string;
+    status: MeetingParticipantStatus;
   }) {
-    return prisma.internalMeetingParticipant.update({
-      where: { id: participantId },
+    return this.prisma.internalMeetingParticipant.updateMany({
+      where: { meetingId: internalMeetingId, userId },
       data: { status },
+    });
+  }
+  async copyParticipantStatuses({
+    targetInternalMeetingId,
+    sourceParticipants,
+  }: {
+    targetInternalMeetingId: string;
+    sourceParticipants: InternalMeetingParticipant[];
+  }) {
+    await this.prisma.$transaction(
+      sourceParticipants.map((p) =>
+        this.prisma.internalMeetingParticipant.updateMany({
+          where: { meetingId: targetInternalMeetingId, userId: p.userId },
+          data: { status: p.status },
+        }),
+      ),
+    );
+  }
+
+  async createOccurrenceOverride({
+    internalMeeting,
+    date,
+    userId,
+    status,
+  }: {
+    internalMeeting: InternalMeeting & {
+      recurring: MeetingReccuring;
+      participants: InternalMeetingParticipant[];
+    };
+    date: Date;
+    userId: string;
+    status: MeetingParticipantStatus;
+  }) {
+    return this.prisma.meetingBase.create({
+      data: {
+        kind: "INTERNAL",
+        type: "SPECIFIED",
+        date,
+        startTime: internalMeeting.recurring.startTime,
+        endTime: internalMeeting.recurring.endTime,
+        parentId: internalMeeting.recurring.id,
+        internalMeeting: {
+          create: {
+            title: internalMeeting.title,
+            description: internalMeeting.description,
+            adminId: internalMeeting.adminId,
+            clinicId: internalMeeting.clinicId,
+            participants: {
+              create: internalMeeting.participants.map((p) => ({
+                userId: p.userId,
+                status: p.userId === userId ? status : p.status,
+              })),
+            },
+          },
+        },
+      },
+      include: { internalMeeting: { include: { participants: true } } },
     });
   }
 }

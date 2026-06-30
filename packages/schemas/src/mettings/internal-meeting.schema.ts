@@ -3,12 +3,13 @@ import {
   clinicIdSchema,
   internalMeetingParticipantIdSchema,
   meetingIdSchema,
+  meetingRecurringIdSchema,
   userIdSchema,
 } from "../ids";
 import {
   createMeetingBaseSchema,
   meetingBaseSchema,
-  meetingStatusSchema,
+  meetingParticipantStatusSchema,
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { userSchema } from "../users";
@@ -19,7 +20,7 @@ export const internalMeetingParticipantSchema = z.object({
   updatedAt: z.coerce.date(),
   meetingId: meetingIdSchema,
   userId: userIdSchema,
-  status: meetingStatusSchema,
+  status: meetingParticipantStatusSchema,
 });
 export const internalMeetingParticipantMetaSchema = z.object({
   id: internalMeetingParticipantIdSchema,
@@ -28,7 +29,7 @@ export const internalMeetingParticipantMetaSchema = z.object({
   meetingId: meetingIdSchema,
   userId: userIdSchema,
   user: userSchema,
-  status: meetingStatusSchema,
+  status: meetingParticipantStatusSchema,
 });
 export const internalMeetingField = z.object({
   title: z.string().max(255),
@@ -69,9 +70,13 @@ export const updateInternalMeetingSchema = createInternalMeetingFields
   .refine(timeRefineFn, timeRefineOptions);
 
 export const updateParticipantStatusSchema = z.object({
-  status: meetingStatusSchema,
+  status: meetingParticipantStatusSchema,
+  date: z.coerce.date().optional(),
+  scope: z.enum(["single", "all"]),
 });
-
+export type UpdateParticipantStatus = z.infer<
+  typeof updateParticipantStatusSchema
+>;
 export type InternalMeetingMeta = z.infer<typeof internalMeetingMetaSchema>;
 export type InternalMeeting = z.infer<typeof internalMeetingSchema>;
 export type CreateInternalMeeting = z.infer<typeof createInternalMeetingSchema>;

@@ -13,13 +13,23 @@ import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { MeetingService } from "./meeting.service";
 import { UserService } from "@api/users";
 import { AnimalMeetingService } from "./animal-meeting";
-import { InternalMeetingService } from "./internal-meeting";
+import {
+  InternalMeetingRepository,
+  InternalMeetingService,
+} from "./internal-meeting";
 import { AvailabilityService } from "./availability";
 import dayjs from "dayjs";
+import { RecurringRepository } from "./recurring-meeting/recurring-meeting.repository";
 
 const meetingService = new MeetingService();
 const animalMeetingService = new AnimalMeetingService();
-const internalMeetingService = new InternalMeetingService();
+const internalMeetingRepository = new InternalMeetingRepository(prisma);
+const recurringRepository = new RecurringRepository(prisma);
+
+const internalMeetingService = new InternalMeetingService(
+  internalMeetingRepository,
+  recurringRepository,
+);
 const availabilityService = new AvailabilityService();
 const userService = new UserService();
 

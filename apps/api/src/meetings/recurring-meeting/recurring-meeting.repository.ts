@@ -25,7 +25,7 @@ const recurringInclude = {
   },
 } satisfies Prisma.MeetingReccuringInclude;
 
-type RecurringWithRelations = Prisma.MeetingReccuringGetPayload<{
+export type RecurringWithRelations = Prisma.MeetingReccuringGetPayload<{
   include: typeof recurringInclude;
 }>;
 type RecurringEditableFields = Omit<UpdateRecurring, "dateToActionStart">;

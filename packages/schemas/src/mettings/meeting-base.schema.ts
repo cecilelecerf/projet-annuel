@@ -7,7 +7,11 @@ export const scheduleTypeSchema = z.enum([
   "EXCEPTION",
 ]);
 export const meetingKindSchema = z.enum(["AVAILABILITY", "INTERNAL", "ANIMAL"]);
-export const meetingStatusSchema = z.enum(["PENDING", "ACCEPTED", "DECLINED"]);
+export const meetingParticipantStatusSchema = z.enum([
+  "PENDING",
+  "ACCEPTED",
+  "DECLINED",
+]);
 
 export const meetingBaseSchema = z.object({
   id: meetingIdSchema,
@@ -31,7 +35,9 @@ export const updateMeetingBaseSchema = createMeetingBaseSchema.partial();
 
 export type ScheduleType = z.infer<typeof scheduleTypeSchema>;
 export type MeetingKind = z.infer<typeof meetingKindSchema>;
-export type MeetingStatus = z.infer<typeof meetingStatusSchema>;
+export type MeetingParticipantStatus = z.infer<
+  typeof meetingParticipantStatusSchema
+>;
 export type MeetingBase = z.infer<typeof meetingBaseSchema>;
 export type CreateMeetingBase = z.infer<typeof createMeetingBaseSchema>;
 export type UpdateMeetingBase = z.infer<typeof updateMeetingBaseSchema>;

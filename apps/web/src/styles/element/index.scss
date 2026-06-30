@@ -1,23 +1,23 @@
 @forward 'element-plus/theme-chalk/src/common/var.scss' with (
   $colors: (
     'primary': (
-      'base': #256cab,
+      'base': #3c78ad,
+    ),
+    'success': (
+      'base': #4d884e,
+    ),
+    'danger': (
+      'base': #ac5050,
     ),
   )
 );
+@use './custom-colors.scss';
+
 .el-button--primary {
   color: var(--el-color-primary-light-9);
   letter-spacing: 0.1em;
 }
 :root {
-  --el-color-pink: #e06d84;
-  --el-color-purple: #9f6de0;
-  --el-color-purple-light: #dbc2fb;
-  --el-color-purple-dark: #654590;
-  --el-color-teal: #5aa95b;
-  --el-color-teal-dark: #457f46;
-  --el-color-teal-light: #b3f0b4;
-  --el-color-primary-dark-9: #0d2438;
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;

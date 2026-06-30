@@ -25,6 +25,8 @@ import {
   type UpdateRecurring,
   type UpdateInternalMeeting,
   internalMeetingField,
+  type MeetingParticipantStatus,
+  type UpdateParticipantStatus,
 } from '@armali/schemas'
 
 export const calendarApi = {
@@ -62,6 +64,9 @@ export const calendarApi = {
     update: async (meetingId: MeetingId, meeting: UpdateInternalMeeting) => {
       const data = await http.patch(`/meetings/internal/${meetingId}`, meeting)
       return internalMeetingField.extend({ meeting: meetingBaseSchema }).parse(data)
+    },
+    participantUpdate: async (meetingId: MeetingId, data: UpdateParticipantStatus) => {
+      await http.patch(`/meetings/internal/${meetingId}/participants`, data)
     },
   },
   animal: {

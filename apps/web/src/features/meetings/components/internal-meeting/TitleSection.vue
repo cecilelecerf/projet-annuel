@@ -19,7 +19,7 @@ const title = defineModel<string>('title', { default: '' })
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .section {
   display: flex;
   flex-direction: column;
@@ -51,7 +51,7 @@ const title = defineModel<string>('title', { default: '' })
   font-family: 'Nunito', sans-serif;
   font-size: 28px;
   font-weight: var(--fw-bold);
-  color: var(--el-color-purple-dark);
+  color: var(--el-color-purple-dark-3);
   margin: 0;
 }
 

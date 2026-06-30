@@ -156,7 +156,7 @@ const lockedReason = computed(() => {
 .meeting-title {
   font-size: 28px;
   font-weight: var(--fw-bold);
-  color: var(--el-text-color-primary);
+  color: var(--el-color-teal-dark-3);
   margin: 0;
 }
 
@@ -186,7 +186,7 @@ const lockedReason = computed(() => {
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-md);
-  background: var(--el-fill-color);
+  background: var(--el-color-teal-light-9);
   border-radius: var(--radius-md);
   text-align: center;
 }

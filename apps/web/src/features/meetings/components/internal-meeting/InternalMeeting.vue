@@ -4,7 +4,6 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import RecurringComponent from '../RecurringComponent.vue'
 import ParticipantSection from './ParticipantSection.vue'
 import DescriptionSection from './DescriptionSection.vue'
 import DateTimeSection from './DateTimeSection.vue'
@@ -14,6 +13,7 @@ import { useFormErrorStore } from '@/stores/formErrorStore.ts'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore.ts'
 import HeaderMeetingSection from '../HeaderMeetingSection.vue'
+import RecurringComponent from './RecurringComponent.vue'
 
 dayjs.locale('fr')
 
@@ -134,7 +134,7 @@ async function onDelete() {
 
     <DescriptionSection v-model:description="edit.description" :editing="isEditing" />
 
-    <ParticipantSection :participants="meeting.participants" />
+    <ParticipantSection :meeting="meeting" :participants="meeting.participants" />
 
     <RecurringComponent
       v-if="meeting.parentId"

@@ -1,10 +1,28 @@
 <script setup lang="ts">
-import { User } from '@element-plus/icons-vue'
+import { ref, computed } from 'vue'
+import { User, Check, Close, Edit } from '@element-plus/icons-vue'
 import type { InternalMeetingMeta } from '@armali/schemas'
+import { calendarApi } from '../../api/calendar.api'
+import { useAuthStore } from '@/stores/authStore'
+import ModalScope from './ModalScope.vue'
 
-defineProps<{
+const { meeting } = defineProps<{
   participants: InternalMeetingMeta['participants']
+  meeting: InternalMeetingMeta
 }>()
+
+const emit = defineEmits<{
+  updated: []
+}>()
+
+const { user } = useAuthStore()
+
+const showScopeDialog = ref(false)
+const pendingStatus = ref<'ACCEPTED' | 'DECLINED' | null>(null)
+const responding = ref(false)
+const edit = ref(false)
+
+const myParticipant = computed(() => meeting.participants?.find((p) => p.userId === user?.id))
 
 const statusColor = (status: string) => {
   if (status === 'ACCEPTED') return 'success'
@@ -16,6 +34,40 @@ const statusLabel = (status: string) => {
   if (status === 'ACCEPTED') return 'Accepté'
   if (status === 'DECLINED') return 'Refusé'
   return 'En attente'
+}
+
+async function respond(status: 'ACCEPTED' | 'DECLINED') {
+  if (meeting.parentId) {
+    pendingStatus.value = status
+    showScopeDialog.value = true
+    return
+  }
+
+  responding.value = true
+  try {
+    await calendarApi.internal.participantUpdate(meeting.id, { status, scope: 'single' })
+    emit('updated')
+  } finally {
+    responding.value = false
+  }
+}
+
+async function confirmScope(scope: 'single' | 'all') {
+  if (!pendingStatus.value) return
+
+  responding.value = true
+  try {
+    await calendarApi.internal.participantUpdate(meeting.id, {
+      status: pendingStatus.value,
+      scope,
+      date: scope === 'single' ? meeting.date : undefined,
+    })
+    emit('updated')
+  } finally {
+    responding.value = false
+    showScopeDialog.value = false
+    pendingStatus.value = null
+  }
 }
 </script>
 
@@ -36,12 +88,50 @@ const statusLabel = (status: string) => {
           <span class="participant-name"> {{ p.user?.firstname }} {{ p.user?.lastname }} </span>
           <span class="participant-role">{{ p.user?.role }}</span>
         </div>
-        <el-tag :type="statusColor(p.status)" size="small" round>
-          {{ statusLabel(p.status) }}
-        </el-tag>
+        <div
+          class="my-response-actions"
+          v-if="p.userId === myParticipant?.userId && (myParticipant.status === 'PENDING' || edit)"
+        >
+          <el-button
+            type="success"
+            plain
+            size="small"
+            :icon="Check"
+            :loading="responding"
+            @click="respond('ACCEPTED')"
+          >
+            Accepter
+          </el-button>
+          <el-button
+            type="danger"
+            plain
+            size="small"
+            :icon="Close"
+            :loading="responding"
+            @click="respond('DECLINED')"
+          >
+            Refuser
+          </el-button>
+        </div>
+        <el-row v-else>
+          <el-button
+            v-if="p.userId === myParticipant?.userId"
+            type="secondary"
+            round
+            size="small"
+            :icon="Edit"
+            :loading="responding"
+            @click="edit = true"
+          />
+          <el-tag :type="statusColor(p.status)" size="small" round>
+            {{ statusLabel(p.status) }}
+          </el-tag>
+        </el-row>
       </div>
     </div>
   </div>
+
+  <ModalScope v-model="showScopeDialog" @on-confirm="confirmScope" />
 </template>
 
 <style scoped>
@@ -74,6 +164,27 @@ const statusLabel = (status: string) => {
   letter-spacing: 0;
 }
 
+.my-response {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--el-color-warning-light-9);
+  border: 1px solid var(--el-color-warning-light-5);
+}
+
+.my-response-text {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.my-response-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
 .participants-list {
   display: flex;
   flex-direction: column;
@@ -91,13 +202,9 @@ const statusLabel = (status: string) => {
   transition: background 0.15s;
 }
 
-.participant-row:hover {
-  background: var(--el-fill-color-light);
-}
-
 .participant-avatar {
-  background: var(--el-color-primary-light-7);
-  color: var(--el-color-primary);
+  background: var(--el-color-purple-light-7);
+  color: var(--el-color-purple);
   font-size: 14px;
   font-weight: var(--fw-bold);
   flex-shrink: 0;

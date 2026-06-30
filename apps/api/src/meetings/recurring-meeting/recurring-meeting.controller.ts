@@ -5,10 +5,9 @@ import { prisma } from "@api/lib/prisma";
 import { meetingRecurringSchema, UpdateRecurring } from "@armali/schemas";
 import { RequestWithParams } from "@api/middlewares";
 import { InternalMeetingRepository } from "../internal-meeting";
-import { AnimalMeetingRepository } from "../animal-meeting";
 
 const recurringRepository = new RecurringRepository(prisma);
-const internalRepository = new InternalMeetingRepository();
+const internalRepository = new InternalMeetingRepository(prisma);
 const recurringService = new RecurringService(
   recurringRepository,
   internalRepository,

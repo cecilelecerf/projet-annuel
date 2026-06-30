@@ -12,7 +12,6 @@ const { user } = useAuthStore()
 if (!user) throw new Error('Non authentifié')
 
 const animalMeetings = await calendarApi.animal.getAllByClientId(user?.id)
-console.log(animalMeetings)
 export type MeetingStatus = 'UPCOMING' | 'PAST'
 
 // ── Filtres ───────────────────────────────────────────────────────────────────

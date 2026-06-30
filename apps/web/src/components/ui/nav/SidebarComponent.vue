@@ -65,7 +65,6 @@ const handleMenuSelect = (index: string) => {
 }
 
 :deep(.el-drawer__title) {
-  font-family: 'Nunito';
   font-weight: var(--fw-bold);
 }
 </style>

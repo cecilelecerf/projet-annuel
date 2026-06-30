@@ -20,9 +20,14 @@ animalMeetingRouter.post(
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   validate(createAnimalMeetingSchema),
-  animalController.create.bind(animalController) as RequestHandler,
+  animalController.getByClient.bind(animalController) as RequestHandler,
 );
-
+animalMeetingRouter.get(
+  "/",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  animalController.getByClient.bind(animalController) as RequestHandler,
+);
 animalMeetingRouter.get(
   "/:id/medical-histories",
   authMiddleware,

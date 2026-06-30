@@ -11,6 +11,7 @@ import SearchSelectSingle from './SearchSelectSingle.vue'
 import SearchSelectMultiple from './SearchSelectMultiple.vue'
 import { animalApi } from '@/features/animals/api'
 import { useFormErrorStore } from '@/stores/formErrorStore'
+import { ChatDotRound, FirstAidKit } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const id = route.params.id as string
@@ -113,22 +114,24 @@ const handleSubmit = async () => {
 
     <!-- Type selector -->
     <div class="type-selector">
-      <button
+      <el-button
+        type="purple"
+        :plain="type !== 'INTERNAL'"
+        :icon="ChatDotRound"
         class="type-btn"
-        :class="{ active: type === 'INTERNAL', 'type-internal': type === 'INTERNAL' }"
         @click="type = 'INTERNAL'"
       >
-        <el-icon><ChatDotRound /></el-icon>
         Réunion
-      </button>
-      <button
+      </el-button>
+      <el-button
+        type="teal"
+        :plain="type !== 'ANIMAL'"
+        :icon="FirstAidKit"
         class="type-btn"
-        :class="{ active: type === 'ANIMAL', 'type-animal': type === 'ANIMAL' }"
         @click="type = 'ANIMAL'"
       >
-        <el-icon><FirstAidKit /></el-icon>
         Rendez-vous
-      </button>
+      </el-button>
     </div>
 
     <!-- Form -->
@@ -291,42 +294,6 @@ const handleSubmit = async () => {
 
 .type-btn {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1.5px solid var(--el-border-color);
-  background: transparent;
-  color: var(--el-text-color-secondary);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover.type-internal {
-    border-color: var(--el-color-purple-dark);
-    color: var(--el-color-purple-dark);
-  }
-  &:hover.type-animal {
-    border-color: var(--el-color-teal-dark-2);
-    color: var(--el-color-teal-dark-2);
-  }
-
-  &.active.type-internal {
-    background: var(--el-color-purple-light);
-    border-color: var(--el-color-purple);
-    color: var(--el-color-purple-dark-3);
-    font-weight: var(--fw-semibold);
-  }
-
-  &.active.type-animal {
-    background: var(--el-color-teal-light-5);
-    border-color: var(--el-color-teal);
-    color: var(--el-color-teal-dark);
-    font-weight: var(--fw-semibold);
-  }
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────────
@@ -369,7 +336,6 @@ const handleSubmit = async () => {
     gap: var(--spacing-sm);
 
     .el-calendar__title {
-      font-family: 'Nunito', sans-serif;
       font-weight: var(--fw-bold);
       font-size: 15px;
     }

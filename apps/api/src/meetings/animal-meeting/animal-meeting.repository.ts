@@ -22,7 +22,7 @@ export class AnimalMeetingRepository {
           },
         },
         speciality: true,
-        veterinarianClinic: true,
+        veterinarianClinic: { include: { veterinarian: true, clinic: true } },
       },
     });
   }
@@ -95,16 +95,26 @@ export class AnimalMeetingRepository {
     return prisma.meetingBase.delete({ where: { id } });
   }
 
-  async findByClient(userId: User["id"]) {
+  async findByUser(userId: User["id"]) {
     return prisma.animalMeeting.findMany({
-      where: { animal: { client: { user: { id: userId } } } },
+      where: {
+        animal: { client: { user: { id: userId } } },
+      },
       include: {
         animal: {
           include: {
             race: { include: { pet: true } },
+            client: { include: { user: { omit: { password: true } } } },
           },
         },
         meeting: true,
+        speciality: true,
+        veterinarianClinic: {
+          include: {
+            veterinarian: { include: { user: { omit: { password: true } } } },
+            clinic: true,
+          },
+        },
       },
     });
   }

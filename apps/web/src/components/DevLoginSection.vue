@@ -162,7 +162,6 @@ const loginAs = async (role: Role) => {
   font-size: var(--el-font-size-extra-small);
   font-weight: var(--fw-bold);
   margin-bottom: var(--spacing-md);
-  font-family: 'Nunito', sans-serif;
 }
 
 .dev-section__title {
@@ -241,7 +240,6 @@ const loginAs = async (role: Role) => {
 }
 
 .role-card__title {
-  font-family: 'Nunito', sans-serif;
   font-size: var(--el-font-size-medium);
   font-weight: var(--fw-bold);
   color: var(--el-color-white);
@@ -257,7 +255,6 @@ const loginAs = async (role: Role) => {
 .role-card__email {
   font-size: var(--el-font-size-extra-small);
   color: var(--el-color-primary-light-3);
-  font-family: 'DM Mono', monospace;
 }
 
 .role-card__arrow {

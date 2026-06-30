@@ -11,7 +11,9 @@ import {
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { animalMetaSchema } from "../animals/meta.schema";
-import { specialitySchema } from "../clinic.schema";
+import { clinicSchema, specialitySchema } from "../clinic.schema";
+import { clientSchema, userSchema, veterinarianSchema } from "../users";
+
 export const animalMeetingFieldSchema = z.object({
   description: z.string().nullable().optional(),
   petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
@@ -41,7 +43,15 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
     animalId: true,
     veterinarianClinicId: true,
   })
-  .extend({ meeting: meetingBaseSchema });
+  .extend({
+    animal: animalMetaSchema,
+    speciality: specialitySchema,
+    meeting: meetingBaseSchema,
+    veterinarianClinic: z.object({
+      clinic: clinicSchema,
+      veterinarian: veterinarianSchema,
+    }),
+  });
 
 const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   description: true,
@@ -74,3 +84,6 @@ export type AnimalMeetingMeta = z.infer<typeof animalMeetingMetaSchema>;
 export type AnimalMeeting = z.infer<typeof animalMeetingSchema>;
 export type CreateAnimalMeeting = z.infer<typeof createAnimalMeetingSchema>;
 export type UpdateAnimalMeeting = z.infer<typeof updateAnimalMeetingSchema>;
+export type AnimalMeetingWithMeeting = z.infer<
+  typeof animalMeetigWithMeetingSchema
+>;

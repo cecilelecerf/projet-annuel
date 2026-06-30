@@ -1,32 +1,32 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
 import { House, Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'Secretary.Home',
+    index: 'SECRETARY.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Secretary.Calendar',
+    index: 'SECRETARY.Calendar',
     label: 'Agenda',
     icon: Calendar,
   },
   {
-    index: 'Secretary.Veto.List',
+    index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
     icon: Calendar,
   },
   {
-    index: 'Secretary.Messagerie',
+    index: 'SECRETARY.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Secretary.Profil',
+    index: 'SECRETARY.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -37,15 +37,15 @@ const menuItems: MenuItem[] = [
   <div class="layout">
     <FormError />
     <Navbar :menu-items="menuItems" />
-    <Suspense>
-      <main class="main">
+    <main class="main">
+      <Suspense>
         <router-view />
-      </main>
 
-      <template #fallback>
-        <div class="loading">Chargement...</div>
-      </template>
-    </Suspense>
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
+    </main>
   </div>
 </template>
 

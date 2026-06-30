@@ -95,10 +95,7 @@ export const calendarApi = {
 
     getAllByClientId: async (clientId: ClientId) => {
       const data = await http.get(`/users/${clientId}/animal-meetings`)
-      return animalMeetigWithMeetingSchema
-        .extend({ animal: animalWithRaceMeta })
-        .array()
-        .parse(data)
+      return animalMeetigWithMeetingSchema.array().parse(data)
     },
   },
   recurring: {

@@ -18,17 +18,13 @@ import {
   InternalMeetingService,
 } from "./internal-meeting";
 import { AvailabilityService } from "./availability";
-import dayjs from "dayjs";
-import { RecurringRepository } from "./recurring-meeting/recurring-meeting.repository";
 
 const meetingService = new MeetingService();
 const animalMeetingService = new AnimalMeetingService();
 const internalMeetingRepository = new InternalMeetingRepository(prisma);
-const recurringRepository = new RecurringRepository(prisma);
 
 const internalMeetingService = new InternalMeetingService(
   internalMeetingRepository,
-  recurringRepository,
 );
 const availabilityService = new AvailabilityService();
 const userService = new UserService();
@@ -113,7 +109,21 @@ export class MeetingController {
       next(err);
     }
   }
-
+  async getMyMeetings(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const meetings = await meetingListService.getForUser(
+        req.user.id,
+        req.user.role,
+      );
+      return res.status(200).json(meetingListSchema.parse(meetings));
+    } catch (err) {
+      next(err);
+    }
+  }
   async getMeeting(
     req: RequestWithParams<{ id: string }> & { query: { date?: string } },
     res: Response,

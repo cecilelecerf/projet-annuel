@@ -212,7 +212,6 @@ async function save() {
 }
 
 .header-title h3 {
-  font-family: 'Nunito', sans-serif;
   font-weight: var(--fw-bold);
   font-size: var(--el-font-size-medium);
   color: var(--el-text-color-primary);
@@ -273,7 +272,6 @@ async function save() {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-family: 'DM Sans', sans-serif;
   font-size: var(--el-font-size-base);
   color: var(--el-text-color-regular);
 }
@@ -297,7 +295,6 @@ async function save() {
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--el-color-primary) 8%, transparent);
-  font-family: 'DM Sans', sans-serif;
   font-size: var(--el-font-size-small);
   color: var(--el-text-color-regular);
   margin-bottom: var(--spacing-sm);

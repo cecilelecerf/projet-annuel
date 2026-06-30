@@ -50,8 +50,10 @@ declare module 'vue' {
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
     Navbar: typeof import('./src/components/ui/nav/Navbar.vue')['default']
+    NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Sidebar: typeof import('./src/components/ui/nav/Sidebar.vue')['default']
+    SidebarComponent: typeof import('./src/components/ui/nav/SidebarComponent.vue')['default']
   }
 }

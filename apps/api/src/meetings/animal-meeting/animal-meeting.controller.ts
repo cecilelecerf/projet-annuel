@@ -4,9 +4,7 @@ import {
   animalMeetigWithMeetingSchema,
   medicalHistorySchema,
   animalMeetingFieldSchema,
-  animalMeetingSchema,
   ClientId,
-  clinicActSchema,
   CreateAnimalMeeting,
   meetingBaseSchema,
   AnimalId,
@@ -62,6 +60,7 @@ export class AnimalMeetingController {
         id: req.params.id,
         data: req.body,
         userId: req.user.id,
+        role: req.user.role,
       });
       res.status(200).json(animalMeetigWithMeetingSchema.parse(meeting));
     } catch (err) {

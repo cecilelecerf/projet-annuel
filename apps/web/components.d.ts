@@ -13,7 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
-    DevSection: typeof import('./src/components/landingPage/DevSection.vue')['default']
+    DevLoginSection: typeof import('./src/components/DevLoginSection.vue')['default']
+    DevSection: typeof import('./src/components/DevSection.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
@@ -36,6 +37,7 @@ declare module 'vue' {
     ElMenu: typeof import('element-plus/es')['ElMenu']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
     ElOption: typeof import('element-plus/es')['ElOption']
+    ElRate: typeof import('element-plus/es')['ElRate']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']

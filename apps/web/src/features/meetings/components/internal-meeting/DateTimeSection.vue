@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { Calendar } from '@element-plus/icons-vue'
+import dayjs from 'dayjs'
+import { computed } from 'vue'
 
-defineProps<{
+const { date } = defineProps<{
   editing: boolean
-  dateLabel: string
+  date: Date
   timeLabel: string
 }>()
 
 const startTime = defineModel<string>('startTime', { required: true })
 const endTime = defineModel<string>('endTime', { required: true })
+const isPast = computed(() => dayjs(date).isBefore(dayjs()))
+const dateLabel = computed(() => dayjs(date).format('dddd D MMMM YYYY'))
+const canEditSchedule = computed(() => !isPast.value)
 </script>
 
 <template>
@@ -17,7 +22,7 @@ const endTime = defineModel<string>('endTime', { required: true })
       <el-icon><Calendar /></el-icon>
       Date & Horaires
     </h3>
-    <div v-if="!editing" class="info-row">
+    <div v-if="!editing || !canEditSchedule" class="info-row">
       <span class="info-value">{{ dateLabel }}</span>
       <span class="info-separator">·</span>
       <span class="info-value">{{ timeLabel }}</span>

@@ -3,9 +3,11 @@ import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
 import { AnimalController } from "./animal.controller";
 import { createAnimalSchema, updateAnimalSchema } from "@armali/schemas";
+import { AnimalMeetingController } from "@api/meetings";
 
 const animalRouter: Router = Router();
 const controller = new AnimalController();
+const animalMeetingController = new AnimalMeetingController();
 
 animalRouter.get(
   "/",
@@ -27,6 +29,14 @@ animalRouter.get(
   "/:id/vaccines",
   authMiddleware,
   controller.getVaccines.bind(controller) as RequestHandler,
+);
+animalRouter.get(
+  "/:id/meetings",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  animalMeetingController.getByAnimal.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 
 animalRouter.post(

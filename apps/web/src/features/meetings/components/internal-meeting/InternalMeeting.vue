@@ -9,10 +9,11 @@ import ParticipantSection from './ParticipantSection.vue'
 import DescriptionSection from './DescriptionSection.vue'
 import DateTimeSection from './DateTimeSection.vue'
 import TitleSection from './TitleSection.vue'
-import HeaderSection from './HeaderSection.vue'
 import { calendarApi } from '../../api/calendar.api.ts'
 import { useFormErrorStore } from '@/stores/formErrorStore.ts'
 import { ElMessage } from 'element-plus'
+import { useAuthStore } from '@/stores/authStore.ts'
+import HeaderMeetingSection from '../HeaderMeetingSection.vue'
 
 dayjs.locale('fr')
 
@@ -21,7 +22,7 @@ const { meeting } = defineProps<{
 }>()
 const router = useRouter()
 const route = useRoute()
-
+const { user } = useAuthStore()
 const { handle } = useFormErrorStore()
 const showDeleteDialog = ref(false)
 const deleting = ref(false)
@@ -40,8 +41,6 @@ const edit = ref<
   date: meeting.date,
   userIds: meeting.participants.map((participant) => participant.userId),
 })
-
-const dateLabel = computed(() => dayjs(meeting.date).format('dddd D MMMM YYYY'))
 
 const timeLabel = computed(() => {
   const start = dayjs(meeting.startTime).format('H[h]mm')
@@ -109,7 +108,8 @@ async function onDelete() {
 </script>
 
 <template>
-  <HeaderSection
+  <HeaderMeetingSection
+    v-if="user"
     :editing="isEditing"
     :is-recurring-occurrence="!!meeting.parentId && String(meeting.parentId) === String(meeting.id)"
     @back="router.back()"
@@ -117,6 +117,8 @@ async function onDelete() {
     @save="onSave"
     @cancel="isEditing = false"
     @delete="showDeleteDialog = true"
+    :date="meeting.date"
+    :user="user"
   />
 
   <div class="meeting-content">
@@ -126,7 +128,7 @@ async function onDelete() {
       v-model:start-time="edit.startTime"
       v-model:end-time="edit.endTime"
       :editing="isEditing"
-      :date-label="dateLabel"
+      :date="meeting.date"
       :time-label="timeLabel"
     />
 

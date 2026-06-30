@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ArrowLeft, Edit, Check, Delete, Calendar, Refresh } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+import type { UserStore } from '@/stores/authStore'
 
 const { editing, isRecurringOccurrence } = defineProps<{
   editing: boolean
   isRecurringOccurrence?: boolean
+  date: Date
+  user: UserStore
 }>()
 
 const emit = defineEmits<{
-  back: []
   edit: []
   save: [scope: 'single' | 'all']
   cancel: []
   delete: []
 }>()
-
+const router = useRouter()
 const showScopeDialog = ref(false)
 
 function onSaveClick() {
@@ -33,23 +36,33 @@ function confirmScope(scope: 'single' | 'all') {
 
 <template>
   <div class="page-header">
-    <el-button text @click="emit('back')">
+    <el-button text @click="router.back()">
       <el-icon><ArrowLeft /></el-icon>
       Retour
     </el-button>
 
     <div class="header-actions">
-      <el-button v-if="!editing" @click="emit('edit')">
-        <el-icon><Edit /></el-icon>
+      <el-button v-if="!editing && user?.role !== 'CLIENT'" @click="emit('edit')" :icon="Edit">
         Modifier
       </el-button>
-      <el-button v-if="editing" type="primary" @click="onSaveClick">
-        <el-icon><Check /></el-icon>
+      <el-button
+        v-if="editing && user?.role !== 'CLIENT'"
+        type="primary"
+        @click="() => onSaveClick()"
+        :icon="Check"
+      >
         Enregistrer
       </el-button>
-      <el-button v-if="editing" @click="emit('cancel')">Annuler</el-button>
-      <el-button type="danger" plain @click="emit('delete')">
-        <el-icon><Delete /></el-icon>
+      <el-button v-if="editing && user?.role !== 'CLIENT'" @click="emit('cancel')">
+        Annuler
+      </el-button>
+      <el-button
+        v-if="new Date(date) > new Date()"
+        type="danger"
+        plain
+        @click="emit('delete')"
+        :icon="Delete"
+      >
         Supprimer
       </el-button>
     </div>

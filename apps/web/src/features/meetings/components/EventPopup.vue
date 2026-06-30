@@ -11,14 +11,19 @@ dayjs.locale('fr')
 
 const { meetingId, date } = defineProps<{
   meetingId: string
-  date: Date
+  date?: Date
 }>()
 const emit = defineEmits<{ close: []; delete: [] }>()
 const { user } = useAuthStore()
 const router = useRouter()
 const isEditing = ref(false)
-const meeting = await calendarApi.get(meetingId, date ? date.toISOString() : undefined)
 
+const meeting = await calendarApi.get(meetingId, date ? date.toISOString() : undefined)
+const dateForm = ref({
+  date: meeting.date,
+  startTime: meeting.startTime,
+  endTime: meeting.endTime,
+})
 const dateLabel = computed(() => {
   const date = meeting.date
   if (!date) return ''
@@ -29,7 +34,7 @@ const dateLabel = computed(() => {
 
 const title = computed(() => {
   if (meeting.kind === 'INTERNAL') return meeting.title
-  if (meeting.kind === 'ANIMAL') return meeting.description ?? 'Consultation'
+  if (meeting.kind === 'ANIMAL') return meeting.speciality?.name ?? 'Consultation'
   return ''
 })
 
@@ -58,8 +63,21 @@ const onDelete = () => {
       </div>
 
       <!-- Date -->
-      <p class="popup-date">{{ dateLabel }}</p>
-
+      <p v-if="!isEditing" class="popup-date">{{ dateLabel }}</p>
+      <div v-else class="edit-row">
+        <span>Le</span>
+        <el-date-picker
+          size="small"
+          type="date"
+          format="dddd D MMMM"
+          style="width: 160px"
+          v-model="dateForm.date"
+        />
+        <span>de</span>
+        <el-time-picker size="small" style="width: 100px" v-model="dateForm.startTime" />
+        <span>à</span>
+        <el-time-picker size="small" style="width: 100px" v-model="dateForm.endTime" />
+      </div>
       <!-- ANIMAL -->
 
       <template v-if="meeting.kind === 'ANIMAL'">
@@ -93,40 +111,34 @@ const onDelete = () => {
         <p v-if="meeting.description" class="popup-description">{{ meeting.description }}</p>
       </template>
 
-      <!-- Mode lecture -->
-      <template v-if="!isEditing">
-        <div class="popup-actions">
-          <el-row>
-            <el-button @click="isEditing = true" plain>Modifier</el-button>
-            <el-button type="danger" @click="onDelete" plain>Supprimer</el-button>
-          </el-row>
-          <el-button
-            @click="goToDetail"
-            type="primary"
-            :color="meeting.kind === 'ANIMAL' ? 'var(--el-color-teal)' : ' var(--el-color-purple)'"
-          >
-            <el-icon><Plus /></el-icon>
-            Voir plus
+      <div class="popup-actions" v-if="!isEditing">
+        <el-row>
+          <el-button v-if="new Date(meeting.date) > new Date()" @click="isEditing = true" plain>
+            Modifier
           </el-button>
-        </div>
-      </template>
+          <el-button
+            type="danger"
+            v-if="new Date(meeting.date) > new Date()"
+            @click="onDelete"
+            plain
+          >
+            Supprimer
+          </el-button>
+        </el-row>
+        <el-button
+          @click="goToDetail"
+          type="primary"
+          :color="meeting.kind === 'ANIMAL' ? 'var(--el-color-teal)' : ' var(--el-color-purple)'"
+        >
+          <el-icon><Plus /></el-icon>
+          Voir plus
+        </el-button>
+      </div>
 
-      <!-- Mode édition -->
-      <template v-else>
-        <div class="edit-row">
-          <span>Le</span>
-          <el-date-picker size="small" type="date" format="dddd D MMMM" style="width: 160px" />
-          <span>de</span>
-          <el-time-picker size="small" style="width: 100px" />
-          <span>à</span>
-          <el-time-picker size="small" style="width: 100px" />
-        </div>
-
-        <div class="popup-actions">
-          <el-button type="primary" @click="onEdit">Enregistrer</el-button>
-          <el-button @click="isEditing = false">Annuler</el-button>
-        </div>
-      </template>
+      <div class="popup-actions" v-else>
+        <el-button type="primary" @click="onEdit">Enregistrer</el-button>
+        <el-button @click="isEditing = false">Annuler</el-button>
+      </div>
     </div>
   </div>
 </template>

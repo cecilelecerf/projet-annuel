@@ -11,6 +11,7 @@ import {
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { animalMetaSchema } from "../animals/meta.schema";
+import { specialitySchema } from "../clinic.schema";
 export const animalMeetingFieldSchema = z.object({
   description: z.string().nullable().optional(),
   petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
@@ -23,6 +24,7 @@ export const animalMeetingFieldSchema = z.object({
 export const animalMeetingSchema = meetingBaseSchema.extend({
   ...animalMeetingFieldSchema.shape,
   kind: z.literal("ANIMAL"),
+  speciality: specialitySchema.nullable(),
 });
 
 export const animalMeetingMetaSchema = animalMeetingSchema.extend({

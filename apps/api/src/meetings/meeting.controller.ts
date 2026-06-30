@@ -7,7 +7,7 @@ import {
   MeetingId,
 } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
-import { BadRequestError, NotFoundError } from "@api/errors";
+import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
 import { prisma } from "@api/lib/prisma";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { MeetingService } from "./meeting.service";
@@ -159,9 +159,9 @@ export class MeetingController {
             userId: req.user.id,
             role: req.user.role,
           });
-          const data = recurringBase
-            ? { ...meeting, ...recurringBase }
-            : { ...meeting, ...meeting.meeting };
+          if (recurringBase)
+            throw new ConflictError("Animal meeting nor recurrent");
+          const data = { ...meeting, ...meeting.meeting };
           return res.status(200).json(animalMeetingMetaSchema.parse(data));
         }
         case "INTERNAL": {

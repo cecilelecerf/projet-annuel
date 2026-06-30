@@ -11,13 +11,11 @@ const baseFilter = (start: Date, end: Date) => ({
 });
 
 const recurringWithChildren = (start: Date, end: Date) => ({
-  animalMeeting: true,
   internalMeeting: { include: { participants: true } },
   availabilty: true,
   childrens: {
     where: baseFilter(start, end),
     include: {
-      animalMeeting: true,
       internalMeeting: { include: { participants: true } },
       availabilty: true,
     },
@@ -57,16 +55,14 @@ export class MeetingRepository {
     return prisma.animalMeeting.findMany({
       where: { veterinarianClinic: { veterinarian: { id: vetProfileId } } },
       include: {
-        recurring: {
-          where: recurringFilter(start, end),
-          include: recurringWithChildren(start, end),
-        },
         meeting: {
           where: {
             ...baseFilter(start, end),
             parentId: null,
           },
-          include: { animalMeeting: true },
+          include: {
+            animalMeeting: { include: { speciality: true } },
+          },
         },
       },
     });
@@ -79,10 +75,6 @@ export class MeetingRepository {
     return prisma.animalMeeting.findMany({
       where: { animal: { clientId: clientProfileId } },
       include: {
-        recurring: {
-          where: recurringFilter(start, end),
-          include: recurringWithChildren(start, end),
-        },
         meeting: {
           where: {
             ...baseFilter(start, end),

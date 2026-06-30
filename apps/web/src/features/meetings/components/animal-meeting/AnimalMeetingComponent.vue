@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { calendarApi } from '../../api/calendar.api'
 import { prescriptionApi } from '@/features/prescriptions/api'
-import MeetingHeader from './MeetingHeader.vue'
 import MeetingPets from './MeetingPets.vue'
 import MeetingInfo from './MeetingInfo.vue'
 import MeetingActs from './MeetingActs.vue'
 import MeetingPrescriptions from './MeetingPrescriptions.vue'
 import { medicalHistoriesApi } from '@/features/medicalHistories/api'
 import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
-import RecurringComponent from '../RecurringComponent.vue'
+import HeaderMeetingSection from '../HeaderMeetingSection.vue'
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
 const { user } = useAuthStore()
 const { handle } = useFormErrorStore()
-
+const showDeleteDialog = ref(false)
+const deleting = ref(false)
 const [acts, prescriptions] = await Promise.all([
   medicalHistoriesApi.getByMeeting(meeting.id),
   prescriptionApi.getByMeeting(meeting.id),
@@ -49,15 +49,16 @@ const onSave = async () => {
 }
 
 const onDelete = async () => {
+  deleting.value = true
   try {
-    await ElMessageBox.confirm('Cette action est irréversible.', 'Supprimer le rendez-vous ?', {
-      confirmButtonText: 'Supprimer',
-      cancelButtonText: 'Annuler',
-      type: 'warning',
-    })
     await calendarApi.delete(meeting.id)
+    ElMessage.success('Rendez-vous supprimé')
+    showDeleteDialog.value = false
     router.back()
-  } catch {}
+  } catch {
+  } finally {
+    deleting.value = false
+  }
 }
 
 const onActSaved = async () => {
@@ -70,14 +71,16 @@ const onPrescriptionSaved = async () => {
 </script>
 
 <template>
-  <MeetingHeader
+  <HeaderMeetingSection
+    v-if="user"
     :meeting="meeting"
-    :is-editing="isEditing"
+    :editing="isEditing"
     :user="user"
     @edit="isEditing = true"
     @cancel="isEditing = false"
     @save="onSave()"
-    @delete="onDelete"
+    @delete="showDeleteDialog = true"
+    :date="meeting.date"
   />
 
   <div class="meeting-content">
@@ -86,7 +89,12 @@ const onPrescriptionSaved = async () => {
     </div>
 
     <div class="meeting-right">
-      <MeetingInfo :meeting="meeting" :edit="edit" :is-editing="isEditing" />
+      <MeetingInfo
+        :meeting="meeting"
+        :edit="edit"
+        :is-editing="isEditing"
+        :is-staff="user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN'"
+      />
       <MeetingActs :acts="localActs" :meeting-id="meeting.id" @saved="onActSaved" />
       <MeetingPrescriptions
         :prescriptions="localPrescriptions"
@@ -94,8 +102,14 @@ const onPrescriptionSaved = async () => {
         @saved="onPrescriptionSaved"
       />
     </div>
-    <RecurringComponent v-if="meeting.recurringId" :recurring-id="meeting.recurringId" />
   </div>
+  <ConfirmDeleteDialog
+    v-model="showDeleteDialog"
+    title="Supprimer le rendez-vous ?"
+    message="Cette action est définitive et ne peut pas être annulée."
+    :loading="deleting"
+    @confirm="onDelete"
+  />
 </template>
 
 <style lang="scss" scoped>

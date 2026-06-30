@@ -9,11 +9,9 @@ import { AnimalMeetingRepository } from "../animal-meeting";
 
 const recurringRepository = new RecurringRepository(prisma);
 const internalRepository = new InternalMeetingRepository();
-const animalMeetingRepository = new AnimalMeetingRepository();
 const recurringService = new RecurringService(
   recurringRepository,
   internalRepository,
-  animalMeetingRepository,
 );
 export class RecurringMeetingController {
   async getRecurring(

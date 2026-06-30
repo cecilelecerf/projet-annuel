@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { roleHomeMap } from '@/router/index'
 import { useNotify } from '@/composables/useNotify'
+import DevLoginSection from '@/components/DevLoginSection.vue'
 
 const notify = useNotify()
 
@@ -72,6 +73,7 @@ async function handleLogin() {
         <router-link to="/register">S'inscrire</router-link>
       </p>
     </div>
+    <dev-login-section />
   </div>
 </template>
 
@@ -79,9 +81,9 @@ async function handleLogin() {
 .auth-page {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
 }
 
 .auth-card {

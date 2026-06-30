@@ -258,7 +258,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-02-10"),
+      date: new Date("2026-06-10"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T09:30:00Z"),
       animalMeeting: {
@@ -282,7 +282,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-05-10"),
+      date: new Date("2026-07-10"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T09:30:00Z"),
       animalMeeting: {
@@ -307,7 +307,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-03-05"),
+      date: new Date("2026-06-05"),
       startTime: new Date("1970-01-01T14:00:00Z"),
       endTime: new Date("1970-01-01T14:20:00Z"),
       animalMeeting: {
@@ -330,7 +330,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-04-01"),
+      date: new Date("2026-08-01"),
       startTime: new Date("1970-01-01T10:00:00Z"),
       endTime: new Date("1970-01-01T10:30:00Z"),
       animalMeeting: {

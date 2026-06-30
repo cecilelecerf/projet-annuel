@@ -18,7 +18,7 @@ function goToMySpace() {
     <div class="hero__bg"></div>
 
     <nav class="nav">
-      <span class="nav__logo brand">CECOULE</span>
+      <span class="nav__logo brand">Armali</span>
       <div class="nav__actions">
         <template v-if="!authStore.isAuthenticated">
           <el-button round plain @click="router.push('/login')">Se connecter</el-button>

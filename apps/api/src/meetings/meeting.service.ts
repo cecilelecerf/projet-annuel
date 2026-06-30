@@ -203,16 +203,10 @@ export class MeetingService {
       start,
       end,
     );
-    const flat = meetings.flatMap(
-      ({
-        recurring,
-        meeting,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (!meeting) return [];
+      return [meeting as MeetingBaseWithSpecific];
+    });
     return this.expandAll(flat, start, end);
   }
 
@@ -227,16 +221,10 @@ export class MeetingService {
       end,
     );
 
-    const flat = meetings.flatMap(
-      ({
-        meeting,
-        recurring,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (meeting) return [meeting as MeetingBaseWithSpecific];
+      return [];
+    });
 
     return this.expandAll(flat, start, end);
   }

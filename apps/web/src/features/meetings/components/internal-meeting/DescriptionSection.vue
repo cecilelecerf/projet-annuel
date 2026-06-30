@@ -47,13 +47,6 @@ const description = defineModel<string | null>('description')
   margin: 0;
 }
 
-.description-text {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
-
 .empty-text {
   font-size: 13px;
   color: var(--el-text-color-placeholder);

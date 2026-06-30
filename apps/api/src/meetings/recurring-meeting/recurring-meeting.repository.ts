@@ -23,15 +23,6 @@ const recurringInclude = {
       },
     },
   },
-  animalMeeting: {
-    select: {
-      id: true,
-      specialityId: true,
-      animalId: true,
-      veterinarianClinicId: true,
-      veterinarianProfileId: true,
-    },
-  },
 } satisfies Prisma.MeetingReccuringInclude;
 
 type RecurringWithRelations = Prisma.MeetingReccuringGetPayload<{
@@ -68,9 +59,7 @@ export class RecurringRepository {
   async splitFromDate(
     current: RecurringWithRelations,
     changes: Partial<
-      RecurringEditableFields & { internal?: UpdateRecurring["internal"] } & {
-        animal?: UpdateRecurring["animal"];
-      }
+      RecurringEditableFields & { internal?: UpdateRecurring["internal"] }
     >,
     splitDate: Date,
   ): Promise<MeetingReccuring> {
@@ -131,23 +120,9 @@ export class RecurringRepository {
                 },
               },
             }),
-          ...(current.kind === "ANIMAL" &&
-            current.animalMeeting && {
-              animalMeeting: {
-                create: {
-                  specialityId: current.animalMeeting.specialityId,
-                  animalId: current.animalMeeting.animalId,
-                  veterinarianClinicId:
-                    current.animalMeeting.veterinarianClinicId,
-                  veterinarianProfileId:
-                    current.animalMeeting.veterinarianProfileId,
-                },
-              },
-            }),
         },
         include: {
           internalMeeting: true,
-          animalMeeting: true,
           availabilty: true,
         },
       });

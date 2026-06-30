@@ -78,7 +78,7 @@ export const calendarApi = {
     },
 
     getAllByAnimal: async (animalId: AnimalId) => {
-      const data = await http.get(`/meetings/animals/animals/${animalId}`)
+      const data = await http.get(`/animals/${animalId}/meetings`)
       return animalMeetingFieldSchema
         .extend({
           meeting: meetingBaseSchema,
@@ -89,7 +89,7 @@ export const calendarApi = {
     },
 
     getAllByClientId: async (clientId: ClientId) => {
-      const data = await http.get(`/meetings/animals/users/${clientId}`)
+      const data = await http.get(`/users/${clientId}/animal-meetings`)
       return animalMeetigWithMeetingSchema
         .extend({ animal: animalWithRaceMeta })
         .array()

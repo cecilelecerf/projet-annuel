@@ -9,13 +9,10 @@ import {
 import { InternalMeetingService } from "./internal-meeting.service";
 import { prisma } from "@api/lib/prisma";
 import { InternalMeetingRepository } from "./internal-meeting.repository";
-import { RecurringRepository } from "../recurring-meeting/recurring-meeting.repository";
 const internalMeetingRepository = new InternalMeetingRepository(prisma);
-const recurringRepository = new RecurringRepository(prisma);
 
 const internalMeetingService = new InternalMeetingService(
   internalMeetingRepository,
-  recurringRepository,
 );
 
 export class InternalMeetingController {
@@ -24,6 +21,7 @@ export class InternalMeetingController {
     res: Response,
     next: NextFunction,
   ) {
+    console.log("enter");
     try {
       if (!req.user.clinicId) throw new ForbiddenError();
 

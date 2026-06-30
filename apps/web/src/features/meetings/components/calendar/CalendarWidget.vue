@@ -30,7 +30,6 @@ const onNewEventDrawerClose = () => {
   newEventDate.value = null
 }
 const onDelete = async () => {
-  console.log(selectedMeeting)
   if (!selectedMeeting.value) return
   deleting.value = true
   try {

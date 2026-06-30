@@ -38,7 +38,7 @@ vi.mock("@api/medicalHistories/medical-history.repository", () => ({
   }),
 }));
 
-vi.mock("@api/meetings", () => ({
+vi.mock("@api/meetings/animal-meeting/animal-meeting.repository", () => ({
   AnimalMeetingRepository: vi.fn(function () {
     return mockAnimalMeetingRepository;
   }),

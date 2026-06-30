@@ -203,20 +203,4 @@ export class MeetingController {
       next(err);
     }
   }
-
-  async delete(
-    req: RequestWithParams<{ id: MeetingId }> & { query: { date?: string } },
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      await meetingService.delete(
-        req.params.id,
-        dayjs(req.query.date).toDate() ?? undefined,
-      );
-      res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
-  }
 }

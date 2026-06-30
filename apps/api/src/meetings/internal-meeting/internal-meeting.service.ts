@@ -14,13 +14,9 @@ import {
 import { InternalMeetingRepository } from "./internal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { flatClinicId } from "@api/users/user.utils";
-import { RecurringRepository } from "../recurring-meeting/recurring-meeting.repository";
 
 export class InternalMeetingService {
-  constructor(
-    private repository: InternalMeetingRepository,
-    private recurringRepository: RecurringRepository,
-  ) {}
+  constructor(private repository: InternalMeetingRepository) {}
   async create({
     data,
     userId,
@@ -105,7 +101,6 @@ export class InternalMeetingService {
   async getById({ id, role }: { id: string; role: UserRole }) {
     if (role === "CLIENT") throw new ForbiddenError();
     const meeting = await this.repository.findById(id);
-    console.log(meeting);
     if (!meeting) throw new NotFoundError("Rendez-vous");
     return {
       ...meeting,
@@ -149,8 +144,6 @@ export class InternalMeetingService {
         status,
       });
     }
-    console.log("enter");
-    console.log(scope);
 
     // ── Cas 2 : meetingId correspond à une récurrence ──────────────────────────────
 

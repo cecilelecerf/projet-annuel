@@ -50,7 +50,6 @@ const createInternalMeetingBaseFields = internalMeetingSchema
     description: true,
     title: true,
     clinicId: true,
-    parentId: true,
   })
   .partial({ clinicId: true })
   .extend({ userIds: userIdSchema.array() });

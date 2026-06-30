@@ -35,14 +35,12 @@ function combineDateTime(date: Date, time: Date) {
 export class AnimalMeetingService {
   // ── Helper partagé create/update ─────────────────────────────────────────────
   private async assertVeterinarianAvailable({
-    veterinarianClinicId,
     veterinarianId,
     date,
     startTime,
     endTime,
     excludeMeetingId,
   }: {
-    veterinarianClinicId: string;
     veterinarianId: string;
     date: Date;
     startTime: Date;
@@ -159,7 +157,6 @@ export class AnimalMeetingService {
     if (!animal) throw new ForbiddenError("L'animal ne vous appartient pas");
 
     await this.assertVeterinarianAvailable({
-      veterinarianClinicId: veterinarianClinic.id,
       veterinarianId: data.veterinarianId,
       date: data.date,
       startTime: data.startTime,
@@ -268,7 +265,6 @@ export class AnimalMeetingService {
 
       // ── Vérifie la dispo du véto sur le nouveau créneau ─────────────────────
       await this.assertVeterinarianAvailable({
-        veterinarianClinicId: meeting.veterinarianClinicId,
         veterinarianId: meeting.veterinarianClinic.veterinarianId,
         date: newDate,
         startTime: newStart,

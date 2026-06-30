@@ -185,16 +185,12 @@ export class MeetingRepository {
     return prisma.meetingReccuring.findUnique({
       where: { id },
       include: {
-        animalMeeting: true,
         internalMeeting: { include: { participants: true } },
         availabilty: true,
       },
     });
   }
 
-  async delete(id: string) {
-    return prisma.meetingBase.delete({ where: { id } });
-  }
   async createException({
     parentId,
     date,

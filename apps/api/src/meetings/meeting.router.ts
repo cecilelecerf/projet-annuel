@@ -33,13 +33,6 @@ meetingRouter.get(
   meetingController.getMeeting.bind(meetingController) as RequestHandler,
 );
 
-meetingRouter.delete(
-  "/:id",
-  authMiddleware,
-  roleMiddleware(["SECRETARY", "VETERINARIAN", "CLIENT"]),
-  meetingController.delete.bind(meetingController) as RequestHandler,
-);
-
 meetingRouter.use("/recurrings", recurringMeetingRouter);
 meetingRouter.use("/availabilities", availabilityRouter);
 meetingRouter.use("/animals", animalMeetingRouter);

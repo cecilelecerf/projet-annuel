@@ -1,7 +1,7 @@
 @forward 'element-plus/theme-chalk/src/common/var.scss' with (
   $colors: (
     'primary': (
-      'base': #3c78ad,
+      'base': #4873a2,
     ),
     'success': (
       'base': #4d884e,
@@ -12,11 +12,8 @@
   )
 );
 @use './custom-colors.scss';
-
-.el-button--primary {
-  color: var(--el-color-primary-light-9);
-  letter-spacing: 0.1em;
-}
+@use './button.scss';
+@use './alert.scss';
 :root {
   --spacing-xs: 4px;
   --spacing-sm: 8px;

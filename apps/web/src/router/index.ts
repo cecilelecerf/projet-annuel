@@ -26,6 +26,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LandingPageView.vue'),
     meta: { public: true },
   },
+  {
+    path: '/design-system',
+    name: 'DesignSystem',
+    component: () => import('@/views/DesignSystem.vue'),
+    meta: { public: true },
+  },
   ...clientRouter,
   ...veterinarianRouter,
   ...directorRouter,

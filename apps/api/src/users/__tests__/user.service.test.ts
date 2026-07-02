@@ -1,3 +1,4 @@
+import { userService } from "@api/instances";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockUserRepository = vi.hoisted(() => ({
@@ -14,9 +15,6 @@ vi.mock("@api/users/user.repository", () => ({
     return mockUserRepository;
   }),
 }));
-
-const { UserService } = await import("@api/users/user.service");
-const userService = new UserService();
 
 const mockUser = {
   id: "user-1",

@@ -64,111 +64,101 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="profil-page">
-    <div class="profil-card">
-      <div class="profil-header">
-        <div class="profil-avatar">{{ user?.firstname?.[0] }}{{ user?.lastname?.[0] }}</div>
-        <div>
-          <h1 class="profil-name">{{ user?.firstname }} {{ user?.lastname }}</h1>
-          <span class="profil-role">Secrétaire</span>
-        </div>
-      </div>
-
-      <el-divider />
-
-      <div class="profil-info">
-        <div class="info-row">
-          <span class="info-label">Email</span>
-          <span class="info-value">{{ user?.email }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Prénom</span>
-          <span class="info-value">{{ user?.firstname }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Nom</span>
-          <span class="info-value">{{ user?.lastname }}</span>
-        </div>
-      </div>
-
-      <el-divider />
-
-      <div class="profil-actions">
-        <el-button size="large" @click="handleLogout">Se déconnecter</el-button>
-        <el-button type="danger" size="large" plain @click="deleteDialog?.open()">
-          Supprimer mon compte
-        </el-button>
-      </div>
-    </div>
-    <DeleteAccountDialog ref="deleteDialog" />
-
-    <!-- Infos clinique (lecture seule) -->
-    <div v-if="clinic" class="profil-card" style="margin-top: 24px">
-      <h2 class="section-title">Ma clinique</h2>
-      <div class="profil-info">
-        <div class="info-row">
-          <span class="info-label">Nom</span><span class="info-value">{{ clinic.name }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Adresse</span
-          ><span class="info-value">{{ clinic.address }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Téléphone</span
-          ><span class="info-value">{{ clinic.phone }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Site web</span>
-          <span class="info-value"
-            ><a :href="clinic.website" target="_blank">{{ clinic.website }}</a></span
-          >
-        </div>
-        <div v-if="clinic.description" class="info-row">
-          <span class="info-label">Description</span
-          ><span class="info-value">{{ clinic.description }}</span>
-        </div>
-        <div v-if="clinic.openingHours" class="info-row">
-          <span class="info-label">Horaires</span>
-          <span class="info-value" style="white-space: pre-line">{{ clinic.openingHours }}</span>
-        </div>
+  <div class="card">
+    <div class="profil-header">
+      <div class="profil-avatar">{{ user?.firstname?.[0] }}{{ user?.lastname?.[0] }}</div>
+      <div>
+        <h1 class="profil-name">{{ user?.firstname }} {{ user?.lastname }}</h1>
+        <span class="profil-role">Secrétaire</span>
       </div>
     </div>
 
-    <!-- Équipe de la clinique -->
-    <div v-if="staff" class="profil-card" style="margin-top: 24px">
-      <h2 class="section-title">Mon équipe</h2>
-      <div class="staff-list">
-        <div
-          v-for="member in [
-            ...(staff.director ? [staff.director] : []),
-            ...staff.referents,
-            ...staff.veterinarians,
-            ...staff.secretaries,
-          ]"
-          :key="member.id"
-          class="staff-item"
+    <el-divider />
+
+    <div class="profil-info">
+      <div class="info-row">
+        <span class="info-label">Email</span>
+        <span class="info-value">{{ user?.email }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Prénom</span>
+        <span class="info-value">{{ user?.firstname }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Nom</span>
+        <span class="info-value">{{ user?.lastname }}</span>
+      </div>
+    </div>
+
+    <el-divider />
+
+    <div class="profil-actions">
+      <el-button size="large" @click="handleLogout">Se déconnecter</el-button>
+      <el-button type="danger" size="large" plain @click="deleteDialog?.open()">
+        Supprimer mon compte
+      </el-button>
+    </div>
+  </div>
+  <DeleteAccountDialog ref="deleteDialog" />
+
+  <!-- Infos clinique (lecture seule) -->
+  <div v-if="clinic" class="card" style="margin-top: 24px">
+    <h2 class="section-title">Ma clinique</h2>
+    <div class="profil-info">
+      <div class="info-row">
+        <span class="info-label">Nom</span><span class="info-value">{{ clinic.name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Adresse</span><span class="info-value">{{ clinic.address }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Téléphone</span><span class="info-value">{{ clinic.phone }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Site web</span>
+        <span class="info-value"
+          ><a :href="clinic.website" target="_blank">{{ clinic.website }}</a></span
         >
-          <div class="staff-avatar">{{ member.firstname[0] }}{{ member.lastname[0] }}</div>
-          <div class="staff-info">
-            <div class="staff-name">{{ member.firstname }} {{ member.lastname }}</div>
-            <div class="staff-email">{{ member.email }}</div>
-          </div>
-          <el-tag :type="roleTag[member.role] as any" size="small">{{
-            roleLabel[member.role]
-          }}</el-tag>
+      </div>
+      <div v-if="clinic.description" class="info-row">
+        <span class="info-label">Description</span
+        ><span class="info-value">{{ clinic.description }}</span>
+      </div>
+      <div v-if="clinic.openingHours" class="info-row">
+        <span class="info-label">Horaires</span>
+        <span class="info-value" style="white-space: pre-line">{{ clinic.openingHours }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Équipe de la clinique -->
+  <div v-if="staff" class="card" style="margin-top: 24px">
+    <h2 class="section-title">Mon équipe</h2>
+    <div class="staff-list">
+      <div
+        v-for="member in [
+          ...(staff.director ? [staff.director] : []),
+          ...staff.referents,
+          ...staff.veterinarians,
+          ...staff.secretaries,
+        ]"
+        :key="member.id"
+        class="staff-item"
+      >
+        <div class="staff-avatar">{{ member.firstname[0] }}{{ member.lastname[0] }}</div>
+        <div class="staff-info">
+          <div class="staff-name">{{ member.firstname }} {{ member.lastname }}</div>
+          <div class="staff-email">{{ member.email }}</div>
         </div>
+        <el-tag :type="roleTag[member.role] as any" size="small">{{
+          roleLabel[member.role]
+        }}</el-tag>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.profil-card {
-  background: white;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
 .profil-header {
   display: flex;
   align-items: center;

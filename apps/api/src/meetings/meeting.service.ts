@@ -12,6 +12,7 @@ import {
 import { MeetingRepository } from "./meeting.repository";
 import type { UserRole } from "@armali/schemas";
 import { NotFoundError } from "@api/errors";
+import { InternalMeetingRepository } from "./internal-meeting";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,10 @@ const RRULE_FREQ: Record<string, Frequency> = {
 };
 
 export class MeetingService {
-  constructor(private repository: MeetingRepository) {}
+  constructor(
+    private repository: MeetingRepository,
+    private internalMeetingRepository: InternalMeetingRepository,
+  ) {}
 
   private isUpcoming(date: Date) {
     return new Date(date) >= new Date();

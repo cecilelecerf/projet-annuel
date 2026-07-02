@@ -4,6 +4,22 @@ const mockMeetingRepository = vi.hoisted(() => ({
   getAnimalMeetingsAsVet: vi.fn(),
   getAnimalMeetingsAsClient: vi.fn(),
   getMeetingById: vi.fn(),
+  getInternalMeetings: vi.fn(),
+  getAvailabilities: vi.fn(),
+  getAvailabilitiesByClinic: vi.fn(),
+  getRecurringById: vi.fn(),
+}));
+
+const mockInternalMeetingRepository = vi.hoisted(() => ({
+  findById: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+  findParticipant: vi.fn(),
+  updateParticipantStatus: vi.fn(),
+  updateParticipantStatusDirect: vi.fn(),
+  createOccurrenceOverride: vi.fn(),
+  copyParticipantStatuses: vi.fn(),
 }));
 
 vi.mock("@api/meetings/meeting.repository", () => ({
@@ -12,8 +28,27 @@ vi.mock("@api/meetings/meeting.repository", () => ({
   }),
 }));
 
+vi.mock("@api/meetings/internal-meeting", () => ({
+  InternalMeetingRepository: vi.fn(function () {
+    return mockInternalMeetingRepository;
+  }),
+}));
+
+vi.mock("@api/meetings/internal-meeting/internal-meeting.repository", () => ({
+  InternalMeetingRepository: vi.fn(function () {
+    return mockInternalMeetingRepository;
+  }),
+}));
+
+const { MeetingRepository } = await import("@api/meetings/meeting.repository");
+const { InternalMeetingRepository } =
+  await import("@api/meetings/internal-meeting/internal-meeting.repository");
 const { MeetingService } = await import("@api/meetings/meeting.service");
-const meetingService = new MeetingService();
+
+const meetingService = new MeetingService(
+  new MeetingRepository({} as any),
+  new InternalMeetingRepository({} as any),
+);
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

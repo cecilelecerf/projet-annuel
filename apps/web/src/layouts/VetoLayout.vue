@@ -30,6 +30,11 @@ const menuItems: MenuItem[] = [
     icon: ChatDotRound,
   },
   {
+    index: 'VETERINARIAN.Availabilities',
+    label: 'Disponibilité',
+    icon: User,
+  },
+  {
     index: 'VETERINARIAN.Profil',
     label: 'Profil',
     icon: User,
@@ -49,17 +54,4 @@ const menuItems: MenuItem[] = [
   </div>
 </template>
 
-<style scoped>
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #f8f9fa;
-}
-.main {
-  width: 100%;
-  max-width: 1200px;
-  margin-inline: auto;
-  padding: 32px 24px;
-}
-</style>
+<style scoped></style>

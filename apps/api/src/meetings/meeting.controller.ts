@@ -60,7 +60,6 @@ export class MeetingController {
         start,
         end,
       });
-
       return res.status(200).json(calendarSchema.parse(calendar));
     } catch (err) {
       next(err);
@@ -106,21 +105,7 @@ export class MeetingController {
       next(err);
     }
   }
-  async getMyMeetings(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const meetings = await meetingListService.getForUser(
-        req.user.id,
-        req.user.role,
-      );
-      return res.status(200).json(meetingListSchema.parse(meetings));
-    } catch (err) {
-      next(err);
-    }
-  }
+
   async getMeeting(
     req: RequestWithParams<{ id: string }> & { query: { date?: string } },
     res: Response,

@@ -25,6 +25,11 @@ export const veterinarianRouter: RouteRecordRaw[] = [
         component: () => import('@/features/meetings/views/MeetingView.vue'),
       },
       {
+        path: 'availabilities',
+        name: 'VETERINARIAN.Availabilities',
+        component: () => import('@/features/availabilities/view/AvaibalitiesView.vue'),
+      },
+      {
         path: 'clients/:id',
         name: 'VETERINARIAN.Clients.Detail',
         component: () => import('@/features/users/views/client/UserView.vue'),

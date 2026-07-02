@@ -164,7 +164,10 @@ export const animalMeetingService = new AnimalMeetingService(
 );
 
 // ⚠️ à vérifier : MeetingService (top-level, agrège probablement les 3 types de meetings)
-export const meetingService = new MeetingService(meetingRepository);
+export const meetingService = new MeetingService(
+  meetingRepository,
+  internalMeetingRepository,
+);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────

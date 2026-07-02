@@ -1,13 +1,11 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
-import { AnimalController } from "./animal.controller";
 import { createAnimalSchema, updateAnimalSchema } from "@armali/schemas";
-import { AnimalMeetingController } from "@api/meetings";
+import { animalController, animalMeetingController } from "@api/instances";
 
 const animalRouter: Router = Router();
-const controller = new AnimalController();
-const animalMeetingController = new AnimalMeetingController();
+const controller = animalController;
 
 animalRouter.get(
   "/",

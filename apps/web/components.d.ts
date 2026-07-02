@@ -14,7 +14,6 @@ declare module 'vue' {
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
     DevLoginSection: typeof import('./src/components/DevLoginSection.vue')['default']
-    DevSection: typeof import('./src/components/DevSection.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']
@@ -42,6 +41,8 @@ declare module 'vue' {
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
+    ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
@@ -49,11 +50,12 @@ declare module 'vue' {
     ElTimeSelect: typeof import('element-plus/es')['ElTimeSelect']
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     Hero: typeof import('./src/components/landingPage/Hero.vue')['default']
-    Navbar: typeof import('./src/components/ui/nav/Navbar.vue')['default']
     NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    Sidebar: typeof import('./src/components/ui/nav/Sidebar.vue')['default']
     SidebarComponent: typeof import('./src/components/ui/nav/SidebarComponent.vue')['default']
+  }
+  export interface GlobalDirectives {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

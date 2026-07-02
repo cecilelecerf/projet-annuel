@@ -8,10 +8,18 @@ import {
   UserRole,
 } from "@armali/schemas";
 import { STAFF_ROLES } from "@api/utils";
+import { availabilityController } from "@api/instances";
 
 const availabilityRouter: RouterType = Router();
 
-const availabilityController = new AvailabilityController();
+availabilityRouter.get(
+  "/",
+  authMiddleware,
+  roleMiddleware(STAFF_ROLES),
+  availabilityController.getAllByUser.bind(
+    availabilityController,
+  ) as RequestHandler,
+);
 availabilityRouter.post(
   "/",
   authMiddleware,

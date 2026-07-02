@@ -1,11 +1,11 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { ActController } from "./act.controller";
 import { STAFF_ROLES } from "@api/utils";
+import { actController } from "@api/instances";
 
 const actRouter: Router = Router();
-const controller = new ActController();
+const controller = actController;
 
 // ── Acts (catalogue global) ───────────────────────────────────────────────────
 

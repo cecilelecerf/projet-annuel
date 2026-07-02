@@ -1,11 +1,10 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { PrescriptionController } from "./prescription.controller";
+import { prescriptionController } from "@api/instances";
 
 const prescriptionRouter: Router = Router();
-const controller = new PrescriptionController();
-
+const controller = prescriptionController;
 const allowedRoles = [
   "VETERINARIAN",
   "SECRETARY",

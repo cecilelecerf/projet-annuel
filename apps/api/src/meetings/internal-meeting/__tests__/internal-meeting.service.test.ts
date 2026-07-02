@@ -1,3 +1,4 @@
+import { meetingService } from "@api/instances";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockMeetingRepository = vi.hoisted(() => ({
@@ -15,9 +16,6 @@ vi.mock("@api/meetings/meeting.repository", () => ({
     return mockMeetingRepository;
   }),
 }));
-
-const { MeetingService } = await import("@api/meetings/meeting.service");
-const meetingService = new MeetingService();
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

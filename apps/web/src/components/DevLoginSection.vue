@@ -120,7 +120,7 @@ const loginAs = async (role: Role) => {
 <style scoped lang="scss">
 .dev-section {
   position: relative;
-  background: var(--el-color-primary-dark-9);
+  background: var(--el-color-primary-dark-2);
   padding: var(--spacing-3xl) var(--spacing-2xl);
   overflow: hidden;
   &::before {

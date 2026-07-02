@@ -4,10 +4,10 @@ import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import { updateClinicSchema } from "@armali/schemas";
-import { ClinicController } from "./clinic.controller";
+import { clinicController } from "@api/instances";
 
 const clinicRouter: RouterType = Router();
-const controller = new ClinicController();
+const controller = clinicController;
 
 clinicRouter.get(
   "/staff",

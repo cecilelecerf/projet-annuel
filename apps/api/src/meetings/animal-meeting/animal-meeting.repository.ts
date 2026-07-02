@@ -1,4 +1,3 @@
-import { prisma } from "@api/lib/prisma";
 import type {
   CreateAnimalMeeting,
   AnimalId,
@@ -7,23 +6,99 @@ import type {
 import {
   User,
   VeterinarianClinic,
+  Prisma,
 } from "../../../prisma/generated/prisma/client";
+import { PrismaClient } from "@prisma/client/extension";
+
+// ═══════════════════════════════════════════════════════════════
+// Includes — définis une fois, réutilisés pour typer les retours
+// ═══════════════════════════════════════════════════════════════
+
+const findByIdInclude = {
+  meeting: true,
+  animal: {
+    include: {
+      client: { include: { user: { omit: { password: true } } } },
+      race: { include: { pet: true } },
+    },
+  },
+  speciality: true,
+  veterinarianClinic: { include: { veterinarian: true, clinic: true } },
+} satisfies Prisma.AnimalMeetingInclude;
+
+const createInclude = {
+  animalMeeting: {
+    include: {
+      animal: true,
+      speciality: true,
+    },
+  },
+} satisfies Prisma.MeetingBaseInclude;
+
+const updateInclude = {
+  meeting: true,
+  animal: true,
+} satisfies Prisma.AnimalMeetingInclude;
+
+const findByUserInclude = {
+  animal: {
+    include: {
+      race: { include: { pet: true } },
+      client: { include: { user: { omit: { password: true } } } },
+    },
+  },
+  meeting: true,
+  speciality: true,
+  veterinarianClinic: {
+    include: {
+      veterinarian: { include: { user: { omit: { password: true } } } },
+      clinic: true,
+    },
+  },
+} satisfies Prisma.AnimalMeetingInclude;
+
+const findByAnimalInclude = {
+  meeting: true,
+  animalMedicalHistories: {
+    include: { clinicAct: { include: { act: true } } },
+  },
+} satisfies Prisma.AnimalMeetingInclude;
+
+// ═══════════════════════════════════════════════════════════════
+// Types de sortie — dérivés des includes ci-dessus, exportables
+// ═══════════════════════════════════════════════════════════════
+
+export type AnimalMeetingWithDetails = Prisma.AnimalMeetingGetPayload<{
+  include: typeof findByIdInclude;
+}>;
+
+export type CreatedAnimalMeeting = Prisma.MeetingBaseGetPayload<{
+  include: typeof createInclude;
+}>;
+
+export type UpdatedAnimalMeeting = Prisma.AnimalMeetingGetPayload<{
+  include: typeof updateInclude;
+}>;
+
+export type AnimalMeetingForUser = Prisma.AnimalMeetingGetPayload<{
+  include: typeof findByUserInclude;
+}>;
+
+export type AnimalMeetingForAnimal = Prisma.AnimalMeetingGetPayload<{
+  include: typeof findByAnimalInclude;
+}>;
+
+// ═══════════════════════════════════════════════════════════════
+// Repository
+// ═══════════════════════════════════════════════════════════════
 
 export class AnimalMeetingRepository {
-  async findById(id: string) {
-    return prisma.animalMeeting.findFirst({
+  constructor(private prisma: PrismaClient) {}
+
+  async findById(id: string): Promise<AnimalMeetingWithDetails | null> {
+    return this.prisma.animalMeeting.findFirst({
       where: { OR: [{ meetingId: id }] },
-      include: {
-        meeting: true,
-        animal: {
-          include: {
-            client: { include: { user: { omit: { password: true } } } },
-            race: { include: { pet: true } },
-          },
-        },
-        speciality: true,
-        veterinarianClinic: { include: { veterinarian: true, clinic: true } },
-      },
+      include: findByIdInclude,
     });
   }
 
@@ -33,8 +108,8 @@ export class AnimalMeetingRepository {
   }: {
     data: CreateAnimalMeeting;
     veterinarianClinicId: VeterinarianClinic["id"];
-  }) {
-    return prisma.meetingBase.create({
+  }): Promise<CreatedAnimalMeeting> {
+    return this.prisma.meetingBase.create({
       data: {
         kind: "ANIMAL",
         date: data.date,
@@ -49,19 +124,18 @@ export class AnimalMeetingRepository {
           },
         },
       },
-      include: {
-        animalMeeting: {
-          include: {
-            animal: true,
-            speciality: true,
-          },
-        },
-      },
+      include: createInclude,
     });
   }
 
-  async update({ id, data }: { id: string; data: UpdateAnimalMeeting }) {
-    return prisma.animalMeeting.update({
+  async update({
+    id,
+    data,
+  }: {
+    id: string;
+    data: UpdateAnimalMeeting;
+  }): Promise<UpdatedAnimalMeeting> {
+    return this.prisma.animalMeeting.update({
       where: { id },
       data: {
         ...(data.description !== undefined && {
@@ -78,56 +152,34 @@ export class AnimalMeetingRepository {
         ...((data.date || data.startTime || data.endTime) && {
           meeting: {
             update: {
-              data: {
-                ...(data.date && { date: data.date }),
-                ...(data.startTime && { startTime: data.startTime }),
-                ...(data.endTime && { endTime: data.endTime }),
-              },
+              ...(data.date && { date: data.date }),
+              ...(data.startTime && { startTime: data.startTime }),
+              ...(data.endTime && { endTime: data.endTime }),
             },
           },
         }),
       },
-      include: { meeting: true, animal: true },
+      include: updateInclude,
     });
   }
 
-  async delete(id: string) {
-    return prisma.meetingBase.delete({ where: { id } });
+  async delete(id: string): Promise<Prisma.MeetingBaseGetPayload<object>> {
+    return this.prisma.meetingBase.delete({ where: { id } });
   }
 
-  async findByUser(userId: User["id"]) {
-    return prisma.animalMeeting.findMany({
+  async findByUser(userId: User["id"]): Promise<AnimalMeetingForUser[]> {
+    return this.prisma.animalMeeting.findMany({
       where: {
         animal: { client: { user: { id: userId } } },
       },
-      include: {
-        animal: {
-          include: {
-            race: { include: { pet: true } },
-            client: { include: { user: { omit: { password: true } } } },
-          },
-        },
-        meeting: true,
-        speciality: true,
-        veterinarianClinic: {
-          include: {
-            veterinarian: { include: { user: { omit: { password: true } } } },
-            clinic: true,
-          },
-        },
-      },
+      include: findByUserInclude,
     });
   }
 
-  async findByAnimal(animalId: AnimalId) {
-    return prisma.animalMeeting.findMany({
+  async findByAnimal(animalId: AnimalId): Promise<AnimalMeetingForAnimal[]> {
+    return this.prisma.animalMeeting.findMany({
       where: { animalId: animalId },
-      include: {
-        meeting: true,
-        animalMedicalHistories: {
-          include: { clinicAct: { include: { act: true } } },
-        },
-      },
+      include: findByAnimalInclude,
     });
   }
 }

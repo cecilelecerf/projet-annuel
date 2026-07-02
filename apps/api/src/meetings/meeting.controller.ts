@@ -4,7 +4,6 @@ import {
   availabilitiesSchema,
   animalMeetingMetaSchema,
   internalMeetingMetaSchema,
-  MeetingId,
 } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
@@ -13,23 +12,18 @@ import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { MeetingService } from "./meeting.service";
 import { UserService } from "@api/users";
 import { AnimalMeetingService } from "./animal-meeting";
-import {
-  InternalMeetingRepository,
-  InternalMeetingService,
-} from "./internal-meeting";
+import { InternalMeetingService } from "./internal-meeting";
 import { AvailabilityService } from "./availability";
 
-const meetingService = new MeetingService();
-const animalMeetingService = new AnimalMeetingService();
-const internalMeetingRepository = new InternalMeetingRepository(prisma);
-
-const internalMeetingService = new InternalMeetingService(
-  internalMeetingRepository,
-);
-const availabilityService = new AvailabilityService();
-const userService = new UserService();
-
 export class MeetingController {
+  constructor(
+    private service: MeetingService,
+    private userService: UserService,
+    private animalMeetingService: AnimalMeetingService,
+    private availabilityService: AvailabilityService,
+    private internalMeetingService: InternalMeetingService,
+  ) {}
+
   async getMyCalendar(
     req: AuthenticatedRequest,
     res: Response,
@@ -53,11 +47,11 @@ export class MeetingController {
           ? prisma.clientProfile.findFirst({ where: { user: { id: userId } } })
           : null,
         ["SECRETARY", "DIRECTOR", "REFERANT"].includes(role)
-          ? userService.getClinicId({ userId, role }).catch(() => null)
+          ? this.userService.getClinicId({ userId, role }).catch(() => null)
           : null,
       ]);
 
-      const calendar = await meetingService.getCalendar({
+      const calendar = await this.service.getCalendar({
         userId,
         role,
         vetProfileId: vetProfile?.id,
@@ -66,7 +60,6 @@ export class MeetingController {
         start,
         end,
       });
-
       return res.status(200).json(calendarSchema.parse(calendar));
     } catch (err) {
       next(err);
@@ -90,14 +83,17 @@ export class MeetingController {
         prisma.veterinarianProfile.findUnique({
           where: { id: veterinarianId },
         }),
-        userService.getClinicId({ userId: req.user.id, role: req.user.role }),
+        this.userService.getClinicId({
+          userId: req.user.id,
+          role: req.user.role,
+        }),
       ]);
       if (!veterinarian) throw new NotFoundError("Veterinarian");
 
       const [internal, animal, availabilities] = await Promise.all([
-        meetingService.getInternalMeetings(veterinarian.id, start, end),
-        meetingService.getAnimalMeetingsAsVet(veterinarian.id, start, end),
-        meetingService.getAvailabilitiesByClinic({ clinicId, start, end }),
+        this.service.getInternalMeetings(veterinarian.id, start, end),
+        this.service.getAnimalMeetingsAsVet(veterinarian.id, start, end),
+        this.service.getAvailabilitiesByClinic({ clinicId, start, end }),
       ]);
       return res.status(200).json(
         calendarSchema.parse({
@@ -109,21 +105,7 @@ export class MeetingController {
       next(err);
     }
   }
-  async getMyMeetings(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const meetings = await meetingListService.getForUser(
-        req.user.id,
-        req.user.role,
-      );
-      return res.status(200).json(meetingListSchema.parse(meetings));
-    } catch (err) {
-      next(err);
-    }
-  }
+
   async getMeeting(
     req: RequestWithParams<{ id: string }> & { query: { date?: string } },
     res: Response,
@@ -174,7 +156,7 @@ export class MeetingController {
 
       switch (kind) {
         case "ANIMAL": {
-          const meeting = await animalMeetingService.getById({
+          const meeting = await this.animalMeetingService.getById({
             id: req.params.id,
             userId: req.user.id,
             role: req.user.role,
@@ -185,7 +167,7 @@ export class MeetingController {
           return res.status(200).json(animalMeetingMetaSchema.parse(data));
         }
         case "INTERNAL": {
-          const meeting = await internalMeetingService.getById({
+          const meeting = await this.internalMeetingService.getById({
             id: req.params.id,
             role: req.user.role,
           });
@@ -195,7 +177,7 @@ export class MeetingController {
           return res.status(200).json(internalMeetingMetaSchema.parse(data));
         }
         case "AVAILABILITY": {
-          const meeting = await availabilityService.getById({
+          const meeting = await this.availabilityService.getById({
             id: req.params.id,
             userId: req.user.id,
             role: req.user.role,

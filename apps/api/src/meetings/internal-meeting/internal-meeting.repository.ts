@@ -2,6 +2,7 @@ import { userWithProfileAndClinicIdInclude } from "@api/users/user.types";
 import type {
   CreateInternalMeeting,
   MeetingParticipantStatus,
+  MeetingRecurringId,
   UpdateInternalMeeting,
 } from "@armali/schemas";
 import {
@@ -10,7 +11,6 @@ import {
   MeetingReccuring,
   PrismaClient,
 } from "../../../prisma/generated/prisma/client";
-import { RecurringWithRelations } from "../recurring-meeting/recurring-meeting.repository";
 
 export class InternalMeetingRepository {
   constructor(private prisma: PrismaClient) {}
@@ -32,10 +32,12 @@ export class InternalMeetingRepository {
     data,
     authorId,
     clinicId,
+    parentId,
   }: {
     data: CreateInternalMeeting;
     authorId: string;
     clinicId: string;
+    parentId: MeetingRecurringId;
   }) {
     return this.prisma.meetingBase.create({
       data: {
@@ -44,7 +46,7 @@ export class InternalMeetingRepository {
         startTime: data.startTime,
         endTime: data.endTime,
         type: "SPECIFIED",
-        parentId: data.parentId,
+        parentId: parentId,
         internalMeeting: {
           create: {
             title: data.title,

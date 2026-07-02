@@ -16,7 +16,7 @@ export class RecurringService {
     return recurring;
   }
 
-  async update(id: string, data: UpdateRecurring) {
+  async update({ id, data }: { id: string; data: UpdateRecurring }) {
     // todo si dans le passé pas de modification avant la date actuelle
     const current = await this.getById(id);
 
@@ -28,7 +28,8 @@ export class RecurringService {
           data: data.internal,
         });
       }
-      return this.repository.update(id, data);
+      const { dateToStartAction, ...d } = data;
+      return this.repository.update(id, d);
     }
 
     return this.repository.splitFromDate(current, data, splitDate);

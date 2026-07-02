@@ -4,11 +4,12 @@ import { UserRole } from "../../prisma/generated/prisma/enums";
 import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId } from "./user.utils";
 import { isStaff } from "@api/utils";
-const userRepository = new UserRepository();
 
 export class UserService {
+  constructor(private repository: UserRepository) {}
+
   async getAllUsers(): Promise<Omit<User, "password">[]> {
-    return await userRepository.getAllUsers();
+    return await this.repository.getAllUsers();
   }
 
   async getClinicId({
@@ -18,7 +19,7 @@ export class UserService {
     userId: string;
     role: UserRole;
   }): Promise<string> {
-    const clinicId = await userRepository.getClinicIdByUserId({
+    const clinicId = await this.repository.getClinicIdByUserId({
       id: userId,
       role,
     });
@@ -28,7 +29,7 @@ export class UserService {
 
   async getUsers(userId: string, role: UserRole) {
     const clinicId = await this.getClinicId({ userId, role });
-    return userRepository.getUsersByClinic({ clinicId });
+    return this.repository.getUsersByClinic({ clinicId });
   }
 
   async getUsersByRoles(
@@ -37,7 +38,7 @@ export class UserService {
     targetRole: UserRole[],
   ) {
     if (role === "ADMIN") {
-      const users = await userRepository.getAllUsersByRole({
+      const users = await this.repository.getAllUsersByRole({
         roles: targetRole,
       });
       return users.map(flatClinicId);
@@ -47,10 +48,10 @@ export class UserService {
     const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
     const [clients, staffs] = await Promise.all([
       targetRole.includes("CLIENT")
-        ? userRepository.getAllUsersByRole({ roles: ["CLIENT"] })
+        ? this.repository.getAllUsersByRole({ roles: ["CLIENT"] })
         : Promise.resolve([]),
       nonClientRoles.length > 0
-        ? userRepository.getUsersByRoleAndClinic({
+        ? this.repository.getUsersByRoleAndClinic({
             clinicId,
             roles: nonClientRoles,
           })
@@ -69,7 +70,7 @@ export class UserService {
     requesterRole: UserRole;
     targetId: string;
   }) {
-    const user = await userRepository.getUserById({ id: targetId });
+    const user = await this.repository.getUserById({ id: targetId });
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (requesterRole === "ADMIN") return user;
@@ -81,7 +82,9 @@ export class UserService {
         userId: requesterId,
         role: requesterRole,
       });
-      const usersInClinic = await userRepository.getUsersByClinic({ clinicId });
+      const usersInClinic = await this.repository.getUsersByClinic({
+        clinicId,
+      });
       if (!usersInClinic.some((u) => u.id === targetId))
         throw new NotFoundError("Utilisateur");
     }

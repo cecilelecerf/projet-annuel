@@ -3,11 +3,14 @@ import { AnimalRepository } from "./animal.repository";
 import type { CreateAnimal, UpdateAnimal, UserRole } from "@armali/schemas";
 import { isStaff } from "@api/utils";
 import dayjs from "dayjs";
-import { prisma } from "@api/lib/prisma";
-
-const animalRepository = new AnimalRepository();
+import { VaccineRepository } from "@api/vaccines/vaccine.repository";
 
 export class AnimalService {
+  constructor(
+    private repository: AnimalRepository,
+    private vaccineRepository: VaccineRepository,
+  ) {}
+
   private async assertOwner({
     petId,
     userId,
@@ -15,7 +18,7 @@ export class AnimalService {
     petId: string;
     userId: string;
   }) {
-    const pet = await animalRepository.findById(petId);
+    const pet = await this.repository.findById(petId);
     if (!pet) throw new NotFoundError("Animal");
     if (pet.clientId !== userId) throw new ForbiddenError();
   }
@@ -35,8 +38,8 @@ export class AnimalService {
   }
 
   async getAll({ userId, role }: { userId: string; role: UserRole }) {
-    if (isStaff(role)) return animalRepository.findAll();
-    return animalRepository.findByClientId(userId);
+    if (isStaff(role)) return this.repository.findAll();
+    return this.repository.findByClientId(userId);
   }
   async getByUser({
     targetUserId,
@@ -49,7 +52,7 @@ export class AnimalService {
   }) {
     if (!isStaff(role) && targetUserId !== requesterId)
       throw new ForbiddenError();
-    return animalRepository.findByClientId(targetUserId);
+    return this.repository.findByClientId(targetUserId);
   }
 
   async getById({
@@ -61,7 +64,7 @@ export class AnimalService {
     userId: string;
     role: UserRole;
   }) {
-    const pet = await animalRepository.findById(id);
+    const pet = await this.repository.findById(id);
     if (!pet) throw new NotFoundError("Animal");
     if (!isStaff(role) && pet.clientId !== userId) throw new ForbiddenError();
     return pet;
@@ -80,7 +83,7 @@ export class AnimalService {
       ? ((data as any).clientId ?? userId)
       : userId;
 
-    return animalRepository.create({ ...data, clientId });
+    return this.repository.create({ ...data, clientId });
   }
 
   async update({
@@ -95,9 +98,9 @@ export class AnimalService {
     role: UserRole;
   }) {
     await this.assertAccess({ petId: id, userId, role });
-    const pet = await animalRepository.findById(id);
+    const pet = await this.repository.findById(id);
     if (!pet) throw new NotFoundError("animal");
-    return animalRepository.update(pet.id, data);
+    return this.repository.update(pet.id, data);
   }
 
   async delete({
@@ -110,22 +113,19 @@ export class AnimalService {
     role: UserRole;
   }) {
     await this.assertOwner({ petId: id, userId });
-    return animalRepository.delete(id);
+    return this.repository.delete(id);
   }
 
   async getVaccinesByAnimal(animalId: string) {
-    const animal = await animalRepository.findById(animalId);
+    const animal = await this.repository.findById(animalId);
     if (!animal) throw new NotFoundError("Animal");
 
     const country = animal.client.country ?? "FR";
     const animalAgeInWeeks = dayjs().diff(dayjs(animal.dateOfBirth), "week"); // ← manquant
 
     const [vaccinesEffectued, allVaccines] = await Promise.all([
-      animalRepository.findVaccinesByAnimal(animalId),
-      prisma.vaccine.findMany({
-        where: { petId: animal.race.petId },
-        include: { act: true, countryRules: true },
-      }),
+      this.repository.findVaccinesByAnimal(animalId),
+      this.vaccineRepository.findByPetId(animal.race.petId),
     ]);
 
     const effectuedMap = new Map(

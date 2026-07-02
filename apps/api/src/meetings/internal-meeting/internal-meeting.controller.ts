@@ -7,15 +7,10 @@ import {
   updateParticipantStatusSchema,
 } from "@armali/schemas";
 import { InternalMeetingService } from "./internal-meeting.service";
-import { prisma } from "@api/lib/prisma";
-import { InternalMeetingRepository } from "./internal-meeting.repository";
-const internalMeetingRepository = new InternalMeetingRepository(prisma);
-
-const internalMeetingService = new InternalMeetingService(
-  internalMeetingRepository,
-);
 
 export class InternalMeetingController {
+  constructor(private service: InternalMeetingService) {}
+
   async create(
     req: AuthenticatedRequest & { body: CreateInternalMeeting },
     res: Response,
@@ -24,7 +19,7 @@ export class InternalMeetingController {
     try {
       if (!req.user.clinicId) throw new ForbiddenError();
 
-      const meeting = await internalMeetingService.create({
+      const meeting = await this.service.create({
         data: req.body,
         userId: req.user.id,
         clinicId: req.user.clinicId,
@@ -41,7 +36,7 @@ export class InternalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await internalMeetingService.update({
+      const meeting = await this.service.update({
         id: req.params.id,
         data: req.body,
         userId: req.user.id,
@@ -58,7 +53,7 @@ export class InternalMeetingController {
     next: NextFunction,
   ) {
     try {
-      await internalMeetingService.delete({
+      await this.service.delete({
         id: req.params.id,
         userId: req.user.id,
       });
@@ -77,7 +72,7 @@ export class InternalMeetingController {
       const result = updateParticipantStatusSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
 
-      const participant = await internalMeetingService.updateParticipantStatus({
+      const participant = await this.service.updateParticipantStatus({
         meetingId: req.params.id,
         userId: req.user.id,
         status: result.data.status,

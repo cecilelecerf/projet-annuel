@@ -21,6 +21,11 @@ export const secretaryRouter: RouteRecordRaw[] = [
       },
       {
         path: 'profil',
+        name: 'SECRETARY.Avaibality',
+        component: () => import('@/features/availabilities/view/AvaibalitiesView.vue'),
+      },
+      {
+        path: 'profil',
         name: 'SECRETARY.Profil',
         component: () => import('@/features/users/views/secretary/Profil.vue'),
       },

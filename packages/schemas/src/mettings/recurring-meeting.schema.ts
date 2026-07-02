@@ -3,6 +3,7 @@ import { meetingRecurringIdSchema } from "../ids";
 import { meetingKindSchema } from "./meeting-base.schema";
 import { createInternalMeetingFields } from "./internal-meeting.schema";
 import { createAnimalMeetingFields } from "./animal-meeting.schema";
+import { createRecurringAvailabilitySchema } from "./availability.schema";
 export const meetingFrequencySchema = z.enum([
   "DAILY",
   "WEEKLY",
@@ -42,12 +43,6 @@ export const updateRecurringSchema = z
         description: true,
         title: true,
         userIds: true,
-      })
-      .optional(),
-    animal: createAnimalMeetingFields
-      .pick({
-        description: true,
-        specialityId: true,
       })
       .optional(),
   });

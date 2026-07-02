@@ -8,7 +8,6 @@ import {
   meetingBaseSchema,
   meetingMetaSchema,
   meetingSchema,
-  animalWithRaceMeta,
   type Calendar,
   type ClientId,
   type CreateAnimalMeeting,
@@ -25,7 +24,6 @@ import {
   type UpdateRecurring,
   type UpdateInternalMeeting,
   internalMeetingField,
-  type MeetingParticipantStatus,
   type UpdateParticipantStatus,
 } from '@armali/schemas'
 

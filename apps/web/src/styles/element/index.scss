@@ -14,6 +14,8 @@
 @use './custom-colors.scss';
 @use './button.scss';
 @use './alert.scss';
+@use './dialog.scss';
+@use './input.scss';
 :root {
   --spacing-xs: 4px;
   --spacing-sm: 8px;
@@ -36,4 +38,10 @@
   --fw-semibold: 600;
   --fw-bold: 700;
   --el-menu-item-height: 47px;
+}
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }

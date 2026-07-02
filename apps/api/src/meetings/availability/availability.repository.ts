@@ -1,26 +1,88 @@
-import { prisma } from "@api/lib/prisma";
-import type { CreateAvailability, UpdateAvailability } from "@armali/schemas";
+import type {
+  CreateAvailabilityException,
+  CreatePunctualAvailability,
+  CreateRecurringAvailability,
+  UpdatePunctualAvailability,
+  UpdateRecurringAvailability,
+} from "@armali/schemas";
+import {
+  Availability,
+  MeetingBase,
+  User,
+} from "../../../prisma/generated/prisma/client";
+import { PrismaClient } from "@prisma/client/extension";
 
 export class AvailabilityRepository {
+  constructor(private prisma: PrismaClient) {}
+
+  async findByUser({ userId, date }: { userId: User["id"]; date: Date }) {
+    return this.prisma.availability.findMany({
+      where: {
+        userId,
+        OR: [
+          {
+            recurringId: { not: null },
+            recurring: { dateEnd: { gte: date } },
+          },
+          {
+            meetingId: { not: null },
+            meeting: { date: { gte: date } },
+          },
+        ],
+      },
+      include: { meeting: true, recurring: true, clinic: true },
+    });
+  }
+
   async findById(id: string) {
-    return prisma.availability.findFirst({
-      where: { OR: [{ meetingId: id }, { recurringId: id }] },
+    return this.prisma.availability.findFirst({
+      where: { OR: [{ meetingId: id }, { recurringId: id }, { id }] },
       include: { meeting: true, user: true, clinic: true },
     });
   }
 
-  async create({
+  async createRecurring({
     data,
     authorId,
     clinicId,
   }: {
-    data: CreateAvailability;
+    data: CreateRecurringAvailability;
     authorId: string;
     clinicId: string;
   }) {
-    return prisma.meetingBase.create({
+    return this.prisma.meetingReccuring.create({
       data: {
-        kind: "AVAILABILITY",
+        kind: "AVAILABILITY" as const,
+        frequency: data.frequency,
+        dayOfWeek: data.dayOfWeek,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        dateStart: data.dateStart,
+        dateEnd: data.dateEnd,
+        availabilty: {
+          create: {
+            userId: authorId,
+            clinicId,
+          },
+        },
+      },
+      include: { availabilty: true },
+    });
+  }
+
+  async createPunctual({
+    data,
+    authorId,
+    clinicId,
+  }: {
+    data: CreatePunctualAvailability;
+    authorId: string;
+    clinicId: string;
+  }) {
+    return this.prisma.meetingBase.create({
+      data: {
+        kind: "AVAILABILITY" as const,
+        type: "SPECIFIED" as const,
         date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -35,19 +97,72 @@ export class AvailabilityRepository {
     });
   }
 
-  async update({ id, data }: { id: string; data: UpdateAvailability }) {
-    return prisma.meetingBase.update({
+  async createExeption({
+    data,
+    authorId,
+    clinicId,
+  }: {
+    data: CreateAvailabilityException;
+    authorId: string;
+    clinicId: string;
+  }) {
+    return this.prisma.meetingBase.create({
+      data: {
+        kind: "AVAILABILITY" as const,
+        type: "EXCEPTION" as const,
+        date: data.date,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        parentId: data.parentId,
+        availabilty: {
+          create: {
+            userId: authorId,
+            clinicId,
+          },
+        },
+      },
+      include: { availabilty: true },
+    });
+  }
+
+  async updatePunctual({
+    id,
+    data,
+  }: {
+    id: MeetingBase["id"];
+    data: UpdatePunctualAvailability;
+  }) {
+    return this.prisma.meetingBase.update({
       where: { id },
       data: {
         date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
       },
-      include: { availabilty: true },
     });
   }
 
-  async delete(id: string) {
-    return prisma.meetingBase.delete({ where: { id } });
+  async updateRecurring({
+    id,
+    data,
+  }: {
+    id: string;
+    data: UpdateRecurringAvailability;
+  }) {
+    return this.prisma.meetingReccuring.update({
+      where: { id },
+      data: {
+        startTime: data.startTime,
+        endTime: data.endTime,
+        dateEnd: data.dateEnd,
+        dateStart: data.dateStart,
+        dayOfWeek: data.dayOfWeek,
+        frequency: data.frequency,
+      },
+    });
+  }
+
+  async delete(id: Availability["id"]) {
+    return this.prisma.availability.delete({ where: { id } });
   }
 }

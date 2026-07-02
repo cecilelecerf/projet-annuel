@@ -15,13 +15,9 @@ import { Clinic } from "../../../prisma/generated/prisma/client";
 import { prisma } from "@api/lib/prisma";
 import { flatUser } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
-import { UserRepository } from "@api/users/user.repository";
 import { EmailService } from "@api/emails/email.service";
 import dayjs from "dayjs";
-
-const animalMeetingRepository = new AnimalMeetingRepository();
-const userRepository = new UserRepository();
-const emailService = new EmailService();
+import { UserRepository } from "@api/users/user.repository";
 
 // ── Combine une date (jour) avec une heure (time) en un seul instant ──────────
 function combineDateTime(date: Date, time: Date) {
@@ -33,6 +29,12 @@ function combineDateTime(date: Date, time: Date) {
 }
 
 export class AnimalMeetingService {
+  constructor(
+    private repository: AnimalMeetingRepository,
+    private userRepository: UserRepository,
+    private emailService: EmailService,
+  ) {}
+
   // ── Helper partagé create/update ─────────────────────────────────────────────
   private async assertVeterinarianAvailable({
     veterinarianId,
@@ -163,13 +165,13 @@ export class AnimalMeetingService {
       endTime: data.endTime,
     });
 
-    const animalMeeting = await animalMeetingRepository.create({
+    const animalMeeting = await this.repository.create({
       data,
       veterinarianClinicId: veterinarianClinic.id,
     });
     if (!animalMeeting) throw new ConflictError("not created");
 
-    await emailService.sendAppointmentEmail(
+    await this.emailService.sendAppointmentEmail(
       "created",
       animal.client.user.email,
       {
@@ -191,7 +193,7 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    const meeting = await animalMeetingRepository.findById(id);
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
     if (!isStaff(role)) {
@@ -221,7 +223,7 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    const meeting = await animalMeetingRepository.findById(id);
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
     // ── Vérification d'accès : client propriétaire ou staff ──────────────────
@@ -273,7 +275,7 @@ export class AnimalMeetingService {
       });
     }
 
-    const updated = await animalMeetingRepository.update({
+    const updated = await this.repository.update({
       id: meeting.id,
       data,
     });
@@ -282,7 +284,7 @@ export class AnimalMeetingService {
     if (isRescheduling) {
       const clientUser = meeting.animal.client.user;
       const type = isOwner ? "updatedConfirmation" : "rescheduled";
-      await emailService.sendAppointmentEmail(type, clientUser.email, {
+      await this.emailService.sendAppointmentEmail(type, clientUser.email, {
         firstname: clientUser.firstname,
         animalName: meeting.animal.name,
         date: updated.meeting!.date,
@@ -302,7 +304,7 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    const meeting = await animalMeetingRepository.findById(id);
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
     if (!isStaff(role) && meeting.animal.clientId !== userId) {
@@ -327,16 +329,20 @@ export class AnimalMeetingService {
       );
     }
 
-    const deleted = await animalMeetingRepository.delete(id);
+    const deleted = await this.repository.delete(id);
 
     // ── Notification email ───────────────────────────────────────────────────────
     const clientUser = meeting.animal.client.user;
-    await emailService.sendAppointmentEmail("cancelled", clientUser.email, {
-      firstname: clientUser.firstname,
-      animalName: meeting.animal.name,
-      date: meetingDate,
-      startTime: meetingStartTime,
-    });
+    await this.emailService.sendAppointmentEmail(
+      "cancelled",
+      clientUser.email,
+      {
+        firstname: clientUser.firstname,
+        animalName: meeting.animal.name,
+        date: meetingDate,
+        startTime: meetingStartTime,
+      },
+    );
 
     return deleted;
   }
@@ -351,11 +357,11 @@ export class AnimalMeetingService {
     role: UserRole;
   }) {
     if (!id) throw new BadRequestError("L'id est obligatoire");
-    const user = await userRepository.getUserById({ id });
+    const user = await this.userRepository.getUserById({ id });
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-    return animalMeetingRepository.findByUser(id);
+    return this.repository.findByUser(id);
   }
 
   async getByAnimal({
@@ -376,6 +382,6 @@ export class AnimalMeetingService {
     if (!isStaff(role) && animal.clientId !== userId)
       throw new ForbiddenError();
 
-    return animalMeetingRepository.findByAnimal(animalId);
+    return this.repository.findByAnimal(animalId);
   }
 }

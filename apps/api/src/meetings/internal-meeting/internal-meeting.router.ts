@@ -1,18 +1,13 @@
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
-import {
-  createAnimalMeetingSchema,
-  createInternalMeetingSchema,
-  updateAnimalMeetingSchema,
-  UserRole,
-} from "@armali/schemas";
-import { InternalMeetingController } from "./internal-meeting.controller";
+import { createInternalMeetingSchema } from "@armali/schemas";
 import { STAFF_ROLES } from "@api/utils";
+import { internalMeetingController } from "@api/instances";
 
 const internalMeetingRouter: RouterType = Router();
 
-const internalController = new InternalMeetingController();
+const internalController = internalMeetingController;
 internalMeetingRouter.post(
   "/",
   authMiddleware,

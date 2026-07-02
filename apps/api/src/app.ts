@@ -1,11 +1,11 @@
 import express, { type Express } from "express";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
-import clinicRouter from "./clinics/clinic.route";
-import directorRouter from "./directors/director.route";
-import referentRouter from "./referents/referent.route";
+import clinicRouter from "./clinics/clinic.router";
+import directorRouter from "./directors/director.router";
+import referentRouter from "./referents/referent.router";
 import adminRouter from "./admins/admin.route";
-import reviewRouter from "./reviews/review.route";
+import reviewRouter from "./reviews/review.router";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
 import { default as authRouter } from "./auth/auth.router";

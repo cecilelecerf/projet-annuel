@@ -1,4 +1,4 @@
-import { MeetingKind, UpdateRecurring } from "@armali/schemas";
+import { UpdateRecurring } from "@armali/schemas";
 import {
   MeetingReccuring,
   PrismaClient,
@@ -49,7 +49,6 @@ export class RecurringRepository {
       data,
       include: {
         availabilty: true,
-        animalMeeting: true,
         internalMeeting: true,
       },
     });

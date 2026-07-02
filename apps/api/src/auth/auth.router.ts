@@ -1,5 +1,4 @@
 import { validate, authMiddleware } from "@api/middlewares";
-import { AuthController } from "@api/auth/auth.controller";
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import {
@@ -8,10 +7,10 @@ import {
   registerDirectorSchema,
   deleteAccountConfirmSchema,
 } from "@armali/schemas";
+import { authController } from "@api/instances";
 
 const authRouter: RouterType = Router();
-const controller = new AuthController();
-
+const controller = authController;
 authRouter.post(
   "/register",
   validate(registerSchema),

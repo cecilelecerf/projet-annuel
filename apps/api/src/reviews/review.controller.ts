@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { ReviewService } from "./review.service";
 
-const reviewService = new ReviewService();
-
 export class ReviewController {
+  constructor(private service: ReviewService) {}
+
   async listVeterinarians(req: Request, res: Response, next: NextFunction) {
     try {
-      const vets = await reviewService.listVeterinarians();
+      const vets = await this.service.listVeterinarians();
       res.status(200).json(vets);
     } catch (err) {
       next(err);
@@ -15,7 +15,7 @@ export class ReviewController {
 
   async upsertReview(req: Request, res: Response, next: NextFunction) {
     try {
-      const review = await reviewService.upsertReview(req.user!.id, req.body);
+      const review = await this.service.upsertReview(req.user!.id, req.body);
       res.status(200).json(review);
     } catch (err) {
       next(err);
@@ -24,7 +24,7 @@ export class ReviewController {
 
   async getMyReviews(req: Request, res: Response, next: NextFunction) {
     try {
-      const reviews = await reviewService.getMyReviews(req.user!.id);
+      const reviews = await this.service.getMyReviews(req.user!.id);
       res.status(200).json(reviews);
     } catch (err) {
       next(err);
@@ -33,7 +33,7 @@ export class ReviewController {
 
   async getVetReviews(req: Request, res: Response, next: NextFunction) {
     try {
-      const reviews = await reviewService.getVetReviews(req.params.vetId);
+      const reviews = await this.service.getVetReviews(req.params.vetId);
       res.status(200).json(reviews);
     } catch (err) {
       next(err);

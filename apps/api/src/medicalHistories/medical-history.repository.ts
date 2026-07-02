@@ -1,4 +1,3 @@
-import { prisma } from "@api/lib/prisma";
 import type {
   CreateMedicalHistory,
   UpdateMedicalHistory,
@@ -11,6 +10,7 @@ import {
   Act,
   AnimalMedicalHistory,
 } from "../../prisma/generated/prisma/client";
+import { PrismaClient } from "@prisma/client/extension";
 
 const meetingActInclude = {
   clinicAct: { include: { act: true } },
@@ -25,8 +25,10 @@ const meetingActInclude = {
 } as const;
 
 export class AnimalMedicalHistoryRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findByMeeting(meetingId: string) {
-    return prisma.animalMedicalHistory.findMany({
+    return this.prisma.animalMedicalHistory.findMany({
       where: { animalMeeting: { meetingId } },
       include: meetingActInclude,
       orderBy: { performedAt: "asc" },
@@ -34,7 +36,7 @@ export class AnimalMedicalHistoryRepository {
   }
 
   async findById(id: string) {
-    return prisma.animalMedicalHistory.findUnique({
+    return this.prisma.animalMedicalHistory.findUnique({
       where: { id },
       include: meetingActInclude,
     });
@@ -66,7 +68,7 @@ export class AnimalMedicalHistoryRepository {
     animalId: Animal["id"];
     actId: Act["id"];
   } & Pick<AnimalMedicalHistory, "priceApplied" | "performedAt">) {
-    return prisma.animalMedicalHistory.create({
+    return this.prisma.animalMedicalHistory.create({
       data: {
         performedAt: performedAt,
         notes: data.notes,
@@ -103,7 +105,7 @@ export class AnimalMedicalHistoryRepository {
   }
 
   async update(id: string, data: UpdateMedicalHistory) {
-    return prisma.animalMedicalHistory.update({
+    return this.prisma.animalMedicalHistory.update({
       where: { id },
       data: {
         notes: data.notes,
@@ -132,6 +134,6 @@ export class AnimalMedicalHistoryRepository {
   }
 
   async delete(id: string) {
-    return prisma.animalMedicalHistory.delete({ where: { id } });
+    return this.prisma.animalMedicalHistory.delete({ where: { id } });
   }
 }

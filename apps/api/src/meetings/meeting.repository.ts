@@ -1,5 +1,5 @@
-import { prisma } from "@api/lib/prisma";
 import { MeetingKind } from "../../prisma/generated/prisma/enums";
+import { PrismaClient } from "@prisma/client/extension";
 
 const recurringFilter = (start: Date, end: Date) => ({
   dateStart: { lte: end },
@@ -23,8 +23,10 @@ const recurringWithChildren = (start: Date, end: Date) => ({
 });
 
 export class MeetingRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async getInternalMeetings(userId: string, start: Date, end: Date) {
-    return prisma.internalMeetingParticipant.findMany({
+    return await this.prisma.internalMeetingParticipant.findMany({
       where: { userId },
       include: {
         meeting: {
@@ -52,7 +54,7 @@ export class MeetingRepository {
   }
 
   async getAnimalMeetingsAsVet(vetProfileId: string, start: Date, end: Date) {
-    return prisma.animalMeeting.findMany({
+    return this.prisma.animalMeeting.findMany({
       where: { veterinarianClinic: { veterinarian: { id: vetProfileId } } },
       include: {
         meeting: {
@@ -72,7 +74,7 @@ export class MeetingRepository {
     start: Date,
     end: Date,
   ) {
-    return prisma.animalMeeting.findMany({
+    return this.prisma.animalMeeting.findMany({
       where: { animal: { clientId: clientProfileId } },
       include: {
         meeting: {
@@ -96,7 +98,7 @@ export class MeetingRepository {
     start: Date;
     end: Date;
   }) {
-    return prisma.availability.findMany({
+    return this.prisma.availability.findMany({
       where: {
         userId,
         OR: [
@@ -132,7 +134,7 @@ export class MeetingRepository {
     start: Date;
     end: Date;
   }) {
-    return prisma.availability.findMany({
+    return this.prisma.availability.findMany({
       where: {
         AND: [
           {
@@ -170,7 +172,7 @@ export class MeetingRepository {
     });
   }
   async getMeetingById(id: string) {
-    return prisma.meetingBase.findUnique({
+    return this.prisma.meetingBase.findUnique({
       where: { id },
       include: {
         animalMeeting: true,
@@ -182,7 +184,7 @@ export class MeetingRepository {
   }
 
   async getRecurringById(id: string) {
-    return prisma.meetingReccuring.findUnique({
+    return this.prisma.meetingReccuring.findUnique({
       where: { id },
       include: {
         internalMeeting: { include: { participants: true } },
@@ -204,7 +206,7 @@ export class MeetingRepository {
     startTime: Date;
     endTime: Date;
   }) {
-    return prisma.meetingBase.create({
+    return this.prisma.meetingBase.create({
       data: {
         type: "EXCEPTION",
         date,

@@ -10,7 +10,6 @@ import {
   MeetingReccuring,
   PrismaClient,
 } from "../../../prisma/generated/prisma/client";
-import { RecurringWithRelations } from "../recurring-meeting/recurring-meeting.repository";
 
 export class InternalMeetingRepository {
   constructor(private prisma: PrismaClient) {}

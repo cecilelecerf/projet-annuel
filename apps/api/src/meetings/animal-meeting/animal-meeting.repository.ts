@@ -1,4 +1,3 @@
-import { prisma } from "@api/lib/prisma";
 import type {
   CreateAnimalMeeting,
   AnimalId,
@@ -8,10 +7,13 @@ import {
   User,
   VeterinarianClinic,
 } from "../../../prisma/generated/prisma/client";
+import { PrismaClient } from "@prisma/client/extension";
 
 export class AnimalMeetingRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findById(id: string) {
-    return prisma.animalMeeting.findFirst({
+    return this.prisma.animalMeeting.findFirst({
       where: { OR: [{ meetingId: id }] },
       include: {
         meeting: true,
@@ -34,7 +36,7 @@ export class AnimalMeetingRepository {
     data: CreateAnimalMeeting;
     veterinarianClinicId: VeterinarianClinic["id"];
   }) {
-    return prisma.meetingBase.create({
+    return this.prisma.meetingBase.create({
       data: {
         kind: "ANIMAL",
         date: data.date,
@@ -61,7 +63,7 @@ export class AnimalMeetingRepository {
   }
 
   async update({ id, data }: { id: string; data: UpdateAnimalMeeting }) {
-    return prisma.animalMeeting.update({
+    return this.prisma.animalMeeting.update({
       where: { id },
       data: {
         ...(data.description !== undefined && {
@@ -92,11 +94,11 @@ export class AnimalMeetingRepository {
   }
 
   async delete(id: string) {
-    return prisma.meetingBase.delete({ where: { id } });
+    return this.prisma.meetingBase.delete({ where: { id } });
   }
 
   async findByUser(userId: User["id"]) {
-    return prisma.animalMeeting.findMany({
+    return this.prisma.animalMeeting.findMany({
       where: {
         animal: { client: { user: { id: userId } } },
       },
@@ -109,6 +111,7 @@ export class AnimalMeetingRepository {
         },
         meeting: true,
         speciality: true,
+
         veterinarianClinic: {
           include: {
             veterinarian: { include: { user: { omit: { password: true } } } },
@@ -120,7 +123,7 @@ export class AnimalMeetingRepository {
   }
 
   async findByAnimal(animalId: AnimalId) {
-    return prisma.animalMeeting.findMany({
+    return this.prisma.animalMeeting.findMany({
       where: { animalId: animalId },
       include: {
         meeting: true,

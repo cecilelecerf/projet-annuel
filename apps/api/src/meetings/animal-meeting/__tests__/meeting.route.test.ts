@@ -136,12 +136,10 @@ describe("DELETE /api/meetings/animals/:id", () => {
         veterinarianId: veto?.id,
         specialityId: speciality!.id,
       });
-    console.log(created.body);
     meetingId = created.body.id;
     const res = await request(app)
       .delete(`/api/meetings/animals/${created.body.id}`)
       .set("Authorization", `Bearer ${token}`);
-    console.log(res.body);
     expect(res.status).toBe(204);
   });
   // ── POST /api/meetings/animals ─────────────────────────────────────────────────

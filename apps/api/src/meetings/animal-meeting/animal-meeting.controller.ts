@@ -8,15 +8,15 @@ import {
   CreateAnimalMeeting,
   meetingBaseSchema,
   AnimalId,
-  animalWithRaceMeta,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
 import { ForbiddenError } from "@api/errors";
 import { flatUser } from "@api/users/user.utils";
 
-const animalMeetingService = new AnimalMeetingService();
 export class AnimalMeetingController {
+  constructor(private service: AnimalMeetingService) {}
+
   async create(
     req: AuthenticatedRequest & { body: CreateAnimalMeeting },
     res: Response,
@@ -24,7 +24,7 @@ export class AnimalMeetingController {
   ) {
     try {
       if (!req.user.clinicId) throw new ForbiddenError();
-      const meeting = await animalMeetingService.create({
+      const meeting = await this.service.create({
         data: req.body,
         clinicId: req.user.clinicId,
       });
@@ -40,7 +40,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await animalMeetingService.getById({
+      const meeting = await this.service.getById({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -57,7 +57,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await animalMeetingService.update({
+      const meeting = await this.service.update({
         id: req.params.id,
         data: req.body,
         userId: req.user.id,
@@ -75,7 +75,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      await animalMeetingService.delete({
+      await this.service.delete({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -92,7 +92,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await animalMeetingService.getByUser({
+      const meetings = await this.service.getByUser({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -123,7 +123,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await animalMeetingService.getByAnimal({
+      const meetings = await this.service.getByAnimal({
         animalId: req.params.id,
         userId: req.user.id,
         role: req.user.role,

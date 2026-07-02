@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { ClinicService } from "./clinic.service";
 
-const clinicService = new ClinicService();
-
 export class ClinicController {
+  constructor(private service: ClinicService) {}
+
   async getClinicStaff(req: Request, res: Response, next: NextFunction) {
     try {
-      const staff = await clinicService.getClinicStaff(
+      const staff = await this.service.getClinicStaff(
         req.user!.id,
         req.user!.role,
       );
@@ -18,7 +18,7 @@ export class ClinicController {
 
   async getMyClinic(req: Request, res: Response, next: NextFunction) {
     try {
-      const clinic = await clinicService.getMyClinic(req.user!.id);
+      const clinic = await this.service.getMyClinic(req.user!.id);
       res.status(200).json(clinic);
     } catch (err) {
       next(err);
@@ -27,7 +27,7 @@ export class ClinicController {
 
   async updateClinic(req: Request, res: Response, next: NextFunction) {
     try {
-      const clinic = await clinicService.updateClinic(req.user!.id, req.body);
+      const clinic = await this.service.updateClinic(req.user!.id, req.body);
       res.status(200).json(clinic);
     } catch (err) {
       next(err);

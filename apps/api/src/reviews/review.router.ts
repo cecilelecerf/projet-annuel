@@ -3,11 +3,11 @@ import type { Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
-import { ReviewController } from "@api/reviews/review.controller";
 import { createReviewSchema } from "@armali/schemas";
+import { reviewController } from "@api/instances";
 
 const reviewRouter: RouterType = Router();
-const controller = new ReviewController();
+const controller = reviewController;
 
 reviewRouter.get(
   "/vets",

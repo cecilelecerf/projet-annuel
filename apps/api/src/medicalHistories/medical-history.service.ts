@@ -22,16 +22,18 @@ const ALLOWED_ROLES: UserRole[] = [
   "ADMIN",
 ];
 
-const repository = new AnimalMedicalHistoryRepository();
-const animalMeetingRepository = new AnimalMeetingRepository();
-const clinicActRepository = new ClinicActRepository();
-const veterinarianClinicRepository = new VeterinarianClinicRepository();
-const animalRepository = new AnimalRepository();
-const vaccineRepository = new VaccineRepository();
-
 export class AnimalMedicalHistoryService {
+  constructor(
+    private repository: AnimalMedicalHistoryRepository,
+    private animalMeetingRepository: AnimalMeetingRepository,
+    private animalRepository: AnimalRepository,
+    private vaccineRepository: VaccineRepository,
+    private veterinarianClinicRepository: VeterinarianClinicRepository,
+    private clinicActRepository: ClinicActRepository,
+  ) {}
+
   async getById(id: string) {
-    const act = await repository.findById(id);
+    const act = await this.repository.findById(id);
     if (!act) throw new NotFoundError("Acte");
     return act;
   }
@@ -39,14 +41,16 @@ export class AnimalMedicalHistoryService {
   async create(data: CreateMedicalHistory, role: UserRole, userId: string) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
 
-    const animalMeeting = await animalMeetingRepository.findById(
+    const animalMeeting = await this.animalMeetingRepository.findById(
       data.meetingId,
     );
     if (!animalMeeting) throw new NotFoundError("animalMeeting");
 
     // Si CLIENT, l'animal doit lui appartenir
     if (role === "CLIENT") {
-      const animal = await animalRepository.findById(animalMeeting.animalId);
+      const animal = await this.animalRepository.findById(
+        animalMeeting.animalId,
+      );
       if (animal?.clientId !== userId) throw new ForbiddenError();
     }
 
@@ -63,14 +67,17 @@ export class AnimalMedicalHistoryService {
     let actId: string | undefined = data.actId ?? undefined;
 
     if (data.clinicActId) {
-      const clinicAct = await clinicActRepository.findById(data.clinicActId);
+      const clinicAct = await this.clinicActRepository.findById(
+        data.clinicActId,
+      );
       if (!clinicAct) throw new NotFoundError("clinic act");
 
       actId = clinicAct.actId;
 
-      const veterinarianClinic = await veterinarianClinicRepository.findById(
-        animalMeeting.veterinarianClinicId,
-      );
+      const veterinarianClinic =
+        await this.veterinarianClinicRepository.findById(
+          animalMeeting.veterinarianClinicId,
+        );
       if (!veterinarianClinic) throw new NotFoundError("veterinarian clinic");
 
       if (veterinarianClinic.clinicId !== clinicAct.clinicId) {
@@ -91,7 +98,7 @@ export class AnimalMedicalHistoryService {
         performedBy = (
           await Promise.all(
             data.performedByIds.map(({ id }) =>
-              veterinarianClinicRepository.findByVeterinarianAndClinic(
+              this.veterinarianClinicRepository.findByVeterinarianAndClinic(
                 id,
                 clinicAct.clinicId,
               ),
@@ -104,8 +111,10 @@ export class AnimalMedicalHistoryService {
 
       // Si vaccin, il doit être associé au même pet que l'animal du meeting
       if (data.vaccination) {
-        const animal = await animalRepository.findById(animalMeeting.animalId);
-        const vaccine = await vaccineRepository.findById(
+        const animal = await this.animalRepository.findById(
+          animalMeeting.animalId,
+        );
+        const vaccine = await this.vaccineRepository.findById(
           data.vaccination.vaccineId,
         );
         if (vaccine?.petId !== animal?.race.petId) {
@@ -132,7 +141,7 @@ export class AnimalMedicalHistoryService {
     const performedAt = animalMeeting.meeting?.date ?? data.performedAt;
     if (!performedAt) throw new BadRequestError("performedAt est obligatoire");
 
-    return repository.create({
+    return this.repository.create({
       data,
       animalMeetingId: animalMeeting.id,
       animalId: animalMeeting.animalId,
@@ -145,20 +154,20 @@ export class AnimalMedicalHistoryService {
   }
   async update(id: string, data: UpdateMedicalHistory, role: UserRole) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
-    const act = await repository.findById(id);
+    const act = await this.repository.findById(id);
     if (!act) throw new NotFoundError("Acte");
-    return repository.update(id, data);
+    return this.repository.update(id, data);
   }
 
   async delete(id: string, role: UserRole) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
-    const act = await repository.findById(id);
+    const act = await this.repository.findById(id);
     if (!act) throw new NotFoundError("Acte");
-    return repository.delete(id);
+    return this.repository.delete(id);
   }
 
   async getByMeeting(meetingId: string) {
-    const acts = await repository.findByMeeting(meetingId);
+    const acts = await this.repository.findByMeeting(meetingId);
     if (!acts) throw new NotFoundError("acts historys");
     return acts;
   }

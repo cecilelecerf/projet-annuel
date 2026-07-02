@@ -10,16 +10,16 @@ import {
 } from "@armali/schemas";
 import { PrescriptionService } from "./prescription.service";
 
-const prescriptionService = new PrescriptionService();
-
 export class PrescriptionController {
+  constructor(private service: PrescriptionService) {}
+
   async getByMeeting(
     req: RequestWithParams<{ meetingId: MeetingId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const prescriptions = await prescriptionService.getByMeeting(
+      const prescriptions = await this.service.getByMeeting(
         req.params.meetingId,
       );
       res.status(200).json(prescriptions);
@@ -34,7 +34,7 @@ export class PrescriptionController {
     next: NextFunction,
   ) {
     try {
-      const prescription = await prescriptionService.getById(req.params.id);
+      const prescription = await this.service.getById(req.params.id);
       res.status(200).json(prescription);
     } catch (err) {
       next(err);
@@ -49,7 +49,7 @@ export class PrescriptionController {
     try {
       const result = createPrescriptionSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const prescription = await prescriptionService.create(
+      const prescription = await this.service.create(
         result.data,
         req.user.role,
       );
@@ -67,7 +67,7 @@ export class PrescriptionController {
     try {
       const result = updatePrescriptionSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const prescription = await prescriptionService.update(
+      const prescription = await this.service.update(
         req.params.id,
         result.data,
         req.user.role,
@@ -84,7 +84,7 @@ export class PrescriptionController {
     next: NextFunction,
   ) {
     try {
-      await prescriptionService.delete(req.params.id, req.user.role);
+      await this.service.delete(req.params.id, req.user.role);
       res.status(204).send();
     } catch (err) {
       next(err);

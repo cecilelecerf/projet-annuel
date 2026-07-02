@@ -1,8 +1,10 @@
-import { prisma } from "@api/lib/prisma";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { userWithProfileAndClinicIdInclude } from "./user.types";
+import { PrismaClient } from "@prisma/client/extension";
 
 export class UserRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async getClinicIdByUserId({
     id,
     role,
@@ -12,25 +14,25 @@ export class UserRepository {
   }): Promise<string | null> {
     switch (role) {
       case "VETERINARIAN": {
-        const profile = await prisma.veterinarianClinic.findFirst({
+        const profile = await this.prisma.veterinarianClinic.findFirst({
           where: { veterinarianId: id },
         });
         return profile?.clinicId ?? null;
       }
       case "SECRETARY": {
-        const profile = await prisma.secretaryProfile.findUnique({
+        const profile = await this.prisma.secretaryProfile.findUnique({
           where: { id },
         });
         return profile?.clinicId ?? null;
       }
       case "DIRECTOR": {
-        const profile = await prisma.directorClinicProfile.findUnique({
+        const profile = await this.prisma.directorClinicProfile.findUnique({
           where: { id },
         });
         return profile?.clinicId ?? null;
       }
       case "REFERANT": {
-        const profile = await prisma.referentClinicProfile.findUnique({
+        const profile = await this.prisma.referentClinicProfile.findUnique({
           where: { id },
         });
         return profile?.clinicId ?? null;
@@ -41,7 +43,7 @@ export class UserRepository {
   }
 
   async getUsersByClinic({ clinicId }: { clinicId: string }) {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: {
         OR: [
           { secretaryProfile: { clinicId } },
@@ -63,7 +65,7 @@ export class UserRepository {
     clinicId: string;
     roles: UserRole[];
   }) {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: {
         role: { in: roles },
         OR: [
@@ -82,7 +84,7 @@ export class UserRepository {
   }
 
   async getUserById({ id }: { id: string }) {
-    return prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { id },
       omit: { password: true },
       include: {
@@ -96,7 +98,7 @@ export class UserRepository {
   }
 
   async getAllUsers() {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       include: {
         veterinarianProfile: true,
         clientProfile: true,
@@ -109,7 +111,7 @@ export class UserRepository {
     });
   }
   async getAllUsersByRole({ roles }: { roles: UserRole[] }) {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: { role: { in: roles } },
       omit: { password: true },
       include: userWithProfileAndClinicIdInclude,

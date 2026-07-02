@@ -2,10 +2,10 @@ import { Router } from "express";
 import type { Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
-import { AdminController } from "@api/admins/admin.controller";
+import { adminController } from "@api/instances";
 
 const adminRouter: RouterType = Router();
-const controller = new AdminController();
+const controller = adminController;
 
 adminRouter.get(
   "/clinic-requests",

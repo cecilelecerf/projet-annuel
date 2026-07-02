@@ -4,8 +4,6 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "@api/middlewares";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 
-const userService = new UserService();
-
 const VALID_ROLES: UserRole[] = [
   "CLIENT",
   "SECRETARY",
@@ -16,13 +14,14 @@ const VALID_ROLES: UserRole[] = [
 ];
 
 export class UserController {
+  constructor(private service: UserService) {}
   async getUsers(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { id, role } = req.user;
       const users =
         role === "ADMIN"
-          ? await userService.getAllUsers()
-          : await userService.getUsers(id, role);
+          ? await this.service.getAllUsers()
+          : await this.service.getUsers(id, role);
       res.status(200).json(users);
     } catch (err) {
       next(err);
@@ -51,7 +50,7 @@ export class UserController {
       const rolesToSearch: UserRole[] = targetRoles.includes("STAFF")
         ? ["DIRECTOR", "REFERANT", "SECRETARY", "VETERINARIAN"]
         : (targetRoles as UserRole[]);
-      const users = await userService.getUsersByRoles(id, role, rolesToSearch);
+      const users = await this.service.getUsersByRoles(id, role, rolesToSearch);
       res.status(200).json(users);
     } catch (err) {
       next(err);
@@ -69,7 +68,7 @@ export class UserController {
         ? req.params.id[0]
         : req.params.id;
 
-      const user = await userService.getUserById({
+      const user = await this.service.getUserById({
         requesterId: id,
         requesterRole: role,
         targetId,

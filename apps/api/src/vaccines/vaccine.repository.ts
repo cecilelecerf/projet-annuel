@@ -1,8 +1,10 @@
-import { prisma } from "@api/lib/prisma";
+import { PrismaClient } from "@prisma/client/extension";
 
 export class VaccineRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findById(id: string) {
-    return prisma.vaccine.findUnique({
+    return this.prisma.vaccine.findUnique({
       where: { id },
       include: {
         countryRules: true,
@@ -12,7 +14,7 @@ export class VaccineRepository {
   }
 
   async findByPetId(petId: string) {
-    return prisma.vaccine.findMany({
+    return this.prisma.vaccine.findMany({
       where: { petId },
       include: {
         countryRules: true,

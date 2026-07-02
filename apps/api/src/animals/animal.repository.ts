@@ -1,22 +1,24 @@
-import { prisma } from "@api/lib/prisma";
 import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
+import { PrismaClient } from "@prisma/client/extension";
 
 export class AnimalRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findAll() {
-    return prisma.animal.findMany({
+    return this.prisma.animal.findMany({
       include: { race: { include: { pet: true } }, client: true },
     });
   }
 
   async findByClientId(clientId: string) {
-    return prisma.animal.findMany({
+    return this.prisma.animal.findMany({
       where: { clientId },
       include: { race: { include: { pet: true } } },
     });
   }
 
   async findById(id: string) {
-    return prisma.animal.findUnique({
+    return this.prisma.animal.findUnique({
       where: { id },
       include: {
         race: { include: { pet: true } },
@@ -31,7 +33,7 @@ export class AnimalRepository {
   }
 
   async create(data: CreateAnimal & { clientId: string }) {
-    return prisma.animal.create({
+    return this.prisma.animal.create({
       data: {
         name: data.name,
         dateOfBirth: data.dateOfBirth,
@@ -46,7 +48,7 @@ export class AnimalRepository {
   }
 
   async update(id: string, data: UpdateAnimal) {
-    return prisma.animal.update({
+    return this.prisma.animal.update({
       where: { id },
       data: {
         name: data.name,
@@ -61,11 +63,11 @@ export class AnimalRepository {
   }
 
   async delete(id: string) {
-    return prisma.animal.delete({ where: { id } });
+    return this.prisma.animal.delete({ where: { id } });
   }
 
   async findVaccinesByAnimal(animalId: string) {
-    return prisma.animalVaccine.findMany({
+    return this.prisma.animalVaccine.findMany({
       where: { animalId },
       include: {
         vaccine: {

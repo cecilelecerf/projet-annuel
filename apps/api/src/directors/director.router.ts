@@ -3,16 +3,16 @@ import type { Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
-import { DirectorController } from "@api/directors/director.controller";
 import {
   createReferentStaffSchema,
   createVeterinarianStaffSchema,
   createSecretaryStaffSchema,
   createClinicRequestSchema,
 } from "@armali/schemas";
+import { directorController } from "@api/instances";
 
 const directorRouter: RouterType = Router();
-const controller = new DirectorController();
+const controller = directorController;
 
 directorRouter.post(
   "/staff/referents",

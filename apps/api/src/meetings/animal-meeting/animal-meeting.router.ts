@@ -5,15 +5,15 @@ import {
   createAnimalMeetingSchema,
   updateAnimalMeetingSchema,
 } from "@armali/schemas";
-import { AnimalMeetingController } from "./animal-meeting.controller";
-import { AnimalMedicalHistoryController } from "@api/medicalHistories/medical-history.controller";
-import { PrescriptionController } from "@api/prescriptions/prescription.controller";
+import {
+  animalController,
+  medicalHistoryController,
+  prescriptionController,
+} from "@api/instances";
 
 const animalMeetingRouter: RouterType = Router();
 
-const animalController = new AnimalMeetingController();
-const animalMedicalHistory = new AnimalMedicalHistoryController();
-const prescriptionController = new PrescriptionController();
+const animalMedicalHistory = medicalHistoryController;
 
 animalMeetingRouter.post(
   "/",
@@ -26,7 +26,7 @@ animalMeetingRouter.get(
   "/",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getByClient.bind(animalController) as RequestHandler,
+  animalController.getByUser.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
   "/:id/medical-histories",

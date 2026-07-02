@@ -10,9 +10,8 @@ import {
   MeetingReccuring,
 } from "../../prisma/generated/prisma/client";
 import { MeetingRepository } from "./meeting.repository";
-import type { MeetingId, UserRole } from "@armali/schemas";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
-import { AnimalMeetingService } from "./animal-meeting";
+import type { UserRole } from "@armali/schemas";
+import { NotFoundError } from "@api/errors";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -36,8 +35,6 @@ type MeetingRecurringWithChildren = MeetingReccuring & {
 export type FlatMeeting = MeetingBase &
   (AnimalMeeting | InternalMeeting | Availability);
 
-const meetingRepository = new MeetingRepository();
-const animalMeetingService = new AnimalMeetingService();
 const RRULE_DAYS: Weekday[] = [
   RRule.SU,
   RRule.MO,
@@ -56,6 +53,8 @@ const RRULE_FREQ: Record<string, Frequency> = {
 };
 
 export class MeetingService {
+  constructor(private repository: MeetingRepository) {}
+
   private isUpcoming(date: Date) {
     return new Date(date) >= new Date();
   }
@@ -181,7 +180,7 @@ export class MeetingService {
     start: Date,
     end: Date,
   ): Promise<FlatMeeting[]> {
-    const participants = await meetingRepository.getInternalMeetings(
+    const participants = await this.repository.getInternalMeetings(
       userId,
       start,
       end,
@@ -203,7 +202,7 @@ export class MeetingService {
     start: Date,
     end: Date,
   ): Promise<FlatMeeting[]> {
-    const meetings = await meetingRepository.getAnimalMeetingsAsVet(
+    const meetings = await this.repository.getAnimalMeetingsAsVet(
       vetProfileId,
       start,
       end,
@@ -220,7 +219,7 @@ export class MeetingService {
     start: Date,
     end: Date,
   ): Promise<FlatMeeting[]> {
-    const meetings = await meetingRepository.getAnimalMeetingsAsClient(
+    const meetings = await this.repository.getAnimalMeetingsAsClient(
       clientProfileId,
       start,
       end,
@@ -243,7 +242,7 @@ export class MeetingService {
     start: Date;
     end: Date;
   }): Promise<FlatMeeting[]> {
-    const avails = await meetingRepository.getAvailabilities({
+    const avails = await this.repository.getAvailabilities({
       userId,
       start,
       end,
@@ -272,7 +271,7 @@ export class MeetingService {
     start: Date;
     end: Date;
   }): Promise<FlatMeeting[]> {
-    const avails = await meetingRepository.getAvailabilitiesByClinic({
+    const avails = await this.repository.getAvailabilitiesByClinic({
       clinicId,
       start,
       end,
@@ -329,7 +328,7 @@ export class MeetingService {
   }
 
   async getMeeting(id: string): Promise<FlatMeeting> {
-    const meeting = await meetingRepository.getMeetingById(id);
+    const meeting = await this.repository.getMeetingById(id);
     if (!meeting) throw new NotFoundError("Meeting");
     return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
   }

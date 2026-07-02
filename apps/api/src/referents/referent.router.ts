@@ -9,9 +9,10 @@ import {
   createSecretaryStaffSchema,
   updateClinicReferentSchema,
 } from "@armali/schemas";
+import { referentController } from "@api/instances";
 
 const referentRouter: RouterType = Router();
-const controller = new ReferentController();
+const controller = referentController;
 
 referentRouter.get(
   "/staff",

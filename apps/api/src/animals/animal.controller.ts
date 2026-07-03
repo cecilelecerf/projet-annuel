@@ -2,7 +2,7 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalDetailSchema,
-  animalWithRaceMeta,
+  animalWithRaceMetaSchema,
   vaccineMetaSchema,
   type CreateAnimal,
   type UpdateAnimal,
@@ -104,7 +104,7 @@ export class AnimalController {
         requesterId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(animalWithRaceMeta.array().parse(pets));
+      res.status(200).json(animalWithRaceMetaSchema.array().parse(pets));
     } catch (err) {
       next(err);
     }

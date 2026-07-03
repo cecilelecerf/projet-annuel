@@ -92,7 +92,7 @@ const loginAs = async (role: Role) => {
       <p class="dev-section__subtitle">Connectez-vous directement avec un compte de test</p>
     </div>
     <div v-if="isAuthenticated" class="dev-section__grid">
-      <RouterLink :to="{ name: 'Client.Home' }"> Allez sur mon espace</RouterLink>
+      <RouterLink :to="{ name: 'CLIENT.Home' }"> Allez sur mon espace</RouterLink>
       <el-button @click="authStore.logout()">Déconnexion</el-button>
     </div>
     <div v-else class="dev-section__grid">

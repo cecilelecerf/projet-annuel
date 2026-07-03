@@ -27,6 +27,11 @@ export const referantRouter: RouteRecordRaw[] = [
         name: 'REFERENT.Clinic',
         component: () => import('@/features/users/views/referent/Clinic.vue'),
       },
+      {
+        path: 'boutique',
+        name: 'REFERENT.Boutique',
+        component: () => import('@/features/products/views/ShopView.vue'),
+      },
 
       // ── Administration & Configuration ────────────────────────
       // {

@@ -24,10 +24,11 @@ export const animalMetaSchema = animalSchema.extend({
     .optional(),
   race: raceMetaSchema,
 });
-
-export const animalWithRaceMeta = animalSchema.extend({
+export type AnimalMeta = z.infer<typeof animalMetaSchema>;
+export const animalWithRaceMetaSchema = animalSchema.extend({
   race: raceMetaSchema,
 });
+export type AnimalWithRaceMeta = z.infer<typeof animalWithRaceMetaSchema>;
 export type AnimalWithUser = z.infer<typeof animalWithUserSchema>;
 
 export const animalDetailSchema = animalSchema.extend({

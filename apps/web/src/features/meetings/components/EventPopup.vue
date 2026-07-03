@@ -86,8 +86,8 @@ const onDelete = () => {
             >{{ meeting.animal.race.pet.name }} - {{ meeting.animal.race.name }}</span
           >
           <span class="animal-cell">{{ meeting.animal.name }}</span>
-          <span class="animal-cell">{{
-            meeting.animal.age.years > 1
+          <span class="animal-cell" v-if="meeting.animal.age?.years">{{
+            meeting.animal.age?.years > 1
               ? `${meeting.animal.age.years} ans`
               : meeting.animal.age.years > 0
                 ? `${meeting.animal.age.years} an et ${meeting.animal.age.months} mois`

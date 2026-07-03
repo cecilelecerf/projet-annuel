@@ -17,7 +17,7 @@ import {
 // ── Pet (espèce/type générique) ───────────────────────────────────────────────
 export const petSchema = z.object({
   id: petIdSchema,
-  picture: z.string().url().nullable().optional(),
+  picture: z.url().nullable().optional(),
   name: z.string().min(1),
 });
 

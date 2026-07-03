@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { AnimalMeetingAct, CreateAnimalMeetingAct, MeetingId } from '@armali/schemas'
+import type { CreateMedicalHistory, MedicalHistory, MeetingId } from '@armali/schemas'
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { actsApi } from '../api'
+import { medicalHistoriesApi } from '../api'
 
 const { meetingId, act } = defineProps<{
   modelValue: boolean
   meetingId: MeetingId
-  act?: AnimalMeetingAct | null
+  act?: MedicalHistory | null
 }>()
 const emit = defineEmits<{
   'update:modelValue': [boolean]
@@ -17,9 +17,9 @@ const emit = defineEmits<{
 const { user } = useAuthStore()
 const loading = ref(false)
 
-const clinicActs = await actsApi.clinicActs.getByClinic(user!.clinicId!)
+const clinicActs = await medicalHistoriesApi.getByClinic(user!.clinicId!)
 
-const defaultForm = (): Partial<CreateAnimalMeetingAct> => ({
+const defaultForm = (): Partial<CreateMedicalHistory> => ({
   meetingId,
   performedAt: new Date(),
   notes: '',
@@ -79,9 +79,9 @@ const onSave = async () => {
   loading.value = true
   try {
     if (isEditing.value && act) {
-      await actsApi.meetingActs.update(meetingId, act.id, form.value)
+      await medicalHistoriesApi.update(meetingId, act.id, form.value)
     } else {
-      await actsApi.meetingActs.create(meetingId, form.value)
+      await medicalHistoriesApi.create(meetingId, form.value)
     }
     emit('saved')
     close()

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
-import type { AnimalMeetingAct } from '@armali/schemas'
 import dayjs from 'dayjs'
 import {
   actTypeIcon,
@@ -9,7 +8,8 @@ import {
   anesthesiaLabel,
   imagingTypeLabel,
 } from '../utils'
-defineProps<{ act: AnimalMeetingAct }>()
+import type { MedicalHistory } from '@armali/schemas'
+defineProps<{ act: MedicalHistory }>()
 
 const { user } = useAuthStore()
 const emit = defineEmits<{ edit: []; delete: [] }>()
@@ -35,7 +35,12 @@ const emit = defineEmits<{ edit: []; delete: [] }>()
       <!-- Performers -->
       <div v-if="act.performedBy?.length" class="act-performers">
         <div class="performers-avatars">
-          <el-avatar v-for="p in act.performedBy" :key="p.id" :size="24" class="performer-avatar">
+          <el-avatar
+            v-for="p in act.performedBy"
+            :key="p.veterinarianId"
+            :size="24"
+            class="performer-avatar"
+          >
             {{ p.veterinarian?.user?.firstname?.charAt(0) }}
           </el-avatar>
         </div>

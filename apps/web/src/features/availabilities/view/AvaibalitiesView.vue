@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Plus, Refresh } from '@element-plus/icons-vue'
 import { useAvailabilities } from '../composables/useAvailabilities.ts'
-import AvailabilityRecurringList from '../components/RecurringList.vue'
-import AvailabilityPunctualList from '../components/PunctualList.vue'
-import AvailabilityCalendar from '../components/Calendar.vue'
-import AvailabilityDialog from '../components/Dialog.vue'
 import type { AvailabilityResponse } from '@armali/schemas'
+import DialogModal from '../components/DialogModal.vue'
+import CalendarComponent from '../components/CalendarComponent.vue'
+import PunctualList from '../components/PunctualList.vue'
+import RecurringList from '../components/RecurringList.vue'
 
 const {
   availabilities,
@@ -49,7 +49,7 @@ await fetchAvailabilities()
     </template>
 
     <template v-else>
-      <AvailabilityRecurringList
+      <RecurringList
         :recurring="recurring"
         :deleting="deleting"
         @edit="openEdit"
@@ -57,7 +57,7 @@ await fetchAvailabilities()
         @create="openCreate('RECURRING')"
       />
 
-      <AvailabilityPunctualList
+      <PunctualList
         :punctual="punctual"
         :deleting="deleting"
         @edit="openEdit($event as AvailabilityResponse)"
@@ -65,10 +65,10 @@ await fetchAvailabilities()
         @create="openCreate('PUNCTUAL')"
       />
 
-      <AvailabilityCalendar :availabilities="availabilities" />
+      <CalendarComponent :availabilities="availabilities" />
     </template>
 
-    <AvailabilityDialog
+    <DialogModal
       v-model:form="form"
       v-model:show="showDialog"
       :saving="saving"

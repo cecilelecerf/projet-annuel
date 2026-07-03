@@ -8,13 +8,13 @@ import {
 
 export const availabilitiesApi = {
   create: async ({ payload }: { payload: CreateAvailability }) => {
-    const data = await http.post(`/meetings/availabilities`, payload)
+    await http.post(`/meetings/availabilities`, payload)
   },
   update: async ({ id, payload }: { id: AvailabilityId; payload: UpdateAvailability }) => {
-    const data = await http.patch(`/meetings/availabilities/${id}`, payload)
+    await http.patch(`/meetings/availabilities/${id}`, payload)
   },
   delete: async ({ id }: { id: AvailabilityId }) => {
-    const data = await http.delete(`/meetings/availabilities/${id}`)
+    await http.delete(`/meetings/availabilities/${id}`)
   },
   getAll: async ({ date }: { date?: string }) => {
     const url = date ? `/meetings/availabilities?date=${date}` : `/meetings/availabilities`

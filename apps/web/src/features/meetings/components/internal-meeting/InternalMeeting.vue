@@ -37,7 +37,6 @@ const edit = ref<
   description: meeting.description ?? '',
   startTime: dayjs(meeting.startTime).toISOString(),
   endTime: dayjs(meeting.endTime).toISOString(),
-  parentId: meeting.parentId,
   date: meeting.date,
   userIds: meeting.participants.map((participant) => participant.userId),
 })

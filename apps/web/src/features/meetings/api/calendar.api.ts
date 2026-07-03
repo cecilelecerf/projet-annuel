@@ -53,7 +53,7 @@ export const calendarApi = {
 
   internal: {
     new: async (meeting: CreateInternalMeeting) => {
-      const data = await http.post(`/meetings/internal`, meeting)
+      await http.post(`/meetings/internal`, meeting)
     },
     get: async (meetingId: MeetingId) => {
       const data = await http.get(`/meetings/internal/${meetingId}`)
@@ -69,7 +69,7 @@ export const calendarApi = {
   },
   animal: {
     new: async (meeting: CreateAnimalMeeting) => {
-      const data = await http.post(`/meetings/animals`, meeting)
+      await http.post(`/meetings/animals`, meeting)
     },
     get: async (meetingId: MeetingId) => {
       const data = await http.get(`/meetings/animals/${meetingId}`)

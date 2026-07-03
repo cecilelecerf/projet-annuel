@@ -1,5 +1,5 @@
 import { calendarApi } from '../api/calendar.api'
-import type { Calendar, MeetingId, UserId } from '@armali/schemas'
+import type { Calendar, UserId } from '@armali/schemas'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'

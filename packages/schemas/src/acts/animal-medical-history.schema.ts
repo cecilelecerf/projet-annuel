@@ -5,7 +5,6 @@ import {
   clinicIdSchema,
   medicalHistoryIdSchema,
   meetingIdSchema,
-  veterinarianClinicIdSchema,
   veterinarianIdSchema,
 } from "../ids";
 import { clinicActSchema } from "./clinic-act.schema";
@@ -16,11 +15,7 @@ import {
 } from "./hospitalization.schema";
 import { createImagingSchema, imagingSchema } from "./imaging.schema";
 import { analysisSchema, createAnalysisSchema } from "./analysis.schema";
-import {
-  baseUserSchema,
-  userSchema,
-  veterinarianProfileSchema,
-} from "../users";
+import { baseUserSchema, veterinarianProfileSchema } from "../users";
 import {
   createAnimalVaccineSchema,
   animalVaccineSchema,
@@ -66,7 +61,7 @@ export const createMedicalHistorySchema = medicalHistorySchema
     hospitalization: createHospitalizationSchema.optional(),
     imaging: createImagingSchema.optional(),
     analysis: createAnalysisSchema.optional(),
-    performedByIds: z.array(veterinarianProfileSchema).optional(),
+    performedByIds: z.array(veterinarianIdSchema).optional(),
     vaccination: createAnimalVaccineSchema.optional(),
     meetingId: meetingIdSchema,
     priceApplied: medicalHistorySchema.shape.priceApplied.optional(),

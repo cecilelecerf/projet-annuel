@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import FullCalendar from '@fullcalendar/vue3'
 import DateDrawer from './DateDrawer.vue'
-import NewEvent from '../NewEventDrawer/index.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
@@ -9,6 +8,7 @@ import type { MeetingId, UserId } from '@armali/schemas'
 import { calendarApi } from '../../api/calendar.api.ts'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
+import BaseComponent from '../NewEventDrawer/BaseComponent.vue'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
@@ -80,7 +80,7 @@ const onDelete = async () => {
     size="420px"
     @close="onNewEventDrawerClose"
   >
-    <NewEvent
+    <BaseComponent
       :key="newEventDate?.toISOString()"
       @close="onNewEventDrawerClose"
       :initial-date="newEventDate"

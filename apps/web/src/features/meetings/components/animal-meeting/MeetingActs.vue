@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import MeetingActCard from '@/features/acts/components/MeetingActCard.vue'
-import type { AnimalMeetingAct, MeetingId } from '@armali/schemas'
+import MeetingActCard from '@/features/medicalHistories/components/MeetingActCard.vue'
+import MeetingActForm from '@/features/medicalHistories/components/MeetingActForm.vue'
+import type { MedicalHistory, MeetingId } from '@armali/schemas'
 import { Plus } from '@element-plus/icons-vue'
 import { ref } from 'vue'
-defineProps<{ acts: AnimalMeetingAct[]; meetingId: MeetingId }>()
+defineProps<{ acts: MedicalHistory[]; meetingId: MeetingId }>()
 const showActForm = ref(false)
-const editingAct = ref<AnimalMeetingAct | null>(null)
+const editingAct = ref<MedicalHistory | null>(null)
 
 const openAddAct = () => {
   editingAct.value = null
   showActForm.value = true
 }
 
-const openEditAct = (act: AnimalMeetingAct) => {
+const openEditAct = (act: MedicalHistory) => {
   editingAct.value = act
   showActForm.value = true
 }

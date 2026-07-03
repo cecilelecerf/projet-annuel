@@ -18,7 +18,7 @@ const { user } = useAuthStore()
 const pet = await animalApi.get(route.params.id as AnimalId)
 const [meetings, vaccinesStatus] = await Promise.all([
   calendarApi.animal.getAllByAnimal(pet.id),
-  await animalApi.getVaccines(route.params.id as AnimalId),
+  animalApi.getVaccines(route.params.id as AnimalId),
 ])
 
 const age = computed(() => {

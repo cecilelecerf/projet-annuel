@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MeetingKind, Animal, User, UserId } from '@armali/schemas'
 import { computed, ref, watch } from 'vue'
-import { calendarApi } from '../../api/calendar.api'
+import { calendarApi } from '../../api/calendar.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import { usersApi } from '@/features/users/api/user.api'
 import dayjs from 'dayjs'

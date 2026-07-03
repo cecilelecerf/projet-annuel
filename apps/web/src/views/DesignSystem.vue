@@ -253,7 +253,7 @@ const weights = [
           <!-- Dégradés complets -->
           <div class="ds-gradient-row">
             <div
-              v-for="(stop, idx) in [
+              v-for="stop in [
                 { label: 'dark-2', color: c.dark2 },
                 { label: 'base', color: c.base },
                 { label: 'light-3', color: c.light3 },

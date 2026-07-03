@@ -5,6 +5,7 @@ import type {
   CreateVeterinarianStaff,
   CreateSecretaryStaff,
   UpdateClinicReferent,
+  UpdateClinicSpecialities,
 } from "@armali/schemas";
 
 export class ReferentService {
@@ -110,5 +111,33 @@ export class ReferentService {
       where: { id: clinicId },
       data,
     });
+  }
+
+  // ── Spécialités de la clinique (relation many-to-many implicite) ─────────
+
+  async getClinicSpecialities(referentUserId: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+    const clinic = await prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: { speciality: true },
+    });
+    return clinic?.speciality ?? [];
+  }
+
+  async updateClinicSpecialities(
+    referentUserId: string,
+    data: UpdateClinicSpecialities,
+  ) {
+    const clinicId = await this.getClinicId(referentUserId);
+    const clinic = await prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        speciality: {
+          set: data.specialityIds.map((id) => ({ id })),
+        },
+      },
+      include: { speciality: true },
+    });
+    return clinic.speciality;
   }
 }

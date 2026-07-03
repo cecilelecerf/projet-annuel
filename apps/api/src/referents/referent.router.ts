@@ -8,6 +8,7 @@ import {
   createVeterinarianStaffSchema,
   createSecretaryStaffSchema,
   updateClinicReferentSchema,
+  updateClinicSpecialitiesSchema,
 } from "@armali/schemas";
 import { referentController } from "@api/instances";
 
@@ -43,6 +44,21 @@ referentRouter.patch(
   roleMiddleware(["REFERANT"]),
   validate(updateClinicReferentSchema),
   controller.updateClinic.bind(controller),
+);
+
+referentRouter.get(
+  "/clinic/specialities",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.getClinicSpecialities.bind(controller),
+);
+
+referentRouter.patch(
+  "/clinic/specialities",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  validate(updateClinicSpecialitiesSchema),
+  controller.updateClinicSpecialities.bind(controller),
 );
 
 export default referentRouter;

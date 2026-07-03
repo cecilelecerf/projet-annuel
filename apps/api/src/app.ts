@@ -18,6 +18,7 @@ import prescriptionRouter from "./prescriptions/prescription.router";
 import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
 import productRouter from "./products/product.router";
 import brandRouter from "./brands/brand.router";
+import specialityRouter from "./specialities/speciality.router";
 
 collectDefaultMetrics();
 
@@ -65,4 +66,5 @@ app.use("/api/medical-histories", animalMedicalHistoryRouter);
 app.use("/api/acts", actRouter);
 app.use("/api/products", productRouter);
 app.use("/api/brands", brandRouter);
+app.use("/api/specialities", specialityRouter);
 app.use(errorHandler);

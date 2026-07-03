@@ -42,4 +42,31 @@ export class ReferentController {
       next(err);
     }
   }
+
+  async getClinicSpecialities(req: Request, res: Response, next: NextFunction) {
+    try {
+      const specialities = await this.service.getClinicSpecialities(
+        req.user!.id,
+      );
+      res.status(200).json(specialities);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async updateClinicSpecialities(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const specialities = await this.service.updateClinicSpecialities(
+        req.user!.id,
+        req.body,
+      );
+      res.status(200).json(specialities);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

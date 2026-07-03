@@ -38,6 +38,9 @@ import { ProductRepository } from "./products/product.repository";
 import { ProductClinicRepository } from "./products/product-clinic.repository";
 import { BrandRepository } from "./brands/brand.repository";
 
+// ── Clinic ──────────────────────────────────────
+import { SpecialityRepository } from "./specialities/speciality.repository";
+
 // ═══════════════════════════════════════════════════════════════
 // Services
 // ═══════════════════════════════════════════════════════════════
@@ -61,6 +64,7 @@ import { ReviewService } from "./reviews/review.service";
 import { UserService } from "./users/user.service";
 import { ProductService } from "./products/product.service";
 import { BrandService } from "./brands/brand.service";
+import { SpecialityService } from "./specialities/speciality.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -85,6 +89,7 @@ import { AnimalMedicalHistoryController } from "./medicalHistories/medical-histo
 import { RecurringMeetingController } from "./meetings/recurring-meeting/recurring-meeting.controller";
 import { ProductController } from "./products/product.controller";
 import { BrandController } from "./brands/brand.controller";
+import { SpecialityController } from "./specialities/speciality.controller";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -109,6 +114,8 @@ const veterinarianClinicRepository = new VeterinarianClinicRepository(prisma);
 const productRepository = new ProductRepository(prisma);
 const productClinicRepository = new ProductClinicRepository(prisma);
 const brandRepository = new BrandRepository(prisma);
+
+const specialityRepository = new SpecialityRepository(prisma);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
@@ -185,6 +192,8 @@ export const meetingService = new MeetingService(
 export const productService = new ProductService(productRepository, productClinicRepository);
 export const brandService = new BrandService(brandRepository);
 
+export const specialityService = new SpecialityService(specialityRepository);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -226,3 +235,5 @@ export const userController = new UserController(userService);
 
 export const productController = new ProductController(productService);
 export const brandController = new BrandController(brandService);
+
+export const specialityController = new SpecialityController(specialityService);

@@ -22,8 +22,12 @@ export const createClinicSchema = clinicSchema.omit({ id: true });
 export const updateClinicSchema = createClinicSchema.partial();
 
 export const updateClinicReferentSchema = z.object({
+  name: z.string().min(1, "Nom requis").optional(),
   address: z.string().min(1, "Adresse requise").optional(),
-  openingHours: z.string().max(500).optional(),
+  phone: z.string().min(10, "Téléphone invalide").optional(),
+  website: z.string().min(1, "Site web requis").optional(),
+  description: z.string().max(500).nullable().optional(),
+  openingHours: z.string().max(500).nullable().optional(),
 });
 
 export const createClinicRequestSchema = z.object({
@@ -70,3 +74,11 @@ export const updateSpecialitySchema = createSpecialitySchema.partial();
 export type Speciality = z.infer<typeof specialitySchema>;
 export type CreateSpeciality = z.infer<typeof createSpecialitySchema>;
 export type UpdateSpeciality = z.infer<typeof updateSpecialitySchema>;
+
+export const updateClinicSpecialitiesSchema = z.object({
+  specialityIds: z.array(specialityIdSchema),
+});
+ 
+export type UpdateClinicSpecialities = z.infer<
+  typeof updateClinicSpecialitiesSchema
+>;

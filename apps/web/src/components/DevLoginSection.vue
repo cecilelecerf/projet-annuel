@@ -23,7 +23,7 @@ const roles: Role[] = [
     emoji: '👤',
     description: "Propriétaire d'animaux, gestion des RDV",
     email: 'client@gmail.com',
-    path: 'Client',
+    path: 'CLIENT',
   },
   {
     key: 'veterinaire',
@@ -31,7 +31,7 @@ const roles: Role[] = [
     emoji: '🩺',
     description: 'Consultation, agenda et dossiers patients',
     email: 'veto@gmail.com',
-    path: 'Veto',
+    path: 'VETERINARIAN',
   },
   {
     key: 'secretaire',
@@ -39,7 +39,7 @@ const roles: Role[] = [
     emoji: '📋',
     description: 'Gestion des plannings et accueil',
     email: 'secretaire@gmail.com',
-    path: 'Secretary',
+    path: 'SECRETARY',
   },
   {
     key: 'directeur',
@@ -47,7 +47,7 @@ const roles: Role[] = [
     emoji: '🏥',
     description: 'Supervision de la clinique et équipes',
     email: 'directeur@gmail.com',
-    path: 'Director',
+    path: 'DIRECTOR',
   },
   {
     key: 'referent',
@@ -55,7 +55,7 @@ const roles: Role[] = [
     emoji: '⭐',
     description: 'Coordination inter-cliniques et spécialités',
     email: 'referent@gmail.com',
-    path: 'Referant',
+    path: 'REFERENT',
   },
   // {
   //   key: 'superadmin',

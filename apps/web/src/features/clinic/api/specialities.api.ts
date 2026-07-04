@@ -1,15 +1,25 @@
 import { http } from '@/lib/api'
-import type { Speciality, CreateSpeciality } from '@armali/schemas'
+import { specialitySchema, type Speciality, type CreateSpeciality } from '@armali/schemas'
 
 export const specialitiesApi = {
-  search: (query: string) =>
-    http.get<Speciality[]>(`/specialities?search=${encodeURIComponent(query)}`),
+  search: async (query: string): Promise<Speciality[]> => {
+    const data = await http.get(`/specialities?search=${encodeURIComponent(query)}`)
+    return specialitySchema.array().parse(data)
+  },
 
-  create: (name: string, description: string) =>
-    http.post<Speciality>('/specialities', { name, description } satisfies CreateSpeciality),
+  create: async (name: string, description: string): Promise<Speciality> => {
+    const payload: CreateSpeciality = { name, description }
+    const data = await http.post('/specialities', payload)
+    return specialitySchema.parse(data)
+  },
 
-  getClinicSpecialities: () => http.get<Speciality[]>('/referent/clinic/specialities'),
+  getClinicSpecialities: async (): Promise<Speciality[]> => {
+    const data = await http.get('/referent/clinic/specialities')
+    return specialitySchema.array().parse(data)
+  },
 
-  updateClinicSpecialities: (specialityIds: string[]) =>
-    http.patch<Speciality[]>('/referent/clinic/specialities', { specialityIds }),
+  updateClinicSpecialities: async (specialityIds: string[]): Promise<Speciality[]> => {
+    const data = await http.patch('/referent/clinic/specialities', { specialityIds })
+    return specialitySchema.array().parse(data)
+  },
 }

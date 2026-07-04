@@ -10,7 +10,7 @@ const staffRoleSchema = z.enum([
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",
-  "REFERANT",
+  "REFERENT",
 ]);
 
 export const staffMemberSchema = z.object({

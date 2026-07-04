@@ -1,10 +1,16 @@
 import { http } from '@/lib/api'
-import type { Brand, CreateBrand } from '@armali/schemas'
+import { brandSchema, type Brand, type CreateBrand } from '@armali/schemas'
 
 export const brandsApi = {
-  search: (query: string) =>
-    http.get<Brand[]>(`/brands?search=${encodeURIComponent(query)}`),
+  search: async (query: string): Promise<Brand[]> => {
+    const data = await http.get(`/brands?search=${encodeURIComponent(query)}`)
+    return brandSchema.array().parse(data)
+  },
 
   // Crée la marque si elle n'existe pas déjà (le backend gère la déduplication par nom)
-  create: (name: string) => http.post<Brand>('/brands', { name } satisfies CreateBrand),
+  create: async (name: string): Promise<Brand> => {
+    const payload: CreateBrand = { name }
+    const data = await http.post('/brands', payload)
+    return brandSchema.parse(data)
+  },
 }

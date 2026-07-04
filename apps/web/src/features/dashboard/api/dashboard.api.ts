@@ -1,6 +1,9 @@
 import { http } from '@/lib/api'
-import type { ReferentDashboard } from '@armali/schemas'
+import { referentDashboardSchema, type ReferentDashboard } from '@armali/schemas'
 
 export const dashboardApi = {
-  get: () => http.get<ReferentDashboard>('/referent/dashboard'),
+  get: async (): Promise<ReferentDashboard> => {
+    const data = await http.get('/referent/dashboard')
+    return referentDashboardSchema.parse(data)
+  },
 }

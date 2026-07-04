@@ -10,7 +10,7 @@ export const adminRouter: RouteRecordRaw[] = [
       {
         path: '',
         name: 'ADMIN.Home',
-        component: () => import('@/features/users/views/admin/Home.vue'),
+        component: () => import('@/features/users/views/admin/HomeView.vue'),
       },
       {
         path: 'clinic-requests',

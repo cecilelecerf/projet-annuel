@@ -10,7 +10,7 @@ export const referantRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'REFERENT.Profil',
-        component: () => import('@/features/users/views/referent/Profil.vue'),
+        component: () => import('@/features/users/views/referent/ProfilView.vue'),
       },
       {
         path: 'staff',

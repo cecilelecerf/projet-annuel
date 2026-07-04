@@ -15,7 +15,7 @@ export const clientRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'CLIENT.Profil',
-        component: () => import('@/features/users/views/client/Profil.vue'),
+        component: () => import('@/features/users/views/client/ProfilView.vue'),
       },
       {
         path: 'veterinaires',

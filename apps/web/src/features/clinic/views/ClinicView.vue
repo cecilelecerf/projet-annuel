@@ -2,7 +2,8 @@
 import { reactive, ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
-import { specialitiesApi, type Speciality } from '@/features/clinic/api/specialities.api'
+import { specialitiesApi } from '@/features/clinic/api/specialities.api'
+import type { Speciality } from '@armali/schemas'
 
 const notify = useNotify()
 

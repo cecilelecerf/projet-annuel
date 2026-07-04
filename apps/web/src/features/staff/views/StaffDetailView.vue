@@ -2,7 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
-import { staffApi, type StaffMemberDetail } from '@/features/staff/api/staff.api'
+import { staffApi } from '@/features/staff/api/staff.api'
+import type { StaffMemberDetail } from '@armali/schemas'
 
 const route = useRoute()
 const router = useRouter()

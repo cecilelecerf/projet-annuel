@@ -3,7 +3,8 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { staffApi } from '@/features/staff/api/staff.api'
-import { specialitiesApi, type Speciality } from '@/features/clinic/api/specialities.api'
+import { specialitiesApi } from '@/features/clinic/api/specialities.api'
+import type { Speciality, SpecialityId } from '@armali/schemas'
 
 const router = useRouter()
 const notify = useNotify()
@@ -83,7 +84,9 @@ async function submitVet() {
       password: vetForm.password,
       licenseNumber: vetForm.licenseNumber,
       bio: vetForm.bio || undefined,
-      specialityIds: selectedSpecialityIds.value.length ? selectedSpecialityIds.value : undefined,
+      specialityIds: selectedSpecialityIds.value.length
+        ? (selectedSpecialityIds.value as SpecialityId[])
+        : undefined,
       identity: hasAnyIdentityField()
         ? {
             birthCity: vetForm.birthCity || undefined,

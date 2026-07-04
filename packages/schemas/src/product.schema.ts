@@ -107,3 +107,16 @@ export const restockProductClinicSchema = z.object({
 });
 
 export type RestockProductClinic = z.infer<typeof restockProductClinicSchema>;
+
+export const productWithBrandSchema = productSchema.extend({
+  brand: brandSchema,
+});
+ 
+export const productClinicWithProductSchema = productClinicSchema.extend({
+  product: productWithBrandSchema,
+});
+ 
+export type ProductWithBrand = z.infer<typeof productWithBrandSchema>;
+export type ProductClinicWithProduct = z.infer<
+  typeof productClinicWithProductSchema
+>;

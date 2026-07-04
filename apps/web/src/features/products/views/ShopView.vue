@@ -2,8 +2,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
-import { productsApi, type ClinicProduct } from '@/features/products/api/products.api'
-import { brandsApi, type Brand } from '@/features/products/api/brands.api'
+import { productsApi } from '@/features/products/api/products.api'
+import { brandsApi } from '@/features/products/api/brands.api'
+import type {
+  ProductClinicWithProduct,
+  Brand,
+  BrandId,
+  ClinicId,
+} from '@armali/schemas'
 
 const notify = useNotify()
 
@@ -13,7 +19,7 @@ interface Clinic {
 }
 
 const clinicId = ref<string | null>(null)
-const clinicProducts = ref<ClinicProduct[]>([])
+const clinicProducts = ref<ProductClinicWithProduct[]>([])
 const loading = ref(false)
 
 // ── Chargement ───────────────────────────────────────────────────────────
@@ -33,7 +39,7 @@ async function loadClinicAndProducts() {
 
 onMounted(loadClinicAndProducts)
 
-function isLowStock(item: ClinicProduct) {
+function isLowStock(item: ProductClinicWithProduct) {
   return item.stock <= item.minimumRequired
 }
 
@@ -122,13 +128,16 @@ async function submitAddProduct() {
   }
   addLoading.value = true
   try {
+    // NOTE : addForm.brandId et clinicId.value sont de simples `string` côté formulaire,
+    // alors que les schémas Zod attendent des ID "brandés" (BrandId, ClinicId).
+    // On caste explicitement à la frontière, la validation réelle a lieu côté serveur.
     const product = await productsApi.create({
       name: addForm.name,
       description: addForm.description || undefined,
-      brandId: addForm.brandId,
+      brandId: addForm.brandId as BrandId,
     })
     const clinicProduct = await productsApi.createClinicProduct({
-      clinicId: clinicId.value,
+      clinicId: clinicId.value as ClinicId,
       productId: product.id,
       stock: addForm.stock,
       minimumRequired: addForm.minimumRequired,
@@ -148,11 +157,11 @@ async function submitAddProduct() {
 // ── Réapprovisionnement ──────────────────────────────────────────────────
 
 const restockDialog = ref(false)
-const restockTarget = ref<ClinicProduct | null>(null)
+const restockTarget = ref<ProductClinicWithProduct | null>(null)
 const restockQuantity = ref(1)
 const restockLoading = ref(false)
 
-function openRestock(item: ClinicProduct) {
+function openRestock(item: ProductClinicWithProduct) {
   restockTarget.value = item
   restockQuantity.value = 1
   restockDialog.value = true
@@ -179,7 +188,7 @@ async function submitRestock() {
 // ── Modification du minimum requis / prix ───────────────────────────────
 
 const editDialog = ref(false)
-const editTarget = ref<ClinicProduct | null>(null)
+const editTarget = ref<ProductClinicWithProduct | null>(null)
 const editForm = reactive({ name: '', brandId: '', minimumRequired: 0, price: 0 })
 const editLoading = ref(false)
 
@@ -225,7 +234,7 @@ async function handleEditBrandSelect(value: string) {
   }
 }
 
-function openEdit(item: ClinicProduct) {
+function openEdit(item: ProductClinicWithProduct) {
   editTarget.value = item
   editForm.name = item.product.name
   editForm.brandId = item.product.brandId
@@ -248,7 +257,7 @@ async function submitEdit() {
     const [updatedProduct, updatedClinicProduct] = await Promise.all([
       productsApi.update(editTarget.value.productId, {
         name: editForm.name,
-        brandId: editForm.brandId,
+        brandId: editForm.brandId as BrandId,
       }),
       productsApi.updateClinicProduct(editTarget.value.id, {
         minimumRequired: editForm.minimumRequired,
@@ -290,7 +299,7 @@ async function submitEdit() {
 
     <el-table v-loading="loading" :data="clinicProducts" style="width: 100%">
       <el-table-column label="Produit" min-width="200">
-        <template #default="{ row }: { row: ClinicProduct }">
+        <template #default="{ row }: { row: ProductClinicWithProduct }">
           <div class="product-cell">
             <strong>{{ row.product.name }}</strong>
             <span class="brand">{{ row.product.brand.name }}</span>
@@ -299,7 +308,7 @@ async function submitEdit() {
       </el-table-column>
 
       <el-table-column label="Stock" width="140">
-        <template #default="{ row }: { row: ClinicProduct }">
+        <template #default="{ row }: { row: ProductClinicWithProduct }">
           <el-tag :type="isLowStock(row) ? 'danger' : 'success'">
             {{ row.stock }}
           </el-tag>
@@ -307,17 +316,17 @@ async function submitEdit() {
       </el-table-column>
 
       <el-table-column label="Minimum requis" width="140">
-        <template #default="{ row }: { row: ClinicProduct }">
+        <template #default="{ row }: { row: ProductClinicWithProduct }">
           {{ row.minimumRequired }}
         </template>
       </el-table-column>
 
       <el-table-column label="Prix" width="120">
-        <template #default="{ row }: { row: ClinicProduct }"> {{ row.price }} € </template>
+        <template #default="{ row }: { row: ProductClinicWithProduct }"> {{ row.price }} € </template>
       </el-table-column>
 
       <el-table-column label="Actions" width="240">
-        <template #default="{ row }: { row: ClinicProduct }">
+        <template #default="{ row }: { row: ProductClinicWithProduct }">
           <el-button size="small" @click="openRestock(row)">Réapprovisionner</el-button>
           <el-button size="small" @click="openEdit(row)">Modifier</el-button>
         </template>

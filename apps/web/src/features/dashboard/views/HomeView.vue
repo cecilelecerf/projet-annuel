@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
-import { dashboardApi, type ReferentDashboard } from '@/features/dashboard/api/dashboard.api'
+import { dashboardApi } from '@/features/dashboard/api/dashboard.api'
+import type { ReferentDashboard } from '@armali/schemas'
 
 const router = useRouter()
 const notify = useNotify()

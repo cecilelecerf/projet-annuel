@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { staffApi, type StaffList } from '@/features/staff/api/staff.api'
+import { staffApi } from '@/features/staff/api/staff.api'
+import type { StaffList } from '@armali/schemas'
 
 const router = useRouter()
 

@@ -16,6 +16,13 @@ const referentRouter: RouterType = Router();
 const controller = referentController;
 
 referentRouter.get(
+  "/dashboard",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.getDashboard.bind(controller),
+);
+
+referentRouter.get(
   "/staff",
   authMiddleware,
   roleMiddleware(["REFERANT"]),

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
+import type { RequestWithParams } from "@api/middlewares";
 import { ReferentService } from "./referent.service";
-import { RequestWithParams } from "@api/middlewares";
 
 export class ReferentController {
   constructor(private service: ReferentService) {}
@@ -82,6 +82,15 @@ export class ReferentController {
         req.body,
       );
       res.status(200).json(specialities);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const dashboard = await this.service.getDashboard(req.user!.id);
+      res.status(200).json(dashboard);
     } catch (err) {
       next(err);
     }

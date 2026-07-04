@@ -30,4 +30,22 @@ export class AdminController {
       next(err);
     }
   }
+
+  async getClinics(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clinics = await adminService.getClinics();
+      res.status(200).json(clinics);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteClinic(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await adminService.deleteClinic(req.params.id);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

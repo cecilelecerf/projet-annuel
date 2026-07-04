@@ -24,7 +24,7 @@ async function handleLogout() {
         <div class="profil-avatar">{{ user?.firstname?.[0] }}{{ user?.lastname?.[0] }}</div>
         <div>
           <h1 class="profil-name">{{ user?.firstname }} {{ user?.lastname }}</h1>
-          <span class="profil-role">Référent clinique</span>
+          <span class="profil-role">Administrateur</span>
         </div>
       </div>
 
@@ -57,6 +57,7 @@ async function handleLogout() {
         </el-button>
       </div>
     </div>
+
     <EditAccountDialog ref="editDialog" />
     <DeleteAccountDialog ref="deleteDialog" />
   </div>
@@ -81,13 +82,14 @@ async function handleLogout() {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #909399;
+  background: #606266;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   font-weight: 700;
+  text-transform: uppercase;
   flex-shrink: 0;
 }
 .profil-name {
@@ -97,7 +99,7 @@ async function handleLogout() {
 }
 .profil-role {
   background: #f4f4f5;
-  color: #909399;
+  color: #606266;
   border-radius: 6px;
   padding: 2px 10px;
   font-size: 13px;

@@ -7,6 +7,7 @@ import {
   registerSchema,
   registerDirectorSchema,
   deleteAccountConfirmSchema,
+  updateAccountSchema,
 } from "@armali/schemas";
 
 const authRouter: RouterType = Router();
@@ -34,6 +35,12 @@ authRouter.post(
 );
 authRouter.post("/refresh", controller.refresh.bind(controller));
 authRouter.get("/me", authMiddleware, controller.me.bind(controller));
+authRouter.patch(
+  "/me",
+  authMiddleware,
+  validate(updateAccountSchema),
+  controller.updateAccount.bind(controller),
+);
 
 authRouter.post(
   "/delete-account/request",

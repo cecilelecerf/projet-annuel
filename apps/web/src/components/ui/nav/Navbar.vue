@@ -23,6 +23,7 @@ const profilRouteMap: Partial<Record<UserRole, string>> = {
   SECRETARY: 'Secretary.Profil',
   DIRECTOR: 'Director.Profil',
   REFERANT: 'Referent.Profil',
+  ADMIN: 'Admin.Profil',
 }
 
 const profilRoute = computed(() => {

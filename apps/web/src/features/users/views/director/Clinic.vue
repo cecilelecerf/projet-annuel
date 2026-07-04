@@ -139,9 +139,9 @@ async function submitRequest() {
       </div>
     </div>
 
-    <!-- Refusée → formulaire de nouvelle demande -->
-    <div v-else-if="status === 'REJECTED'">
-      <div class="card rejection-banner">
+    <!-- Refusée ou sans clinique → formulaire de nouvelle demande -->
+    <div v-else-if="status === 'REJECTED' || status === 'NONE'">
+      <div v-if="status === 'REJECTED'" class="card rejection-banner">
         <div class="state-icon rejected">✗</div>
         <h2 class="state-title">Demande refusée</h2>
         <p class="state-desc">
@@ -158,8 +158,18 @@ async function submitRequest() {
           </div>
         </div>
       </div>
+      <div v-else class="card">
+        <div class="state-icon none">🏥</div>
+        <h2 class="state-title">Aucune clinique associée</h2>
+        <p class="state-desc">
+          Vous n'êtes rattaché à aucune clinique pour le moment. Vous pouvez faire une demande de
+          création de clinique ci-dessous.
+        </p>
+      </div>
       <div class="card" style="margin-top: 20px">
-        <h2 class="section-title">Nouvelle demande</h2>
+        <h2 class="section-title">
+          {{ status === 'REJECTED' ? 'Nouvelle demande' : 'Demande de création de clinique' }}
+        </h2>
         <el-form label-position="top" @submit.prevent="submitRequest">
           <el-row :gutter="16">
             <el-col :span="12">
@@ -196,16 +206,6 @@ async function submitRequest() {
           </el-button>
         </el-form>
       </div>
-    </div>
-
-    <!-- Aucune demande -->
-    <div v-else-if="status === 'NONE'" class="card">
-      <div class="state-icon none">🏥</div>
-      <h2 class="state-title">Aucune clinique associée</h2>
-      <p class="state-desc">
-        Aucune demande en cours. Contactez un administrateur si vous pensez qu'il s'agit d'une
-        erreur.
-      </p>
     </div>
 
     <!-- Approuvée → infos + édition -->

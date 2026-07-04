@@ -13,7 +13,7 @@ const ADMIN_ROLES: UserRole[] = ["ADMIN"];
 const STAFF_ROLES: UserRole[] = [
   "DIRECTOR",
   "SECRETARY",
-  "REFERANT",
+  "REFERENT",
   "VETERINARIAN",
 ];
 

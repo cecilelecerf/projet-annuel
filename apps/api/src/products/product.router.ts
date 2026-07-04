@@ -7,7 +7,7 @@ import { productController } from "@api/instances";
 const productRouter: Router = Router();
 const controller = productController;
 
-const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERANT"] as const;
+const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
 
 // ── Products (catalogue global) ─────────────────────────────────────────────
 

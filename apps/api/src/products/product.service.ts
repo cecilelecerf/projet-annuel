@@ -10,7 +10,7 @@ import type {
   UserRole,
 } from "@armali/schemas";
 
-const STOCK_MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERANT"];
+const STOCK_MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERENT"];
 
 export class ProductService {
   constructor(

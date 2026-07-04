@@ -1,11 +1,11 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { requireRole } from './utils'
 
-export const referantRouter: RouteRecordRaw[] = [
+export const referentRouter: RouteRecordRaw[] = [
   {
     path: '/referent',
     component: () => import('@/layouts/ReferentLayout.vue'),
-    beforeEnter: requireRole('REFERANT'),
+    beforeEnter: requireRole('REFERENT'),
     children: [
       {
         path: '',

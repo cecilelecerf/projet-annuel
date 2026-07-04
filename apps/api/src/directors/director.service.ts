@@ -30,7 +30,7 @@ export class DirectorService {
         firstname: data.firstname,
         lastname: data.lastname,
         password: hashedPassword,
-        role: "REFERANT",
+        role: "REFERENT",
         referentClinicProfile: {
           create: { clinicId },
         },
@@ -148,7 +148,7 @@ export class DirectorService {
         : null,
       referents: referents.map((r) => ({
         ...r.user,
-        role: "REFERANT" as const,
+        role: "REFERENT" as const,
       })),
       veterinarians: vets.map((v) => ({
         ...v.veterinarian.user,

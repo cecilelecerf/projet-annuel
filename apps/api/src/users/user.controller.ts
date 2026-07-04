@@ -9,7 +9,7 @@ const VALID_ROLES: UserRole[] = [
   "SECRETARY",
   "VETERINARIAN",
   "DIRECTOR",
-  "REFERANT",
+  "REFERENT",
   "ADMIN",
 ];
 
@@ -48,7 +48,7 @@ export class UserController {
         throw new BadRequestError(`Rôle invalide`);
       }
       const rolesToSearch: UserRole[] = targetRoles.includes("STAFF")
-        ? ["DIRECTOR", "REFERANT", "SECRETARY", "VETERINARIAN"]
+        ? ["DIRECTOR", "REFERENT", "SECRETARY", "VETERINARIAN"]
         : (targetRoles as UserRole[]);
       const users = await this.service.getUsersByRoles(id, role, rolesToSearch);
       res.status(200).json(users);

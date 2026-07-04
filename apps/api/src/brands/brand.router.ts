@@ -7,7 +7,7 @@ import { brandController } from "@api/instances";
 const brandRouter: Router = Router();
 const controller = brandController;
 
-const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERANT"] as const;
+const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
 
 brandRouter.get(
   "/",

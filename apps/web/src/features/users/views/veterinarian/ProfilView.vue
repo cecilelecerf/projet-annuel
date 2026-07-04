@@ -37,13 +37,13 @@ const staff = ref<StaffList | null>(null)
 
 const roleLabel: Record<string, string> = {
   DIRECTOR: 'Directeur',
-  REFERANT: 'Référent',
+  REFERENT: 'Référent',
   VETERINARIAN: 'Vétérinaire',
   SECRETARY: 'Secrétaire',
 }
 const roleTag: Record<string, string> = {
   DIRECTOR: 'danger',
-  REFERANT: '',
+  REFERENT: '',
   VETERINARIAN: 'success',
   SECRETARY: 'warning',
 }

@@ -51,7 +51,7 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
         firstname: "Sophie",
         lastname: "Bernard",
         password,
-        role: "REFERANT",
+        role: "REFERENT",
       },
     }),
     prisma.user.create({

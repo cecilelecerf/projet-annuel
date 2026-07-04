@@ -7,7 +7,7 @@ import { specialityController } from "@api/instances";
 const specialityRouter: Router = Router();
 const controller = specialityController;
 
-const MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERANT"] as const;
+const MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
 
 specialityRouter.get(
   "/",

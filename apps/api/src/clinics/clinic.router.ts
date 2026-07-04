@@ -12,14 +12,14 @@ const controller = clinicController;
 clinicRouter.get(
   "/staff",
   authMiddleware,
-  roleMiddleware(["DIRECTOR", "REFERANT", "VETERINARIAN", "SECRETARY"]),
+  roleMiddleware(["DIRECTOR", "REFERENT", "VETERINARIAN", "SECRETARY"]),
   controller.getClinicStaff.bind(controller),
 );
 
 clinicRouter.get(
   "/me",
   authMiddleware,
-  roleMiddleware(["DIRECTOR", "REFERANT", "VETERINARIAN", "SECRETARY"]),
+  roleMiddleware(["DIRECTOR", "REFERENT", "VETERINARIAN", "SECRETARY"]),
   controller.getMyClinic.bind(controller),
 );
 

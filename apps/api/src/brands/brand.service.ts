@@ -2,7 +2,7 @@ import { NotFoundError, ForbiddenError } from "@api/errors";
 import { BrandRepository } from "./brand.repository";
 import type { CreateBrand, UpdateBrand, UserRole } from "@armali/schemas";
 
-const STOCK_MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERANT"];
+const STOCK_MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERENT"];
 
 export class BrandService {
   constructor(private repository: BrandRepository) {}

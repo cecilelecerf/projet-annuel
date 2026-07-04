@@ -63,7 +63,7 @@ export async function seedBankingInfo(
         bic: "BNPAFRPP",
         domiciliation: "Société Générale Bordeaux",
         beneficiary: "Sophie Bernard",
-        referantId: referentUser1.id,
+        referentId: referentUser1.id,
       },
     }),
   ]);

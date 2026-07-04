@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { clientSchema } from "./client.schema";
 import { secretarySchema } from "./secretary.schema";
-import { referantSchema } from "./referant.schema";
+import { referentSchema } from "./referent.schema";
 import { veterinarianSchema } from "./veterinarian.schema";
 import { baseUserSchema, userPasswordSchema } from "./base-user.schema";
 import { directorClinicSchema } from "./director.schema";
@@ -15,7 +15,7 @@ export const userSchema = z.discriminatedUnion("role", [
   clientSchema,
   secretarySchema,
   directorClinicSchema,
-  referantSchema,
+  referentSchema,
   veterinarianSchema,
   adminSchema,
 ]);
@@ -38,5 +38,5 @@ export * from "./base-user.schema";
 export * from "./client.schema";
 export * from "./veterinarian.schema";
 export * from "./secretary.schema";
-export * from "./referant.schema";
+export * from "./referent.schema";
 export * from "./director.schema";

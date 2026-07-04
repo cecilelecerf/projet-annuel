@@ -31,7 +31,7 @@ export class UserRepository {
         });
         return profile?.clinicId ?? null;
       }
-      case "REFERANT": {
+      case "REFERENT": {
         const profile = await this.prisma.referentClinicProfile.findUnique({
           where: { id },
         });

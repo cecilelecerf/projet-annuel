@@ -18,28 +18,28 @@ const controller = referentController;
 referentRouter.get(
   "/dashboard",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   controller.getDashboard.bind(controller),
 );
 
 referentRouter.get(
   "/staff",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   controller.getClinicStaff.bind(controller),
 );
 
 referentRouter.get(
   "/staff/:id",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   controller.getStaffMemberDetail.bind(controller) as RequestHandler,
 );
 
 referentRouter.post(
   "/staff/veterinarians",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   validate(createVeterinarianStaffSchema),
   controller.createVeterinarian.bind(controller),
 );
@@ -47,7 +47,7 @@ referentRouter.post(
 referentRouter.post(
   "/staff/secretaries",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   validate(createSecretaryStaffSchema),
   controller.createSecretary.bind(controller),
 );
@@ -55,7 +55,7 @@ referentRouter.post(
 referentRouter.patch(
   "/clinic",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   validate(updateClinicReferentSchema),
   controller.updateClinic.bind(controller),
 );
@@ -63,14 +63,14 @@ referentRouter.patch(
 referentRouter.get(
   "/clinic/specialities",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   controller.getClinicSpecialities.bind(controller),
 );
 
 referentRouter.patch(
   "/clinic/specialities",
   authMiddleware,
-  roleMiddleware(["REFERANT"]),
+  roleMiddleware(["REFERENT"]),
   validate(updateClinicSpecialitiesSchema),
   controller.updateClinicSpecialities.bind(controller),
 );

@@ -5,7 +5,7 @@ export interface StaffMember {
   firstname: string
   lastname: string
   email: string
-  role: 'VETERINARIAN' | 'SECRETARY' | 'DIRECTOR' | 'REFERANT'
+  role: 'VETERINARIAN' | 'SECRETARY' | 'DIRECTOR' | 'REFERENT'
   licenseNumber?: string
 }
 
@@ -63,7 +63,7 @@ export interface StaffMemberDetail {
   firstname: string
   lastname: string
   email: string
-  role: 'VETERINARIAN' | 'SECRETARY' | 'DIRECTOR' | 'REFERANT'
+  role: 'VETERINARIAN' | 'SECRETARY' | 'DIRECTOR' | 'REFERENT'
   createdAt: string
   veterinarianProfile?: {
     licenseNumber: string

@@ -49,7 +49,7 @@ export class ClinicService {
         where: { id: userId },
       });
       clinicId = dp?.clinicId ?? null;
-    } else if (role === "REFERANT") {
+    } else if (role === "REFERENT") {
       const rp = await prisma.referentClinicProfile.findUnique({
         where: { id: userId },
       });
@@ -108,7 +108,7 @@ export class ClinicService {
         : null,
       referents: referents.map((r) => ({
         ...r.user,
-        role: "REFERANT" as const,
+        role: "REFERENT" as const,
       })),
       veterinarians: vets.map((v) => ({
         ...v.veterinarian.user,

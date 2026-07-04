@@ -46,7 +46,7 @@ export class MeetingController {
         role === "CLIENT"
           ? prisma.clientProfile.findFirst({ where: { user: { id: userId } } })
           : null,
-        ["SECRETARY", "DIRECTOR", "REFERANT"].includes(role)
+        ["SECRETARY", "DIRECTOR", "REFERENT"].includes(role)
           ? this.userService.getClinicId({ userId, role }).catch(() => null)
           : null,
       ]);

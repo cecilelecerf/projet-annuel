@@ -51,7 +51,7 @@ export class ReferentService {
 
     return {
       director: directorProfile ? { ...directorProfile.user, role: "DIRECTOR" as const } : null,
-      referents: referents.map((r) => ({ ...r.user, role: "REFERANT" as const })),
+      referents: referents.map((r) => ({ ...r.user, role: "REFERENT" as const })),
       veterinarians: vets.map((v) => ({ ...v.veterinarian.user, role: "VETERINARIAN" as const, licenseNumber: v.veterinarian.licenseNumber })),
       secretaries: secretaries.map((s) => ({ ...s.user, role: "SECRETARY" as const })),
     };

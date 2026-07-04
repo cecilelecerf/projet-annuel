@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Edit, RefreshRight, InfoFilled, Calendar } from '@element-plus/icons-vue'
 import { type MeetingRecurring, type MeetingRecurringId } from '@armali/schemas'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
 
 const props = defineProps<{
@@ -45,7 +45,7 @@ async function fetchMeeting() {
   loading.value = true
   error.value = false
   try {
-    meeting.value = await calendarApi.recurring.get(props.recurringId)
+    meeting.value = await meetingApi.recurring.get(props.recurringId)
   } catch {
     error.value = true
   } finally {
@@ -76,7 +76,7 @@ async function save() {
 
   saving.value = true
   try {
-    await calendarApi.recurring.update(props.recurringId, {
+    await meetingApi.recurring.update(props.recurringId, {
       dateToStartAction: props.date,
       dayOfWeek: form.dayOfWeek,
       dateStart: form.dateRange[0] ? new Date(form.dateRange[0]) : undefined,

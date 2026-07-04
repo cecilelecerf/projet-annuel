@@ -10,7 +10,7 @@ import {
   MeetingReccuring,
 } from "../../prisma/generated/prisma/client";
 import { MeetingRepository } from "./meeting.repository";
-import type { UserRole } from "@armali/schemas";
+import type { ClinicId, UserRole } from "@armali/schemas";
 import { NotFoundError } from "@api/errors";
 
 const DEFAULT_SLOT_DURATION_MINUTES = 30;
@@ -239,15 +239,18 @@ export class MeetingService {
     userId,
     start,
     end,
+    clinicId,
   }: {
     userId: string;
     start: Date;
     end: Date;
+    clinicId?: string;
   }): Promise<FlatMeeting[]> {
     const avails = await this.repository.getAvailabilities({
       userId,
       start,
       end,
+      clinicId,
     });
 
     const flat = avails.flatMap(
@@ -380,15 +383,17 @@ export class MeetingService {
     start,
     end,
     slotDurationMinutes = DEFAULT_SLOT_DURATION_MINUTES,
+    clinicId,
   }: {
     veterinarianId: string;
     vetUserId: string;
     start: Date;
     end: Date;
     slotDurationMinutes?: number;
+    clinicId: ClinicId;
   }) {
     const [availabilities, internal, animal] = await Promise.all([
-      this.getAvailabilities({ userId: vetUserId, start, end }),
+      this.getAvailabilities({ userId: vetUserId, start, end, clinicId }),
       this.getInternalMeetings(vetUserId, start, end),
       this.getAnimalMeetingsAsVet(veterinarianId, start, end),
     ]);

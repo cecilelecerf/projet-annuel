@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MeetingKind, Animal, User, UserId } from '@armali/schemas'
 import { computed, ref, watch } from 'vue'
-import { calendarApi } from '../../api/calendar.api.ts'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import { usersApi } from '@/features/users/api/user.api'
 import dayjs from 'dayjs'
@@ -79,7 +79,7 @@ const handleSubmit = async () => {
         ...participants.value.map(({ id }) => toUserId(id)),
         veterinarian ? toUserId(veterinarian.id) : toUserId(authStore.user.id),
       ]
-      await calendarApi.internal.new({
+      await meetingApi.internal.new({
         title: title.value,
         userIds: participantIds,
         date: date.value,
@@ -89,7 +89,7 @@ const handleSubmit = async () => {
       })
     } else {
       if (!selectedVet.value || !selectedClient.value || !selectAnimal.value) return
-      await calendarApi.animal.new({
+      await meetingApi.animal.new({
         date: date.value,
         startTime: new Date(`1970-01-01T${start.value}`),
         endTime: new Date(`1970-01-01T${end.value}`),

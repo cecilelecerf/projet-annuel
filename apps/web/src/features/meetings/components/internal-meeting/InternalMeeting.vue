@@ -8,7 +8,7 @@ import ParticipantSection from './ParticipantSection.vue'
 import DescriptionSection from './DescriptionSection.vue'
 import DateTimeSection from './DateTimeSection.vue'
 import TitleSection from './TitleSection.vue'
-import { calendarApi } from '../../api/calendar.api.ts'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { useFormErrorStore } from '@/stores/formErrorStore.ts'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore.ts'
@@ -50,7 +50,7 @@ const timeLabel = computed(() => {
 const onSave = async (scope: 'single' | 'all') => {
   if (scope === 'all' && meeting.parentId) {
     try {
-      const result = await calendarApi.recurring.update(meeting.parentId, {
+      const result = await meetingApi.recurring.update(meeting.parentId, {
         dateToStartAction: meeting.date,
         startTime: dayjs(edit.value.startTime).toDate(),
         endTime: dayjs(edit.value.endTime).toDate(),
@@ -73,7 +73,7 @@ const onSave = async (scope: 'single' | 'all') => {
     }
   } else {
     try {
-      const result = await calendarApi.internal.update(meeting.id, {
+      const result = await meetingApi.internal.update(meeting.id, {
         ...edit.value,
         startTime: dayjs(edit.value.startTime).toDate(),
         endTime: dayjs(edit.value.endTime).toDate(),
@@ -94,7 +94,7 @@ const onSave = async (scope: 'single' | 'all') => {
 async function onDelete() {
   deleting.value = true
   try {
-    await calendarApi.delete(meeting.id, meeting.date.toISOString())
+    await meetingApi.delete(meeting.id, meeting.date.toISOString())
     ElMessage.success('Rendez-vous supprimé')
     showDeleteDialog.value = false
     router.back()

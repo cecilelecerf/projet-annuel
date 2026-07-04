@@ -6,7 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import type { AnimalId } from '@armali/schemas'
 import { animalApi } from '../../api'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
 import { actTypeLabel } from '@/features/medicalHistories/utils.ts'
 import WeightChart from './WeightChart.vue'
 import { useAuthStore } from '@/stores/authStore.ts'
@@ -17,7 +17,7 @@ const router = useRouter()
 const { user } = useAuthStore()
 const pet = await animalApi.get(route.params.id as AnimalId)
 const [meetings, vaccinesStatus] = await Promise.all([
-  calendarApi.animal.getAllByAnimal(pet.id),
+  meetingApi.animal.getAllByAnimal(pet.id),
   animalApi.getVaccines(route.params.id as AnimalId),
 ])
 

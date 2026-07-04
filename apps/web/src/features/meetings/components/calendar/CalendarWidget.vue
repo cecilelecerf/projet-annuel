@@ -5,7 +5,7 @@ import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
 import type { MeetingId, UserId } from '@armali/schemas'
-import { calendarApi } from '../../api/calendar.api.ts'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import BaseComponent from '../NewEventDrawer/BaseComponent.vue'
@@ -33,7 +33,7 @@ const onDelete = async () => {
   if (!selectedMeeting.value) return
   deleting.value = true
   try {
-    await calendarApi.delete(
+    await meetingApi.delete(
       selectedMeeting.value?.id as MeetingId,
       selectedMeeting.value?.date.toISOString(),
     )

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore'
 import { useFormErrorStore } from '@/stores/formErrorStore'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { prescriptionApi } from '@/features/prescriptions/api'
 import MeetingPets from './MeetingPets.vue'
 import MeetingInfo from './MeetingInfo.vue'
@@ -40,7 +40,7 @@ const edit = ref<UpdateAnimalMeeting>({
 
 const onSave = async () => {
   try {
-    await calendarApi.animal.update(meeting.id, { ...edit.value })
+    await meetingApi.animal.update(meeting.id, { ...edit.value })
     isEditing.value = false
   } catch (err) {
     console.log(err)
@@ -51,7 +51,7 @@ const onSave = async () => {
 const onDelete = async () => {
   deleting.value = true
   try {
-    await calendarApi.delete(meeting.id)
+    await meetingApi.delete(meeting.id)
     ElMessage.success('Rendez-vous supprimé')
     showDeleteDialog.value = false
     router.back()

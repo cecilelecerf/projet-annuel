@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { calendarApi } from '../api/calendar.api'
+import { meetingApi } from '../api/meeting.api'
 import { Plus } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { MEETING_COLORS } from '@/utils/meetingColor'
@@ -19,7 +19,7 @@ const { user } = useAuthStore()
 const router = useRouter()
 const isEditing = ref(false)
 
-const meeting = await calendarApi.get(meetingId, date ? date.toISOString() : undefined)
+const meeting = await meetingApi.get(meetingId, date ? date.toISOString() : undefined)
 const dateForm = ref({
   date: meeting.date,
   startTime: meeting.startTime,

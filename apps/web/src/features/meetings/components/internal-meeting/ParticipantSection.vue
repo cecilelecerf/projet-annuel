@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { User, Check, Close, Edit } from '@element-plus/icons-vue'
 import type { InternalMeetingMeta } from '@armali/schemas'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import ModalScope from './ModalScope.vue'
 
@@ -45,7 +45,7 @@ async function respond(status: 'ACCEPTED' | 'DECLINED') {
 
   responding.value = true
   try {
-    await calendarApi.internal.participantUpdate(meeting.id, { status, scope: 'single' })
+    await meetingApi.internal.participantUpdate(meeting.id, { status, scope: 'single' })
     emit('updated')
   } finally {
     responding.value = false
@@ -57,7 +57,7 @@ async function confirmScope(scope: 'single' | 'all') {
 
   responding.value = true
   try {
-    await calendarApi.internal.participantUpdate(meeting.id, {
+    await meetingApi.internal.participantUpdate(meeting.id, {
       status: pendingStatus.value,
       scope,
       date: scope === 'single' ? meeting.date : undefined,

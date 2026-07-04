@@ -180,14 +180,17 @@ export class MeetingRepository {
     userId,
     start,
     end,
+    clinicId,
   }: {
     userId: string;
     start: Date;
     end: Date;
+    clinicId?: string;
   }): Promise<AvailabilityWithSchedule[]> {
     return this.prisma.availability.findMany({
       where: {
         userId,
+        ...(clinicId && { clinicId }),
         OR: [
           {
             recurringId: { not: null },

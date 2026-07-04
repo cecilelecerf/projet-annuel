@@ -3,9 +3,8 @@ import { ref, computed, watch } from 'vue'
 import { User } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
-import { bookingApi } from '../booking.api'
 import type { BookingClinic, BookingVet, BookingSlot } from '@armali/schemas'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
 
 dayjs.locale('fr')
@@ -29,7 +28,7 @@ const slotsLoading = ref(false)
 async function loadVets() {
   vetsLoading.value = true
   try {
-    vets.value = await bookingApi.getClinicVets({
+    vets.value = await meetingApi.animal.booking.getClinicVets({
       clinicId: props.clinic.id,
       date: props.date,
       specialityId: props.specialityId ?? undefined,
@@ -44,7 +43,7 @@ async function loadSlots() {
   if (!selectedVet.value) return
   slotsLoading.value = true
   try {
-    slots.value = await calendarApi.getVetSlot({
+    slots.value = await meetingApi.getVetSlot({
       veterinarianId: selectedVet.value.id,
       clinicId: props.clinic.id,
       date: dayjs(calendarDate.value).format('YYYY-MM-DD'),

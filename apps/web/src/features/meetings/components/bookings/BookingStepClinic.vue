@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Location } from '@element-plus/icons-vue'
-import { bookingApi } from '../booking.api'
 import type { BookingAnimal, BookingClinic, BookingFilters } from '@armali/schemas'
 import BookingMap from './BookingMap.vue'
 import { MEETING_COLORS } from '@/utils/meetingColor.ts'
 import dayjs from 'dayjs'
 import { geocodeAddress } from '../utils.ts'
+import { meetingApi } from '../../api/meeting.api.ts'
 
 const props = defineProps<{
   animal: BookingAnimal
@@ -47,7 +47,7 @@ async function geolocate() {
 async function searchClinics() {
   clinicsLoading.value = true
   try {
-    clinics.value = await bookingApi.searchClinics({
+    clinics.value = await meetingApi.animal.booking.searchClinics({
       lat: filters.value.lat ?? undefined,
       lng: filters.value.lng ?? undefined,
       address: isGeolocated.value ? undefined : filters.value.address || undefined,

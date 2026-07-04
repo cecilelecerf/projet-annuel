@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { Calendar, Search } from '@element-plus/icons-vue'
-import { calendarApi } from '../../api/calendar.api.ts'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import MeetingCard from '../../components/animal-meeting/MeetingCard.vue'
 import { useRouter } from 'vue-router'
@@ -13,7 +13,7 @@ const { user } = useAuthStore()
 const router = useRouter()
 if (!user) throw new Error('Non authentifié')
 
-const animalMeetings = await calendarApi.animal.getAllByClientId(user?.id)
+const animalMeetings = await meetingApi.animal.getAllByClientId(user?.id)
 export type MeetingStatus = 'UPCOMING' | 'PAST'
 
 // ── Filtres ───────────────────────────────────────────────────────────────────

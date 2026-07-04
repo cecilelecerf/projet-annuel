@@ -5,7 +5,7 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { ref } from 'vue'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api.ts'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
@@ -33,7 +33,7 @@ const emit = defineEmits<{
 const calendar = ref<Calendar | null>(null)
 const formatted = dayjs(date).format('YYYY-MM-DD')
 
-calendarApi
+meetingApi
   .getCalendar({ start: formatted, end: formatted, userId })
   .then((data) => (calendar.value = data))
 
@@ -65,7 +65,7 @@ const calendarOptions = ref<CalendarOptions>({
     emit('newEvent', info.date)
   },
   datesSet: async () => {
-    const data = await calendarApi.getCalendar({ start: formatted, end: formatted, userId })
+    const data = await meetingApi.getCalendar({ start: formatted, end: formatted, userId })
     calendar.value = data
     calendarOptions.value.events = data.meetings.map(toCalendarEvent)
     calendarOptions.value.businessHours = availabilitiesToBusinessHours({ calendar: data })

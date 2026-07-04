@@ -11,7 +11,7 @@ import type {
   BookingSlot,
   SpecialityId,
 } from '@armali/schemas'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
 
 dayjs.locale('fr')
@@ -44,7 +44,7 @@ async function confirm() {
   confirming.value = true
   formError.clear()
   try {
-    await calendarApi.animal.new({
+    await meetingApi.animal.new({
       animalId: props.animal.id,
       veterinarianId: props.vet.id,
       date: props.slot.date,

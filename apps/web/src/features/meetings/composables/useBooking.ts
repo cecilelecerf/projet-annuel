@@ -20,8 +20,8 @@ export function useBooking() {
 
   // ── Étape 2 — Filtres + clinique ──────────────────────────────────────────
   const filters = ref<BookingFilters>({
-    lat: null,
-    lng: null,
+    lat: undefined,
+    lng: undefined,
     address: '',
     radiusKm: 20,
     date: undefined,
@@ -61,8 +61,8 @@ export function useBooking() {
     selectedSpecialityId.value = null
     reason.value = ''
     filters.value = {
-      lat: null,
-      lng: null,
+      lat: undefined,
+      lng: undefined,
       address: '',
       radiusKm: 20,
       date: undefined,

@@ -224,6 +224,7 @@ export class MeetingController {
         vetUserId: veterinarian.user.id,
         start: date,
         end: date,
+        clinicId,
       });
       return res.status(200).json(bookingSlotSchema.array().parse(slots));
     } catch (err) {

@@ -1,6 +1,6 @@
 import { hash } from "bcryptjs";
 import { prisma } from "@api/lib/prisma";
-import { BadRequestError } from "@api/errors";
+import { BadRequestError, NotFoundError, ForbiddenError } from "@api/errors";
 import type {
   CreateVeterinarianStaff,
   CreateSecretaryStaff,
@@ -54,6 +54,46 @@ export class ReferentService {
     };
   }
 
+  // ── Fiche détail d'un membre du personnel ─────────────────────────────────
+  // Vérifie que le membre appartient bien à la clinique du référent avant de renvoyer le détail
+  async getStaffMemberDetail(referentUserId: string, memberId: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+
+    const user = await prisma.user.findUnique({
+      where: { id: memberId },
+      include: {
+        veterinarianProfile: {
+          include: {
+            veterinarianIdentity: true,
+            bankingInfo: true,
+            speciality: true,
+            veterinarianClinic: true,
+          },
+        },
+        secretaryProfile: {
+          include: { bankingInfo: true },
+        },
+        directorClinicProfile: true,
+        referentClinicProfile: true,
+      },
+    });
+
+    if (!user) throw new NotFoundError("Membre du personnel");
+
+    const belongsToClinic =
+      (user.veterinarianProfile?.veterinarianClinic ?? []).some(
+        (vc) => vc.clinicId === clinicId,
+      ) ||
+      user.secretaryProfile?.clinicId === clinicId ||
+      user.directorClinicProfile?.clinicId === clinicId ||
+      user.referentClinicProfile?.clinicId === clinicId;
+
+    if (!belongsToClinic) throw new ForbiddenError();
+
+    const { password: _password, ...safeUser } = user;
+    return safeUser;
+  }
+
   async createVeterinarian(referentUserId: string, data: CreateVeterinarianStaff) {
     const clinicId = await this.getClinicId(referentUserId);
     const hashedPassword = await hash(data.password, 10);
@@ -72,10 +112,30 @@ export class ReferentService {
             veterinarianClinic: {
               create: { clinicId },
             },
+            ...(data.identity && {
+              veterinarianIdentity: { create: data.identity },
+            }),
+            ...(data.bankingInfo && {
+              bankingInfo: { create: data.bankingInfo },
+            }),
+            ...(data.specialityIds &&
+              data.specialityIds.length > 0 && {
+                speciality: {
+                  connect: data.specialityIds.map((id) => ({ id })),
+                },
+              }),
           },
         },
       },
-      include: { veterinarianProfile: true },
+      include: {
+        veterinarianProfile: {
+          include: {
+            veterinarianIdentity: true,
+            bankingInfo: true,
+            speciality: true,
+          },
+        },
+      },
     });
 
     const { password: _, ...userWithoutPassword } = user;
@@ -94,10 +154,15 @@ export class ReferentService {
         password: hashedPassword,
         role: "SECRETARY",
         secretaryProfile: {
-          create: { clinicId },
+          create: {
+            clinicId,
+            ...(data.bankingInfo && {
+              bankingInfo: { create: data.bankingInfo },
+            }),
+          },
         },
       },
-      include: { secretaryProfile: true },
+      include: { secretaryProfile: { include: { bankingInfo: true } } },
     });
 
     const { password: _, ...userWithoutPassword } = user;

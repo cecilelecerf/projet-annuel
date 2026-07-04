@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { Router as RouterType } from "express";
+import type { Router as RouterType, RequestHandler } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
@@ -20,6 +20,13 @@ referentRouter.get(
   authMiddleware,
   roleMiddleware(["REFERANT"]),
   controller.getClinicStaff.bind(controller),
+);
+
+referentRouter.get(
+  "/staff/:id",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.getStaffMemberDetail.bind(controller) as RequestHandler,
 );
 
 referentRouter.post(

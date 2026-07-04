@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { ReferentService } from "./referent.service";
+import { RequestWithParams } from "@api/middlewares";
 
 export class ReferentController {
   constructor(private service: ReferentService) {}
@@ -8,6 +9,22 @@ export class ReferentController {
     try {
       const staff = await this.service.getClinicStaff(req.user!.id);
       res.status(200).json(staff);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getStaffMemberDetail(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const member = await this.service.getStaffMemberDetail(
+        req.user!.id,
+        req.params.id,
+      );
+      res.status(200).json(member);
     } catch (err) {
       next(err);
     }

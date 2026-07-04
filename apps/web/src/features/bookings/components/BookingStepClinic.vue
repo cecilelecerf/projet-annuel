@@ -4,13 +4,18 @@ import { Location } from '@element-plus/icons-vue'
 import { bookingApi } from '../booking.api'
 import type { BookingAnimal, BookingClinic, BookingFilters } from '@armali/schemas'
 import BookingMap from './BookingMap.vue'
+import { MEETING_COLORS } from '@/utils/meetingColor.ts'
+import dayjs from 'dayjs'
+import { geocodeAddress } from '../utils.ts'
 
 const props = defineProps<{
   animal: BookingAnimal
   initialSpecialityId?: string | null
 }>()
 
-const filters = defineModel<BookingFilters>('filters', { required: true })
+const filters = defineModel<BookingFilters>('filters', {
+  required: true,
+})
 const selectedClinic = defineModel<BookingClinic | null>('clinic', { required: true })
 
 const locating = ref(false)
@@ -56,9 +61,40 @@ async function searchClinics() {
   }
 }
 
+async function onAddressChange() {
+  isGeolocated.value = false
+
+  if (!filters.value.address) {
+    filters.value.lat = undefined
+    filters.value.lng = undefined
+    await searchClinics()
+    return
+  }
+
+  locationError.value = ''
+  const coords = await geocodeAddress(filters.value.address)
+
+  if (coords) {
+    filters.value.lat = coords.lat
+    filters.value.lng = coords.lng
+  } else {
+    locationError.value = 'Adresse introuvable, vérifiez la saisie.'
+    filters.value.lat = undefined
+    filters.value.lng = undefined
+  }
+
+  await searchClinics()
+}
 const sortedClinics = computed(() => [...clinics.value].sort((a, b) => a.distanceKm - b.distanceKm))
 
-const TODAY = new Date().toISOString().split('T')[0]
+if (!filters.value.date) {
+  filters.value.date = dayjs().format('YYYY-MM-DD')
+}
+if (!filters.value.address && !filters.value.lat) {
+  await geolocate()
+} else {
+  await searchClinics()
+}
 </script>
 
 <template>
@@ -81,7 +117,7 @@ const TODAY = new Date().toISOString().split('T')[0]
               placeholder="Ville, adresse..."
               :prefix-icon="Location"
               clearable
-              @change="searchClinics"
+              @change="onAddressChange"
             />
             <el-button
               :loading="locating"
@@ -92,28 +128,30 @@ const TODAY = new Date().toISOString().split('T')[0]
           </div>
           <p v-if="locationError" class="location-error">{{ locationError }}</p>
         </div>
+        <div class="filter-block">
+          <div class="filter-group">
+            <label class="filter-label">Rayon</label>
+            <el-select v-model="filters.radiusKm" @change="searchClinics">
+              <el-option label="5 km" :value="5" />
+              <el-option label="10 km" :value="10" />
+              <el-option label="20 km" :value="20" />
+              <el-option label="50 km" :value="50" />
+            </el-select>
+          </div>
 
-        <div class="filter-group">
-          <label class="filter-label">Rayon</label>
-          <el-select v-model="filters.radiusKm" @change="searchClinics">
-            <el-option label="5 km" :value="5" />
-            <el-option label="10 km" :value="10" />
-            <el-option label="20 km" :value="20" />
-            <el-option label="50 km" :value="50" />
-          </el-select>
-        </div>
-
-        <div class="filter-group">
-          <label class="filter-label">Date souhaitée</label>
-          <el-date-picker
-            v-model="filters.date"
-            type="date"
-            value-format="YYYY-MM-DD"
-            :disabled-date="(d: Date) => d < new Date(TODAY)"
-            placeholder="N'importe quand"
-            clearable
-            @change="searchClinics"
-          />
+          <div class="filter-group">
+            <label class="filter-label">Date souhaitée</label>
+            <el-date-picker
+              v-model="filters.date"
+              class="date-input"
+              type="date"
+              value-format="YYYY-MM-DD"
+              :disabled-date="(d: Date) => d < new Date()"
+              placeholder="N'importe quand"
+              clearable
+              @change="searchClinics"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -121,10 +159,18 @@ const TODAY = new Date().toISOString().split('T')[0]
     <div class="results-header">
       <span class="results-count">{{ sortedClinics.length }} cliniques trouvées</span>
       <div class="view-toggle">
-        <el-button size="small" :type="mapView ? 'primary' : ''" @click="mapView = true"
+        <el-button
+          size="small"
+          :type="MEETING_COLORS.ANIMAL"
+          :plain="!mapView"
+          @click="mapView = true"
           >Carte</el-button
         >
-        <el-button size="small" :type="!mapView ? 'primary' : ''" @click="mapView = false"
+        <el-button
+          size="small"
+          :plain="mapView"
+          :type="MEETING_COLORS.ANIMAL"
+          @click="mapView = false"
           >Liste</el-button
         >
       </div>
@@ -142,12 +188,6 @@ const TODAY = new Date().toISOString().split('T')[0]
           :center-lat="filters.lat"
           :center-lng="filters.lng"
         />
-        <!-- <div class="map-placeholder">
-          <el-icon style="font-size: 48px; color: var(--el-text-color-placeholder)"
-            ><Location
-          /></el-icon>
-          <p>Carte des cliniques</p>
-        </div> -->
       </div>
 
       <div class="clinic-list" :class="{ 'clinic-list--sidebar': mapView }">
@@ -179,7 +219,7 @@ const TODAY = new Date().toISOString().split('T')[0]
                 v-for="s in clinic.specialities.slice(0, 2)"
                 :key="s"
                 size="small"
-                type="primary"
+                :type="MEETING_COLORS.ANIMAL"
                 round
                 >{{ s }}</el-tag
               >
@@ -233,15 +273,28 @@ const TODAY = new Date().toISOString().split('T')[0]
 }
 .filter-row {
   display: flex;
+  gap: var(--spacing-2xl);
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.filter-block {
+  display: flex;
   gap: var(--spacing-md);
   flex-wrap: wrap;
+  @include below('md') {
+    width: 100%;
+  }
 }
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
   flex: 1;
-  min-width: 160px;
+  min-width: 120px;
+  @include below('md') {
+    width: 100%;
+    min-width: 0;
+  }
 }
 .filter-label {
   font-size: 12px;
@@ -253,16 +306,31 @@ const TODAY = new Date().toISOString().split('T')[0]
 .location-input {
   display: flex;
   gap: var(--spacing-xs);
+  width: 100%;
+  max-width: 500px;
+  @include below('md') {
+    max-width: 100%;
+  }
 }
 .location-error {
   font-size: 12px;
   color: var(--el-color-danger);
   margin: 0;
 }
+:deep(.el-date-editor.el-input) {
+  width: 100%;
+}
+.date-input {
+  width: 100% !important;
+}
 .results-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-sm);
+  @include below('md') {
+    flex-wrap: wrap;
+  }
 }
 .results-count {
   font-size: 13px;
@@ -271,6 +339,7 @@ const TODAY = new Date().toISOString().split('T')[0]
 .view-toggle {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 .results-body {
   display: flex;
@@ -285,8 +354,7 @@ const TODAY = new Date().toISOString().split('T')[0]
   @include below('md') {
     &--map {
       flex-direction: column;
-      height: 200px;
-      width: 100%;
+      height: auto;
     }
   }
 }
@@ -296,6 +364,11 @@ const TODAY = new Date().toISOString().split('T')[0]
   overflow: hidden;
   border: 1px solid var(--el-border-color-lighter);
   height: 100%;
+  @include below('md') {
+    width: 100%;
+    height: 240px;
+    flex: none;
+  }
 }
 .map-placeholder {
   width: 100%;
@@ -318,6 +391,13 @@ const TODAY = new Date().toISOString().split('T')[0]
     overflow-y: auto;
     height: 100%;
   }
+  @include below('md') {
+    &--sidebar {
+      width: 100%;
+      height: auto;
+      overflow-y: visible;
+    }
+  }
 }
 .clinic-card {
   display: flex;
@@ -333,12 +413,12 @@ const TODAY = new Date().toISOString().split('T')[0]
   transition: all 0.15s;
   width: 100%;
   &:hover {
-    border-color: var(--el-color-primary-light-5);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   }
   &--selected {
-    border-color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-#{meeting-color('animal')});
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
   }
 }
 .clinic-card-header {
@@ -352,6 +432,7 @@ const TODAY = new Date().toISOString().split('T')[0]
   flex-direction: column;
   gap: 4px;
   flex: 1;
+  min-width: 0;
 }
 .clinic-name {
   font-size: 14px;
@@ -366,6 +447,7 @@ const TODAY = new Date().toISOString().split('T')[0]
   color: var(--el-text-color-secondary);
   .el-icon {
     font-size: 11px;
+    flex-shrink: 0;
   }
 }
 .clinic-meta {
@@ -378,7 +460,7 @@ const TODAY = new Date().toISOString().split('T')[0]
 .clinic-distance {
   font-size: 12px;
   font-weight: var(--fw-semibold);
-  color: var(--el-color-primary);
+  color: var(--el-color-#{meeting-color('animal')});
 }
 .clinic-rating {
   font-size: 11px;
@@ -389,6 +471,7 @@ const TODAY = new Date().toISOString().split('T')[0]
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 .clinic-tags {
   display: flex;

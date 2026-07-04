@@ -371,8 +371,6 @@ export class MeetingService {
 
       cursor = slotEnd;
     }
-    console.log("slice");
-    console.log(result);
     return result;
   }
 

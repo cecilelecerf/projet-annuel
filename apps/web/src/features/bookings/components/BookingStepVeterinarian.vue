@@ -6,6 +6,7 @@ import 'dayjs/locale/fr'
 import { bookingApi } from '../booking.api'
 import type { BookingClinic, BookingVet, BookingSlot } from '@armali/schemas'
 import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { MEETING_COLORS } from '@/utils/meetingColor'
 
 dayjs.locale('fr')
 
@@ -111,7 +112,7 @@ const afternoonSlots = computed(() => slots.value.filter((s) => dayjs(s.startTim
                   :key="s.id"
                   size="small"
                   round
-                  type="primary"
+                  :type="MEETING_COLORS.ANIMAL"
                   >{{ s.name }}</el-tag
                 >
               </div>
@@ -253,16 +254,16 @@ const afternoonSlots = computed(() => slots.value.filter((s) => dayjs(s.startTim
   transition: all 0.15s;
   width: 100%;
   &:hover {
-    border-color: var(--el-color-primary-light-5);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
   }
   &--selected {
-    border-color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-#{meeting-color('animal')});
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
   }
 }
 .vet-avatar {
-  background: var(--el-color-primary-light-7);
-  color: var(--el-color-primary-dark-2);
+  background: var(--el-color-#{meeting-color('animal')}-light-7);
+  color: var(--el-color-#{meeting-color('animal')}-dark-2);
   font-size: 14px;
   font-weight: var(--fw-bold);
   flex-shrink: 0;
@@ -284,7 +285,7 @@ const afternoonSlots = computed(() => slots.value.filter((s) => dayjs(s.startTim
   flex-wrap: wrap;
 }
 .vet-check {
-  color: var(--el-color-primary);
+  color: var(--el-color-#{meeting-color('animal')});
   font-size: 16px;
   flex-shrink: 0;
 }
@@ -333,13 +334,13 @@ const afternoonSlots = computed(() => slots.value.filter((s) => dayjs(s.startTim
   transition: all 0.15s;
   text-align: center;
   &:hover {
-    border-color: var(--el-color-primary-light-5);
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
+    color: var(--el-color-#{meeting-color('animal')});
   }
   &--selected {
-    border-color: var(--el-color-primary);
-    background: var(--el-color-primary);
+    border-color: var(--el-color-#{meeting-color('animal')});
+    background: var(--el-color-#{meeting-color('animal')});
     color: var(--el-color-white);
     font-weight: var(--fw-semibold);
   }

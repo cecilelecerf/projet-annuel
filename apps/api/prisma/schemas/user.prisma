@@ -65,7 +65,6 @@ model VeterinarianProfile {
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
   animal                 Animal[]
-  animalMeeting          AnimalMeeting[]
   specialities           Speciality[]
   veterinarianClinic     VeterinarianClinic[]
   pet                    Pet[]

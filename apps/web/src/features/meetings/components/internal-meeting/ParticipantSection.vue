@@ -134,7 +134,7 @@ async function confirmScope(scope: 'single' | 'all') {
   <ModalScope v-model="showScopeDialog" @on-confirm="confirmScope" />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .section {
   display: flex;
   flex-direction: column;
@@ -203,8 +203,8 @@ async function confirmScope(scope: 'single' | 'all') {
 }
 
 .participant-avatar {
-  background: var(--el-color-purple-light-7);
-  color: var(--el-color-purple);
+  background: var(--el-color-#{meeting-color('internal')}-light-7);
+  color: var(--el-color-#{meeting-color('internal')});
   font-size: 14px;
   font-weight: var(--fw-bold);
   flex-shrink: 0;

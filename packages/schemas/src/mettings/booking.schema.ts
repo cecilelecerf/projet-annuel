@@ -27,8 +27,8 @@ export type BookingSpeciality = z.infer<typeof bookingSpecialitySchema>;
 
 // ── Filtres de recherche ──────────────────────────────────────────────────────
 export const bookingFiltersSchema = z.object({
-  lat: z.number().nullable(),
-  lng: z.number().nullable(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   address: z.string(),
   radiusKm: z.number().int().min(1).max(200).default(20),
   date: z.string().optional(), // YYYY-MM-DD

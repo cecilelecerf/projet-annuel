@@ -5,23 +5,60 @@ import { prisma } from "@api/lib/prisma";
 import dayjs from "dayjs";
 import { ClinicRepository } from "@api/clinics/clinic.repository";
 import { haversineKm } from "@api/utils/distance";
-import { AvailabilityRepository } from "@api/meetings";
-
-const SLOT_DURATION_MINUTES = 30;
+import { MeetingService } from "@api/meetings";
 
 export class BookingService {
   constructor(
     private repository: BookingRepository,
     private clinicRepository: ClinicRepository,
-    private availabilityRepository: AvailabilityRepository,
+    private meetingService: MeetingService,
   ) {}
   // ── Recherche de cliniques ─────────────────────────────────────────────────
   async searchClinics(query: BookingSearchQuery) {
-    const clinics = await this.clinicRepository.searchClinics(query);
+    const targetDate = query.date ? new Date(query.date) : new Date();
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
-    return clinics
+    // Phase 1 : préfiltre large en base (candidats potentiels)
+    const candidates = await this.clinicRepository.searchClinics({
+      ...query,
+      startDate: startOfDay,
+      endDate: endOfDay,
+    });
+
+    // Phase 2 : vérification précise (RRule, jour de semaine, exceptions)
+    const clinicsWithRealAvailability = await Promise.all(
+      candidates.map(async (clinic) => {
+        const vetsWithAvailability = await Promise.all(
+          clinic.veterinarianClinics.map(async (vc) => {
+            const availabilities = await this.meetingService.getAvailabilities({
+              userId: vc.veterinarian.user.id,
+              start: startOfDay,
+              end: endOfDay,
+            });
+            return availabilities.length > 0 ? vc : null;
+          }),
+        );
+
+        const filteredVets = vetsWithAvailability.filter(
+          (v): v is (typeof clinic.veterinarianClinics)[number] => v !== null,
+        );
+
+        return filteredVets.length > 0
+          ? { ...clinic, veterinarianClinics: filteredVets }
+          : null;
+      }),
+    );
+
+    const realClinics = clinicsWithRealAvailability.filter(
+      (c): c is NonNullable<typeof c> => c !== null,
+    );
+
+    // Phase 3 : mapping + distance + filtre rayon + tri (restauré)
+    return realClinics
       .map((clinic) => {
-        // Récupère toutes les spécialités des vetos de la clinique
         const specialities = [
           ...new Set(
             clinic.veterinarianClinics.flatMap((vc) =>
@@ -29,7 +66,6 @@ export class BookingService {
             ),
           ),
         ];
-        // Prochain créneau disponible parmi tous les vetos
         const nextSlot = this._getNextSlotLabel(clinic.veterinarianClinics);
         const distance =
           query.lat &&
@@ -52,13 +88,11 @@ export class BookingService {
         };
       })
       .filter((c) => {
-        // Filtre par rayon si lat/lng fournis
         if (!query.lat || !query.lng) return true;
         return c.distanceKm <= (query.radiusKm ?? 20);
       })
       .sort((a, b) => a.distanceKm - b.distanceKm);
   }
-
   // ── Vétérinaires d'une clinique ────────────────────────────────────────────
   async getClinicVets(params: {
     clinicId: string;
@@ -152,15 +186,15 @@ export class BookingService {
     return {
       meetingId: meeting.id,
       clinic: {
-        id: am.veterinarianClinic.clinic.id,
-        name: am.veterinarianClinic.clinic.name,
-        address: am.veterinarianClinic.clinic.address,
+        id: am.veterinarianClinic?.clinic.id,
+        name: am.veterinarianClinic?.clinic.name,
+        address: am.veterinarianClinic?.clinic.address,
       },
       vet: {
-        id: am.veterinarianClinic.veterinarian.id,
+        id: am.veterinarianClinic?.veterinarian.id,
         user: {
-          firstname: am.veterinarianClinic.veterinarian.user.firstname,
-          lastname: am.veterinarianClinic.veterinarian.user.lastname,
+          firstname: am.veterinarianClinic?.veterinarian.user.firstname,
+          lastname: am.veterinarianClinic?.veterinarian.user.lastname,
         },
       },
       animal: {
@@ -180,7 +214,9 @@ export class BookingService {
     const allDates: Date[] = [];
 
     for (const vc of veterinarianClinics) {
-      for (const avail of vc.availabilities ?? []) {
+      // Fix : les disponibilités remontent sous veterinarian.user.availabilities,
+      // pas directement sur vc (bug préexistant, nextSlot était toujours null)
+      for (const avail of vc.veterinarian?.user?.availabilities ?? []) {
         if (avail.meeting?.date) allDates.push(new Date(avail.meeting.date));
       }
     }

@@ -95,7 +95,12 @@ const onPrescriptionSaved = async () => {
         :is-editing="isEditing"
         :is-staff="user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN'"
       />
-      <MeetingActs :acts="localActs" :meeting-id="meeting.id" @saved="onActSaved" />
+      <MeetingActs
+        :acts="localActs"
+        :clinic-id="meeting.veterinarianClinic?.clinicId"
+        :meeting-id="meeting.id"
+        @saved="onActSaved"
+      />
       <MeetingPrescriptions
         :prescriptions="localPrescriptions"
         :meeting-id="meeting.id"

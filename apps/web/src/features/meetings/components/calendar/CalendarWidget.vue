@@ -102,7 +102,7 @@ const onDelete = async () => {
   />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .calendar-container {
   flex: 1;
   min-height: 0;
@@ -221,25 +221,25 @@ const onDelete = async () => {
   padding: var(--spacing-xs);
 }
 :deep(.kind-ANIMAL) {
-  background: var(--el-color-teal-light-5) !important;
+  background: var(--el-color-#{meeting-color('animal')}-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-teal) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-teal-dark-5);
+    color: var(--el-color-#{meeting-color('animal')}-dark-5);
   }
 }
 :deep(.kind-INTERNAL) {
-  background: var(--el-color-purple-light-5) !important;
+  background: var(--el-color-#{meeting-color('internal')}-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
-    border: 0.5px solid var(--el-color-purple) !important;
+    border: 0.5px solid var(--el-color-#{meeting-color('internal')}) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-purple-dark-5);
+    color: var(--el-color-#{meeting-color('internal')}-dark-5);
   }
 }
 

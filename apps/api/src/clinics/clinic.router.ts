@@ -11,7 +11,7 @@ const clinicRouter: RouterType = Router();
 const controller = clinicController;
 
 clinicRouter.get(
-  "/:id/acts",
+  "/:id/medical-histories",
   authMiddleware,
   medicalHistoryController.getByClinic.bind(
     medicalHistoryController,

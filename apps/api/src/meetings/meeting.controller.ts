@@ -203,8 +203,6 @@ export class MeetingController {
     res: Response,
     next: NextFunction,
   ) {
-    console.log("enter");
-    console.log(req.query);
     try {
       const result = z
         .object({ date: z.coerce.date(), clinicId: clinicIdSchema })
@@ -227,8 +225,6 @@ export class MeetingController {
         start: date,
         end: date,
       });
-      console.log("end");
-      console.log(slots);
       return res.status(200).json(bookingSlotSchema.array().parse(slots));
     } catch (err) {
       console.log(err);

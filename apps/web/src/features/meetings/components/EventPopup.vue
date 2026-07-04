@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { calendarApi } from '../api/calendar.api'
 import { Plus } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
+import { MEETING_COLORS } from '@/utils/meetingColor'
 
 dayjs.locale('fr')
 
@@ -125,7 +126,7 @@ const onDelete = () => {
             Supprimer
           </el-button>
         </el-row>
-        <el-button @click="goToDetail" :type="meeting.kind === 'ANIMAL' ? 'teal' : 'purple'">
+        <el-button @click="goToDetail" :type="MEETING_COLORS[meeting.kind]">
           <el-icon><Plus /></el-icon>
           Voir plus
         </el-button>
@@ -200,8 +201,8 @@ const onDelete = () => {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: color-mix(in srgb, var(--el-color-teal) 8%, transparent);
-  border: 1.5px solid var(--el-color-teal-light-5);
+  background: color-mix(in srgb, var(--el-color-#{meeting-color('animal')}) 8%, transparent);
+  border: 1.5px solid var(--el-color-#{meeting-color('animal')}-light-5);
   border-radius: var(--radius-md);
   padding: var(--spacing-sm) var(--spacing-lg);
   gap: var(--spacing-md);
@@ -221,7 +222,7 @@ const onDelete = () => {
 }
 
 .participant-avatar {
-  background: var(--el-color-purple);
+  background: var(--el-color-#{meeting-color('internal')});
   border: 2px solid var(--el-bg-color);
   margin-left: -6px;
   &:first-child {

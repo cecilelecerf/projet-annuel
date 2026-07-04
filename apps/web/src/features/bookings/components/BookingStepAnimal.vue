@@ -76,7 +76,7 @@ const VISIT_REASONS = [
 
         <div v-if="animals.length === 0" class="empty-animals">
           <p>Vous n'avez pas encore d'animal enregistré.</p>
-          <el-button type="primary" size="small" @click="$router.push('/animals/new')">
+          <el-button type="success" size="small" @click="$router.push('/animals/new')">
             Ajouter un animal
           </el-button>
         </div>
@@ -168,12 +168,12 @@ const VISIT_REASONS = [
   font-family: 'DM Sans', sans-serif;
   width: 100%;
   &:hover {
-    border-color: var(--el-color-primary-light-5);
-    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
   }
   &--selected {
-    border-color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-#{meeting-color('animal')});
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
   }
 }
 .animal-avatar {
@@ -203,7 +203,7 @@ const VISIT_REASONS = [
   color: var(--el-text-color-secondary);
 }
 .animal-check {
-  color: var(--el-color-primary);
+  color: var(--el-color-#{meeting-color('animal')});
   font-size: 18px;
 }
 .section {
@@ -248,13 +248,13 @@ const VISIT_REASONS = [
   cursor: pointer;
   transition: all 0.15s;
   &:hover {
-    border-color: var(--el-color-primary-light-5);
-    color: var(--el-color-primary);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
+    color: var(--el-color-#{meeting-color('animal')});
   }
   &--selected {
-    border-color: var(--el-color-primary);
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
+    border-color: var(--el-color-#{meeting-color('animal')});
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
+    color: var(--el-color-#{meeting-color('animal')});
     font-weight: var(--fw-medium);
   }
 }

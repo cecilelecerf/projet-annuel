@@ -12,6 +12,7 @@ import type {
   SpecialityId,
 } from '@armali/schemas'
 import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { MEETING_COLORS } from '@/utils/meetingColor'
 
 dayjs.locale('fr')
 
@@ -108,7 +109,13 @@ async function confirm() {
           <div class="summary-value">
             <span class="summary-main">Dr {{ vet.user.firstname }} {{ vet.user.lastname }}</span>
             <div class="vet-tags">
-              <el-tag v-for="s in vet.specialities" :key="s.id" size="small" round type="primary">
+              <el-tag
+                v-for="s in vet.specialities"
+                :key="s.id"
+                size="small"
+                round
+                :type="MEETING_COLORS.ANIMAL"
+              >
                 {{ s.name }}
               </el-tag>
             </div>
@@ -140,7 +147,7 @@ async function confirm() {
       />
 
       <el-button
-        type="primary"
+        :type="MEETING_COLORS.ANIMAL"
         size="large"
         :loading="confirming"
         style="width: 100%"
@@ -207,10 +214,10 @@ async function confirm() {
 .summary-main {
   font-size: 15px;
   font-weight: var(--fw-semibold);
-  color: var(--el-text-color-primary);
+  color: var(--el-text-color-#{meeting-color('animal')});
 }
 .summary-date {
-  color: var(--el-color-primary);
+  color: var(--el-color-#{meeting-color('animal')});
 }
 .summary-sub {
   font-size: 12px;

@@ -141,39 +141,42 @@ export class ClinicRepository {
   }
 
   // ── Recherche de cliniques pour le booking ────────────────────────────────
-  async searchClinics({ date, specialityId, petId }: BookingSearchQuery) {
-    const futureDate = date ? new Date(date) : new Date();
-
+  async searchClinics({
+    startDate,
+    endDate,
+    specialityId,
+    petId,
+  }: Omit<BookingSearchQuery, "date"> & { startDate: Date; endDate: Date }) {
     return prisma.clinic.findMany({
       where: {
-        // La clinique accepte cette espèce
         ...(petId && {
           clinicPet: { some: { id: petId } },
         }),
-        // Au moins un veto disponible
         veterinarianClinics: {
           some: {
             veterinarian: {
-              // Le veto sait soigner cette espèce
               ...(petId && {
                 pet: { some: { id: petId } },
               }),
-              // Le veto a la spécialité demandée
               ...(specialityId && {
                 specialities: { some: { id: specialityId } },
               }),
-              // Le veto a des disponibilités futures
               user: {
                 availabilities: {
                   some: {
                     OR: [
                       {
                         recurringId: { not: null },
-                        recurring: { dateEnd: { gte: futureDate } },
+                        recurring: {
+                          dateStart: { lte: startDate },
+                          dateEnd: { gte: endDate },
+                        },
                       },
                       {
                         meetingId: { not: null },
-                        meeting: { date: { gte: futureDate } },
+                        meeting: {
+                          date: { gte: startDate, lte: endDate },
+                        },
                       },
                     ],
                   },

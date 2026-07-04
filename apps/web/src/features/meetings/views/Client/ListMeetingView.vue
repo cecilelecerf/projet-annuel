@@ -211,7 +211,7 @@ const past = computed(() => filtered.value.filter((m) => m.status === 'PAST'))
   transition: all 0.15s;
 
   &:hover {
-    border-color: var(--el-color-primary-light-5);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     transform: translateY(-1px);
   }

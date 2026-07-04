@@ -6,6 +6,7 @@ import BookingStepVet from '../components/BookingStepVeterinarian.vue'
 import BookingStepConfirm from '../components/BookingStepConfirm.vue'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
+import { MEETING_COLORS } from '@/utils/meetingColor.ts'
 
 const router = useRouter()
 
@@ -108,7 +109,7 @@ const STEPS = [
 
     <div v-if="step < 4" class="booking-footer">
       <span class="step-counter">Étape {{ step }} sur 4</span>
-      <el-button type="primary" size="large" :disabled="!canGoNext" @click="next">
+      <el-button :type="MEETING_COLORS.ANIMAL" size="large" :disabled="!canGoNext" @click="next">
         {{ step === 3 ? 'Voir le récapitulatif' : 'Continuer' }} →
       </el-button>
     </div>
@@ -177,7 +178,7 @@ const STEPS = [
   flex-shrink: 0;
   transition: all 0.2s;
   .stepper-step--active & {
-    background: var(--el-color-primary);
+    background: var(--el-color-#{meeting-color('animal')});
     color: var(--el-color-white);
   }
   .stepper-step--done & {
@@ -195,7 +196,7 @@ const STEPS = [
   color: var(--el-text-color-secondary);
   white-space: nowrap;
   .stepper-step--active & {
-    color: var(--el-color-primary);
+    color: var(--el-color-#{meeting-color('animal')});
     font-weight: var(--fw-semibold);
   }
   .stepper-step--done & {
@@ -208,7 +209,7 @@ const STEPS = [
 .stepper-line {
   flex: 1;
   height: 2px;
-  background: var(--el-border-color-lighter);
+  background: var(--el-color-#{meeting-color('animal')}-light-5);
   margin: 0 var(--spacing-sm);
   transition: background 0.2s;
   &--done {

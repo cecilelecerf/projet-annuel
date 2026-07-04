@@ -95,19 +95,6 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      console.log(
-        meetings.map((meeting) => ({
-          ...meeting,
-          animal: {
-            ...meeting.animal,
-            client: flatUser(meeting.animal.client),
-          },
-          veterinarianClinic: {
-            ...meeting.veterinarianClinic,
-            veterinarian: flatUser(meeting.veterinarianClinic.veterinarian),
-          },
-        })),
-      );
       res.status(200).json(
         animalMeetigWithMeetingSchema.array().parse(
           meetings.map((meeting) => ({
@@ -118,7 +105,9 @@ export class AnimalMeetingController {
             },
             veterinarianClinic: {
               ...meeting.veterinarianClinic,
-              veterinarian: flatUser(meeting.veterinarianClinic.veterinarian),
+              veterinarian: meeting.veterinarianClinic
+                ? flatUser(meeting.veterinarianClinic?.veterinarian)
+                : undefined,
             },
           })),
         ),

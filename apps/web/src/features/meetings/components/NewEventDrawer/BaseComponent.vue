@@ -12,6 +12,7 @@ import SearchSelectMultiple from './SearchSelectMultiple.vue'
 import { animalApi } from '@/features/animals/api'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { ChatDotRound, FirstAidKit } from '@element-plus/icons-vue'
+import { MEETING_COLORS } from '@/utils/meetingColor.ts'
 
 const route = useRoute()
 const id = route.params.id as string
@@ -119,7 +120,7 @@ const handleSubmit = async () => {
     <!-- Type selector — masqué pour directeur et référant -->
     <div v-if="canCreateAnimal" class="type-selector">
       <el-button
-        type="purple"
+        :type="MEETING_COLORS.INTERNAL"
         :plain="type !== 'INTERNAL'"
         :icon="ChatDotRound"
         class="type-btn"
@@ -128,7 +129,7 @@ const handleSubmit = async () => {
         Réunion
       </el-button>
       <el-button
-        type="teal"
+        :type="MEETING_COLORS.ANIMAL"
         :plain="type !== 'ANIMAL'"
         :icon="FirstAidKit"
         class="type-btn"
@@ -275,11 +276,11 @@ const handleSubmit = async () => {
   transition: background-color 0.2s;
 
   &.dot-internal {
-    background-color: var(--el-color-purple);
+    background-color: var(--el-color-#{meeting-color('internal')});
   }
 
   &.dot-animal {
-    background-color: var(--el-color-teal);
+    background-color: var(--el-color-#{meeting-color('animal')});
   }
 }
 
@@ -315,8 +316,8 @@ const handleSubmit = async () => {
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-lg);
   border-bottom: 1px solid var(--el-border-color-lighter);
-  background: var(--el-color-purple-light-9, #f5f0fb);
-  color: var(--el-color-purple, #9f6de0);
+  background: var(--el-color-#{meeting-color('internal')}-light-9, #f5f0fb);
+  color: var(--el-color-#{meeting-color('internal')}, #9f6de0);
   font-size: 13px;
   font-weight: var(--fw-medium);
 }
@@ -466,7 +467,7 @@ const handleSubmit = async () => {
   border: 1px solid var(--el-border-color-lighter);
 
   .chip-avatar {
-    background: var(--el-color-primary);
+    background: var(--el-color-#{meeting-color('internal')});
     color: white;
     font-size: 11px;
     font-weight: var(--fw-bold);

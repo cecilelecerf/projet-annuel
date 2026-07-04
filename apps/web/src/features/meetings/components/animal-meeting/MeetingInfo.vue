@@ -156,7 +156,7 @@ const lockedReason = computed(() => {
 .meeting-title {
   font-size: 28px;
   font-weight: var(--fw-bold);
-  color: var(--el-color-teal-dark-3);
+  color: var(--el-color-#{meeting-color('animal')}-dark-3);
   margin: 0;
 }
 
@@ -186,7 +186,7 @@ const lockedReason = computed(() => {
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-md);
-  background: var(--el-color-teal-light-9);
+  background: var(--el-color-#{meeting-color('animal')}-light-9);
   border-radius: var(--radius-md);
   text-align: center;
 }
@@ -253,9 +253,9 @@ const lockedReason = computed(() => {
   width: fit-content;
 
   &.animal {
-    background: var(--el-color-success-light-9);
-    color: var(--el-color-success);
-    border: 1px solid var(--el-color-success-light-5);
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
+    color: var(--el-color-#{meeting-color('animal')});
+    border: 1px solid var(--el-color-#{meeting-color('animal')}-light-5);
   }
 }
 </style>

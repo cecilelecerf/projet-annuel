@@ -30,115 +30,109 @@ function formatCurrency(value: number) {
 </script>
 
 <template>
-  <div class="home-page" v-loading="loading">
-    <div class="page-header">
-      <div>
-        <h1>{{ dashboard?.clinic.name || 'Tableau de bord' }}</h1>
-        <p>Vue d'ensemble de votre clinique</p>
+  <div class="page-header">
+    <div>
+      <h1>{{ dashboard?.clinic.name || 'Tableau de bord' }}</h1>
+      <p>Vue d'ensemble de votre clinique</p>
+    </div>
+  </div>
+
+  <el-skeleton v-if="loading" :rows="6" animated />
+
+  <template v-else-if="dashboard">
+    <!-- Cartes de synthèse -->
+    <div class="stats-grid">
+      <div class="card stat-card">
+        <span class="stat-label">Chiffre d'affaires</span>
+        <span class="stat-value">{{ formatCurrency(dashboard.sales.totalRevenue) }}</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">Commandes (30 derniers jours)</span>
+        <span class="stat-value">{{ dashboard.sales.recentOrdersCount }}</span>
+        <span class="stat-sub">{{ dashboard.sales.totalOrdersCount }} au total</span>
+      </div>
+      <div
+        class="card stat-card"
+        :class="{ 'stat-card--alert': dashboard.sales.lowStockCount > 0 }"
+        @click="router.push({ name: 'REFERENT.Boutique' })"
+      >
+        <span class="stat-label">Produits en stock bas</span>
+        <span class="stat-value">{{ dashboard.sales.lowStockCount }}</span>
+        <span v-if="dashboard.sales.lowStockCount > 0" class="stat-sub stat-sub--alert">
+          À réapprovisionner →
+        </span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">Note moyenne clinique</span>
+        <span class="stat-value">
+          <template v-if="dashboard.reviews.clinicAverageRating">
+            {{ dashboard.reviews.clinicAverageRating }} / 5
+          </template>
+          <template v-else>—</template>
+        </span>
+        <span class="stat-sub">{{ dashboard.reviews.totalReviews }} avis reçus</span>
       </div>
     </div>
 
-    <template v-if="dashboard">
-      <!-- Cartes de synthèse -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-label">Chiffre d'affaires</span>
-          <span class="stat-value">{{ formatCurrency(dashboard.sales.totalRevenue) }}</span>
+    <!-- Personnel -->
+    <div class="cards-row">
+      <div class="card card--half">
+        <h2>Personnel</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Vétérinaires</span>
+            <span class="value">{{ dashboard.clinic.veterinarianCount }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Secrétaires</span>
+            <span class="value">{{ dashboard.clinic.secretaryCount }}</span>
+          </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-label">Commandes (30 derniers jours)</span>
-          <span class="stat-value">{{ dashboard.sales.recentOrdersCount }}</span>
-          <span class="stat-sub">{{ dashboard.sales.totalOrdersCount }} au total</span>
-        </div>
-        <div
-          class="stat-card"
-          :class="{ 'stat-card--alert': dashboard.sales.lowStockCount > 0 }"
-          @click="router.push({ name: 'REFERENT.Boutique' })"
-        >
-          <span class="stat-label">Produits en stock bas</span>
-          <span class="stat-value">{{ dashboard.sales.lowStockCount }}</span>
-          <span v-if="dashboard.sales.lowStockCount > 0" class="stat-sub stat-sub--alert">
-            À réapprovisionner →
-          </span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Note moyenne clinique</span>
-          <span class="stat-value">
-            <template v-if="dashboard.reviews.clinicAverageRating">
-              {{ dashboard.reviews.clinicAverageRating }} / 5
-            </template>
-            <template v-else>—</template>
-          </span>
-          <span class="stat-sub">{{ dashboard.reviews.totalReviews }} avis reçus</span>
-        </div>
+        <el-button text @click="router.push({ name: 'REFERENT.Staff' })">
+          Voir le personnel →
+        </el-button>
       </div>
 
-      <!-- Personnel -->
-      <div class="cards-row">
-        <div class="card card--half">
-          <h2>Personnel</h2>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="label">Vétérinaires</span>
-              <span class="value">{{ dashboard.clinic.veterinarianCount }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">Secrétaires</span>
-              <span class="value">{{ dashboard.clinic.secretaryCount }}</span>
-            </div>
-          </div>
-          <el-button text @click="router.push({ name: 'REFERENT.Staff' })">
-            Voir le personnel →
-          </el-button>
+      <!-- Notations par vétérinaire -->
+      <div class="card card--half">
+        <h2>Notation des vétérinaires</h2>
+        <div v-if="dashboard.reviews.veterinarianStats.length === 0" class="no-data">
+          Aucun vétérinaire dans la clinique pour le moment.
         </div>
-
-        <!-- Notations par vétérinaire -->
-        <div class="card card--half">
-          <h2>Notation des vétérinaires</h2>
-          <div v-if="dashboard.reviews.veterinarianStats.length === 0" class="no-data">
-            Aucun vétérinaire dans la clinique pour le moment.
-          </div>
-          <div v-else class="vet-stats-list">
-            <div
-              v-for="vet in dashboard.reviews.veterinarianStats"
-              :key="vet.id"
-              class="vet-stat-item"
-            >
-              <span class="vet-name">{{ vet.firstname }} {{ vet.lastname }}</span>
-              <div class="vet-rating">
-                <template v-if="vet.averageRating !== null">
-                  <el-rate :model-value="vet.averageRating" disabled allow-half />
-                  <span class="rating-value">{{ vet.averageRating }}</span>
-                  <span class="rating-count">({{ vet.reviewCount }})</span>
-                </template>
-                <span v-else class="no-rating">Aucun avis</span>
-              </div>
+        <div v-else class="vet-stats-list">
+          <div
+            v-for="vet in dashboard.reviews.veterinarianStats"
+            :key="vet.id"
+            class="vet-stat-item"
+          >
+            <span class="vet-name">{{ vet.firstname }} {{ vet.lastname }}</span>
+            <div class="vet-rating">
+              <template v-if="vet.averageRating !== null">
+                <el-rate :model-value="vet.averageRating" disabled allow-half />
+                <span class="rating-value">{{ vet.averageRating }}</span>
+                <span class="rating-count">({{ vet.reviewCount }})</span>
+              </template>
+              <span v-else class="no-rating">Aucun avis</span>
             </div>
           </div>
         </div>
       </div>
-    </template>
-  </div>
+    </div>
+  </template>
 </template>
 
 <style scoped>
-.home-page {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
 }
 .page-header h1 {
   font-size: 24px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 4px;
+  font-weight: var(--fw-bold);
+  color: var(--el-text-color-primary);
+  margin: 0 0 var(--spacing-xs);
 }
 .page-header p {
-  color: #6b7280;
+  color: var(--el-text-color-regular);
   margin: 0;
   font-size: 14px;
 }
@@ -146,98 +140,90 @@ function formatCurrency(value: number) {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
+
+/* Le fond, le radius et le padding viennent de la classe globale .card (index.scss) */
 .stat-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 .stat-card--alert {
   cursor: pointer;
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--el-color-danger-light-5);
 }
 .stat-label {
   font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 .stat-value {
   font-size: 26px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-weight: var(--fw-bold);
+  color: var(--el-text-color-primary);
 }
 .stat-sub {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
 }
 .stat-sub--alert {
-  color: #ef4444;
-  font-weight: 600;
+  color: var(--el-color-danger);
+  font-weight: var(--fw-semibold);
 }
 
 .cards-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-.card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 22px 24px;
+  gap: var(--spacing-lg);
 }
 .card h2 {
   font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 16px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
+  margin: 0 0 var(--spacing-md);
 }
 .info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--spacing-xs);
 }
 .label {
   font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-secondary);
   text-transform: uppercase;
 }
 .value {
   font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-weight: var(--fw-bold);
+  color: var(--el-text-color-primary);
 }
 
 .no-data {
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
   font-size: 14px;
 }
 .vet-stats-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 .vet-stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 .vet-stat-item:last-child {
   border-bottom: none;
@@ -245,26 +231,26 @@ function formatCurrency(value: number) {
 }
 .vet-name {
   font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
 }
 .vet-rating {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-sm);
 }
 .rating-value {
   font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
 }
 .rating-count {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
 }
 .no-rating {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--el-text-color-secondary);
 }
 
 @media (max-width: 1024px) {

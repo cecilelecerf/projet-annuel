@@ -6,9 +6,11 @@ import { Calendar, Search } from '@element-plus/icons-vue'
 import { calendarApi } from '../../api/calendar.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import MeetingCard from '../../components/animal-meeting/MeetingCard.vue'
+import { useRouter } from 'vue-router'
 
 dayjs.locale('fr')
 const { user } = useAuthStore()
+const router = useRouter()
 if (!user) throw new Error('Non authentifié')
 
 const animalMeetings = await calendarApi.animal.getAllByClientId(user?.id)
@@ -64,6 +66,9 @@ const past = computed(() => filtered.value.filter((m) => m.status === 'PAST'))
       <h1 class="page-title">Mes rendez-vous</h1>
       <p class="page-subtitle">{{ animalMeetings.length }} rendez-vous au total</p>
     </div>
+    <el-button @click="() => router.push({ name: 'CLIENT.Booking' })"
+      >Nouveau rendez-vous</el-button
+    >
   </div>
 
   <!-- Filtres -->

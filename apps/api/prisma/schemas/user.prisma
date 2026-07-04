@@ -66,7 +66,7 @@ model VeterinarianProfile {
 
   animal                 Animal[]
   animalMeeting          AnimalMeeting[]
-  speciality             Speciality[]
+  specialities           Speciality[]
   veterinarianClinic     VeterinarianClinic[]
   pet                    Pet[]
   hospitalizationReports HospitalizationReport[]

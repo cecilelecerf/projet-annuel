@@ -37,12 +37,15 @@ async function main() {
 
   console.log("🌱 Seeding database...");
 
-  const { clinic1, clinic2 } = await seedClinics(prisma);
-  const users = await seedUsers(prisma, [clinic1, clinic2]);
+  const specialities = await seedSpecialities(prisma);
+  const { clinic1, clinic2 } = await seedClinics(prisma, { specialities });
+  const users = await seedUsers(prisma, {
+    clinics: [clinic1, clinic2],
+    specialities,
+  });
   await seedMedicalVisits(prisma, { users });
   await seedBankingInfo(prisma, { users });
   const pets = await seedPets(prisma);
-  const specialities = await seedSpecialities(prisma);
   const vetoClinic = await seedVeterinarianClinics(prisma, {
     users,
     clinic1,

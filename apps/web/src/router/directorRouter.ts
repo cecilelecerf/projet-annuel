@@ -18,6 +18,16 @@ export const directorRouter: RouteRecordRaw[] = [
         component: () => import('@/features/users/views/director/ProfilView.vue'),
       },
       {
+        path: 'calendar',
+        name: 'DIRECTOR.Calendar',
+        component: () => import('@/features/meetings/views/MeCalendarView.vue'),
+      },
+      {
+        path: 'meetings/:id',
+        name: 'DIRECTOR.Meetings.Detail',
+        component: () => import('@/features/meetings/views/MeetingView.vue'),
+      },
+      {
         path: 'staff',
         name: 'DIRECTOR.Staff',
         component: () => import('@/features/users/views/director/Staff.vue'),

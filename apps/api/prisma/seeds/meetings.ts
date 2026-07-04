@@ -46,9 +46,11 @@ export async function seedMeetings(
     vetProfile2,
     vetProfile3,
     secretaryProfile,
+    directorUser1,
+    directorUser2,
+    referentUser1,
   } = users;
   const { vetoClinic1, vetoClinic2, vetoClinic3 } = veterinarianClinics;
-  const { specCardio, specDerma } = specialities;
   const { conditionCardio, conditionRenal } = healthConditions;
   const { raceLab, racePersan, raceGolden } = pets;
 
@@ -268,7 +270,7 @@ export async function seedMeetings(
           petSize: 58,
           report:
             "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
-          specialityId: specCardio.id,
+          specialityId: specialities.cardiologie.id,
           animalId: animal1.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -292,7 +294,7 @@ export async function seedMeetings(
           petSize: 58,
           report:
             "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
-          specialityId: specCardio.id,
+          specialityId: specialities.cardiologie.id,
           animalId: animal1.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -315,7 +317,7 @@ export async function seedMeetings(
           description: "Problème de peau",
           petWeight: 4,
           petSize: 32,
-          specialityId: specDerma.id,
+          specialityId: specialities.dermatologie.id,
           animalId: animal2.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -335,7 +337,7 @@ export async function seedMeetings(
       endTime: new Date("1970-01-01T10:30:00Z"),
       animalMeeting: {
         create: {
-          specialityId: specDerma.id,
+          specialityId: specialities.dermatologie.id,
           animalId: animal3.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -412,6 +414,7 @@ export async function seedMeetings(
 
   await prisma.internalMeetingParticipant.createMany({
     data: [
+      // ── Réunion récurrente hebdomadaire ────────────────────────────────────────
       {
         meetingId: recurringInternal1.internalMeeting!.id,
         userId: vetoUser1.id,
@@ -428,6 +431,18 @@ export async function seedMeetings(
         status: "PENDING",
       },
       {
+        meetingId: recurringInternal1.internalMeeting!.id,
+        userId: directorUser1.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: recurringInternal1.internalMeeting!.id,
+        userId: referentUser1.id,
+        status: "PENDING",
+      },
+
+      // ── Formation nouveaux équipements ─────────────────────────────────────────
+      {
         meetingId: baseInternal2.internalMeeting!.id,
         userId: vetoUser1.id,
         status: "ACCEPTED",
@@ -437,9 +452,23 @@ export async function seedMeetings(
         userId: vetoUser2.id,
         status: "DECLINED",
       },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: secretaryUser1.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: directorUser1.id,
+        status: "PENDING",
+      },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: referentUser1.id,
+        status: "ACCEPTED",
+      },
     ],
   });
-
   // ── Health conditions owned pets ────────────────────────────────────────────
   await prisma.animalHealthCondition.create({
     data: {

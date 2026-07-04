@@ -10,8 +10,8 @@ model Clinic {
   website      String
   openingHours String?
 
-  speciality             Speciality[]
-  veterinarianClinic     VeterinarianClinic[]
+  specialities           Speciality[]
+  veterinarianClinics    VeterinarianClinic[]
   clinicPet              Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]

@@ -20,6 +20,7 @@ import { AnimalMeetingRepository } from "./meetings/animal-meeting/animal-meetin
 import { AvailabilityRepository } from "./meetings/availability/availability.repository";
 import { InternalMeetingRepository } from "./meetings/internal-meeting/internal-meeting.repository";
 import { RecurringRepository } from "./meetings/recurring-meeting/recurring-meeting.repository";
+import { BookingRepository } from "./bookings/booking.repository";
 
 // ── Prescriptions ─────────────────────────────────────────────
 import { PrescriptionRepository } from "./prescriptions/prescription.repository";
@@ -54,6 +55,7 @@ import { PrescriptionService } from "./prescriptions/prescription.service";
 import { ReferentService } from "./referents/referent.service";
 import { ReviewService } from "./reviews/review.service";
 import { UserService } from "./users/user.service";
+import { BookingService } from "./bookings/booking.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -76,6 +78,10 @@ import { UserController } from "./users/user.controller";
 import { AnimalMedicalHistoryService } from "./medicalHistories/medical-history.service";
 import { AnimalMedicalHistoryController } from "./medicalHistories/medical-history.controller";
 import { RecurringMeetingController } from "./meetings/recurring-meeting/recurring-meeting.controller";
+import { BookingController } from "./bookings/booking.controller";
+import { SpecialityRepository } from "./specialities/speciality.repository";
+import { SpecialityService } from "./specialities/speciality.service";
+import { SpecialityController } from "./specialities/speciality.controller";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -91,6 +97,7 @@ const animalMeetingRepository = new AnimalMeetingRepository(prisma);
 const availabilityRepository = new AvailabilityRepository(prisma);
 const internalMeetingRepository = new InternalMeetingRepository(prisma);
 const recurringRepository = new RecurringRepository(prisma);
+const bookingRepository = new BookingRepository(prisma);
 
 const prescriptionRepository = new PrescriptionRepository(prisma);
 const userRepository = new UserRepository(prisma);
@@ -109,7 +116,6 @@ export const authService = new AuthService();
 
 export const actService = new ActService(actRepository, clinicActRepository);
 
-// ⚠️ à vérifier : AnimalService — peut avoir besoin de vaccineRepository en plus
 export const animalService = new AnimalService(
   animalRepository,
   vaccineRepository,
@@ -132,11 +138,8 @@ export const veterinarianClinicService = new VeterinarianClinicService(
   veterinarianClinicRepository,
 );
 
-// ⚠️ à vérifier : ClinicService — probablement prisma direct + veterinarianClinicService
 export const clinicService = new ClinicService();
 
-// ⚠️ à vérifier : AdminService, DirectorService, ReferentService, ReviewService
-//    — pas de repository dédié visible dans l'arborescence, supposés utiliser prisma directement
 export const adminService = new AdminService();
 export const directorService = new DirectorService();
 export const referentService = new ReferentService();
@@ -156,14 +159,12 @@ export const availabilityService = new AvailabilityService(
   recurringService,
 );
 
-// ⚠️ à vérifier : AnimalMeetingService — dépend peut-être de emailService pour les confirmations
 export const animalMeetingService = new AnimalMeetingService(
   animalMeetingRepository,
   userRepository,
   emailService,
 );
-
-// ⚠️ à vérifier : MeetingService (top-level, agrège probablement les 3 types de meetings)
+export const bookingService = new BookingService(bookingRepository);
 export const meetingService = new MeetingService(
   meetingRepository,
   internalMeetingRepository,
@@ -173,6 +174,9 @@ export const meetingService = new MeetingService(
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 
+const specialityRepository = new SpecialityRepository(prisma);
+const specialityService = new SpecialityService(specialityRepository);
+export const specialityController = new SpecialityController(specialityService);
 export const actController = new ActController(actService);
 export const adminController = new AdminController();
 export const animalController = new AnimalController(animalService);
@@ -192,6 +196,7 @@ export const meetingController = new MeetingController(
 export const animalMeetingController = new AnimalMeetingController(
   animalMeetingService,
 );
+export const bookingController = new BookingController(bookingService);
 export const availabilityController = new AvailabilityController(
   availabilityService,
 );

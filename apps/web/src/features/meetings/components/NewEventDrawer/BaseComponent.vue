@@ -23,18 +23,21 @@ const { initialDate } = defineProps<{
 const emit = defineEmits<{ close: [] }>()
 const formErrorStore = useFormErrorStore()
 
+const role = authStore.user?.role
+
+// ── Directeur et référant ne peuvent créer que des réunions internes ──────────
+const canCreateAnimal = computed(() => role === 'VETERINARIAN' || role === 'SECRETARY')
+
 const date = ref<Date>(initialDate ?? new Date())
 const start = ref(initialDate ? dayjs(initialDate).format('HH:mm:ss') : '')
 const end = ref(initialDate ? dayjs(initialDate).add(1, 'hour').format('HH:mm:ss') : '')
 
 const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>>('INTERNAL')
 const title = ref('')
-
 const location = ref('')
 const participants = ref<User[]>([])
 const selectedClient = ref<User | null>(null)
 const selectedVet = ref<User | null>(veterinarian ?? null)
-
 const selectAnimal = ref<Animal | null>(null)
 
 const clients = ref<User[]>([])
@@ -46,6 +49,7 @@ watch(selectedClient, async (client) => {
   selectAnimal.value = null
   animals.value = client ? await animalApi.getAllByUser(client.id) : []
 })
+
 watch(
   type,
   async (t) => {
@@ -54,7 +58,6 @@ watch(
         usersApi.getUsersByRole(['CLIENT']),
         usersApi.getUsersByRole(['VETERINARIAN']),
       ])
-
       clients.value = clientsData
       vets.value = vetsData
     } else {
@@ -63,6 +66,7 @@ watch(
   },
   { immediate: true },
 )
+
 const isVetLocked = computed(() => !!veterinarian)
 
 const handleSubmit = async () => {
@@ -112,8 +116,8 @@ const handleSubmit = async () => {
       </el-icon>
     </div>
 
-    <!-- Type selector -->
-    <div class="type-selector">
+    <!-- Type selector — masqué pour directeur et référant -->
+    <div v-if="canCreateAnimal" class="type-selector">
       <el-button
         type="purple"
         :plain="type !== 'INTERNAL'"
@@ -134,9 +138,15 @@ const handleSubmit = async () => {
       </el-button>
     </div>
 
+    <!-- Bandeau informatif pour directeur et référant -->
+    <div v-else class="type-info-banner">
+      <el-icon><ChatDotRound /></el-icon>
+      Réunion interne uniquement
+    </div>
+
     <!-- Form -->
     <div class="form">
-      <!-- ANIMAL : animal + client -->
+      <!-- ANIMAL : client + animal + vétérinaire -->
       <template v-if="type === 'ANIMAL'">
         <SearchSelectSingle
           v-model="selectedClient"
@@ -172,14 +182,14 @@ const handleSubmit = async () => {
           :items="staffs"
           display-key="lastname"
           secondary-key="firstname"
-          placeholder="Rechercher des participant..."
+          placeholder="Rechercher des participants..."
         />
         <div class="field">
           <label class="field-label">Lieu</label>
           <el-input v-model="location" placeholder="Salle, adresse..." size="large">
-            <template #prefix
-              ><el-icon><Location /></el-icon
-            ></template>
+            <template #prefix>
+              <el-icon><Location /></el-icon>
+            </template>
           </el-input>
         </div>
       </template>
@@ -267,6 +277,7 @@ const handleSubmit = async () => {
   &.dot-internal {
     background-color: var(--el-color-purple);
   }
+
   &.dot-animal {
     background-color: var(--el-color-teal);
   }
@@ -296,6 +307,20 @@ const handleSubmit = async () => {
   flex: 1;
 }
 
+// ── Bandeau info rôle restreint ───────────────────────────────────────────────
+
+.type-info-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-color-purple-light-9, #f5f0fb);
+  color: var(--el-color-purple, #9f6de0);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+}
+
 // ── Form ──────────────────────────────────────────────────────────────────────
 
 .form {
@@ -321,7 +346,8 @@ const handleSubmit = async () => {
   letter-spacing: 0.05em;
 }
 
-// ── Horaires ──────────────────────────────────────────────────────────────────
+// ── Calendrier compact ────────────────────────────────────────────────────────
+
 :deep(.compact-calendar) {
   border: 1px solid var(--el-border-color-lighter);
   border-radius: var(--radius-md);
@@ -340,11 +366,9 @@ const handleSubmit = async () => {
       font-size: 15px;
     }
 
-    .el-button-group {
-      .el-button {
-        padding: 4px 10px;
-        font-size: 12px;
-      }
+    .el-button-group .el-button {
+      padding: 4px 10px;
+      font-size: 12px;
     }
   }
 
@@ -396,6 +420,9 @@ const handleSubmit = async () => {
     }
   }
 }
+
+// ── Horaires ──────────────────────────────────────────────────────────────────
+
 .time-row {
   display: flex;
   align-items: center;
@@ -461,6 +488,7 @@ const handleSubmit = async () => {
     }
   }
 }
+
 .autocomplete-item {
   display: flex;
   align-items: center;

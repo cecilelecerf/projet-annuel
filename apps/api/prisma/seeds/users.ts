@@ -1,8 +1,22 @@
 import { hash } from "bcryptjs";
 import type { Clinic, PrismaClient } from "../generated/prisma/client";
 
-export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
+export async function seedUsers(
+  prisma: PrismaClient,
+  {
+    clinics,
+    specialities,
+  }: {
+    clinics: Clinic[];
+    specialities: ReturnType<
+      typeof import("./specialities").seedSpecialities
+    > extends Promise<infer T>
+      ? T
+      : never;
+  },
+) {
   const [clinic1, clinic2] = clinics;
+
   const password = await hash("Password123!", 10);
 
   // ── Users ────────────────────────────────────────────────────────────────────
@@ -134,6 +148,12 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
         id: vetoUser1.id,
         licenseNumber: "VET-001",
         bio: "Spécialiste en cardiologie animale",
+        specialities: {
+          connect: [
+            { id: specialities.cardiologie.id },
+            { id: specialities.dermatologie.id },
+          ],
+        },
       },
     }),
     prisma.veterinarianProfile.create({
@@ -141,10 +161,23 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
         id: vetoUser2.id,
         licenseNumber: "VET-002",
         bio: "Généraliste avec expertise en dermatologie",
+        specialities: {
+          connect: [
+            { id: specialities.dermatologie.id },
+            { id: specialities.chirurgie.id },
+          ],
+        },
       },
     }),
     prisma.veterinarianProfile.create({
-      data: { id: vetoUser3.id, licenseNumber: "VET-003", bio: "Généraliste" },
+      data: {
+        id: vetoUser3.id,
+        licenseNumber: "VET-003",
+        bio: "Généraliste",
+        specialities: {
+          connect: [{ id: specialities.medecineGenerale.id }],
+        },
+      },
     }),
   ]);
 

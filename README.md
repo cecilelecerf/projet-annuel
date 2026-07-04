@@ -67,6 +67,8 @@ JWT_REFRESH_SECRET=changeme
 
 ---
 
+<!-- TODO AJOUTER LE UP DU DOCKER -->
+
 ## 🗄️ Base de données
 
 ```bash

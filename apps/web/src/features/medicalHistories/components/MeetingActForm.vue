@@ -13,6 +13,7 @@ const emit = defineEmits<{
   'update:modelValue': [boolean]
   saved: []
 }>()
+console.log(meetingId)
 
 const { user } = useAuthStore()
 const loading = ref(false)

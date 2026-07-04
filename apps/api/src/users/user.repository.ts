@@ -1,3 +1,4 @@
+import { User } from "../../prisma/generated/prisma/client";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { userWithProfileAndClinicIdInclude } from "./user.types";
 import { PrismaClient } from "@prisma/client/extension";
@@ -42,7 +43,11 @@ export class UserRepository {
     }
   }
 
-  async getUsersByClinic({ clinicId }: { clinicId: string }) {
+  async getUsersByClinic({
+    clinicId,
+  }: {
+    clinicId: string;
+  }): Promise<Omit<User, "password">[]> {
     return this.prisma.user.findMany({
       where: {
         OR: [

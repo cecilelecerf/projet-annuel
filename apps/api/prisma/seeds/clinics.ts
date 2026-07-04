@@ -2,30 +2,40 @@ import type { PrismaClient } from "../generated/prisma/client";
 async function geocodeAddress(address: string) {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
-    { headers: { "User-Agent": "Armali/1.0" } }, // obligatoire pour Nominatim
+    { headers: { "User-Agent": "Armali/1.0" } },
   );
-  const [result] = await res.json();
-  return result
-    ? { lat: parseFloat(result.lat), lng: parseFloat(result.lon) }
-    : { lat: 0, lng: 0 };
+  const results = await res.json();
+  const [result] = results;
+
+  if (!result) {
+    console.warn(`⚠️ Geocoding failed for: "${address}"`);
+    return { lat: 0, lng: 0 };
+  }
+
+  console.log(`✅ ${address} → ${result.lat}, ${result.lon}`);
+  return { lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
 }
 
 export async function seedClinics(
   prisma: PrismaClient,
   {
     specialities,
+    pets,
   }: {
     specialities: ReturnType<
       typeof import("./specialities").seedSpecialities
     > extends Promise<infer T>
       ? T
       : never;
+    pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
-  const address1 = "12 Avenue du Parc, Paris 75015";
-  const address2 = "5 Rue Saint-Michel, Paris 75005";
-  const address3 = "45 Avenue du Maine, Paris 75014";
-  const address4 = "18 Rue de la Paix, Lyon 69002";
+  const address1 = "15 Rue de la Convention, Paris 75015";
+  const address2 = "5 Rue Saint-Jacques, Paris 75005";
+  const address3 = "40 Avenue du Maine, Paris 75014";
+  const address4 = "18 Rue de la République, Lyon 69002";
   const [coord1, coord2, coord3, coord4] = await Promise.all([
     geocodeAddress(address1),
     geocodeAddress(address2),
@@ -47,6 +57,13 @@ export async function seedClinics(
         openingHours: "Lun-Ven 8h-19h · Sam 9h-17h",
         lat: coord1.lat,
         lng: coord1.lng,
+        clinicPet: {
+          connect: [
+            { id: pets.petCat.id },
+            { id: pets.petDog.id },
+            { id: pets.petRabbit.id },
+          ],
+        },
         specialities: {
           connect: [
             { id: specialities.medecineGenerale.id },
@@ -73,6 +90,9 @@ export async function seedClinics(
         openingHours: "Lun-Sam 9h-18h",
         lat: coord2.lat,
         lng: coord2.lng,
+        clinicPet: {
+          connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }],
+        },
         specialities: {
           connect: [
             { id: specialities.medecineGenerale.id },
@@ -98,6 +118,9 @@ export async function seedClinics(
         openingHours: "Lun-Ven 8h-20h · Sam-Dim 9h-18h (urgences)",
         lat: coord3.lat,
         lng: coord3.lng,
+        clinicPet: {
+          connect: [{ id: pets.petDog.id }, { id: pets.petRabbit.id }],
+        },
         specialities: {
           connect: [
             { id: specialities.oncologie.id },
@@ -124,6 +147,13 @@ export async function seedClinics(
         openingHours: "Mar-Sam 9h-18h",
         lat: coord4.lat,
         lng: coord4.lng,
+        clinicPet: {
+          connect: [
+            { id: pets.petCat.id },
+            { id: pets.petDog.id },
+            { id: pets.petRabbit.id },
+          ],
+        },
         specialities: {
           connect: [
             { id: specialities.medecineNAC.id },

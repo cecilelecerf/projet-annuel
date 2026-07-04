@@ -2,10 +2,7 @@ import { z } from "zod";
 import { meetingParticipantStatusSchema } from "./meeting-base.schema";
 import { internalMeetingSchema } from "./internal-meeting.schema";
 import { availabilitiesSchema } from "./availability.schema";
-import {
-  animalMeetingMetaSchema,
-  animalMeetingSchema,
-} from "./animal-meeting.schema";
+import { animalMeetingSchema } from "./animal-meeting.schema";
 import { meetingRecurringIdSchema } from "../ids";
 
 export const flatInternalMeetingSchema = internalMeetingSchema.extend({

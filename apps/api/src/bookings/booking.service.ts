@@ -5,6 +5,7 @@ import { prisma } from "@api/lib/prisma";
 import dayjs from "dayjs";
 import { ClinicRepository } from "@api/clinics/clinic.repository";
 import { haversineKm } from "@api/utils/distance";
+import { AvailabilityRepository } from "@api/meetings";
 
 const SLOT_DURATION_MINUTES = 30;
 
@@ -12,10 +13,10 @@ export class BookingService {
   constructor(
     private repository: BookingRepository,
     private clinicRepository: ClinicRepository,
+    private availabilityRepository: AvailabilityRepository,
   ) {}
   // ── Recherche de cliniques ─────────────────────────────────────────────────
   async searchClinics(query: BookingSearchQuery) {
-    console.log(query);
     const clinics = await this.clinicRepository.searchClinics(query);
 
     return clinics
@@ -28,7 +29,6 @@ export class BookingService {
             ),
           ),
         ];
-
         // Prochain créneau disponible parmi tous les vetos
         const nextSlot = this._getNextSlotLabel(clinic.veterinarianClinics);
         const distance =
@@ -82,69 +82,6 @@ export class BookingService {
       })),
       rating: null,
     }));
-  }
-
-  // ── Créneaux disponibles ───────────────────────────────────────────────────
-  async getVetSlots(params: {
-    veterinarianId: string;
-    clinicId: string;
-    date: string;
-  }) {
-    const { availabilities, existingMeetings } =
-      await this.repository.getVetSlots(params);
-
-    if (availabilities.length === 0) return [];
-
-    const targetDate = new Date(params.date);
-
-    // Récupère les plages horaires de disponibilité
-    const timeRanges = availabilities
-      .map((avail) => {
-        const base = avail.meeting ?? avail.recurring;
-        if (!base) return null;
-        return {
-          startTime: dayjs(base.startTime),
-          endTime: dayjs(base.endTime),
-        };
-      })
-      .filter(Boolean) as { startTime: dayjs.Dayjs; endTime: dayjs.Dayjs }[];
-
-    // Génère les créneaux de SLOT_DURATION_MINUTES minutes
-    const slots: { date: Date; startTime: Date; endTime: Date }[] = [];
-
-    for (const range of timeRanges) {
-      let cursor = range.startTime;
-      while (cursor.isBefore(range.endTime)) {
-        const slotEnd = cursor.add(SLOT_DURATION_MINUTES, "minute");
-        if (slotEnd.isAfter(range.endTime)) break;
-
-        // Vérifie que le créneau n'est pas déjà pris
-        const isTaken = existingMeetings.some((m) => {
-          if (!m.meeting) return false;
-          const start = dayjs(m.meeting.startTime);
-          const end = dayjs(m.meeting.endTime);
-          return cursor.isBefore(end) && slotEnd.isAfter(start);
-        });
-
-        // Vérifie que le créneau est dans le futur
-        const slotDateTime = dayjs(targetDate)
-          .hour(cursor.hour())
-          .minute(cursor.minute());
-        const isFuture = slotDateTime.isAfter(dayjs());
-
-        if (!isTaken && isFuture) {
-          slots.push({
-            date: targetDate,
-            startTime: new Date(`1970-01-01T${cursor.format("HH:mm:ss")}Z`),
-            endTime: new Date(`1970-01-01T${slotEnd.format("HH:mm:ss")}Z`),
-          });
-        }
-
-        cursor = slotEnd;
-      }
-    }
-
-    return slots;
   }
 
   // ── Créer le rendez-vous ───────────────────────────────────────────────────

@@ -24,7 +24,7 @@ export function useCalendar(userId?: UserId) {
   const fetchMeetings = (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
-    return calendarApi.getCalendar(start, end, userId)
+    return calendarApi.getCalendar({ start, end, userId })
   }
   const calendarOptions = ref<CalendarOptions>({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],

@@ -23,10 +23,8 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      if (!req.user.clinicId) throw new ForbiddenError();
       const meeting = await this.service.create({
         data: req.body,
-        clinicId: req.user.clinicId,
       });
       res.status(201).json(meeting);
     } catch (err) {
@@ -97,6 +95,19 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
+      console.log(
+        meetings.map((meeting) => ({
+          ...meeting,
+          animal: {
+            ...meeting.animal,
+            client: flatUser(meeting.animal.client),
+          },
+          veterinarianClinic: {
+            ...meeting.veterinarianClinic,
+            veterinarian: flatUser(meeting.veterinarianClinic.veterinarian),
+          },
+        })),
+      );
       res.status(200).json(
         animalMeetigWithMeetingSchema.array().parse(
           meetings.map((meeting) => ({

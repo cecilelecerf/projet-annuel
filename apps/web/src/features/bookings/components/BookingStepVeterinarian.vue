@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { bookingApi } from '../booking.api'
 import type { BookingClinic, BookingVet, BookingSlot } from '@armali/schemas'
+import { calendarApi } from '@/features/meetings/api/calendar.api'
 
 dayjs.locale('fr')
 
@@ -42,11 +43,13 @@ async function loadSlots() {
   if (!selectedVet.value) return
   slotsLoading.value = true
   try {
-    slots.value = await bookingApi.getVetSlots({
+    slots.value = await calendarApi.getVetSlot({
       veterinarianId: selectedVet.value.id,
       clinicId: props.clinic.id,
       date: dayjs(calendarDate.value).format('YYYY-MM-DD'),
     })
+  } catch (err) {
+    console.log(err)
   } finally {
     slotsLoading.value = false
   }

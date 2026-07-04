@@ -134,13 +134,7 @@ export class AnimalMeetingService {
     }
   }
 
-  async create({
-    data,
-    clinicId,
-  }: {
-    data: CreateAnimalMeeting;
-    clinicId: Clinic["id"];
-  }) {
+  async create({ data }: { data: CreateAnimalMeeting }) {
     this.assertIsFuture(
       data.date,
       data.startTime,
@@ -148,7 +142,7 @@ export class AnimalMeetingService {
     );
 
     const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
-      where: { clinicId, veterinarianId: data.veterinarianId },
+      where: { clinicId: data.clinicId, veterinarianId: data.veterinarianId },
     });
     if (!veterinarianClinic) throw new NotFoundError("veterinarianClinic");
 
@@ -361,7 +355,7 @@ export class AnimalMeetingService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-    return this.repository.findByUser(id);
+    return this.repository.findByClient(id);
   }
 
   async getByAnimal({

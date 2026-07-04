@@ -4,7 +4,7 @@ export async function seedMeetings(
   prisma: PrismaClient,
   {
     users,
-    clinic1,
+    clinics,
     veterinarianClinics,
     specialities,
     healthConditions,
@@ -15,7 +15,11 @@ export async function seedMeetings(
     >
       ? T
       : never;
-    clinic1: Clinic;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
     veterinarianClinics: ReturnType<
       typeof import("./veterinarian-clinics").seedVeterinarianClinics
     > extends Promise<infer T>
@@ -361,7 +365,7 @@ export async function seedMeetings(
         create: {
           title: "Réunion hebdomadaire équipe",
           description: "Point de la semaine",
-          clinicId: clinic1.id,
+          clinicId: clinics.clinic1.id,
           adminId: vetProfile1.id,
         },
       },
@@ -384,7 +388,7 @@ export async function seedMeetings(
         create: {
           title: "Réunion hebdomadaire — bilan mensuel",
           description: "Bilan du mois de mars",
-          clinicId: clinic1.id,
+          clinicId: clinics.clinic1.id,
           adminId: vetProfile1.id,
         },
       },
@@ -402,7 +406,7 @@ export async function seedMeetings(
         create: {
           title: "Formation nouveaux équipements",
           description: "Présentation échographie",
-          clinicId: clinic1.id,
+          clinicId: clinics.clinic1.id,
           adminId: secretaryProfile.id,
         },
       },

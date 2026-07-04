@@ -33,7 +33,9 @@ const emit = defineEmits<{
 const calendar = ref<Calendar | null>(null)
 const formatted = dayjs(date).format('YYYY-MM-DD')
 
-calendarApi.getCalendar(formatted, formatted, userId).then((data) => (calendar.value = data))
+calendarApi
+  .getCalendar({ start: formatted, end: formatted, userId })
+  .then((data) => (calendar.value = data))
 
 const formattedDate = dayjs(date).format('YYYY-MM-DD')
 
@@ -63,7 +65,7 @@ const calendarOptions = ref<CalendarOptions>({
     emit('newEvent', info.date)
   },
   datesSet: async () => {
-    const data = await calendarApi.getCalendar(formatted, formatted, userId)
+    const data = await calendarApi.getCalendar({ start: formatted, end: formatted, userId })
     calendar.value = data
     calendarOptions.value.events = data.meetings.map(toCalendarEvent)
     calendarOptions.value.businessHours = availabilitiesToBusinessHours({ calendar: data })

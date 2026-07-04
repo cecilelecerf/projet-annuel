@@ -4,11 +4,9 @@ import {
   bookingSearchQuerySchema,
   bookingClinicSchema,
   bookingVetSchema,
-  bookingSlotSchema,
   bookingConfirmationSchema,
   createBookingSchema,
   ClinicId,
-  VeterinarianId,
 } from "@armali/schemas";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 
@@ -48,32 +46,6 @@ export class BookingController {
       });
 
       return res.json(bookingVetSchema.array().parse(vets));
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  // GET /booking/vets/:veterinarianId/slots
-  async getVetSlots(
-    req: RequestWithParams<{ veterinarianId: VeterinarianId }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const { veterinarianId } = req.params;
-      const { clinicId, date } = req.query as Record<string, string>;
-
-      if (!clinicId || !date) {
-        return res.status(400).json({ error: "clinicId et date sont requis" });
-      }
-
-      const slots = await this.service.getVetSlots({
-        veterinarianId,
-        clinicId,
-        date,
-      });
-
-      return res.json(bookingSlotSchema.array().parse(slots));
     } catch (err) {
       next(err);
     }

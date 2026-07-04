@@ -25,12 +25,6 @@ bookingRouter.get(
 );
 
 // GET /booking/vets/:veterinarianId/slots?clinicId=&date=
-bookingRouter.get(
-  "/vets/:veterinarianId/slots",
-  authMiddleware,
-  roleMiddleware(["CLIENT"]),
-  bookingController.getVetSlots.bind(bookingController) as RequestHandler,
-);
 
 // ── Création du rendez-vous ───────────────────────────────────────────────────
 

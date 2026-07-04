@@ -4,10 +4,9 @@ import MeetingActForm from '@/features/medicalHistories/components/MeetingActFor
 import type { MedicalHistory, MeetingId } from '@armali/schemas'
 import { Plus } from '@element-plus/icons-vue'
 import { ref } from 'vue'
-defineProps<{ acts: MedicalHistory[]; meetingId: MeetingId }>()
+const { meetingId } = defineProps<{ acts: MedicalHistory[]; meetingId: MeetingId }>()
 const showActForm = ref(false)
 const editingAct = ref<MedicalHistory | null>(null)
-
 const openAddAct = () => {
   editingAct.value = null
   showActForm.value = true

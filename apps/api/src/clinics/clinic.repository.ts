@@ -10,7 +10,7 @@ const USER_SELECT = {
   email: true,
 } as const;
 
-const FUTURE_AVAILABILITY_WHERE = () => ({
+const futureAvailabilityWhere = () => ({
   OR: [
     {
       recurringId: { not: null },
@@ -146,19 +146,23 @@ export class ClinicRepository {
 
     return prisma.clinic.findMany({
       where: {
+        // La clinique accepte cette espèce
+        ...(petId && {
+          clinicPet: { some: { id: petId } },
+        }),
+        // Au moins un veto disponible
         veterinarianClinics: {
           some: {
-            ...(petId && {
-              veterinarian: {
-                pet: { some: { petId } },
-              },
-            }),
-            ...(specialityId && {
-              veterinarian: {
-                specialities: { some: { id: specialityId } },
-              },
-            }),
             veterinarian: {
+              // Le veto sait soigner cette espèce
+              ...(petId && {
+                pet: { some: { id: petId } },
+              }),
+              // Le veto a la spécialité demandée
+              ...(specialityId && {
+                specialities: { some: { id: specialityId } },
+              }),
+              // Le veto a des disponibilités futures
               user: {
                 availabilities: {
                   some: {
@@ -188,7 +192,7 @@ export class ClinicRepository {
                 user: {
                   include: {
                     availabilities: {
-                      where: FUTURE_AVAILABILITY_WHERE(),
+                      where: futureAvailabilityWhere(),
                       include: { meeting: true, recurring: true },
                       take: 1,
                       orderBy: { meeting: { date: "asc" } },

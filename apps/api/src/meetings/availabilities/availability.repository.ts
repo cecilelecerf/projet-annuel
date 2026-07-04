@@ -165,4 +165,58 @@ export class AvailabilityRepository {
   async delete(id: Availability["id"]) {
     return this.prisma.availability.delete({ where: { id } });
   }
+
+  async getVetSlots({
+    veterinarianId,
+    clinicId,
+    date,
+  }: {
+    veterinarianId: string;
+    clinicId: string;
+    date: string;
+  }) {
+    const targetDate = new Date(date);
+    const dayOfWeek = targetDate.getUTCDay();
+
+    // Récupère les disponibilités du veto pour cette date
+    const availabilities = await this.prisma.availability.findMany({
+      where: {
+        veterinarianClinic: {
+          veterinarianId,
+          clinicId,
+        },
+        OR: [
+          // Dispo ponctuelle ce jour précis
+          {
+            meetingId: { not: null },
+            meeting: { date: targetDate },
+          },
+          // Dispo récurrente couvrant ce jour
+          {
+            recurringId: { not: null },
+            recurring: {
+              dayOfWeek: { has: dayOfWeek },
+              dateStart: { lte: targetDate },
+              dateEnd: { gte: targetDate },
+            },
+          },
+        ],
+      },
+      include: {
+        meeting: true,
+        recurring: true,
+      },
+    });
+
+    // Récupère les RDV déjà pris ce jour pour ce veto
+    const existingMeetings = await this.prisma.animalMeeting.findMany({
+      where: {
+        veterinarianClinic: { veterinarianId, clinicId },
+        meeting: { date: targetDate },
+      },
+      include: { meeting: true },
+    });
+
+    return { availabilities, existingMeetings };
+  }
 }

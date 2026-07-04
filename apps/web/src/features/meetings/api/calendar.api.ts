@@ -25,10 +25,21 @@ import {
   type UpdateInternalMeeting,
   internalMeetingField,
   type UpdateParticipantStatus,
+  type VeterinarianId,
+  type ClinicId,
+  bookingSlotSchema,
 } from '@armali/schemas'
 
 export const calendarApi = {
-  getCalendar: async (start: string, end: string, userId?: UserId): Promise<Calendar> => {
+  getCalendar: async ({
+    start,
+    end,
+    userId,
+  }: {
+    start: string
+    end: string
+    userId?: UserId
+  }): Promise<Calendar> => {
     const data = await http.get(
       `/meetings/calendar${userId ? '/' + userId : ''}?startDate=${start}&endDate=${end}`,
     )
@@ -49,6 +60,21 @@ export const calendarApi = {
 
   delete: async (meetingId: MeetingId, date?: string) => {
     return await http.delete(`/meetings/${meetingId}${date ? `?date=${date}` : ''}`)
+  },
+  getVetSlot: async ({
+    veterinarianId,
+    date,
+    clinicId,
+  }: {
+    veterinarianId: VeterinarianId
+    clinicId: ClinicId
+    date: string
+  }) => {
+    const params = new URLSearchParams({ date, clinicId })
+
+    return await http
+      .get(`/meetings/veterinarians/${veterinarianId}/slots?${params}`)
+      .then((d) => bookingSlotSchema.array().parse(d))
   },
 
   internal: {

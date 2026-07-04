@@ -4,6 +4,8 @@ import {
   availabilitiesSchema,
   animalMeetingMetaSchema,
   internalMeetingMetaSchema,
+  bookingSlotSchema,
+  clinicIdSchema,
 } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
@@ -14,6 +16,7 @@ import { UserService } from "@api/users";
 import { AnimalMeetingService } from "./animal-meeting";
 import { InternalMeetingService } from "./internal-meeting";
 import { AvailabilityService } from "./availabilities";
+import z from "zod";
 
 export class MeetingController {
   constructor(
@@ -192,6 +195,43 @@ export class MeetingController {
           throw new NotFoundError("Meeting");
       }
     } catch (err) {
+      next(err);
+    }
+  }
+  async getVetSlots(
+    req: RequestWithParams<{ veterinarianId: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    console.log("enter");
+    console.log(req.query);
+    try {
+      const result = z
+        .object({ date: z.coerce.date(), clinicId: clinicIdSchema })
+        .safeParse(req.query);
+      if (!result.success)
+        throw new BadRequestError("La date et la clinic sont requis");
+
+      const { date, clinicId } = result.data;
+      const { veterinarianId } = req.params;
+
+      const veterinarian = await prisma.veterinarianProfile.findUnique({
+        where: { id: veterinarianId },
+        include: { user: true },
+      });
+      if (!veterinarian) throw new NotFoundError("Veterinarian");
+
+      const slots = await this.service.getVetSlots({
+        veterinarianId: veterinarian.id,
+        vetUserId: veterinarian.user.id,
+        start: date,
+        end: date,
+      });
+      console.log("end");
+      console.log(slots);
+      return res.status(200).json(bookingSlotSchema.array().parse(slots));
+    } catch (err) {
+      console.log(err);
       next(err);
     }
   }

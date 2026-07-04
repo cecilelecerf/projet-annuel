@@ -3,13 +3,11 @@ import { http } from '@/lib/api'
 import {
   bookingClinicSchema,
   bookingConfirmationSchema,
-  bookingSlotSchema,
   bookingVetSchema,
   createBookingSchema,
   type BookingSearchQuery,
   type ClinicId,
   type CreateBooking,
-  type VeterinarianId,
 } from '@armali/schemas'
 
 export const bookingApi = {
@@ -25,7 +23,6 @@ export const bookingApi = {
     if (query.petId) params.set('petId', query.petId)
 
     const data = await http.get(`/booking/clinics?${params}`)
-    console.log('serch')
     return bookingClinicSchema.array().parse(data)
   },
 
@@ -48,21 +45,6 @@ export const bookingApi = {
 
     const data = await http.get(`/booking/clinics/${clinicId}/vets?${params}`)
     return bookingVetSchema.array().parse(data)
-  },
-
-  // ── Créneaux disponibles pour un veto ──────────────────────────────────────
-  getVetSlots: async ({
-    veterinarianId,
-    clinicId,
-    date,
-  }: {
-    veterinarianId: VeterinarianId
-    clinicId: ClinicId
-    date: string
-  }) => {
-    const params = new URLSearchParams({ date, clinicId })
-    const data = await http.get(`/booking/vets/${veterinarianId}/slots?${params}`)
-    return bookingSlotSchema.array().parse(data)
   },
 
   // ── Créer le rendez-vous ───────────────────────────────────────────────────

@@ -12,7 +12,8 @@ import {
 import { MeetingRepository } from "./meeting.repository";
 import type { UserRole } from "@armali/schemas";
 import { NotFoundError } from "@api/errors";
-import { InternalMeetingRepository } from "./internal-meeting";
+
+const DEFAULT_SLOT_DURATION_MINUTES = 30;
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -54,10 +55,7 @@ const RRULE_FREQ: Record<string, Frequency> = {
 };
 
 export class MeetingService {
-  constructor(
-    private repository: MeetingRepository,
-    private internalMeetingRepository: InternalMeetingRepository,
-  ) {}
+  constructor(private repository: MeetingRepository) {}
 
   private isUpcoming(date: Date) {
     return new Date(date) >= new Date();
@@ -335,5 +333,76 @@ export class MeetingService {
     const meeting = await this.repository.getMeetingById(id);
     if (!meeting) throw new NotFoundError("Meeting");
     return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
+  }
+
+  private overlaps(
+    aStart: Date,
+    aEnd: Date,
+    bStart: Date,
+    bEnd: Date,
+  ): boolean {
+    return aStart < bEnd && bStart < aEnd;
+  }
+
+  private sliceAvailabilityIntoSlots(
+    availability: FlatMeeting,
+    occupied: { start: Date; end: Date }[],
+    slotDurationMinutes: number,
+  ): { startTime: Date; endTime: Date }[] {
+    const result: { startTime: Date; endTime: Date; date: Date }[] = [];
+    const slotMs = slotDurationMinutes * 60 * 1000;
+
+    let cursor = new Date(availability.startTime);
+    const end = new Date(availability.endTime);
+
+    while (cursor.getTime() + slotMs <= end.getTime()) {
+      const slotEnd = new Date(cursor.getTime() + slotMs);
+      const isTaken = occupied.some((o) =>
+        this.overlaps(cursor, slotEnd, o.start, o.end),
+      );
+
+      if (!isTaken) {
+        result.push({
+          startTime: new Date(cursor),
+          endTime: slotEnd,
+          date: availability.date,
+        });
+      }
+
+      cursor = slotEnd;
+    }
+    console.log("slice");
+    console.log(result);
+    return result;
+  }
+
+  async getVetSlots({
+    veterinarianId,
+    vetUserId,
+    start,
+    end,
+    slotDurationMinutes = DEFAULT_SLOT_DURATION_MINUTES,
+  }: {
+    veterinarianId: string;
+    vetUserId: string;
+    start: Date;
+    end: Date;
+    slotDurationMinutes?: number;
+  }) {
+    const [availabilities, internal, animal] = await Promise.all([
+      this.getAvailabilities({ userId: vetUserId, start, end }),
+      this.getInternalMeetings(vetUserId, start, end),
+      this.getAnimalMeetingsAsVet(veterinarianId, start, end),
+    ]);
+
+    const occupied = [...internal, ...animal].map((m) => ({
+      start: new Date(m.startTime),
+      end: new Date(m.endTime),
+      date: new Date(m.date),
+    }));
+
+    return availabilities.flatMap((a) =>
+      this.sliceAvailabilityIntoSlots(a, occupied, slotDurationMinutes),
+    );
   }
 }

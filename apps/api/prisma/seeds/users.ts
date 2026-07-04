@@ -6,16 +6,24 @@ export async function seedUsers(
   {
     clinics,
     specialities,
+    pets,
   }: {
-    clinics: Clinic[];
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
     specialities: ReturnType<
       typeof import("./specialities").seedSpecialities
     > extends Promise<infer T>
       ? T
       : never;
+    pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
-  const [clinic1, clinic2] = clinics;
+  const { clinic1, clinic2 } = clinics;
 
   const password = await hash("Password123!", 10);
 
@@ -148,6 +156,14 @@ export async function seedUsers(
         id: vetoUser1.id,
         licenseNumber: "VET-001",
         bio: "Spécialiste en cardiologie animale",
+        pet: {
+          connect: [
+            { id: pets.petCat.id },
+            { id: pets.petRabbit.id },
+            { id: pets.petDog.id },
+          ],
+        },
+
         specialities: {
           connect: [
             { id: specialities.cardiologie.id },
@@ -161,6 +177,8 @@ export async function seedUsers(
         id: vetoUser2.id,
         licenseNumber: "VET-002",
         bio: "Généraliste avec expertise en dermatologie",
+        pet: { connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }] },
+
         specialities: {
           connect: [
             { id: specialities.dermatologie.id },
@@ -174,6 +192,7 @@ export async function seedUsers(
         id: vetoUser3.id,
         licenseNumber: "VET-003",
         bio: "Généraliste",
+        pet: { connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }] },
         specialities: {
           connect: [{ id: specialities.medecineGenerale.id }],
         },

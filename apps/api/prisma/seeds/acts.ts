@@ -3,16 +3,18 @@ import type { PrismaClient, Clinic, Pet } from "../generated/prisma/client";
 export async function seedActs(
   prisma: PrismaClient,
   {
-    clinic1,
     petCat,
     petDog,
-    clinic2,
+    clinics,
     meetings,
   }: {
     petDog: Pet;
     petCat: Pet;
-    clinic1: Clinic;
-    clinic2: Clinic;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
     meetings: ReturnType<
       typeof import("./meetings").seedMeetings
     > extends Promise<infer T>
@@ -145,36 +147,44 @@ export async function seedActs(
 
   // ── Prix par clinique ───────────────────────────────────────────────────────
   const caCardioClinic1 = await prisma.clinicAct.create({
-    data: { actId: actCardio.id, clinicId: clinic1.id, price: 70 },
+    data: { actId: actCardio.id, clinicId: clinics.clinic1.id, price: 70 },
   });
   const caEchoClinic1 = await prisma.clinicAct.create({
-    data: { actId: actEcho.id, clinicId: clinic1.id, price: 95 },
+    data: { actId: actEcho.id, clinicId: clinics.clinic1.id, price: 95 },
   });
   const caBloodClinic1 = await prisma.clinicAct.create({
-    data: { actId: actBlood.id, clinicId: clinic1.id, price: 50 },
+    data: { actId: actBlood.id, clinicId: clinics.clinic1.id, price: 50 },
   });
   const caXrayClinic1 = await prisma.clinicAct.create({
-    data: { actId: actXray.id, clinicId: clinic1.id, price: 80 },
+    data: { actId: actXray.id, clinicId: clinics.clinic1.id, price: 80 },
   });
   const caSurgeryClinic1 = await prisma.clinicAct.create({
-    data: { actId: actSurgery.id, clinicId: clinic1.id, price: 195 },
+    data: { actId: actSurgery.id, clinicId: clinics.clinic1.id, price: 195 },
   });
   const caHospClinic1 = await prisma.clinicAct.create({
-    data: { actId: actHospitalization.id, clinicId: clinic1.id, price: 65 },
+    data: {
+      actId: actHospitalization.id,
+      clinicId: clinics.clinic1.id,
+      price: 65,
+    },
   });
   const caNursingClinic1 = await prisma.clinicAct.create({
-    data: { actId: actNursing.id, clinicId: clinic1.id, price: 28 },
+    data: { actId: actNursing.id, clinicId: clinics.clinic1.id, price: 28 },
   });
   const caVaccClinic1 = await prisma.clinicAct.create({
-    data: { actId: actCHPPRIVaccination.id, clinicId: clinic1.id, price: 32 },
+    data: {
+      actId: actCHPPRIVaccination.id,
+      clinicId: clinics.clinic1.id,
+      price: 32,
+    },
     include: { act: true },
   });
 
   await prisma.clinicAct.createMany({
     data: [
-      { actId: actConsultation.id, clinicId: clinic2.id, price: 38 },
-      { actId: actEcho.id, clinicId: clinic2.id, price: 88 },
-      { actId: actBlood.id, clinicId: clinic2.id, price: 42 },
+      { actId: actConsultation.id, clinicId: clinics.clinic2.id, price: 38 },
+      { actId: actEcho.id, clinicId: clinics.clinic2.id, price: 88 },
+      { actId: actBlood.id, clinicId: clinics.clinic2.id, price: 42 },
     ],
   });
 

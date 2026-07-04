@@ -134,7 +134,6 @@ export const updatePunctualAvailabilitySchema = z
   })
   .refine(
     (d) => {
-      console.log(d.startTime);
       if (d.startTime && d.endTime) return d.startTime < d.endTime;
       return true;
     },

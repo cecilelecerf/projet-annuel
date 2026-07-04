@@ -167,7 +167,7 @@ export class AnimalMeetingRepository {
     return this.prisma.meetingBase.delete({ where: { id } });
   }
 
-  async findByUser(userId: User["id"]): Promise<AnimalMeetingForUser[]> {
+  async findByClient(userId: User["id"]): Promise<AnimalMeetingForUser[]> {
     return this.prisma.animalMeeting.findMany({
       where: {
         animal: { client: { user: { id: userId } } },

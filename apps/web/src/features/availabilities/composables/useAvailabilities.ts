@@ -114,9 +114,6 @@ export function useAvailabilities() {
         await _update()
         ElMessage.success('Disponibilité mise à jour')
       } else {
-        console.log('fom')
-        console.log(form.value)
-
         await _create()
         ElMessage.success('Disponibilité ajoutée')
       }
@@ -133,7 +130,6 @@ export function useAvailabilities() {
 
   async function _create() {
     if (form.value.kind === 'RECURRING') {
-      console.log(form.value)
       await availabilitiesApi.create({
         payload: {
           type: 'RECURRING' as const,

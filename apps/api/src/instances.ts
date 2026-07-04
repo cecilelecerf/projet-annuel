@@ -168,11 +168,9 @@ export const animalMeetingService = new AnimalMeetingService(
 export const bookingService = new BookingService(
   bookingRepository,
   clinicRepository,
+  availabilityRepository,
 );
-export const meetingService = new MeetingService(
-  meetingRepository,
-  internalMeetingRepository,
-);
+export const meetingService = new MeetingService(meetingRepository);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────

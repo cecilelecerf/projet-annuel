@@ -16,6 +16,7 @@ const selectedClinic = defineModel<BookingClinic | null>('clinic', { required: t
 const locating = ref(false)
 const locationError = ref('')
 const clinicsLoading = ref(false)
+const isGeolocated = ref(false)
 const mapView = ref(true)
 const clinics = ref<BookingClinic[]>([])
 
@@ -26,13 +27,12 @@ async function geolocate() {
     const pos = await new Promise<GeolocationPosition>((res, rej) =>
       navigator.geolocation.getCurrentPosition(res, rej),
     )
-    console.log(pos)
     filters.value.lat = pos.coords.latitude
     filters.value.lng = pos.coords.longitude
     filters.value.address = 'Ma position actuelle'
+    isGeolocated.value = true
     await searchClinics()
   } catch {
-    console.log('ooeoe')
     locationError.value = 'Géolocalisation refusée. Saisissez une adresse.'
   } finally {
     locating.value = false
@@ -45,7 +45,7 @@ async function searchClinics() {
     clinics.value = await bookingApi.searchClinics({
       lat: filters.value.lat ?? undefined,
       lng: filters.value.lng ?? undefined,
-      address: filters.value.address || undefined,
+      address: isGeolocated.value ? undefined : filters.value.address || undefined,
       radiusKm: filters.value.radiusKm,
       date: filters.value.date,
       specialityId: filters.value.specialityId ?? undefined,
@@ -281,6 +281,13 @@ const TODAY = new Date().toISOString().split('T')[0]
     align-items: flex-start;
     gap: var(--spacing-md);
     height: 480px;
+  }
+  @include below('md') {
+    &--map {
+      flex-direction: column;
+      height: 200px;
+      width: 100%;
+    }
   }
 }
 .map-container {

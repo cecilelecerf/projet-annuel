@@ -10,7 +10,7 @@ import {
 
 export const medicalHistoriesApi = {
   getByClinic: async (clinicId: ClinicId) => {
-    const data = await http.get(`/acts/clinic/${clinicId}`)
+    const data = await http.get(`/clinics/${clinicId}/medical-histories`)
     return clinicActSchema.array().parse(data)
   },
   getByMeeting: async (meetingId: MeetingId) => {

@@ -2,7 +2,6 @@
 import { ref } from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
-import { bookingApi } from '../booking.api'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { useRouter } from 'vue-router'
 import type {
@@ -12,6 +11,7 @@ import type {
   BookingSlot,
   SpecialityId,
 } from '@armali/schemas'
+import { calendarApi } from '@/features/meetings/api/calendar.api'
 
 dayjs.locale('fr')
 
@@ -43,7 +43,7 @@ async function confirm() {
   confirming.value = true
   formError.clear()
   try {
-    await bookingApi.create({
+    await calendarApi.animal.new({
       animalId: props.animal.id,
       veterinarianId: props.vet.id,
       date: props.slot.date,
@@ -51,6 +51,7 @@ async function confirm() {
       endTime: props.slot.endTime,
       specialityId: props.specialityId ?? null,
       description: props.reason || null,
+      clinicId: props.clinic.id,
     })
     confirmed.value = true
     emit('confirmed')

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   animalIdSchema,
+  clinicIdSchema,
   specialityIdSchema,
   veterinarianClinicIdSchema,
   veterinarianIdSchema,
@@ -45,7 +46,7 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
   })
   .extend({
     animal: animalMetaSchema,
-    speciality: specialitySchema,
+    speciality: specialitySchema.nullable(),
     meeting: meetingBaseSchema,
     veterinarianClinic: z.object({
       clinic: clinicSchema,
@@ -68,6 +69,7 @@ export const createAnimalMeetingFields = createMeetingBaseSchema
   .extend(
     createAnimalMeetingBaseFields.omit({ veterinarianClinicId: true }).extend({
       veterinarianId: veterinarianIdSchema,
+      clinicId: clinicIdSchema,
     }).shape,
   );
 

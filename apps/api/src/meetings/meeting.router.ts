@@ -18,6 +18,12 @@ meetingRouter.get(
   meetingController.getMyCalendar.bind(meetingController) as RequestHandler,
 );
 meetingRouter.get(
+  "/veterinarians/:veterinarianId/slots",
+  authMiddleware,
+  roleMiddleware(["CLIENT"]),
+  meetingController.getVetSlots.bind(meetingController) as RequestHandler,
+);
+meetingRouter.get(
   "/calendar/:veterinarianId",
   authMiddleware,
   roleMiddleware(["SECRETARY"]),

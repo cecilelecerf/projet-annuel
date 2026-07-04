@@ -17,7 +17,7 @@ import { AnimalMedicalHistoryRepository } from "./medicalHistories/medical-histo
 // ── Meetings ──────────────────────────────────────────────────
 import { MeetingRepository } from "./meetings/meeting.repository";
 import { AnimalMeetingRepository } from "./meetings/animal-meeting/animal-meeting.repository";
-import { AvailabilityRepository } from "./meetings/availability/availability.repository";
+import { AvailabilityRepository } from "./meetings/availabilities/availability.repository";
 import { InternalMeetingRepository } from "./meetings/internal-meeting/internal-meeting.repository";
 import { RecurringRepository } from "./meetings/recurring-meeting/recurring-meeting.repository";
 import { BookingRepository } from "./bookings/booking.repository";
@@ -48,7 +48,7 @@ import { DirectorService } from "./directors/director.service";
 import { EmailService } from "./emails/email.service";
 import { MeetingService } from "./meetings/meeting.service";
 import { AnimalMeetingService } from "./meetings/animal-meeting/animal-meeting.service";
-import { AvailabilityService } from "./meetings/availability/availability.service";
+import { AvailabilityService } from "./meetings/availabilities/availability.service";
 import { InternalMeetingService } from "./meetings/internal-meeting/internal-meeting.service";
 import { RecurringService } from "./meetings/recurring-meeting/recurring-meeting.service";
 import { PrescriptionService } from "./prescriptions/prescription.service";
@@ -69,7 +69,7 @@ import { ClinicController } from "./clinics/clinic.controller";
 import { DirectorController } from "./directors/director.controller";
 import { MeetingController } from "./meetings/meeting.controller";
 import { AnimalMeetingController } from "./meetings/animal-meeting/animal-meeting.controller";
-import { AvailabilityController } from "./meetings/availability/availability.controller";
+import { AvailabilityController } from "./meetings/availabilities/availability.controller";
 import { InternalMeetingController } from "./meetings/internal-meeting/internal-meeting.controller";
 import { PrescriptionController } from "./prescriptions/prescription.controller";
 import { ReferentController } from "./referents/referent.controller";
@@ -82,6 +82,7 @@ import { BookingController } from "./bookings/booking.controller";
 import { SpecialityRepository } from "./specialities/speciality.repository";
 import { SpecialityService } from "./specialities/speciality.service";
 import { SpecialityController } from "./specialities/speciality.controller";
+import { ClinicRepository } from "./clinics/clinic.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -103,7 +104,7 @@ const prescriptionRepository = new PrescriptionRepository(prisma);
 const userRepository = new UserRepository(prisma);
 const vaccineRepository = new VaccineRepository(prisma);
 const veterinarianClinicRepository = new VeterinarianClinicRepository(prisma);
-
+const clinicRepository = new ClinicRepository(prisma);
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -138,7 +139,7 @@ export const veterinarianClinicService = new VeterinarianClinicService(
   veterinarianClinicRepository,
 );
 
-export const clinicService = new ClinicService();
+export const clinicService = new ClinicService(clinicRepository);
 
 export const adminService = new AdminService();
 export const directorService = new DirectorService();
@@ -164,7 +165,10 @@ export const animalMeetingService = new AnimalMeetingService(
   userRepository,
   emailService,
 );
-export const bookingService = new BookingService(bookingRepository);
+export const bookingService = new BookingService(
+  bookingRepository,
+  clinicRepository,
+);
 export const meetingService = new MeetingService(
   meetingRepository,
   internalMeetingRepository,

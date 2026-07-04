@@ -9,12 +9,14 @@ model Clinic {
   description  String?
   website      String
   openingHours String?
+  lat          Float
+  lng          Float
 
   specialities           Speciality[]
-  veterinarianClinics    VeterinarianClinic[]
   clinicPet              Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
+  veterinarianClinics    VeterinarianClinic[]
   secretaryProfile       SecretaryProfile[]
   directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]

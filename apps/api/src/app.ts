@@ -63,6 +63,6 @@ app.use("/api/animals", animalRouter);
 app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/medical-histories", animalMedicalHistoryRouter);
 app.use("/api/acts", actRouter);
-app.use("/api/bookings", bookingRouter);
+app.use("/api/booking", bookingRouter);
 app.use("/api/specialities", specialityRouter);
 app.use(errorHandler);

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import availabilityRouter from "./availability/availability.router";
+import availabilityRouter from "./availabilities/availability.router";
 import animalMeetingRouter from "./animal-meeting/animal-meeting.router";
 import internalMeetingRouter from "./internal-meeting/internal-meeting.router";
 import recurringMeetingRouter from "./recurring-meeting/recurring-meeting.router";

@@ -13,7 +13,7 @@ import { MeetingService } from "./meeting.service";
 import { UserService } from "@api/users";
 import { AnimalMeetingService } from "./animal-meeting";
 import { InternalMeetingService } from "./internal-meeting";
-import { AvailabilityService } from "./availability";
+import { AvailabilityService } from "./availabilities";
 
 export class MeetingController {
   constructor(

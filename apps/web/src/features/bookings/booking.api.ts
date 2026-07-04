@@ -11,7 +11,6 @@ import {
   type CreateBooking,
   type VeterinarianId,
 } from '@armali/schemas'
-import { z } from 'zod'
 
 export const bookingApi = {
   // ── Recherche de cliniques ─────────────────────────────────────────────────
@@ -26,6 +25,7 @@ export const bookingApi = {
     if (query.petId) params.set('petId', query.petId)
 
     const data = await http.get(`/booking/clinics?${params}`)
+    console.log('serch')
     return bookingClinicSchema.array().parse(data)
   },
 

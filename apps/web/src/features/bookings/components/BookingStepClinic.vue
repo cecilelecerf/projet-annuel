@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Location } from '@element-plus/icons-vue'
 import { bookingApi } from '../booking.api'
 import type { BookingAnimal, BookingClinic, BookingFilters } from '@armali/schemas'
+import BookingMap from './BookingMap.vue'
 
 const props = defineProps<{
   animal: BookingAnimal
@@ -25,11 +26,13 @@ async function geolocate() {
     const pos = await new Promise<GeolocationPosition>((res, rej) =>
       navigator.geolocation.getCurrentPosition(res, rej),
     )
+    console.log(pos)
     filters.value.lat = pos.coords.latitude
     filters.value.lng = pos.coords.longitude
     filters.value.address = 'Ma position actuelle'
     await searchClinics()
   } catch {
+    console.log('ooeoe')
     locationError.value = 'Géolocalisation refusée. Saisissez une adresse.'
   } finally {
     locating.value = false
@@ -129,12 +132,22 @@ const TODAY = new Date().toISOString().split('T')[0]
 
     <div class="results-body" :class="{ 'results-body--map': mapView }">
       <div v-show="mapView" class="map-container">
-        <div class="map-placeholder">
+        <BookingMap
+          :clinics="clinics"
+          @on-selected-clinic="
+            (clinic) => {
+              selectedClinic = clinic
+            }
+          "
+          :center-lat="filters.lat"
+          :center-lng="filters.lng"
+        />
+        <!-- <div class="map-placeholder">
           <el-icon style="font-size: 48px; color: var(--el-text-color-placeholder)"
             ><Location
           /></el-icon>
           <p>Carte des cliniques</p>
-        </div>
+        </div> -->
       </div>
 
       <div class="clinic-list" :class="{ 'clinic-list--sidebar': mapView }">

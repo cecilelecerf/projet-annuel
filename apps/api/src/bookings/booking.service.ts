@@ -3,45 +3,60 @@ import type { BookingSearchQuery, CreateBooking } from "@armali/schemas";
 import { BookingRepository } from "./booking.repository";
 import { prisma } from "@api/lib/prisma";
 import dayjs from "dayjs";
+import { ClinicRepository } from "@api/clinics/clinic.repository";
+import { haversineKm } from "@api/utils/distance";
 
 const SLOT_DURATION_MINUTES = 30;
 
 export class BookingService {
-  constructor(private repository: BookingRepository) {}
+  constructor(
+    private repository: BookingRepository,
+    private clinicRepository: ClinicRepository,
+  ) {}
   // ── Recherche de cliniques ─────────────────────────────────────────────────
   async searchClinics(query: BookingSearchQuery) {
-    const clinics = await this.repository.searchClinics(query);
+    console.log(query);
+    const clinics = await this.clinicRepository.searchClinics(query);
 
-    return clinics.map((clinic) => {
-      // Récupère toutes les spécialités des vetos de la clinique
-      const specialities = [
-        ...new Set(
-          clinic.veterinarianClinics.flatMap((vc) =>
-            vc.veterinarian.specialities.map((s) => s.name),
+    return clinics
+      .map((clinic) => {
+        // Récupère toutes les spécialités des vetos de la clinique
+        const specialities = [
+          ...new Set(
+            clinic.veterinarianClinics.flatMap((vc) =>
+              vc.veterinarian.specialities.map((s) => s.name),
+            ),
           ),
-        ),
-      ];
+        ];
 
-      // Prochain créneau disponible parmi tous les vetos
-      const nextSlot = this._getNextSlotLabel(clinic.veterinarianClinics);
-
-      return {
-        id: clinic.id,
-        name: clinic.name,
-        address: clinic.address,
-        phone: clinic.phone,
-        description: clinic.description,
-        openingHours: clinic.openingHours,
-        // TODO: lat/lng depuis un champ ou geocoding
-        lat: 0,
-        lng: 0,
-        distanceKm: 0, // TODO: calculer depuis lat/lng si fournis
-        vetCount: clinic.veterinarianClinics.length,
-        specialities,
-        nextSlot,
-        rating: null,
-      };
-    });
+        // Prochain créneau disponible parmi tous les vetos
+        const nextSlot = this._getNextSlotLabel(clinic.veterinarianClinics);
+        const distance =
+          query.lat &&
+          query.lng &&
+          haversineKm(query.lat, query.lng, clinic.lat, clinic.lng);
+        return {
+          id: clinic.id,
+          name: clinic.name,
+          address: clinic.address,
+          phone: clinic.phone,
+          description: clinic.description,
+          openingHours: clinic.openingHours,
+          lat: clinic.lat,
+          lng: clinic.lng,
+          distanceKm: Math.round((distance ?? 0) * 10) / 10,
+          vetCount: clinic.veterinarianClinics.length,
+          specialities,
+          nextSlot,
+          rating: null,
+        };
+      })
+      .filter((c) => {
+        // Filtre par rayon si lat/lng fournis
+        if (!query.lat || !query.lng) return true;
+        return c.distanceKm <= (query.radiusKm ?? 20);
+      })
+      .sort((a, b) => a.distanceKm - b.distanceKm);
   }
 
   // ── Vétérinaires d'une clinique ────────────────────────────────────────────

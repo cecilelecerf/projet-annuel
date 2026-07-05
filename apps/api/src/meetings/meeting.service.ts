@@ -4,6 +4,7 @@ const { RRule, RRuleSet } = RRuleLib;
 import {
   AnimalMeeting,
   Availability,
+  Clinic,
   InternalMeeting,
   InternalMeetingParticipant,
   MeetingBase,
@@ -12,6 +13,7 @@ import {
 import { MeetingRepository } from "./meeting.repository";
 import type { ClinicId, UserRole } from "@armali/schemas";
 import { NotFoundError } from "@api/errors";
+import { match } from "ts-pattern";
 
 const DEFAULT_SLOT_DURATION_MINUTES = 30;
 
@@ -22,7 +24,7 @@ type MeetingBaseWithSpecific = MeetingBase & {
   internalMeeting:
     | (InternalMeeting & { participants: InternalMeetingParticipant[] })
     | null;
-  availabilty: Availability | null;
+  availabilty: (Availability & { clinic: Clinic }) | null;
 };
 
 type MeetingRecurringWithChildren = MeetingReccuring & {
@@ -30,7 +32,7 @@ type MeetingRecurringWithChildren = MeetingReccuring & {
   internalMeeting:
     | (InternalMeeting & { participants: InternalMeetingParticipant[] })
     | null;
-  availabilty: Availability | null;
+  availabilty: (Availability & { clinic: Clinic }) | null;
   childrens: MeetingBaseWithSpecific[];
 };
 
@@ -239,20 +241,19 @@ export class MeetingService {
     userId,
     start,
     end,
-    clinicId,
+    clinicIds,
   }: {
     userId: string;
     start: Date;
     end: Date;
-    clinicId?: string;
+    clinicIds?: string[];
   }): Promise<FlatMeeting[]> {
     const avails = await this.repository.getAvailabilities({
       userId,
       start,
       end,
-      clinicId,
+      clinicIds,
     });
-
     const flat = avails.flatMap(
       ({
         recurring,
@@ -266,44 +267,13 @@ export class MeetingService {
 
     return this.expandAll(flat, start, end);
   }
-
-  async getAvailabilitiesByClinic({
-    clinicId,
-    start,
-    end,
-  }: {
-    clinicId: string;
-    start: Date;
-    end: Date;
-  }): Promise<FlatMeeting[]> {
-    const avails = await this.repository.getAvailabilitiesByClinic({
-      clinicId,
-      start,
-      end,
-    });
-
-    const flat = avails.flatMap(
-      ({
-        recurring,
-        meeting,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-
-    return this.expandAll(flat, start, end);
-  }
-
-  // ── Calendrier agrégé ──────────────────────────────────────────────────────
 
   async getCalendar({
     userId,
     role,
     vetProfileId,
     clientProfileId,
-    clinicId,
+    clinicIds,
     start,
     end,
   }: {
@@ -311,20 +281,26 @@ export class MeetingService {
     role: UserRole;
     vetProfileId?: string;
     clientProfileId?: string;
-    clinicId?: string;
+    clinicIds?: string[];
     start: Date;
     end: Date;
   }) {
     const [internal, animal, availabilities] = await Promise.all([
       this.getInternalMeetings(userId, start, end),
-      role === "VETERINARIAN" && vetProfileId
-        ? this.getAnimalMeetingsAsVet(vetProfileId, start, end)
-        : role === "CLIENT" && clientProfileId
-          ? this.getAnimalMeetingsAsClient(clientProfileId, start, end)
-          : Promise.resolve([]),
-      clinicId
-        ? this.getAvailabilitiesByClinic({ clinicId, start, end })
-        : this.getAvailabilities({ userId, start, end }),
+
+      match(role)
+        .with("VETERINARIAN", () =>
+          vetProfileId
+            ? this.getAnimalMeetingsAsVet(vetProfileId, start, end)
+            : Promise.resolve([]),
+        )
+        .with("CLIENT", () =>
+          clientProfileId
+            ? this.getAnimalMeetingsAsClient(clientProfileId, start, end)
+            : Promise.resolve([]),
+        )
+        .otherwise(() => Promise.resolve([])),
+      this.getAvailabilities({ userId, start, end, clinicIds }),
     ]);
     return {
       meetings: [...internal, ...animal],
@@ -379,22 +355,20 @@ export class MeetingService {
 
   async getVetSlots({
     veterinarianId,
-    vetUserId,
     start,
     end,
     slotDurationMinutes = DEFAULT_SLOT_DURATION_MINUTES,
-    clinicId,
+    clinicIds,
   }: {
     veterinarianId: string;
-    vetUserId: string;
     start: Date;
     end: Date;
     slotDurationMinutes?: number;
-    clinicId: ClinicId;
+    clinicIds: ClinicId[];
   }) {
     const [availabilities, internal, animal] = await Promise.all([
-      this.getAvailabilities({ userId: vetUserId, start, end, clinicId }),
-      this.getInternalMeetings(vetUserId, start, end),
+      this.getAvailabilities({ userId: veterinarianId, start, end, clinicIds }),
+      this.getInternalMeetings(veterinarianId, start, end),
       this.getAnimalMeetingsAsVet(veterinarianId, start, end),
     ]);
 
@@ -407,5 +381,36 @@ export class MeetingService {
     return availabilities.flatMap((a) =>
       this.sliceAvailabilityIntoSlots(a, occupied, slotDurationMinutes),
     );
+  }
+  async getAvailabilityTimeline({
+    veterinarianId,
+    clinicIds,
+    start,
+    end,
+  }: {
+    veterinarianId: string;
+    clinicIds: string[];
+    start: Date;
+    end: Date;
+  }): Promise<{
+    windows: { start: Date; end: Date }[];
+    busy: { start: Date; end: Date }[];
+  }> {
+    const [availabilities, internal, animal] = await Promise.all([
+      this.getAvailabilities({ userId: veterinarianId, start, end, clinicIds }),
+      this.getInternalMeetings(veterinarianId, start, end),
+      this.getAnimalMeetingsAsVet(veterinarianId, start, end),
+    ]);
+    const windows = availabilities.map((a) => ({
+      start: new Date(a.startTime),
+      end: new Date(a.endTime),
+    }));
+
+    const busy = [...internal, ...animal].map((m) => ({
+      start: new Date(m.startTime),
+      end: new Date(m.endTime),
+    }));
+
+    return { windows, busy };
   }
 }

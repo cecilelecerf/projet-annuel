@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import { Calendar, Search } from '@element-plus/icons-vue'
-import { meetingApi } from '../../api/meeting.api.ts'
+import { meetingApi } from '../api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore'
-import MeetingCard from '../../components/animal-meeting/MeetingCard.vue'
 import { useRouter } from 'vue-router'
+import MeetingCard from '../components/animal-meeting/MeetingCard.vue'
+import { combineDateAndTime } from '../components/utils.ts'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
 const { user } = useAuthStore()
 const router = useRouter()
@@ -15,6 +18,9 @@ if (!user) throw new Error('Non authentifié')
 
 const animalMeetings = await meetingApi.animal.getAllByClientId(user?.id)
 export type MeetingStatus = 'UPCOMING' | 'PAST'
+
+// Combine le jour de `date` avec l'heure de `time` (colonne @db.Time, lue en UTC)
+// pour obtenir l'instant réel du RDV — pas juste "minuit du jour J"
 
 // ── Filtres ───────────────────────────────────────────────────────────────────
 const search = ref('')
@@ -28,10 +34,14 @@ const animals = computed(() => {
 
 const filtered = computed(() => {
   return animalMeetings
-    .map((m) => ({
-      ...m,
-      status: (dayjs(m.meeting.date) > dayjs() ? 'UPCOMING' : 'PAST') as MeetingStatus,
-    }))
+    .map((m) => {
+      const meetingDateTime = combineDateAndTime(m.meeting.date, m.meeting.startTime)
+      return {
+        ...m,
+        meetingDateTime,
+        status: (meetingDateTime > new Date() ? 'UPCOMING' : 'PAST') as MeetingStatus,
+      }
+    })
     .filter((m) => {
       if (filterStatus.value !== 'ALL' && m.status !== filterStatus.value) return false
       if (filterAnimal.value && m.animal.name !== filterAnimal.value) return false
@@ -51,14 +61,13 @@ const filtered = computed(() => {
     .sort((a, b) => {
       if (a.status === 'UPCOMING' && b.status === 'PAST') return -1
       if (a.status === 'PAST' && b.status === 'UPCOMING') return 1
-      return a.meeting.date.getTime() - b.meeting.date.getTime()
+      return a.meetingDateTime.getTime() - b.meetingDateTime.getTime()
     })
 })
 
 const upcoming = computed(() => filtered.value.filter((m) => m.status === 'UPCOMING'))
 const past = computed(() => filtered.value.filter((m) => m.status === 'PAST'))
 </script>
-
 <template>
   <!-- Header -->
   <div class="page-header">

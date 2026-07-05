@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { Delete, Edit, Clock, Calendar, Refresh } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import type { AvailabilityRecurringResponse, AvailabilityId, ClinicId } from '@armali/schemas'
 import { DAYS } from '../types/availabilty'
+import { formatDate, formatTime } from '@/features/meetings/components/utils'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
 
 const { recurring } = defineProps<{
@@ -18,13 +21,6 @@ const emit = defineEmits<{
   create: []
 }>()
 
-function formatTime(date: Date | string) {
-  return dayjs(date).format('H[h]mm')
-}
-
-function formatDate(date: Date | string) {
-  return dayjs(date).format('D MMMM YYYY')
-}
 const groupByClinic: Record<
   ClinicId,
   { clinicName: string; recurring: AvailabilityRecurringResponse[] }

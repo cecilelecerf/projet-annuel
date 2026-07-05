@@ -11,7 +11,6 @@ import type {
 } from "@armali/schemas";
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
-import { Clinic } from "../../../prisma/generated/prisma/client";
 import { prisma } from "@api/lib/prisma";
 import { flatUser } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
@@ -80,7 +79,8 @@ export class AnimalMeetingService {
         endTime: { gte: endTime },
       },
     });
-
+    console.log("availability");
+    console.log(date);
     const recurringAvailability =
       availability ??
       (await prisma.meetingReccuring.findFirst({
@@ -88,19 +88,21 @@ export class AnimalMeetingService {
           kind: "AVAILABILITY",
           dateStart: { lte: date },
           dateEnd: { gte: date },
-          startTime: { lte: startTime },
-          endTime: { gte: endTime },
-          availabilty: {
-            user: { veterinarianProfile: { id: veterinarianId } },
-          },
+          // startTime: { lte: startTime },
+          // endTime: { gte: endTime },
+          // availabilty: {
+          //   user: { veterinarianProfile: { user: { id: veterinarianId } } },
+          // },
         },
       }));
-
+    console.log("recurring");
+    console.log(recurringAvailability);
     if (!recurringAvailability) {
       throw new ConflictError(
         "Le vétérinaire n'est pas disponible sur ce créneau",
       );
     }
+    console.log("t");
   }
   private hasScheduleChanged(
     current: { date: Date; startTime: Date; endTime: Date },
@@ -260,13 +262,14 @@ export class AnimalMeetingService {
       );
 
       // ── Vérifie la dispo du véto sur le nouveau créneau ─────────────────────
-      await this.assertVeterinarianAvailable({
-        veterinarianId: meeting.veterinarianClinic.veterinarianId,
-        date: newDate,
-        startTime: newStart,
-        endTime: newEnd,
-        excludeMeetingId: id,
-      });
+      if (meeting.veterinarianClinic?.veterinarianId)
+        await this.assertVeterinarianAvailable({
+          veterinarianId: meeting.veterinarianClinic?.veterinarianId,
+          date: newDate,
+          startTime: newStart,
+          endTime: newEnd,
+          excludeMeetingId: id,
+        });
     }
 
     const updated = await this.repository.update({

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { InternalMeetingMeta, UpdateInternalMeeting } from '@armali/schemas'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -15,7 +16,15 @@ import { useAuthStore } from '@/stores/authStore.ts'
 import HeaderMeetingSection from '../HeaderMeetingSection.vue'
 import RecurringComponent from './RecurringComponent.vue'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
+
+type Edit = Required<
+  Omit<UpdateInternalMeeting, 'startTime' | 'endTime'> & {
+    startTime: string
+    endTime: string
+  }
+>
 
 const { meeting } = defineProps<{
   meeting: InternalMeetingMeta
@@ -27,33 +36,34 @@ const { handle } = useFormErrorStore()
 const showDeleteDialog = ref(false)
 const deleting = ref(false)
 const isEditing = ref(false)
-const edit = ref<
-  Required<Omit<UpdateInternalMeeting, 'startTime' | 'endTime'>> & {
-    startTime: string
-    endTime: string
-  }
->({
+const edit = ref<Edit>({
   title: meeting.title,
   description: meeting.description ?? '',
-  startTime: dayjs(meeting.startTime).toISOString(),
-  endTime: dayjs(meeting.endTime).toISOString(),
+  startTime: dayjs.utc(meeting.startTime).format('HH:mm:ss'),
+  endTime: dayjs.utc(meeting.endTime).format('HH:mm:ss'),
   date: meeting.date,
   userIds: meeting.participants.map((participant) => participant.userId),
 })
 
 const timeLabel = computed(() => {
-  const start = dayjs(meeting.startTime).format('H[h]mm')
-  const end = dayjs(meeting.endTime).format('H[h]mm')
+  const start = dayjs.utc(meeting.startTime).format('H[h]mm')
+  const end = dayjs.utc(meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
+
+// Reconstruit un Date ancré 1970-01-01 UTC à partir d'une string "HH:mm:ss",
+// même convention que celle utilisée par les colonnes Prisma @db.Time
+function timeStringToDate(time: string): Date {
+  return dayjs.utc(`1970-01-01T${time}`).toDate()
+}
 
 const onSave = async (scope: 'single' | 'all') => {
   if (scope === 'all' && meeting.parentId) {
     try {
       const result = await meetingApi.recurring.update(meeting.parentId, {
         dateToStartAction: meeting.date,
-        startTime: dayjs(edit.value.startTime).toDate(),
-        endTime: dayjs(edit.value.endTime).toDate(),
+        startTime: timeStringToDate(edit.value.startTime),
+        endTime: timeStringToDate(edit.value.endTime),
         internal: {
           title: edit.value.title,
           description: edit.value.description,
@@ -75,8 +85,8 @@ const onSave = async (scope: 'single' | 'all') => {
     try {
       const result = await meetingApi.internal.update(meeting.id, {
         ...edit.value,
-        startTime: dayjs(edit.value.startTime).toDate(),
-        endTime: dayjs(edit.value.endTime).toDate(),
+        startTime: timeStringToDate(edit.value.startTime),
+        endTime: timeStringToDate(edit.value.endTime),
       })
       isEditing.value = false
 

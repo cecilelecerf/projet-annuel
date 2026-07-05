@@ -13,6 +13,7 @@ import type {
 } from '@armali/schemas'
 import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
+import { formatDate, subtractTime } from '../utils'
 
 dayjs.locale('fr')
 
@@ -31,14 +32,6 @@ const formError = useFormErrorStore()
 const router = useRouter()
 const confirming = ref(false)
 const confirmed = ref(false)
-
-function formatDate(date: Date) {
-  return dayjs(date).format('dddd D MMMM YYYY')
-}
-
-function formatTime(start: Date, end: Date) {
-  return `${dayjs(start).format('H[h]mm')} — ${dayjs(end).format('H[h]mm')}`
-}
 
 async function confirm() {
   confirming.value = true
@@ -126,7 +119,7 @@ async function confirm() {
           <span class="summary-label">Date & heure</span>
           <div class="summary-value">
             <span class="summary-main summary-date">{{ formatDate(slot.date) }}</span>
-            <span class="summary-sub">{{ formatTime(slot.startTime, slot.endTime) }}</span>
+            <span class="summary-sub">{{ subtractTime(slot.startTime, slot.endTime) }}</span>
           </div>
         </div>
         <template v-if="reason">

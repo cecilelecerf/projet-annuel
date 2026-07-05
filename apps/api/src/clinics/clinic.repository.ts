@@ -1,5 +1,9 @@
 import { prisma } from "@api/lib/prisma";
-import type { UpdateClinic, BookingSearchQuery } from "@armali/schemas";
+import type {
+  UpdateClinic,
+  BookingSearchQuery,
+  ClinicId,
+} from "@armali/schemas";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
@@ -26,59 +30,66 @@ const futureAvailabilityWhere = () => ({
 export class ClinicRepository {
   constructor(private prisma: PrismaClient) {}
 
+  async findById(clinicId: string) {
+    return this.prisma.clinic.findUnique({ where: { id: clinicId } });
+  }
+
   // ── Trouve la clinique d'un utilisateur selon son rôle ────────────────────
   async findClinicByUserId(userId: string) {
     const director = await this.prisma.directorClinicProfile.findUnique({
       where: { id: userId },
       include: { clinic: true },
     });
-    if (director) return director.clinic;
+    if (director) return [director.clinic];
 
     const referent = await this.prisma.referentClinicProfile.findUnique({
       where: { id: userId },
       include: { clinic: true },
     });
-    if (referent) return referent.clinic;
+    if (referent) return [referent.clinic];
 
-    const vetClinic = await this.prisma.veterinarianClinic.findFirst({
+    const vetClinic = await this.prisma.veterinarianClinic.findMany({
       where: { veterinarianId: userId },
       include: { clinic: true },
     });
-    if (vetClinic) return vetClinic.clinic;
+    if (vetClinic) return vetClinic.map(({ clinic }) => clinic);
 
     const secretary = await this.prisma.secretaryProfile.findUnique({
       where: { id: userId },
       include: { clinic: true },
     });
-    return secretary?.clinic ?? null;
+    if (secretary) return [secretary.clinic];
   }
 
   // ── Trouve le clinicId d'un utilisateur selon son rôle ───────────────────
-  async findClinicIdByUser(userId: string, role: UserRole) {
+  async findClinicIdByUser(
+    userId: string,
+    role: UserRole,
+  ): Promise<ClinicId[] | null> {
     switch (role) {
       case "VETERINARIAN": {
-        const vc = await this.prisma.veterinarianClinic.findFirst({
+        const vcs = await this.prisma.veterinarianClinic.findMany({
           where: { veterinarianId: userId },
         });
-        return vc?.clinicId ?? null;
+        return vcs.map((vc) => vc.clinicId as ClinicId) ?? null;
       }
       case "SECRETARY": {
         const sp = await this.prisma.secretaryProfile.findUnique({
           where: { id: userId },
         });
-        return sp?.clinicId ?? null;
+        return sp?.clinicId ? [sp.clinicId as ClinicId] : null;
       }
       case "DIRECTOR": {
         const dp = await this.prisma.directorClinicProfile.findUnique({
           where: { id: userId },
         });
-        return dp?.clinicId ?? null;
+        return dp?.clinicId ? [dp.clinicId as ClinicId] : null;
       }
       case "REFERANT": {
         const rp = await this.prisma.referentClinicProfile.findUnique({
           where: { id: userId },
         });
-        return rp?.clinicId ?? null;
+        return rp?.clinicId ? [rp.clinicId as ClinicId] : null;
       }
       default:
         return null;

@@ -32,7 +32,7 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       {
         path: 'clients/:id',
         name: 'VETERINARIAN.Clients.Detail',
-        component: () => import('@/features/users/views/client/UserView.vue'),
+        component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
         path: 'animals/:id',

@@ -47,7 +47,8 @@ const roleTag: Record<string, string> = {
   VETERINARIAN: 'success',
   SECRETARY: 'warning',
 }
-
+// TODO : à refaire en utilisant staff api
+// Attention les vétos peuvent avoir plusieurs clinics
 onMounted(async () => {
   const [clinicData, staffData] = await Promise.allSettled([
     http.get('/clinics/me'),

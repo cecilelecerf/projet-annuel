@@ -6,6 +6,7 @@ import {
   internalMeetingMetaSchema,
   bookingSlotSchema,
   clinicIdSchema,
+  availabilityTimelineSchema,
 } from "@armali/schemas";
 import type { NextFunction, Response } from "express";
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
@@ -40,7 +41,7 @@ export class MeetingController {
       const { startDate: start, endDate: end } = result.data;
       const { id: userId, role } = req.user;
 
-      const [vetProfile, clientProfile, clinicId] = await Promise.all([
+      const [vetProfile, clientProfile, clinicIds] = await Promise.all([
         role === "VETERINARIAN"
           ? prisma.veterinarianProfile.findFirst({
               where: { user: { id: userId } },
@@ -59,7 +60,7 @@ export class MeetingController {
         role,
         vetProfileId: vetProfile?.id,
         clientProfileId: clientProfile?.id,
-        clinicId: clinicId ?? undefined,
+        clinicIds: clinicIds ?? undefined,
         start,
         end,
       });
@@ -82,7 +83,7 @@ export class MeetingController {
       const { startDate: start, endDate: end } = result.data;
       const { veterinarianId } = req.params;
 
-      const [veterinarian, clinicId] = await Promise.all([
+      const [veterinarian, clinicIds] = await Promise.all([
         prisma.veterinarianProfile.findUnique({
           where: { id: veterinarianId },
         }),
@@ -96,7 +97,12 @@ export class MeetingController {
       const [internal, animal, availabilities] = await Promise.all([
         this.service.getInternalMeetings(veterinarian.id, start, end),
         this.service.getAnimalMeetingsAsVet(veterinarian.id, start, end),
-        this.service.getAvailabilitiesByClinic({ clinicId, start, end }),
+        this.service.getAvailabilities({
+          userId: veterinarian.id,
+          clinicIds,
+          start,
+          end,
+        }),
       ]);
       return res.status(200).json(
         calendarSchema.parse({
@@ -221,14 +227,51 @@ export class MeetingController {
 
       const slots = await this.service.getVetSlots({
         veterinarianId: veterinarian.id,
-        vetUserId: veterinarian.user.id,
         start: date,
         end: date,
-        clinicId,
+        clinicIds: [clinicId],
       });
       return res.status(200).json(bookingSlotSchema.array().parse(slots));
     } catch (err) {
       console.log(err);
+      next(err);
+    }
+  }
+
+  async getAvailabilityTimeline(
+    req: RequestWithParams<{ veterinarianId: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const result = z
+        .object({ date: z.coerce.date(), clinicId: clinicIdSchema })
+        .safeParse(req.query);
+      if (!result.success)
+        throw new BadRequestError("La date et la clinic sont requis");
+
+      const { date, clinicId } = result.data;
+      const { veterinarianId } = req.params;
+
+      const veterinarian = await prisma.veterinarianProfile.findFirst({
+        where: { id: veterinarianId },
+        include: { user: true },
+      });
+      if (!veterinarian) throw new NotFoundError("Veterinarian");
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const timeline = await this.service.getAvailabilityTimeline({
+        veterinarianId: veterinarianId,
+        clinicIds: [clinicId],
+        start: startOfDay,
+        end: endOfDay,
+      });
+
+      return res.status(200).json(availabilityTimelineSchema.parse(timeline));
+    } catch (err) {
       next(err);
     }
   }

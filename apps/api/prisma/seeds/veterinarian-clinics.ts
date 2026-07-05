@@ -32,7 +32,7 @@ export async function seedVeterinarianClinics(
     data: { veterinarianId: vetProfile3.id, clinicId: clinics.clinic2.id },
   });
   const vetoClinic5 = await prisma.veterinarianClinic.create({
-    data: { veterinarianId: vetProfile1.id, clinicId: clinics.clinic2.id },
+    data: { veterinarianId: vetProfile1.id, clinicId: clinics.clinic3.id },
   });
 
   return { vetoClinic1, vetoClinic2, vetoClinic3, vetoClinic4, vetoClinic5 };

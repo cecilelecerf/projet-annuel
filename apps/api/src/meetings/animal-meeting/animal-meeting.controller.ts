@@ -11,7 +11,6 @@ import {
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { ForbiddenError } from "@api/errors";
 import { flatUser } from "@api/users/user.utils";
 
 export class AnimalMeetingController {

@@ -5,6 +5,7 @@ import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import { updateClinicSchema } from "@armali/schemas";
 import { clinicController, medicalHistoryController } from "@api/instances";
+import { STAFF_ROLES } from "@api/utils";
 
 const clinicRouter: RouterType = Router();
 
@@ -20,15 +21,15 @@ clinicRouter.get(
 clinicRouter.get(
   "/staff",
   authMiddleware,
-  roleMiddleware(["DIRECTOR", "REFERANT", "VETERINARIAN", "SECRETARY"]),
-  controller.getClinicStaff.bind(controller),
+  roleMiddleware(STAFF_ROLES),
+  controller.getStaffByClinic.bind(controller),
 );
 
 clinicRouter.get(
   "/me",
   authMiddleware,
-  roleMiddleware(["DIRECTOR", "REFERANT", "VETERINARIAN", "SECRETARY"]),
-  controller.getMyClinic.bind(controller),
+  roleMiddleware(STAFF_ROLES),
+  controller.getMyClinic.bind(controller) as RequestHandler,
 );
 
 clinicRouter.patch(

@@ -4,8 +4,13 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
 import dayjs from 'dayjs'
-import { ref } from 'vue'
-import { availabilitiesToBusinessHours, toCalendarEvent } from '../components/utils'
+import { computed, ref, watch } from 'vue'
+import {
+  availabilitiesToBackgroundEvents,
+  availabilitiesToBusinessHours,
+  extractDistinctClinics,
+  toCalendarEvent,
+} from '../components/utils'
 import type {
   CalendarOptions,
   DatesSetArg,
@@ -14,6 +19,7 @@ import type {
   EventInput,
 } from '@fullcalendar/core/index.js'
 import type { VerboseFormattingArg } from '@fullcalendar/core/internal'
+dayjs.locale('fr')
 
 export function useCalendar(userId?: UserId) {
   const calendarData = ref<Calendar | null>(null)
@@ -21,11 +27,40 @@ export function useCalendar(userId?: UserId) {
   const openNewEvent = ref(false)
   const selectedMeeting = ref<{ id: string; isReccuring?: boolean; date: Date } | null>(null)
 
+  // Filtre multi-cliniques : vide = toutes les cliniques affichées
+  const selectedClinicIds = ref<string[]>([])
+
+  const availableClinics = computed(() => extractDistinctClinics(calendarData.value))
+
+  let lastFetchedRange: { start: string; end: string } | null = null
+
   const fetchMeetings = (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
+    lastFetchedRange = { start, end }
     return meetingApi.getCalendar({ start, end, userId })
   }
+
+  function refreshDisplayedEvents() {
+    if (!calendarData.value) return
+    calendarOptions.value.events = calendarData.value.meetings.map(toCalendarEvent)
+    calendarOptions.value.events = [
+      ...calendarOptions.value.events,
+      ...availabilitiesToBackgroundEvents({
+        calendar: calendarData.value,
+        clinicIds: selectedClinicIds.value,
+      }),
+    ]
+    calendarOptions.value.businessHours = availabilitiesToBusinessHours({
+      calendar: calendarData.value,
+      clinicIds: selectedClinicIds.value,
+    })
+  }
+
+  // Recalcule l'affichage localement quand le filtre change,
+  // sans refetch réseau (les données sont déjà toutes en mémoire)
+  watch(selectedClinicIds, refreshDisplayedEvents)
+
   const calendarOptions = ref<CalendarOptions>({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
     initialView: 'timeGridWeek',
@@ -57,7 +92,6 @@ export function useCalendar(userId?: UserId) {
     allDaySlot: false,
     events: [] as EventInput[],
     eventColor: '#409eff',
-    businessHours: [{}],
     eventClassNames: (arg: EventContentArg) => [
       `kind-${arg.event.extendedProps.kind}`,
       `status-${arg.event.extendedProps.status}`,
@@ -76,11 +110,16 @@ export function useCalendar(userId?: UserId) {
     datesSet: async (info: DatesSetArg) => {
       const meetings = await fetchMeetings(info.startStr, info.endStr)
       calendarData.value = meetings
-      calendarOptions.value.events = calendarData.value!.meetings.map(toCalendarEvent)
-      calendarOptions.value.businessHours = availabilitiesToBusinessHours({
-        calendar: calendarData.value!,
-      })
+      refreshDisplayedEvents()
     },
   })
-  return { calendarOptions, dateSelect, openNewEvent, selectedMeeting }
+
+  return {
+    calendarOptions,
+    dateSelect,
+    openNewEvent,
+    selectedMeeting,
+    selectedClinicIds,
+    availableClinics,
+  }
 }

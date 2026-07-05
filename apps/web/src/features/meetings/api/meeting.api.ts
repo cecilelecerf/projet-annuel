@@ -34,7 +34,10 @@ import {
   type CreateBooking,
   createBookingSchema,
   bookingConfirmationSchema,
+  type AvailabilityTimeline,
+  availabilityTimelineSchema,
 } from '@armali/schemas'
+import dayjs from 'dayjs'
 
 export const meetingApi = {
   getCalendar: async ({
@@ -179,6 +182,22 @@ export const meetingApi = {
     update: async (reccuringId: MeetingRecurringId, body: UpdateRecurring) => {
       const data = await http.patch(`/meetings/recurrings/${reccuringId}`, body)
       return meetingRecurringSchema.parse(data)
+    },
+  },
+  availability: {
+    getTimeline: async ({
+      veterinarianId,
+      clinicId,
+      date,
+    }: {
+      veterinarianId: VeterinarianId
+      clinicId: ClinicId
+      date: Date
+    }): Promise<AvailabilityTimeline> => {
+      const data = await http.get(
+        `/veterinarians/${veterinarianId}/availabilities/timeline?date=${dayjs(date).format('YYYY-MM-DD')}&clinicId=${clinicId}`,
+      )
+      return availabilityTimelineSchema.parse(data)
     },
   },
 }

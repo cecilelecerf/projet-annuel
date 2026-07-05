@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
+import utc from 'dayjs/plugin/utc'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { meetingApi } from '../api/meeting.api'
 import { Plus } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { MEETING_COLORS } from '@/utils/meetingColor'
-
+import { combineDateAndTime } from './utils'
+dayjs.extend(utc)
 dayjs.locale('fr')
 
 const { meetingId, date } = defineProps<{
@@ -28,8 +30,8 @@ const dateForm = ref({
 const dateLabel = computed(() => {
   const date = meeting.date
   if (!date) return ''
-  const start = meeting.startTime ? dayjs(meeting.startTime).format('H[h]mm') : ''
-  const end = meeting.endTime ? dayjs(meeting.endTime).format('H[h]mm') : ''
+  const start = meeting.startTime ? dayjs.utc(meeting.startTime).format('H[h]mm') : ''
+  const end = meeting.endTime ? dayjs.utc(meeting.endTime).format('H[h]mm') : ''
   return `Le ${dayjs(date).format('dddd D MMMM')} de ${start} à ${end}`
 })
 
@@ -52,6 +54,10 @@ const onEdit = () => {}
 const onDelete = () => {
   emit('delete')
 }
+const isUpcoming = computed(() => {
+  if (!meeting.date || !meeting.startTime) return false
+  return combineDateAndTime(meeting.date, meeting.startTime) > new Date()
+})
 </script>
 
 <template>
@@ -114,17 +120,8 @@ const onDelete = () => {
 
       <div class="popup-actions" v-if="!isEditing">
         <el-row>
-          <el-button v-if="new Date(meeting.date) > new Date()" @click="isEditing = true" plain>
-            Modifier
-          </el-button>
-          <el-button
-            type="danger"
-            v-if="new Date(meeting.date) > new Date()"
-            @click="onDelete"
-            plain
-          >
-            Supprimer
-          </el-button>
+          <el-button v-if="isUpcoming" @click="isEditing = true" plain> Modifier </el-button>
+          <el-button type="danger" v-if="isUpcoming" @click="onDelete" plain> Supprimer </el-button>
         </el-row>
         <el-button @click="goToDetail" :type="MEETING_COLORS[meeting.kind]">
           <el-icon><Plus /></el-icon>

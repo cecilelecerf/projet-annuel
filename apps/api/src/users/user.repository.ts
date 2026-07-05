@@ -12,10 +12,10 @@ export class UserRepository {
   }: {
     id: string;
     role: UserRole;
-  }): Promise<string | null> {
+  }): Promise<string[] | null> {
     switch (role) {
       case "VETERINARIAN": {
-        const profile = await this.prisma.veterinarianClinic.findFirst({
+        const profile = await this.prisma.veterinarianClinic.findMany({
           where: { veterinarianId: id },
         });
         return profile?.clinicId ?? null;
@@ -24,19 +24,19 @@ export class UserRepository {
         const profile = await this.prisma.secretaryProfile.findUnique({
           where: { id },
         });
-        return profile?.clinicId ?? null;
+        return profile?.clinicId ? [profile?.clinicId] : null;
       }
       case "DIRECTOR": {
         const profile = await this.prisma.directorClinicProfile.findUnique({
           where: { id },
         });
-        return profile?.clinicId ?? null;
+        return profile?.clinicId ? [profile?.clinicId] : null;
       }
       case "REFERANT": {
         const profile = await this.prisma.referentClinicProfile.findUnique({
           where: { id },
         });
-        return profile?.clinicId ?? null;
+        return profile?.clinicId ? [profile?.clinicId] : null;
       }
       default:
         return null;
@@ -44,18 +44,20 @@ export class UserRepository {
   }
 
   async getUsersByClinic({
-    clinicId,
+    clinicIds,
   }: {
-    clinicId: string;
+    clinicIds: string[];
   }): Promise<Omit<User, "password">[]> {
     return this.prisma.user.findMany({
       where: {
         OR: [
-          { secretaryProfile: { clinicId } },
-          { directorClinicProfile: { clinicId } },
-          { referentClinicProfile: { clinicId } },
+          { secretaryProfile: { clinicId: { in: clinicIds } } },
+          { directorClinicProfile: { clinicId: { in: clinicIds } } },
+          { referentClinicProfile: { clinicId: { in: clinicIds } } },
           {
-            veterinarianProfile: { veterinarianClinic: { some: { clinicId } } },
+            veterinarianProfile: {
+              veterinarianClinic: { clinicId: { in: clinicIds } },
+            },
           },
         ],
       },
@@ -64,21 +66,23 @@ export class UserRepository {
   }
 
   async getUsersByRoleAndClinic({
-    clinicId,
+    clinicIds,
     roles,
   }: {
-    clinicId: string;
+    clinicIds: string[];
     roles: UserRole[];
   }) {
     return this.prisma.user.findMany({
       where: {
         role: { in: roles },
         OR: [
-          { secretaryProfile: { clinicId } },
-          { directorClinicProfile: { clinicId } },
-          { referentClinicProfile: { clinicId } },
+          { secretaryProfile: { clinicId: { in: clinicIds } } },
+          { directorClinicProfile: { clinicId: { in: clinicIds } } },
+          { referentClinicProfile: { clinicId: { in: clinicIds } } },
           {
-            veterinarianProfile: { veterinarianClinic: { some: { clinicId } } },
+            veterinarianProfile: {
+              veterinarianClinic: { some: { clinicId: { in: clinicIds } } },
+            },
           },
         ],
       },

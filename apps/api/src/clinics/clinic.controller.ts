@@ -1,12 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
 import { ClinicService } from "./clinic.service";
+import { clinicSchema } from "@armali/schemas";
+import { AuthenticatedRequest } from "@api/middlewares";
 
 export class ClinicController {
   constructor(private service: ClinicService) {}
 
-  async getClinicStaff(req: Request, res: Response, next: NextFunction) {
+  async getStaffByClinic(req: Request, res: Response, next: NextFunction) {
     try {
-      const staff = await this.service.getClinicStaff(
+      const staff = await this.service.getStaffByClinic(
         req.user!.id,
         req.user!.role,
       );
@@ -16,10 +18,14 @@ export class ClinicController {
     }
   }
 
-  async getMyClinic(req: Request, res: Response, next: NextFunction) {
+  async getMyClinic(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const clinic = await this.service.getMyClinic(req.user!.id);
-      res.status(200).json(clinic);
+      const clinics = await this.service.getMyClinic(req.user.id);
+      res.status(200).json(clinicSchema.array().parse(clinics));
     } catch (err) {
       next(err);
     }

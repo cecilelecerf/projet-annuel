@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
 
 const props = defineProps<{
@@ -16,15 +18,15 @@ const edit = defineModel<UpdateAnimalMeeting>('edit', { required: true })
 const dateLabel = computed(() => dayjs(props.meeting.date).format('dddd D MMMM YYYY'))
 
 const timeLabel = computed(() => {
-  const start = dayjs(props.meeting.startTime).format('H[h]mm')
-  const end = dayjs(props.meeting.endTime).format('H[h]mm')
+  const start = dayjs.utc(props.meeting.startTime).format('H[h]mm')
+  const end = dayjs.utc(props.meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
 
 // ── Combine date (jour) + heure (time) en un seul instant ────────────────────
 const meetingDateTime = computed(() => {
   const date = dayjs(props.meeting.date)
-  const time = dayjs(props.meeting.startTime)
+  const time = dayjs.utc(props.meeting.startTime)
   return date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 })
 

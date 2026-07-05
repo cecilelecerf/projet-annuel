@@ -18,7 +18,7 @@ export class UserService {
   }: {
     userId: string;
     role: UserRole;
-  }): Promise<string> {
+  }): Promise<string[]> {
     const clinicId = await this.repository.getClinicIdByUserId({
       id: userId,
       role,
@@ -28,8 +28,8 @@ export class UserService {
   }
 
   async getUsers(userId: string, role: UserRole) {
-    const clinicId = await this.getClinicId({ userId, role });
-    return this.repository.getUsersByClinic({ clinicId });
+    const clinicIds = await this.getClinicId({ userId, role });
+    return this.repository.getUsersByClinic({ clinicIds });
   }
 
   async getUsersByRoles(
@@ -44,7 +44,7 @@ export class UserService {
       return users.map(flatClinicId);
     }
 
-    const clinicId = await this.getClinicId({ userId, role });
+    const clinicIds = await this.getClinicId({ userId, role });
     const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
     const [clients, staffs] = await Promise.all([
       targetRole.includes("CLIENT")
@@ -52,7 +52,7 @@ export class UserService {
         : Promise.resolve([]),
       nonClientRoles.length > 0
         ? this.repository.getUsersByRoleAndClinic({
-            clinicId,
+            clinicIds,
             roles: nonClientRoles,
           })
         : Promise.resolve([]),
@@ -78,12 +78,12 @@ export class UserService {
     if (user.role === "ADMIN") throw new ForbiddenError();
 
     if (isStaff(user.role)) {
-      const clinicId = await this.getClinicId({
+      const clinicIds = await this.getClinicId({
         userId: requesterId,
         role: requesterRole,
       });
       const usersInClinic = await this.repository.getUsersByClinic({
-        clinicId,
+        clinicIds,
       });
       if (!usersInClinic.some((u) => u.id === targetId))
         throw new NotFoundError("Utilisateur");

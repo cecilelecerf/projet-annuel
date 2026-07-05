@@ -95,7 +95,15 @@ const lastSize = computed(() => {
         <el-divider />
 
         <!-- Propriétaire -->
-        <div class="owner-row" @click="router.push(`/secretary/users/${pet.clientId}`)">
+        <div
+          class="owner-row"
+          @click="
+            router.push({
+              name: `${user?.role.toUpperCase()}.Clients.Detail`,
+              params: { id: pet.clientId },
+            })
+          "
+        >
           <div class="owner-avatar">
             {{ pet.client?.user.firstname?.charAt(0) }}{{ pet.client?.user.lastname?.charAt(0) }}
           </div>

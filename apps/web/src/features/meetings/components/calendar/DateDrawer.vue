@@ -9,7 +9,7 @@ import { meetingApi } from '../../api/meeting.api.ts'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
-import { availabilitiesToBusinessHours, toCalendarEvent } from '../utils'
+import { availabilitiesToBackgroundEvents, toCalendarEvent } from '../utils'
 import EventCard from './EventCalendar.vue'
 import type {
   CalendarOptions,
@@ -68,7 +68,7 @@ const calendarOptions = ref<CalendarOptions>({
     const data = await meetingApi.getCalendar({ start: formatted, end: formatted, userId })
     calendar.value = data
     calendarOptions.value.events = data.meetings.map(toCalendarEvent)
-    calendarOptions.value.businessHours = availabilitiesToBusinessHours({ calendar: data })
+    calendarOptions.value.businessHours = availabilitiesToBackgroundEvents({ calendar: data })
   },
 })
 </script>

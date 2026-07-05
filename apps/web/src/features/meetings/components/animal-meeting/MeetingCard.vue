@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useRouter } from 'vue-router'
-import type { MeetingStatus } from '../../views/Client/ListMeetingView.vue'
 import type { AnimalMeetingWithMeeting } from '@armali/schemas'
 import { MEETING_COLORS } from '@/utils/meetingColor.ts'
+import type { MeetingStatus } from '../../views/ListAnimalMeetingView.vue'
+import { subtractTime } from '../utils.ts'
+
+dayjs.extend(utc)
 
 const { animalMeeting } = defineProps<{
   status: MeetingStatus
@@ -14,9 +18,6 @@ const { animalMeeting } = defineProps<{
 const router = useRouter()
 const { user } = useAuthStore()
 
-function formatTime(start: Date, end: Date) {
-  return `${dayjs(start).format('H[h]mm')} — ${dayjs(end).format('H[h]mm')}`
-}
 function goToMeeting() {
   router.push({
     name: `${user?.role.toUpperCase()}.Meetings.Detail`,
@@ -43,7 +44,7 @@ function goToMeeting() {
       <div class="card-meta">
         <span class="meta-item">
           <el-icon><Clock /></el-icon>
-          {{ formatTime(animalMeeting.meeting.startTime, animalMeeting.meeting.endTime) }}
+          {{ subtractTime(animalMeeting.meeting.startTime, animalMeeting.meeting.endTime) }}
         </span>
         <span class="meta-item">
           <el-icon><User /></el-icon>

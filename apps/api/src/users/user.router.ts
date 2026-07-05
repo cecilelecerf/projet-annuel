@@ -9,6 +9,7 @@ import {
 } from "@api/instances";
 
 const userRouter: RouterType = Router();
+
 const controller = userController;
 
 userRouter.get(
@@ -23,6 +24,7 @@ userRouter.get(
   roleMiddleware(STAFF_ROLES),
   controller.getUsersByRole.bind(controller) as RequestHandler,
 );
+
 userRouter.get(
   "/:id/animals",
   authMiddleware,

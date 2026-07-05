@@ -13,7 +13,14 @@ const { userId } = defineProps<{
   userId?: UserId
 }>()
 const router = useRouter()
-const { calendarOptions, dateSelect, openNewEvent, selectedMeeting } = useCalendar(userId)
+const {
+  calendarOptions,
+  dateSelect,
+  openNewEvent,
+  selectedMeeting,
+  availableClinics,
+  selectedClinicIds,
+} = useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
 const showDeleteDialog = ref(false)
@@ -50,6 +57,18 @@ const onDelete = async () => {
 
 <template>
   <div class="calendar-container">
+    <div v-if="availableClinics.length > 1" class="clinic-filter">
+      <el-select
+        v-model="selectedClinicIds"
+        multiple
+        collapse-tags
+        placeholder="Toutes les cliniques"
+        clearable
+        style="width: 280px"
+      >
+        <el-option v-for="c in availableClinics" :key="c.id" :label="c.name" :value="c.id" />
+      </el-select>
+    </div>
     <FullCalendar :options="calendarOptions"> </FullCalendar>
   </div>
 
@@ -77,7 +96,7 @@ const onDelete = async () => {
     v-model="openNewEvent"
     direction="rtl"
     :with-header="false"
-    size="420px"
+    size="520px"
     @close="onNewEventDrawerClose"
   >
     <BaseComponent

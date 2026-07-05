@@ -79,8 +79,6 @@ export class AnimalMeetingService {
         endTime: { gte: endTime },
       },
     });
-    console.log("availability");
-    console.log(date);
     const recurringAvailability =
       availability ??
       (await prisma.meetingReccuring.findFirst({
@@ -95,14 +93,11 @@ export class AnimalMeetingService {
           // },
         },
       }));
-    console.log("recurring");
-    console.log(recurringAvailability);
     if (!recurringAvailability) {
       throw new ConflictError(
         "Le vétérinaire n'est pas disponible sur ce créneau",
       );
     }
-    console.log("t");
   }
   private hasScheduleChanged(
     current: { date: Date; startTime: Date; endTime: Date },

@@ -19,10 +19,17 @@ clinicRouter.get(
   ) as RequestHandler,
 );
 clinicRouter.get(
-  "/staff",
+  "/:id/staff",
   authMiddleware,
   roleMiddleware(STAFF_ROLES),
-  controller.getStaffByClinic.bind(controller),
+  controller.getStaffByClinic.bind(controller) as RequestHandler,
+);
+
+clinicRouter.get(
+  "/:id/clients",
+  authMiddleware,
+  roleMiddleware(STAFF_ROLES),
+  controller.getClientsByClinic.bind(controller) as RequestHandler,
 );
 
 clinicRouter.get(
@@ -37,7 +44,7 @@ clinicRouter.patch(
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   validate(updateClinicSchema),
-  controller.updateClinic.bind(controller),
+  controller.updateClinic.bind(controller) as RequestHandler,
 );
 
 export default clinicRouter;

@@ -48,13 +48,11 @@ export async function seedMeetings(
     clientUser2,
     vetProfile1,
     vetProfile2,
-    vetProfile3,
     secretaryProfile,
     directorUser1,
-    directorUser2,
     referentUser1,
   } = users;
-  const { vetoClinic1, vetoClinic2, vetoClinic3 } = veterinarianClinics;
+  const { vetoClinic1, vetoClinic2 } = veterinarianClinics;
   const { conditionCardio, conditionRenal } = healthConditions;
   const { raceLab, racePersan, raceGolden } = pets;
 

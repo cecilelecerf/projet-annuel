@@ -1,6 +1,6 @@
 import { NotFoundError } from "@api/errors";
 import { RecurringRepository } from "./recurring-meeting.repository";
-import { UpdateRecurring } from "@armali/schemas";
+import { MeetingRecurringId, UpdateRecurring } from "@armali/schemas";
 import { InternalMeetingRepository } from "../internal-meeting";
 import dayjs from "dayjs";
 
@@ -10,13 +10,19 @@ export class RecurringService {
     private internalMeetingRepository: InternalMeetingRepository,
   ) {}
 
-  async getById(id: string) {
+  async getById(id: MeetingRecurringId) {
     const recurring = await this.repository.findById(id);
     if (!recurring) throw new NotFoundError("Récurrence introuvable");
     return recurring;
   }
 
-  async update({ id, data }: { id: string; data: UpdateRecurring }) {
+  async update({
+    id,
+    data,
+  }: {
+    id: MeetingRecurringId;
+    data: UpdateRecurring;
+  }) {
     // todo si dans le passé pas de modification avant la date actuelle
     const current = await this.getById(id);
 

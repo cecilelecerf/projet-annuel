@@ -1,4 +1,4 @@
-import { UpdateRecurring } from "@armali/schemas";
+import { MeetingRecurringId, UpdateRecurring } from "@armali/schemas";
 import {
   MeetingReccuring,
   PrismaClient,
@@ -33,7 +33,7 @@ type RecurringEditableFields = Omit<UpdateRecurring, "dateToActionStart">;
 export class RecurringRepository {
   constructor(private prisma: PrismaClient) {}
 
-  findById(id: string): Promise<RecurringWithRelations | null> {
+  findById(id: MeetingRecurringId): Promise<RecurringWithRelations | null> {
     return this.prisma.meetingReccuring.findUnique({
       where: { id },
       include: recurringInclude,

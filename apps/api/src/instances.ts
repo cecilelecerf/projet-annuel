@@ -110,8 +110,9 @@ const clinicRepository = new ClinicRepository(prisma);
 // ═══════════════════════════════════════════════════════════════
 
 export const emailService = new EmailService();
+export const clinicService = new ClinicService(clinicRepository);
 
-export const userService = new UserService(userRepository);
+export const userService = new UserService(userRepository, clinicService);
 
 export const authService = new AuthService();
 
@@ -139,20 +140,19 @@ export const veterinarianClinicService = new VeterinarianClinicService(
   veterinarianClinicRepository,
 );
 
-export const clinicService = new ClinicService(clinicRepository);
-
 export const adminService = new AdminService();
 export const directorService = new DirectorService();
 export const referentService = new ReferentService();
 export const reviewService = new ReviewService();
 
-export const internalMeetingService = new InternalMeetingService(
-  internalMeetingRepository,
-);
-
 export const recurringService = new RecurringService(
   recurringRepository,
   internalMeetingRepository,
+);
+
+export const internalMeetingService = new InternalMeetingService(
+  internalMeetingRepository,
+  recurringService,
 );
 
 export const availabilityService = new AvailabilityService(

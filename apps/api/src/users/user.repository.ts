@@ -6,43 +6,6 @@ import { PrismaClient } from "@prisma/client/extension";
 export class UserRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async getClinicIdByUserId({
-    id,
-    role,
-  }: {
-    id: string;
-    role: UserRole;
-  }): Promise<string[] | null> {
-    switch (role) {
-      case "VETERINARIAN": {
-        const profile = await this.prisma.veterinarianClinic.findMany({
-          where: { veterinarianId: id },
-        });
-        return profile?.clinicId ?? null;
-      }
-      case "SECRETARY": {
-        const profile = await this.prisma.secretaryProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ? [profile?.clinicId] : null;
-      }
-      case "DIRECTOR": {
-        const profile = await this.prisma.directorClinicProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ? [profile?.clinicId] : null;
-      }
-      case "REFERANT": {
-        const profile = await this.prisma.referentClinicProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ? [profile?.clinicId] : null;
-      }
-      default:
-        return null;
-    }
-  }
-
   async getUsersByClinic({
     clinicIds,
   }: {
@@ -62,33 +25,6 @@ export class UserRepository {
         ],
       },
       omit: { password: true },
-    });
-  }
-
-  async getUsersByRoleAndClinic({
-    clinicIds,
-    roles,
-  }: {
-    clinicIds: string[];
-    roles: UserRole[];
-  }) {
-    return this.prisma.user.findMany({
-      where: {
-        role: { in: roles },
-        OR: [
-          { secretaryProfile: { clinicId: { in: clinicIds } } },
-          { directorClinicProfile: { clinicId: { in: clinicIds } } },
-          { referentClinicProfile: { clinicId: { in: clinicIds } } },
-          {
-            veterinarianProfile: {
-              veterinarianClinic: { some: { clinicId: { in: clinicIds } } },
-            },
-          },
-        ],
-      },
-      omit: { password: true },
-
-      include: userWithProfileAndClinicIdInclude,
     });
   }
 

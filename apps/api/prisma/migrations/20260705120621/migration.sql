@@ -420,8 +420,7 @@ CREATE TABLE "animal_meetings" (
     "meetingId" TEXT,
     "specialityId" TEXT,
     "animalId" TEXT NOT NULL,
-    "veterinarianClinicId" TEXT NOT NULL,
-    "veterinarianProfileId" TEXT,
+    "veterinarianClinicId" TEXT,
 
     CONSTRAINT "animal_meetings_pkey" PRIMARY KEY ("id")
 );
@@ -1016,10 +1015,7 @@ ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_specialityId_fkey"
 ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "animals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_veterinarianClinicId_fkey" FOREIGN KEY ("veterinarianClinicId") REFERENCES "veterinarian_clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_veterinarianProfileId_fkey" FOREIGN KEY ("veterinarianProfileId") REFERENCES "veterinarian_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "animal_meetings" ADD CONSTRAINT "animal_meetings_veterinarianClinicId_fkey" FOREIGN KEY ("veterinarianClinicId") REFERENCES "veterinarian_clinics"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "animals" ADD CONSTRAINT "animals_attendingVeterinarianId_fkey" FOREIGN KEY ("attendingVeterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;

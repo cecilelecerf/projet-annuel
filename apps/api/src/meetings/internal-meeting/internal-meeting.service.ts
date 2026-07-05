@@ -44,7 +44,7 @@ export class InternalMeetingService {
     );
     if (!isParticipant) throw new ForbiddenError();
 
-    return internalMeetingRepository.update({ id, data });
+    return internalMeetingRepository.update({ id: existing.id, data });
   }
 
   async delete({ id, userId }: { id: string; userId: string }) {

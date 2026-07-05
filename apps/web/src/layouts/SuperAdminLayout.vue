@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, List, OfficeBuilding, User } from '@element-plus/icons-vue'
+import { House, List, OfficeBuilding, Star, User } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
 
 const menuItems: MenuItem[] = [
@@ -19,6 +19,11 @@ const menuItems: MenuItem[] = [
     index: 'Admin.Clinics',
     label: 'Cliniques',
     icon: OfficeBuilding,
+  },
+  {
+    index: 'Admin.Specialities',
+    label: 'Spécialités',
+    icon: Star,
   },
   {
     index: 'Admin.Profil',

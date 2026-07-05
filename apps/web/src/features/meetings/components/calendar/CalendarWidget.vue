@@ -9,7 +9,8 @@ import type { UserId } from '@armali/schemas'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
-const { calendarOptions, dateSelect, openNewEvent, selectedMeeting } = useCalendar(userId)
+const { calendarOptions, dateSelect, openNewEvent, selectedMeeting, refetchEvents } =
+  useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
 const isDateDrawerOpen = computed({
@@ -22,6 +23,12 @@ const isDateDrawerOpen = computed({
 const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
+  refetchEvents()
+}
+
+const onMeetingDeleted = () => {
+  selectedMeeting.value = null
+  refetchEvents()
 }
 </script>
 
@@ -63,7 +70,7 @@ const onNewEventDrawerClose = () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
-    @delete="selectedMeeting = null"
+    @delete="onMeetingDeleted"
   />
 </template>
 
@@ -206,6 +213,13 @@ const onNewEventDrawerClose = () => {
   }
   & .fc-event-title {
     color: var(--el-color-purple-dark);
+  }
+}
+:deep(.kind-AVAILABILITY) {
+  background: color-mix(in srgb, var(--el-color-amber-light) 25%, transparent) !important;
+  backdrop-filter: blur(1px);
+  & .fc-event-title {
+    color: var(--el-color-amber-dark);
   }
 }
 

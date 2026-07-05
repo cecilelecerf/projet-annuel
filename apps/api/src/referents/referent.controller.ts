@@ -45,4 +45,49 @@ export class ReferentController {
       next(err);
     }
   }
+
+  async linkSpeciality(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clinic = await referentService.linkSpeciality(
+        req.user!.id,
+        req.params.specialityId,
+      );
+      res.status(200).json(clinic);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async unlinkSpeciality(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clinic = await referentService.unlinkSpeciality(
+        req.user!.id,
+        req.params.specialityId,
+      );
+      res.status(200).json(clinic);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteStaffMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await referentService.deleteStaffMember(
+        req.user!.id,
+        req.params.id,
+      );
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getVisitsForecast(req: Request, res: Response, next: NextFunction) {
+    try {
+      const forecast = await referentService.getVisitsForecast(req.user!.id);
+      res.status(200).json(forecast);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

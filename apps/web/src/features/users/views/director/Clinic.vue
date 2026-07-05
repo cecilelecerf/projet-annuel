@@ -2,28 +2,44 @@
 import { ref, reactive, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import AddressFields from '@/components/AddressFields.vue'
+import OpeningHoursEditor from '@/components/OpeningHoursEditor.vue'
+import ClinicSpecialities from '@/components/ClinicSpecialities.vue'
+import { formatAddress, defaultOpeningHours, type OpeningHoursDay } from '@/utils/clinic.utils'
 
 const notify = useNotify()
 
 type Status = 'loading' | 'NONE' | 'PENDING' | 'REJECTED' | 'APPROVED'
 
+interface Speciality {
+  id: string
+  name: string
+  description: string
+}
+
 interface ClinicData {
   id: string
   name: string
-  address: string
+  street: string
+  postalCode: string
+  city: string
+  country: string
   siret: string
   phone: string
   website: string
   description?: string | null
-  openingHours?: string | null
+  openingHours?: OpeningHoursDay[] | null
+  speciality?: Speciality[]
 }
 
 interface RequestData {
   id: string
   name: string
-  address: string
+  street: string
+  postalCode: string
+  city: string
+  country: string
   siret: string
-  status: string
   createdAt: string
 }
 
@@ -32,12 +48,25 @@ const clinic = ref<ClinicData | null>(null)
 const request = ref<RequestData | null>(null)
 
 const editMode = ref(false)
-const editClinic = ref<Partial<ClinicData>>({})
+const editClinic = reactive({
+  name: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
+  phone: '',
+  website: '',
+  description: '',
+  openingHours: defaultOpeningHours(),
+})
 const saving = ref(false)
 
 const form = reactive({
   name: '',
-  address: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
   siret: '',
   phone: '',
   website: '',
@@ -45,7 +74,7 @@ const form = reactive({
 })
 const submitting = ref(false)
 
-onMounted(async () => {
+async function loadClinic() {
   try {
     const data = await http.get('/director/clinic')
     status.value = data.status
@@ -55,17 +84,30 @@ onMounted(async () => {
     notify.error('Erreur lors du chargement')
     status.value = 'NONE'
   }
-})
+}
+
+onMounted(loadClinic)
 
 function startEdit() {
-  editClinic.value = { ...clinic.value }
+  if (!clinic.value) return
+  Object.assign(editClinic, {
+    name: clinic.value.name,
+    street: clinic.value.street,
+    postalCode: clinic.value.postalCode,
+    city: clinic.value.city,
+    country: clinic.value.country,
+    phone: clinic.value.phone,
+    website: clinic.value.website,
+    description: clinic.value.description ?? '',
+    openingHours: clinic.value.openingHours?.length ? clinic.value.openingHours : defaultOpeningHours(),
+  })
   editMode.value = true
 }
 
 async function saveClinic() {
   saving.value = true
   try {
-    clinic.value = await http.patch('/clinics/me', editClinic.value)
+    clinic.value = await http.patch('/clinics/me', editClinic)
     editMode.value = false
     notify.success('Clinique mise à jour')
   } catch (err: unknown) {
@@ -77,7 +119,8 @@ async function saveClinic() {
 
 async function submitRequest() {
   if (!form.name.trim()) return notify.error('Le nom est requis')
-  if (!form.address.trim()) return notify.error("L'adresse est requise")
+  if (!form.street.trim() || !form.postalCode.trim() || !form.city.trim())
+    return notify.error("L'adresse est requise")
   if (form.siret.replace(/\s/g, '').length !== 14)
     return notify.error('Le SIRET doit contenir 14 chiffres')
   if (form.phone.replace(/\s/g, '').length < 10) return notify.error('Téléphone invalide')
@@ -125,7 +168,7 @@ async function submitRequest() {
         </div>
         <div class="info-row">
           <span class="info-label">Adresse</span
-          ><span class="info-value">{{ request.address }}</span>
+          ><span class="info-value">{{ formatAddress(request) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">SIRET</span><span class="info-value">{{ request.siret }}</span>
@@ -183,9 +226,7 @@ async function submitRequest() {
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="Adresse">
-            <el-input v-model="form.address" placeholder="12 rue de la Paix, 75001 Paris" />
-          </el-form-item>
+          <AddressFields v-model="form" />
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="Téléphone">
@@ -222,7 +263,7 @@ async function submitRequest() {
           </div>
           <div class="info-row">
             <span class="info-label">Adresse</span
-            ><span class="info-value">{{ clinic.address }}</span>
+            ><span class="info-value">{{ formatAddress(clinic) }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">SIRET</span><span class="info-value">{{ clinic.siret }}</span>
@@ -241,29 +282,20 @@ async function submitRequest() {
             <span class="info-label">Description</span
             ><span class="info-value">{{ clinic.description }}</span>
           </div>
-          <div v-if="clinic.openingHours" class="info-row">
-            <span class="info-label">Horaires</span>
-            <span class="info-value" style="white-space: pre-line">{{ clinic.openingHours }}</span>
-          </div>
         </div>
       </template>
 
       <template v-else>
         <el-form label-position="top">
           <el-form-item label="Nom"><el-input v-model="editClinic.name" /></el-form-item>
-          <el-form-item label="Adresse"><el-input v-model="editClinic.address" /></el-form-item>
+          <AddressFields v-model="editClinic" />
           <el-form-item label="Téléphone"><el-input v-model="editClinic.phone" /></el-form-item>
           <el-form-item label="Site web"><el-input v-model="editClinic.website" /></el-form-item>
           <el-form-item label="Description">
             <el-input v-model="editClinic.description" type="textarea" :rows="3" />
           </el-form-item>
           <el-form-item label="Horaires d'ouverture">
-            <el-input
-              v-model="editClinic.openingHours"
-              type="textarea"
-              :rows="4"
-              placeholder="Ex: Lun-Ven: 9h-19h&#10;Sam: 9h-13h&#10;Dim: Fermé"
-            />
+            <OpeningHoursEditor v-model="editClinic.openingHours" />
           </el-form-item>
           <div style="display: flex; gap: 12px">
             <el-button @click="editMode = false">Annuler</el-button>
@@ -271,6 +303,15 @@ async function submitRequest() {
           </div>
         </el-form>
       </template>
+    </div>
+
+    <div v-if="status === 'APPROVED' && clinic" class="card" style="margin-top: 20px">
+      <h2 class="section-title">Spécialités de la clinique</h2>
+      <ClinicSpecialities
+        api-prefix="director"
+        :linked="clinic.speciality ?? []"
+        @change="loadClinic"
+      />
     </div>
   </div>
 </template>

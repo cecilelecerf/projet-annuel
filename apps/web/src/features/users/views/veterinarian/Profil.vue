@@ -5,6 +5,7 @@ import { ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import DeleteAccountDialog from '@/components/profile/DeleteAccountDialog.vue'
 import EditAccountDialog from '@/components/profile/EditAccountDialog.vue'
+import { formatAddress, formatOpeningHours, type OpeningHoursDay } from '@/utils/clinic.utils'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -14,11 +15,14 @@ const user = authStore.user
 
 interface ClinicData {
   name: string
-  address: string
+  street: string
+  postalCode: string
+  city: string
+  country: string
   phone: string
   website: string
   description?: string | null
-  openingHours?: string | null
+  openingHours?: OpeningHoursDay[] | null
 }
 interface StaffMember {
   id: string
@@ -117,7 +121,7 @@ async function handleLogout() {
         </div>
         <div class="info-row">
           <span class="info-label">Adresse</span
-          ><span class="info-value">{{ clinic.address }}</span>
+          ><span class="info-value">{{ formatAddress(clinic) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Téléphone</span
@@ -133,9 +137,11 @@ async function handleLogout() {
           <span class="info-label">Description</span
           ><span class="info-value">{{ clinic.description }}</span>
         </div>
-        <div v-if="clinic.openingHours" class="info-row">
+        <div v-if="clinic.openingHours?.length" class="info-row">
           <span class="info-label">Horaires</span>
-          <span class="info-value" style="white-space: pre-line">{{ clinic.openingHours }}</span>
+          <span class="info-value" style="white-space: pre-line">{{
+            formatOpeningHours(clinic.openingHours)
+          }}</span>
         </div>
       </div>
     </div>

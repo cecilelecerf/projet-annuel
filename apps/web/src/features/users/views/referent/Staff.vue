@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
 
 const notify = useNotify()
+const router = useRouter()
 
 interface StaffMember {
   id: string
   firstname: string
   lastname: string
   email: string
-  role: 'VETERINARIAN' | 'SECRETARY'
+  role: 'REFERANT' | 'VETERINARIAN' | 'SECRETARY'
   licenseNumber?: string
 }
+
+const DELETABLE_ROLES = ['VETERINARIAN', 'SECRETARY']
 
 interface StaffList {
   director: StaffMember | null
@@ -46,6 +50,20 @@ async function loadStaff() {
 }
 
 onMounted(loadStaff)
+
+function goToDetail(member: StaffMember) {
+  router.push({ name: 'Referent.Staff.Detail', params: { id: member.id } })
+}
+
+async function deleteMember(member: StaffMember) {
+  try {
+    await http.delete(`/referent/staff/${member.id}`)
+    notify.success('Compte supprimé')
+    await loadStaff()
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la suppression')
+  }
+}
 
 const activeTab = ref<'veterinarian' | 'secretary'>('veterinarian')
 
@@ -129,6 +147,7 @@ async function submitSecretary() {
           ]"
           :key="member.id"
           class="staff-item"
+          @click="goToDetail(member)"
         >
           <div class="staff-avatar">{{ member.firstname[0] }}{{ member.lastname[0] }}</div>
           <div class="staff-info">
@@ -138,6 +157,17 @@ async function submitSecretary() {
           <el-tag :type="roleTag[member.role] as any" size="small">{{
             roleLabel[member.role]
           }}</el-tag>
+          <el-popconfirm
+            v-if="DELETABLE_ROLES.includes(member.role)"
+            title="Supprimer ce compte ?"
+            @confirm="deleteMember(member)"
+          >
+            <template #reference>
+              <el-button size="small" type="danger" text @click.stop
+                >Supprimer</el-button
+              >
+            </template>
+          </el-popconfirm>
         </div>
       </div>
     </div>
@@ -292,6 +322,7 @@ async function submitSecretary() {
   gap: 12px;
   padding: 8px 0;
   border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
 }
 .staff-item:last-child {
   border-bottom: none;

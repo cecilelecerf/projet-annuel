@@ -6,34 +6,61 @@ import {
   specialityIdSchema,
 } from "./ids";
 
+// ── Adresse ───────────────────────────────────────────────────────────────────
+export const clinicAddressSchema = z.object({
+  street: z.string().min(1, "Rue requise").max(255),
+  postalCode: z.string().regex(/^\d{5}$/, "Code postal invalide (5 chiffres)"),
+  city: z.string().min(1, "Ville requise").max(255),
+  country: z.string().min(1).max(255).default("FR"),
+});
+
+// ── Horaires d'ouverture ───────────────────────────────────────────────────────
+const timeStringSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Heure invalide (HH:mm)");
+
+export const openingHoursDaySchema = z.object({
+  dayOfWeek: z.number().int().min(0).max(6),
+  openTime: timeStringSchema,
+  closeTime: timeStringSchema,
+  closed: z.boolean().default(false),
+});
+
+export const openingHoursSchema = z.array(openingHoursDaySchema).length(7);
+
+export type ClinicAddress = z.infer<typeof clinicAddressSchema>;
+export type OpeningHoursDay = z.infer<typeof openingHoursDaySchema>;
+export type OpeningHours = z.infer<typeof openingHoursSchema>;
+
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
   id: clinicIdSchema,
   name: z.string().min(1, "Nom requis"),
-  address: z.string().min(1, "Adresse requise"),
   siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
   phone: z.string().min(10, "Téléphone invalide"),
   website: z.string().min(1, "Site web requis"),
   description: z.string().max(500).nullable().optional(),
-  openingHours: z.string().max(500).nullable().optional(),
-});
+  openingHours: openingHoursSchema.nullable().optional(),
+}).extend(clinicAddressSchema.shape);
 
 export const createClinicSchema = clinicSchema.omit({ id: true });
 export const updateClinicSchema = createClinicSchema.partial();
 
-export const updateClinicReferentSchema = z.object({
-  address: z.string().min(1, "Adresse requise").optional(),
-  openingHours: z.string().max(500).optional(),
-});
+export const updateClinicReferentSchema = clinicAddressSchema
+  .partial()
+  .extend({
+    openingHours: openingHoursSchema.optional(),
+  });
 
-export const createClinicRequestSchema = z.object({
-  name: z.string().min(1, "Nom requis"),
-  address: z.string().min(1, "Adresse requise"),
-  siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
-  phone: z.string().min(10, "Téléphone invalide"),
-  website: z.string().min(1, "Site web requis"),
-  description: z.string().max(500).optional(),
-});
+export const createClinicRequestSchema = z
+  .object({
+    name: z.string().min(1, "Nom requis"),
+    siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+    phone: z.string().min(10, "Téléphone invalide"),
+    website: z.string().min(1, "Site web requis"),
+    description: z.string().max(500).optional(),
+  })
+  .extend(clinicAddressSchema.shape);
 
 export type Clinic = z.infer<typeof clinicSchema>;
 export type CreateClinic = z.infer<typeof createClinicSchema>;

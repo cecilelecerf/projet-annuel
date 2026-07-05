@@ -217,6 +217,29 @@ export class MeetingService {
     return this.expandAll(flat, start, end);
   }
 
+  async getAnimalMeetingsByClinic(
+    clinicId: string,
+    start: Date,
+    end: Date,
+  ): Promise<FlatMeeting[]> {
+    const meetings = await meetingRepository.getAnimalMeetingsByClinic(
+      clinicId,
+      start,
+      end,
+    );
+    const flat = meetings.flatMap(
+      ({
+        recurring,
+        meeting,
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
+    );
+    return this.expandAll(flat, start, end);
+  }
+
   async getAnimalMeetingsAsClient(
     clientProfileId: string,
     start: Date,

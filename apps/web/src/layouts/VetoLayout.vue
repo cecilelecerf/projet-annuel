@@ -15,15 +15,7 @@ const menuItems: MenuItem[] = [
     label: 'Agenda',
     icon: Calendar,
   },
-  {
-    index: 'animaux',
-    label: 'Animaux',
-    icon: '🐻',
-    children: [
-      { index: 'Veto.Animaux.MesAnimaux', label: 'Mes animaux' },
-      { index: 'Veto.Animaux.Derniers', label: 'Derniers traités' },
-    ],
-  },
+  // "Animaux" retiré : pages "Mes animaux" / "Derniers traités" pas encore implémentées
   {
     index: 'Veto.Messagerie',
     label: 'Messagerie',

@@ -70,6 +70,25 @@ export class MeetingRepository {
       },
     });
   }
+  async getAnimalMeetingsByClinic(clinicId: string, start: Date, end: Date) {
+    return prisma.animalMeeting.findMany({
+      where: { veterinarianClinic: { clinicId } },
+      include: {
+        recurring: {
+          where: recurringFilter(start, end),
+          include: recurringWithChildren(start, end),
+        },
+        meeting: {
+          where: {
+            ...baseFilter(start, end),
+            parentId: null,
+          },
+          include: { animalMeeting: true },
+        },
+      },
+    });
+  }
+
   async getAnimalMeetingsAsClient(
     clientProfileId: string,
     start: Date,

@@ -5,6 +5,7 @@ import {
   Login,
   Register,
   UpdateAccount,
+  RegisterDirectorSchema,
 } from "@armali/schemas";
 import {
   generateAccessToken,
@@ -20,7 +21,6 @@ import {
   UnauthorizedError,
 } from "@api/errors";
 import { EmailService } from "@api/emails/email.service";
-import type { RegisterDirector } from "@api/types/auth.types";
 
 const emailService = new EmailService();
 
@@ -81,7 +81,7 @@ export class AuthService {
     return { user: userWithoutPassword, accessToken, refreshToken };
   }
 
-  async registerDirector(data: RegisterDirector) {
+  async registerDirector(data: RegisterDirectorSchema) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -119,7 +119,10 @@ export class AuthService {
       await tx.clinicCreationRequest.create({
         data: {
           name: clinic.name,
-          address: clinic.address,
+          street: clinic.street,
+          postalCode: clinic.postalCode,
+          city: clinic.city,
+          country: clinic.country,
           siret: clinic.siret,
           phone: clinic.phone,
           website: clinic.website,

@@ -86,7 +86,27 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
   const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(data?.error ?? data?.message ?? 'Erreur serveur')
+    // Le middleware `validate` renvoie déjà { message, errors: Record<string,string[]> }
+    // Le handler d'erreurs global renvoie { error, issues: ZodIssue[] } pour les ZodError non interceptées
+    const fieldErrors: Record<string, string[]> | undefined =
+      data?.errors && typeof data.errors === 'object'
+        ? data.errors
+        : Array.isArray(data?.issues)
+          ? data.issues.reduce(
+              (acc: Record<string, string[]>, issue: { path: (string | number)[]; message: string }) => {
+                const key = issue.path.join('.') || '_'
+                acc[key] = [...(acc[key] ?? []), issue.message]
+                return acc
+              },
+              {},
+            )
+          : undefined
+
+    const detail = fieldErrors ? Object.values(fieldErrors).flat().join(' — ') : undefined
+    const baseMessage = data?.error ?? data?.message ?? 'Erreur serveur'
+    const message = detail ? `${baseMessage} : ${detail}` : baseMessage
+
+    throw new ApiError(response.status, message, fieldErrors)
   }
 
   return data as T

@@ -8,6 +8,13 @@ const animalMedicalHistoryRouter: Router = Router();
 const controller = new AnimalMedicalHistoryController();
 
 animalMedicalHistoryRouter.get(
+  "/meeting/:meetingId",
+  authMiddleware,
+  roleMiddleware(STAFF_ROLES),
+  controller.getByMeeting.bind(controller) as RequestHandler,
+);
+
+animalMedicalHistoryRouter.get(
   "/:id",
   authMiddleware,
   roleMiddleware(STAFF_ROLES),

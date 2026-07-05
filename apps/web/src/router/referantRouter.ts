@@ -18,9 +18,19 @@ export const referantRouter: RouteRecordRaw[] = [
         component: () => import('@/features/users/views/referent/Staff.vue'),
       },
       {
+        path: 'staff/:id',
+        name: 'Referent.Staff.Detail',
+        component: () => import('@/features/users/views/AccountDetail.vue'),
+      },
+      {
         path: 'clinic',
         name: 'Referent.Clinic',
         component: () => import('@/features/users/views/referent/Clinic.vue'),
+      },
+      {
+        path: 'previsions',
+        name: 'Referent.VisitsForecast',
+        component: () => import('@/features/users/views/referent/VisitsForecast.vue'),
       },
 
       // ── Administration & Configuration ────────────────────────

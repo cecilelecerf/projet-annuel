@@ -2,7 +2,14 @@
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, User, UserFilled, OfficeBuilding, ChatDotRound } from '@element-plus/icons-vue'
+import {
+  House,
+  User,
+  UserFilled,
+  OfficeBuilding,
+  ChatDotRound,
+  TrendCharts,
+} from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
@@ -19,6 +26,11 @@ const menuItems: MenuItem[] = [
     index: 'Director.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
+  },
+  {
+    index: 'Director.Analytics',
+    label: 'Statistiques',
+    icon: TrendCharts,
   },
   {
     index: 'Director.Messagerie',

@@ -2,29 +2,52 @@
 import { reactive, ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import AddressFields from '@/components/AddressFields.vue'
+import OpeningHoursEditor from '@/components/OpeningHoursEditor.vue'
+import ClinicSpecialities from '@/components/ClinicSpecialities.vue'
+import { formatAddress, defaultOpeningHours, type OpeningHoursDay } from '@/utils/clinic.utils'
 
 const notify = useNotify()
+
+interface Speciality {
+  id: string
+  name: string
+  description: string
+}
 
 interface Clinic {
   id: string
   name: string
-  address: string
+  street: string
+  postalCode: string
+  city: string
+  country: string
   phone: string
   website: string
   description?: string
-  openingHours?: string
+  openingHours?: OpeningHoursDay[] | null
+  speciality?: Speciality[]
 }
 
 const clinic = ref<Clinic | null>(null)
-const form = reactive({ address: '', openingHours: '' })
+const form = reactive({
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
+  openingHours: defaultOpeningHours(),
+})
 const loading = ref(false)
 
 async function loadClinic() {
   try {
     const data = await http.get<Clinic>('/clinics/me')
     clinic.value = data
-    form.address = data.address ?? ''
-    form.openingHours = data.openingHours ?? ''
+    form.street = data.street ?? ''
+    form.postalCode = data.postalCode ?? ''
+    form.city = data.city ?? ''
+    form.country = data.country ?? 'FR'
+    form.openingHours = data.openingHours?.length ? data.openingHours : defaultOpeningHours()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Impossible de charger la clinique')
   }
@@ -54,31 +77,34 @@ onMounted(loadClinic)
     </div>
 
     <div class="form-card">
-      <h2>Modifier les informations</h2>
+      <h2>Adresse</h2>
       <el-form label-position="top" @submit.prevent="save">
-        <el-form-item label="Adresse">
-          <el-input v-model="form.address" placeholder="12 rue de la Paix, 75001 Paris" />
-        </el-form-item>
-        <el-form-item label="Horaires d'ouverture">
-          <el-input
-            v-model="form.openingHours"
-            type="textarea"
-            :rows="4"
-            placeholder="Lundi - Vendredi : 9h00 - 19h00&#10;Samedi : 9h00 - 13h00&#10;Dimanche : Fermé"
-          />
-        </el-form-item>
-        <el-button type="primary" native-type="submit" :loading="loading"> Enregistrer </el-button>
+        <AddressFields v-model="form" />
       </el-form>
+
+      <h2>Horaires d'ouverture</h2>
+      <OpeningHoursEditor v-model="form.openingHours" />
+
+      <el-button type="primary" :loading="loading" style="margin-top: 20px" @click="save">
+        Enregistrer
+      </el-button>
     </div>
 
     <div v-if="clinic" class="info-card">
       <h2>Informations actuelles</h2>
-      <p><strong>Adresse :</strong> {{ clinic.address }}</p>
-      <p v-if="clinic.openingHours">
-        <strong>Horaires :</strong><br />
-        <span style="white-space: pre-line">{{ clinic.openingHours }}</span>
+      <p>
+        <strong>Adresse :</strong>
+        {{ formatAddress(clinic) }}
       </p>
-      <p v-else style="color: #6b7280">Aucun horaire renseigné</p>
+    </div>
+
+    <div v-if="clinic" class="form-card">
+      <h2>Spécialités de la clinique</h2>
+      <ClinicSpecialities
+        api-prefix="referent"
+        :linked="clinic.speciality ?? []"
+        @change="loadClinic"
+      />
     </div>
   </div>
 </template>

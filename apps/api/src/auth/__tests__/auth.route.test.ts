@@ -153,7 +153,10 @@ describe("POST /api/auth/register-director", () => {
     lastname: "Directeur",
     clinic: {
       name: "Clinique Vétérinaire du Centre",
-      address: "12 rue de la Paix, 75001 Paris",
+      street: "12 rue de la Paix",
+      postalCode: "75001",
+      city: "Paris",
+      country: "FR",
       siret,
       phone: "0102030405",
       website: "https://clinique-centre.fr",
@@ -220,12 +223,13 @@ describe("POST /api/auth/register-director", () => {
     await getPrisma().clinic.create({
       data: {
         name: "Clinique existante",
-        address: "1 rue Test",
+        street: "1 rue Test",
+        postalCode: "75001",
+        city: "Paris",
         siret,
         phone: "0102030405",
         website: "https://existant.fr",
         description: null,
-        openingHours: "09:00",
       },
     });
 

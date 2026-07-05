@@ -4,27 +4,29 @@ import { BadRequestError, NotFoundError } from "@api/errors";
 
 export class ClinicService {
   async getMyClinic(userId: string) {
+    const clinicInclude = { speciality: true } as const;
+
     const director = await prisma.directorClinicProfile.findUnique({
       where: { id: userId },
-      include: { clinic: true },
+      include: { clinic: { include: clinicInclude } },
     });
     if (director) return director.clinic;
 
     const referent = await prisma.referentClinicProfile.findUnique({
       where: { id: userId },
-      include: { clinic: true },
+      include: { clinic: { include: clinicInclude } },
     });
     if (referent) return referent.clinic;
 
     const vetClinic = await prisma.veterinarianClinic.findFirst({
       where: { veterinarianId: userId },
-      include: { clinic: true },
+      include: { clinic: { include: clinicInclude } },
     });
     if (vetClinic) return vetClinic.clinic;
 
     const secretary = await prisma.secretaryProfile.findUnique({
       where: { id: userId },
-      include: { clinic: true },
+      include: { clinic: { include: clinicInclude } },
     });
     if (secretary) return secretary.clinic;
 

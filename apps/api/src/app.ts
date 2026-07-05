@@ -17,6 +17,7 @@ import animalRouter from "./animals/animal.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
 import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
 import messagingRouter from "./messaging/messaging.router";
+import specialityRouter from "./specialities/speciality.route";
 
 collectDefaultMetrics();
 
@@ -63,4 +64,5 @@ app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/medical-histories", animalMedicalHistoryRouter);
 app.use("/api/acts", actRouter);
 app.use("/api/conversations", messagingRouter);
+app.use("/api/specialities", specialityRouter);
 app.use(errorHandler);

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 import { calendarApi } from '../api/calendar.api'
 import { Plus } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useFormErrorStore } from '@/stores/formErrorStore'
 
 dayjs.locale('fr')
 
@@ -16,7 +18,7 @@ const { meetingId, date } = defineProps<{
 const emit = defineEmits<{ close: []; delete: [] }>()
 const { user } = useAuthStore()
 const router = useRouter()
-const isEditing = ref(false)
+const formErrorStore = useFormErrorStore()
 const meeting = await calendarApi.get(meetingId, date ? date.toISOString() : undefined)
 
 const dateLabel = computed(() => {
@@ -38,9 +40,24 @@ const goToDetail = () => {
     `/${user?.role.toLowerCase()}/meetings/${meeting.id}${date ? `?date=${date.toISOString()}` : ''}`,
   )
 }
-const onEdit = () => {}
-const onDelete = () => {
-  emit('delete')
+
+const onDelete = async () => {
+  try {
+    await ElMessageBox.confirm('Cette action est irréversible.', 'Supprimer cet événement ?', {
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  try {
+    await calendarApi.delete(meeting.id)
+    emit('delete')
+  } catch (err) {
+    formErrorStore.handle(err)
+  }
 }
 </script>
 
@@ -89,40 +106,20 @@ const onDelete = () => {
         <p v-if="meeting.description" class="popup-description">{{ meeting.description }}</p>
       </template>
 
-      <!-- Mode lecture -->
-      <template v-if="!isEditing">
-        <div class="popup-actions">
-          <el-row>
-            <el-button @click="isEditing = true" plain>Modifier</el-button>
-            <el-button type="danger" @click="onDelete" plain>Supprimer</el-button>
-          </el-row>
-          <el-button
-            @click="goToDetail"
-            type="primary"
-            :color="meeting.kind === 'ANIMAL' ? 'var(--el-color-teal)' : ' var(--el-color-purple)'"
-          >
-            <el-icon><Plus /></el-icon>
-            Voir plus
-          </el-button>
-        </div>
-      </template>
-
-      <!-- Mode édition -->
-      <template v-else>
-        <div class="edit-row">
-          <span>Le</span>
-          <el-date-picker size="small" type="date" format="dddd D MMMM" style="width: 160px" />
-          <span>de</span>
-          <el-time-picker size="small" style="width: 100px" />
-          <span>à</span>
-          <el-time-picker size="small" style="width: 100px" />
-        </div>
-
-        <div class="popup-actions">
-          <el-button type="primary" @click="onEdit">Enregistrer</el-button>
-          <el-button @click="isEditing = false">Annuler</el-button>
-        </div>
-      </template>
+      <div class="popup-actions">
+        <el-row>
+          <el-button @click="goToDetail" plain>Modifier</el-button>
+          <el-button type="danger" @click="onDelete" plain>Supprimer</el-button>
+        </el-row>
+        <el-button
+          @click="goToDetail"
+          type="primary"
+          :color="meeting.kind === 'ANIMAL' ? 'var(--el-color-teal)' : ' var(--el-color-purple)'"
+        >
+          <el-icon><Plus /></el-icon>
+          Voir plus
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -217,16 +214,6 @@ const onDelete = () => {
   &:first-child {
     margin-left: 0;
   }
-}
-
-// ── Edit row ──────────────────────────────────────────────────────────────────
-.edit-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────

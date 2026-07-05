@@ -26,7 +26,7 @@ const date = ref<Date>(initialDate ?? new Date())
 const start = ref(initialDate ? dayjs(initialDate).format('HH:mm:ss') : '')
 const end = ref(initialDate ? dayjs(initialDate).add(1, 'hour').format('HH:mm:ss') : '')
 
-const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>>('INTERNAL')
+const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL' | 'AVAILABILITY'>>('INTERNAL')
 const title = ref('')
 
 const location = ref('')
@@ -56,13 +56,14 @@ watch(
 
       clients.value = clientsData
       vets.value = vetsData
-    } else {
+    } else if (t === 'INTERNAL') {
       staffs.value = await usersApi.getUsersByRole(['STAFF'])
     }
   },
   { immediate: true },
 )
 const isVetLocked = computed(() => !!veterinarian)
+const canDeclareAvailability = computed(() => !veterinarian && !!authStore.user?.clinicId)
 
 const handleSubmit = async () => {
   formErrorStore.clear()
@@ -81,7 +82,7 @@ const handleSubmit = async () => {
         endTime: new Date(`1970-01-01T${end.value}`),
         clinicId: authStore.user?.clinicId,
       })
-    } else {
+    } else if (type.value === 'ANIMAL') {
       if (!selectedVet.value || !selectedClient.value || !selectAnimal.value) return
       await calendarApi.animal.new({
         date: date.value,
@@ -89,6 +90,12 @@ const handleSubmit = async () => {
         endTime: new Date(`1970-01-01T${end.value}`),
         veterinarianId: selectedVet.value.id,
         animalId: selectAnimal.value?.id,
+      })
+    } else {
+      await calendarApi.availability.new({
+        date: date.value,
+        startTime: new Date(`1970-01-01T${start.value}`),
+        endTime: new Date(`1970-01-01T${end.value}`),
       })
     }
     emit('close')
@@ -103,7 +110,14 @@ const handleSubmit = async () => {
     <!-- Header -->
     <div class="drawer-header">
       <div class="header-left">
-        <div class="type-dot" :class="type === 'INTERNAL' ? 'dot-internal' : 'dot-animal'" />
+        <div
+          class="type-dot"
+          :class="{
+            'dot-internal': type === 'INTERNAL',
+            'dot-animal': type === 'ANIMAL',
+            'dot-availability': type === 'AVAILABILITY',
+          }"
+        />
         <h3>Nouvel événement</h3>
       </div>
       <el-icon class="close-btn" @click="$emit('close')">
@@ -129,10 +143,27 @@ const handleSubmit = async () => {
         <el-icon><FirstAidKit /></el-icon>
         Rendez-vous
       </button>
+      <button
+        v-if="canDeclareAvailability"
+        class="type-btn"
+        :class="{ active: type === 'AVAILABILITY', 'type-availability': type === 'AVAILABILITY' }"
+        @click="type = 'AVAILABILITY'"
+      >
+        <el-icon><Clock /></el-icon>
+        Disponibilité
+      </button>
     </div>
 
     <!-- Form -->
     <div class="form">
+      <!-- AVAILABILITY : simple créneau -->
+      <template v-if="type === 'AVAILABILITY'">
+        <p class="availability-hint">
+          Déclarez un créneau où vous êtes disponible pour recevoir des rendez-vous. La secrétaire
+          ne peut réserver un rendez-vous que sur un créneau où vous êtes déclaré disponible.
+        </p>
+      </template>
+
       <!-- ANIMAL : animal + client -->
       <template v-if="type === 'ANIMAL'">
         <SearchSelectSingle
@@ -267,6 +298,9 @@ const handleSubmit = async () => {
   &.dot-animal {
     background-color: var(--el-color-teal);
   }
+  &.dot-availability {
+    background-color: var(--el-color-amber);
+  }
 }
 
 .close-btn {
@@ -313,6 +347,10 @@ const handleSubmit = async () => {
     border-color: var(--el-color-teal-dark);
     color: var(--el-color-teal-dark);
   }
+  &:hover.type-availability {
+    border-color: var(--el-color-amber-dark);
+    color: var(--el-color-amber-dark);
+  }
 
   &.active.type-internal {
     background: var(--el-color-purple-light);
@@ -327,6 +365,23 @@ const handleSubmit = async () => {
     color: var(--el-color-teal-dark);
     font-weight: var(--fw-semibold);
   }
+
+  &.active.type-availability {
+    background: var(--el-color-amber-light);
+    border-color: var(--el-color-amber);
+    color: var(--el-color-amber-dark);
+    font-weight: var(--fw-semibold);
+  }
+}
+
+.availability-hint {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin: 0;
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────────

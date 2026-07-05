@@ -28,6 +28,8 @@ interface StaffList {
 
 const staff = ref<StaffList>({ director: null, referents: [], veterinarians: [], secretaries: [] })
 
+const DELETABLE_ROLES = ['REFERANT', 'VETERINARIAN', 'SECRETARY']
+
 const roleLabel: Record<string, string> = {
   DIRECTOR: 'Directeur',
   REFERANT: 'Référent',
@@ -47,6 +49,20 @@ async function loadStaff() {
     staff.value = await http.get('/director/staff')
   } catch {
     // clinique pas encore approuvée
+  }
+}
+
+function goToDetail(member: StaffMember) {
+  router.push({ name: 'Director.Staff.Detail', params: { id: member.id } })
+}
+
+async function deleteMember(member: StaffMember) {
+  try {
+    await http.delete(`/director/staff/${member.id}`)
+    notify.success('Compte supprimé')
+    await loadStaff()
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la suppression')
   }
 }
 
@@ -180,6 +196,7 @@ async function submitSecretary() {
             ]"
             :key="member.id"
             class="staff-item"
+            @click="goToDetail(member)"
           >
             <div class="staff-avatar">{{ member.firstname[0] }}{{ member.lastname[0] }}</div>
             <div class="staff-info">
@@ -189,6 +206,15 @@ async function submitSecretary() {
             <el-tag :type="roleTag[member.role] as any" size="small">{{
               roleLabel[member.role]
             }}</el-tag>
+            <el-popconfirm
+              v-if="DELETABLE_ROLES.includes(member.role)"
+              title="Supprimer ce compte ?"
+              @confirm="deleteMember(member)"
+            >
+              <template #reference>
+                <el-button size="small" type="danger" text @click.stop>Supprimer</el-button>
+              </template>
+            </el-popconfirm>
           </div>
         </div>
       </div>
@@ -406,6 +432,7 @@ async function submitSecretary() {
   align-items: center;
   gap: 12px;
   padding: 8px 0;
+  cursor: pointer;
   border-bottom: 1px solid #f3f4f6;
 }
 .staff-item:last-child {

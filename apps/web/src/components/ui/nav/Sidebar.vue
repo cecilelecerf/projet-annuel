@@ -21,6 +21,11 @@ defineProps<{ menuItems: MenuItem[] }>()
 const activeMenu = computed(() => route.name as string)
 
 const handleMenuSelect = (index: string) => {
+  const resolved = router.resolve({ name: index })
+  if (resolved.matched.length === 0) {
+    console.warn(`Sidebar: aucune route nommée "${index}" — fonctionnalité pas encore disponible`)
+    return
+  }
   router.push({ name: index })
 }
 </script>

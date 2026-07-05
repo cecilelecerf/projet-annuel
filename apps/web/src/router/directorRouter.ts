@@ -23,9 +23,19 @@ export const directorRouter: RouteRecordRaw[] = [
         component: () => import('@/features/users/views/director/Staff.vue'),
       },
       {
+        path: 'staff/:id',
+        name: 'Director.Staff.Detail',
+        component: () => import('@/features/users/views/AccountDetail.vue'),
+      },
+      {
         path: 'clinique',
         name: 'Director.Clinic',
         component: () => import('@/features/users/views/director/Clinic.vue'),
+      },
+      {
+        path: 'statistiques',
+        name: 'Director.Analytics',
+        component: () => import('@/features/users/views/director/Analytics.vue'),
       },
       // ── Administration & Configuration ────────────────────────
       // {

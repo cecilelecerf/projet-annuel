@@ -4,6 +4,9 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
+import { calendarApi } from '../api/calendar.api'
+import { useFormErrorStore } from '@/stores/formErrorStore'
 
 dayjs.locale('fr')
 
@@ -11,6 +14,7 @@ const { meeting } = defineProps<{
   meeting: InternalMeetingMeta
 }>()
 const router = useRouter()
+const formErrorStore = useFormErrorStore()
 
 const isEditing = ref(false)
 const editTitle = ref(meeting.title)
@@ -39,13 +43,36 @@ const statusLabel = (status: string) => {
 }
 
 const onSave = async () => {
-  // TODO: appel API update
-  isEditing.value = false
+  try {
+    await calendarApi.internal.update(meeting.id, {
+      title: editTitle.value,
+      description: editDescription.value,
+      startTime: new Date(`1970-01-01T${editStart.value}`),
+      endTime: new Date(`1970-01-01T${editEnd.value}`),
+    })
+    isEditing.value = false
+  } catch (err) {
+    formErrorStore.handle(err)
+  }
 }
 
 const onDelete = async () => {
-  // TODO: appel API delete
-  router.back()
+  try {
+    await ElMessageBox.confirm('Cette action est irréversible.', 'Supprimer la réunion ?', {
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+
+  try {
+    await calendarApi.delete(meeting.id)
+    router.back()
+  } catch (err) {
+    formErrorStore.handle(err)
+  }
 }
 </script>
 

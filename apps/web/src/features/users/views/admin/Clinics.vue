@@ -2,13 +2,17 @@
 import { ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import { formatAddress } from '@/utils/clinic.utils'
 
 const notify = useNotify()
 
 interface ClinicRow {
   id: string
   name: string
-  address: string
+  street: string
+  postalCode: string
+  city: string
+  country: string
   siret: string
   phone: string
   website: string
@@ -66,7 +70,9 @@ onMounted(load)
 
     <el-table v-loading="loading" :data="clinics" stripe empty-text="Aucune clinique">
       <el-table-column prop="name" label="Nom" min-width="160" />
-      <el-table-column prop="address" label="Adresse" min-width="180" />
+      <el-table-column label="Adresse" min-width="180">
+        <template #default="{ row }">{{ formatAddress(row) }}</template>
+      </el-table-column>
       <el-table-column prop="siret" label="SIRET" width="150" />
       <el-table-column prop="phone" label="Téléphone" width="140" />
       <el-table-column label="Site web" min-width="160">

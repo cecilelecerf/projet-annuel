@@ -44,4 +44,32 @@ referentRouter.patch(
   controller.updateClinic.bind(controller),
 );
 
+referentRouter.post(
+  "/clinic/specialities/:specialityId",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.linkSpeciality.bind(controller),
+);
+
+referentRouter.delete(
+  "/clinic/specialities/:specialityId",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.unlinkSpeciality.bind(controller),
+);
+
+referentRouter.delete(
+  "/staff/:id",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.deleteStaffMember.bind(controller),
+);
+
+referentRouter.get(
+  "/analytics/visits-forecast",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.getVisitsForecast.bind(controller),
+);
+
 export default referentRouter;

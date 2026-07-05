@@ -1,11 +1,20 @@
 import { hash } from "bcryptjs";
 import { prisma } from "@api/lib/prisma";
-import { BadRequestError } from "@api/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import type {
   CreateVeterinarianStaff,
   CreateSecretaryStaff,
   UpdateClinicReferent,
 } from "@armali/schemas";
+import { UserRole } from "../../prisma/generated/prisma/enums";
+import { MeetingService } from "@api/meetings/meeting.service";
+import { computeVisitsForecast } from "./visits-forecast.util";
+
+const DELETABLE_ROLES: UserRole[] = ["VETERINARIAN", "SECRETARY"];
+const VISITS_WEEKS_HISTORY = 16;
+const VISITS_WEEKS_FORECAST = 4;
+
+const meetingService = new MeetingService();
 
 export class ReferentService {
   private async getClinicId(referentUserId: string): Promise<string> {
@@ -110,5 +119,68 @@ export class ReferentService {
       where: { id: clinicId },
       data,
     });
+  }
+
+  async linkSpeciality(referentUserId: string, specialityId: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+    return prisma.clinic.update({
+      where: { id: clinicId },
+      data: { speciality: { connect: { id: specialityId } } },
+      include: { speciality: true },
+    });
+  }
+
+  async unlinkSpeciality(referentUserId: string, specialityId: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+    return prisma.clinic.update({
+      where: { id: clinicId },
+      data: { speciality: { disconnect: { id: specialityId } } },
+      include: { speciality: true },
+    });
+  }
+
+  async deleteStaffMember(referentUserId: string, targetId: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+
+    const target = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!target) throw new NotFoundError("Utilisateur");
+    if (!DELETABLE_ROLES.includes(target.role)) throw new ForbiddenError();
+
+    let targetClinicId: string | undefined;
+    if (target.role === "SECRETARY") {
+      targetClinicId = (
+        await prisma.secretaryProfile.findUnique({ where: { id: targetId } })
+      )?.clinicId;
+    } else if (target.role === "VETERINARIAN") {
+      targetClinicId = (
+        await prisma.veterinarianClinic.findFirst({ where: { veterinarianId: targetId } })
+      )?.clinicId;
+    }
+
+    if (targetClinicId !== clinicId) throw new NotFoundError("Utilisateur");
+
+    await prisma.user.delete({ where: { id: targetId } });
+    return { message: "Compte supprimé" };
+  }
+
+  async getVisitsForecast(referentUserId: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+
+    const now = new Date();
+    const start = new Date(now);
+    start.setUTCDate(start.getUTCDate() - VISITS_WEEKS_HISTORY * 7);
+    const end = now;
+
+    const meetings = await meetingService.getAnimalMeetingsByClinic(
+      clinicId,
+      start,
+      end,
+    );
+
+    return computeVisitsForecast(
+      meetings.map((m) => new Date(m.date)),
+      VISITS_WEEKS_HISTORY,
+      VISITS_WEEKS_FORECAST,
+    );
   }
 }

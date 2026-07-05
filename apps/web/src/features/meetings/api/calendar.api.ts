@@ -12,12 +12,14 @@ import {
   type Calendar,
   type ClientId,
   type CreateAnimalMeeting,
+  type CreateAvailability,
   type CreateInternalMeeting,
   type Meeting,
   type MeetingId,
   type MeetingMeta,
   type AnimalId,
   type UpdateAnimalMeeting,
+  type UpdateInternalMeeting,
   type UserId,
   medicalHistorySchema,
 } from '@armali/schemas'
@@ -53,6 +55,15 @@ export const calendarApi = {
     get: async (meetingId: MeetingId) => {
       const data = await http.get(`/meetings/internal/${meetingId}`)
       return internalMeetingSchema.parse(data)
+    },
+    update: async (meetingId: MeetingId, meeting: UpdateInternalMeeting) => {
+      const data = await http.patch(`/meetings/internal/${meetingId}`, meeting)
+      return internalMeetingSchema.parse(data)
+    },
+  },
+  availability: {
+    new: async (availability: CreateAvailability) => {
+      await http.post(`/meetings/availabilities`, availability)
     },
   },
   animal: {

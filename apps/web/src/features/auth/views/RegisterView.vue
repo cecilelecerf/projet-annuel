@@ -5,6 +5,7 @@ import { useAuthStore, type UserStore } from '@/stores/authStore'
 import { http } from '@/lib/api'
 import { roleHomeMap } from '@/router/index'
 import { useNotify } from '@/composables/useNotify'
+import AddressFields from '@/components/AddressFields.vue'
 
 const notify = useNotify()
 
@@ -26,7 +27,10 @@ const form = ref({
 
 const clinic = ref({
   name: '',
-  address: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
   siret: '',
   phone: '',
   website: '',
@@ -57,7 +61,8 @@ function validateUserForm(): string | null {
 
 function validateClinicForm(): string | null {
   if (!clinic.value.name.trim()) return 'Le nom de la clinique est requis'
-  if (!clinic.value.address.trim()) return "L'adresse est requise"
+  if (!clinic.value.street.trim() || !clinic.value.postalCode.trim() || !clinic.value.city.trim())
+    return "L'adresse est requise"
   if (clinic.value.siret.replace(/\s/g, '').length !== 14)
     return 'Le SIRET doit contenir 14 chiffres'
   if (clinic.value.phone.replace(/\s/g, '').length < 10) return 'Téléphone invalide'
@@ -101,7 +106,10 @@ async function handleSubmit() {
         lastname: form.value.lastname,
         clinic: {
           name: clinic.value.name,
-          address: clinic.value.address,
+          street: clinic.value.street,
+          postalCode: clinic.value.postalCode,
+          city: clinic.value.city,
+          country: clinic.value.country,
           siret: clinic.value.siret.replace(/\s/g, ''),
           phone: clinic.value.phone.replace(/\s/g, ''),
           website: clinic.value.website,
@@ -224,13 +232,7 @@ async function handleSubmit() {
             />
           </el-form-item>
 
-          <el-form-item label="Adresse">
-            <el-input
-              v-model="clinic.address"
-              placeholder="12 rue de la Paix, 75001 Paris"
-              size="large"
-            />
-          </el-form-item>
+          <AddressFields v-model="clinic" size="large" />
 
           <div class="form-row">
             <el-form-item label="SIRET (14 chiffres)">

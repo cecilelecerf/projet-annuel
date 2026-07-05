@@ -75,4 +75,51 @@ export class DirectorController {
       next(err);
     }
   }
+
+  async linkSpeciality(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clinic = await directorService.linkSpeciality(
+        req.user!.id,
+        req.params.specialityId,
+      );
+      res.status(200).json(clinic);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async unlinkSpeciality(req: Request, res: Response, next: NextFunction) {
+    try {
+      const clinic = await directorService.unlinkSpeciality(
+        req.user!.id,
+        req.params.specialityId,
+      );
+      res.status(200).json(clinic);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteStaffMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await directorService.deleteStaffMember(
+        req.user!.id,
+        req.params.id,
+      );
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getAnalyticsOverview(req: Request, res: Response, next: NextFunction) {
+    try {
+      const overview = await directorService.getAnalyticsOverview(
+        req.user!.id,
+      );
+      res.status(200).json(overview);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -67,4 +67,32 @@ directorRouter.get(
   controller.getMyRequests.bind(controller),
 );
 
+directorRouter.post(
+  "/clinic/specialities/:specialityId",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR"]),
+  controller.linkSpeciality.bind(controller),
+);
+
+directorRouter.delete(
+  "/clinic/specialities/:specialityId",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR"]),
+  controller.unlinkSpeciality.bind(controller),
+);
+
+directorRouter.delete(
+  "/staff/:id",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR"]),
+  controller.deleteStaffMember.bind(controller),
+);
+
+directorRouter.get(
+  "/analytics/overview",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR"]),
+  controller.getAnalyticsOverview.bind(controller),
+);
+
 export default directorRouter;

@@ -20,11 +20,22 @@ export function useCalendar(userId?: UserId) {
   const dateSelect = ref<Date | null>(null)
   const openNewEvent = ref(false)
   const selectedMeeting = ref<{ id: string; isReccuring?: boolean; date: Date } | null>(null)
+  const lastRange = ref<{ startStr: string; endStr: string } | null>(null)
 
   const fetchMeetings = (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
     return calendarApi.getCalendar(start, end, userId)
+  }
+
+  const refetchEvents = async () => {
+    if (!lastRange.value) return
+    const meetings = await fetchMeetings(lastRange.value.startStr, lastRange.value.endStr)
+    calendarData.value = meetings
+    calendarOptions.value.events = calendarData.value!.meetings.map(toCalendarEvent)
+    calendarOptions.value.businessHours = availabilitiesToBusinessHours({
+      calendar: calendarData.value!,
+    })
   }
   const calendarOptions = ref<CalendarOptions>({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -72,13 +83,9 @@ export function useCalendar(userId?: UserId) {
       }
     },
     datesSet: async (info: DatesSetArg) => {
-      const meetings = await fetchMeetings(info.startStr, info.endStr)
-      calendarData.value = meetings
-      calendarOptions.value.events = calendarData.value!.meetings.map(toCalendarEvent)
-      calendarOptions.value.businessHours = availabilitiesToBusinessHours({
-        calendar: calendarData.value!,
-      })
+      lastRange.value = { startStr: info.startStr, endStr: info.endStr }
+      await refetchEvents()
     },
   })
-  return { calendarOptions, dateSelect, openNewEvent, selectedMeeting }
+  return { calendarOptions, dateSelect, openNewEvent, selectedMeeting, refetchEvents }
 }

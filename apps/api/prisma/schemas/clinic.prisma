@@ -21,6 +21,7 @@ model Clinic {
   internalMeetings       InternalMeeting[]
   clinicActs             ClinicAct[]
   availabilities         Availability[]
+  conversations          Conversation[]
 
   @@map("clinics")
 }

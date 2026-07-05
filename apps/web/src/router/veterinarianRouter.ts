@@ -113,37 +113,12 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       //   // Liste de tous les RDV avec infos sur véto, actions réalisées,
       //   // médicaments données, etc.
       // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'Veto.Messagerie',
-      //   //        component: () => import('@/views/veto/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'default-group',
-      //       name: 'Veto.Messagerie.DefaultGroup',
-      //       //            component: () => import('@/views/veto/messagerie/DefaultGroup.vue'),
-      //       // Groupe par défaut avec tous le personnel de la clinique (sauf directeur)
-      //     },
-      //     {
-      //       path: 'groupe',
-      //       name: 'Veto.Messagerie.Groupe',
-      //       //            component: () => import('@/views/veto/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'Veto.Messagerie.Privees',
-      //       //            component: () => import('@/views/veto/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'Veto.Messagerie.Conversation',
-      //       //            component: () => import('@/views/veto/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'Veto.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
       // // ── Profil ───────────────────────────────────────────────
       // {
       //   path: 'profil',

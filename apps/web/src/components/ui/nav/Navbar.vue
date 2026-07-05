@@ -5,8 +5,9 @@ import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import Sidebar, { type MenuItem } from './Sidebar.vue'
 import { getStringRole } from '@/utils/role.utils'
-import type { UserRole } from '@armali/schemas'
+import type { Conversation, ConversationId, UserRole } from '@armali/schemas'
 import { useNotify } from '@/composables/useNotify'
+import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
 
 const notify = useNotify()
 
@@ -16,6 +17,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
+const messagingStore = useMessagingStore()
 
 const profilRouteMap: Partial<Record<UserRole, string>> = {
   CLIENT: 'Client.Profil',
@@ -26,10 +28,35 @@ const profilRouteMap: Partial<Record<UserRole, string>> = {
   ADMIN: 'Admin.Profil',
 }
 
+const messagerieRouteMap: Partial<Record<UserRole, string>> = {
+  VETERINARIAN: 'Veto.Messagerie',
+  SECRETARY: 'Secretary.Messagerie',
+  DIRECTOR: 'Director.Messagerie',
+  REFERANT: 'Referent.Messagerie',
+}
+
 const profilRoute = computed(() => {
   const role = user.value?.role
   return role ? profilRouteMap[role] : undefined
 })
+
+const unreadConversations = computed(() =>
+  messagingStore.sortedConversations.filter((c) => (c.unreadCount ?? 0) > 0).slice(0, 5),
+)
+
+function conversationTitle(conversation: Conversation) {
+  if (conversation.type === 'GROUP') return conversation.name ?? 'Groupe'
+  const other = conversation.conversationMembers?.find((m) => m.userId !== user.value?.id)
+  return other?.user ? `${other.user.firstname} ${other.user.lastname}` : 'Conversation'
+}
+
+function goToConversation(conversationId: ConversationId) {
+  const role = user.value?.role
+  const routeName = role ? messagerieRouteMap[role] : undefined
+  if (!routeName) return
+  messagingStore.openConversation(conversationId)
+  router.push({ name: routeName })
+}
 
 const userInitials = computed(() => {
   if (!user.value) return '?'
@@ -50,11 +77,38 @@ const handleLogout = async () => {
       <h1 class="navbar__title">Espace {{ user && getStringRole(user.role) }}</h1>
     </div>
     <div class="navbar__right">
-      <el-badge :value="3" class="navbar__badge">
-        <el-button circle plain>
-          <el-icon><Bell /></el-icon>
-        </el-button>
-      </el-badge>
+      <el-dropdown trigger="click" placement="bottom-end">
+        <el-badge
+          :value="messagingStore.totalUnread"
+          :hidden="messagingStore.totalUnread === 0"
+          class="navbar__badge"
+        >
+          <el-button circle plain>
+            <el-icon><Bell /></el-icon>
+          </el-button>
+        </el-badge>
+
+        <template #dropdown>
+          <el-dropdown-menu class="navbar__notifications">
+            <el-dropdown-item v-if="unreadConversations.length === 0" disabled>
+              Aucune nouvelle notification
+            </el-dropdown-item>
+            <el-dropdown-item
+              v-for="conversation in unreadConversations"
+              :key="conversation.id"
+              @click="goToConversation(conversation.id)"
+            >
+              <div class="navbar__notif-item">
+                <div class="navbar__notif-top">
+                  <strong>{{ conversationTitle(conversation) }}</strong>
+                  <el-badge :value="conversation.unreadCount" />
+                </div>
+                <span class="navbar__notif-preview">{{ conversation.lastMessage?.content }}</span>
+              </div>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
 
       <el-dropdown trigger="click" placement="bottom-end">
         <div class="navbar__user">
@@ -120,6 +174,32 @@ $navbar-height: 64px;
   :deep(.el-badge__content) {
     background: var(--el-color-primary);
   }
+}
+
+.navbar__notifications {
+  min-width: 260px;
+}
+
+.navbar__notif-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+}
+
+.navbar__notif-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.navbar__notif-preview {
+  font-size: var(--el-font-size-small);
+  color: var(--el-text-color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .navbar__user {

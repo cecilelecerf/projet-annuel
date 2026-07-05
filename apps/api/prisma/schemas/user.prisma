@@ -30,6 +30,8 @@ model User {
   clinicCreationRequests      ClinicCreationRequest[]
   animalConditionHealths      AnimalHealthCondition[]
   conversationMembers         ConversationMember[]
+  createdConversations        Conversation[]               @relation("CreatedConversations")
+  sentMessages                Message[]                    @relation("SentMessages")
   internalMeetingParticipants InternalMeetingParticipant[]
   meticalVisites              MedicalVisit[]
   availabilities              Availability[]

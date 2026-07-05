@@ -76,36 +76,11 @@ export const referantRouter: RouteRecordRaw[] = [
       // },
 
       // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'Referent.Messagerie',
-      //   //        component: () => import('@/views/referent/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'default-group',
-      //       name: 'Referent.Messagerie.DefaultGroup',
-      //       //            component: () => import('@/views/referent/messagerie/DefaultGroup.vue'),
-      //       // Groupe par défaut avec tous le personnel de la clinique (sauf directeur)
-      //     },
-      //     {
-      //       path: 'groupe',
-      //       name: 'Referent.Messagerie.Groupe',
-      //       //            component: () => import('@/views/referent/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'Referent.Messagerie.Privees',
-      //       //            component: () => import('@/views/referent/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'Referent.Messagerie.Conversation',
-      //       //            component: () => import('@/views/referent/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      {
+        path: 'messagerie',
+        name: 'Referent.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
     ],
   },
 ]

@@ -104,37 +104,12 @@ export const secretaryRouter: RouteRecordRaw[] = [
       //     },
       //   ],
       // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'Secretary.Messagerie',
-      //   //        component: () => import('@/views/secretary/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'default-group',
-      //       name: 'Secretary.Messagerie.DefaultGroup',
-      //       //            component: () => import('@/views/secretary/messagerie/DefaultGroup.vue'),
-      //       // Groupe par défaut avec tous le personnel de la clinique (sauf directeur)
-      //     },
-      //     {
-      //       path: 'groupe',
-      //       name: 'Secretary.Messagerie.Groupe',
-      //       //            component: () => import('@/views/secretary/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'Secretary.Messagerie.Privees',
-      //       //            component: () => import('@/views/secretary/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'Secretary.Messagerie.Conversation',
-      //       //            component: () => import('@/views/secretary/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'Secretary.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
       // // ── Profil ───────────────────────────────────────────────
       // {
       //   path: 'profil',

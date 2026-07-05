@@ -47,31 +47,12 @@ export const directorRouter: RouteRecordRaw[] = [
       //     },
       //   ],
       // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'Director.Messagerie',
-      //   //        component: () => import('@/views/directeur/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'groupe',
-      //       name: 'Director.Messagerie.Groupe',
-      //       //            component: () => import('@/views/directeur/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'Director.Messagerie.Privees',
-      //       //            component: () => import('@/views/directeur/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'Director.Messagerie.Conversation',
-      //       //            component: () => import('@/views/directeur/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'Director.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
     ],
   },
 ]

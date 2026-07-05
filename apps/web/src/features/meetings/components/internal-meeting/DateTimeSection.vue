@@ -42,9 +42,21 @@ const canEditSchedule = computed(() => !isPast.value)
       <span class="info-value">{{ timeLabel }}</span>
     </div>
     <div v-else class="edit-time-row">
-      <el-time-picker v-model="startTime" format="HH:mm" placeholder="Début" size="large" />
+      <el-time-picker
+        v-model="startTime"
+        format="HH:mm"
+        placeholder="Début"
+        size="large"
+        value-format="HH:mm:ss"
+      />
       <span class="time-arrow">→</span>
-      <el-time-picker v-model="endTime" format="HH:mm" placeholder="Fin" size="large" />
+      <el-time-picker
+        v-model="endTime"
+        format="HH:mm"
+        placeholder="Fin"
+        size="large"
+        value-format="HH:mm:ss"
+      />
     </div>
   </div>
 </template>

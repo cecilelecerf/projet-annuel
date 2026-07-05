@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { User } from '@armali/schemas'
+import type { User, Staff } from '@armali/schemas'
 import SearchSelectMultiple from './SearchSelectMultiple.vue'
 
 defineProps<{
-  staffs: User[]
+  staffs: Staff[] | undefined
 }>()
 
 const title = defineModel<string>('title', { required: true })
@@ -18,7 +18,7 @@ const location = defineModel<string>('location', { required: true })
   </div>
   <SearchSelectMultiple
     v-model="participants"
-    :items="staffs"
+    :items="staffs ?? []"
     display-key="lastname"
     secondary-key="firstname"
     placeholder="Rechercher des participants..."
@@ -33,7 +33,7 @@ const location = defineModel<string>('location', { required: true })
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .field {
   display: flex;
   flex-direction: column;

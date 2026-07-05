@@ -8,7 +8,11 @@ import { meetingApi } from '../api/meeting.api'
 import { Plus } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { MEETING_COLORS } from '@/utils/meetingColor'
-import { combineDateAndTime } from './utils'
+import { combineDateAndTime, timeStringToDate } from './utils'
+import { useMeetingActions } from '../composables/useMeetingActions'
+import ModalScope from './internal-meeting/ModalScope.vue'
+import type { MeetingId } from '@armali/schemas'
+
 dayjs.extend(utc)
 dayjs.locale('fr')
 
@@ -16,23 +20,29 @@ const { meetingId, date } = defineProps<{
   meetingId: string
   date?: Date
 }>()
-const emit = defineEmits<{ close: []; delete: [] }>()
+const emit = defineEmits<{ close: [] }>()
 const { user } = useAuthStore()
 const router = useRouter()
+const { saveSchedule, deleteMeeting, deleting } = useMeetingActions()
+
 const isEditing = ref(false)
+const showScopeDialog = ref(false)
+const scopeDialogAction = ref<'save' | 'delete' | null>(null)
+const showDeleteDialog = ref(false)
+const pendingDeleteScope = ref<'single' | 'all'>('single')
 
 const meeting = await meetingApi.get(meetingId, date ? date.toISOString() : undefined)
 const dateForm = ref({
   date: meeting.date,
-  startTime: meeting.startTime,
-  endTime: meeting.endTime,
+  startTime: dayjs.utc(meeting.startTime).format('HH:mm:ss'),
+  endTime: dayjs.utc(meeting.endTime).format('HH:mm:ss'),
 })
 const dateLabel = computed(() => {
-  const date = meeting.date
-  if (!date) return ''
+  const d = meeting.date
+  if (!d) return ''
   const start = meeting.startTime ? dayjs.utc(meeting.startTime).format('H[h]mm') : ''
   const end = meeting.endTime ? dayjs.utc(meeting.endTime).format('H[h]mm') : ''
-  return `Le ${dayjs(date).format('dddd D MMMM')} de ${start} à ${end}`
+  return `Le ${dayjs(d).format('dddd D MMMM')} de ${start} à ${end}`
 })
 
 const title = computed(() => {
@@ -40,6 +50,21 @@ const title = computed(() => {
   if (meeting.kind === 'ANIMAL') return meeting.speciality?.name ?? 'Consultation'
   return ''
 })
+
+// Une récurrence est impliquée dès qu'un parentId existe (occurrence virtuelle
+// ou override déjà matérialisé) — seul INTERNAL supporte le choix de scope
+const isRecurringMeeting = computed(() => meeting.kind === 'INTERNAL' && !!meeting.parentId)
+
+function confirmScope(scope: 'single' | 'all') {
+  showScopeDialog.value = false
+  const action = scopeDialogAction.value
+  scopeDialogAction.value = null
+  if (action === 'save') onSaveInternal(scope)
+  if (action === 'delete') {
+    pendingDeleteScope.value = scope
+    showDeleteDialog.value = true
+  }
+}
 
 const goToDetail = () => {
   router.push({
@@ -50,10 +75,69 @@ const goToDetail = () => {
         : undefined,
   })
 }
-const onEdit = () => {}
-const onDelete = () => {
-  emit('delete')
+
+const onEdit = async () => {
+  if (meeting.kind === 'INTERNAL') {
+    if (isRecurringMeeting.value) {
+      scopeDialogAction.value = 'save'
+      showScopeDialog.value = true
+    } else {
+      onSaveInternal('single')
+    }
+  } else if (meeting.kind === 'ANIMAL') {
+    try {
+      await meetingApi.animal.update(meeting.id, {
+        date: dateForm.value.date,
+        startTime: timeStringToDate(dateForm.value.startTime),
+        endTime: timeStringToDate(dateForm.value.endTime),
+      })
+      isEditing.value = false
+    } catch (err) {
+      console.log(err)
+    }
+  }
 }
+
+const onSaveInternal = async (scope: 'single' | 'all' = 'single') => {
+  if (meeting.kind !== 'INTERNAL') return
+  console.log(dateForm.value.date)
+
+  await saveSchedule({
+    meetingId: meeting.id,
+    parentId: meeting.parentId ?? null,
+    date: dateForm.value.date,
+    startTime: dateForm.value.startTime,
+    endTime: dateForm.value.endTime,
+    scope,
+    onSuccess: () => {
+      isEditing.value = false
+      emit('close')
+    },
+  })
+}
+
+function onDeleteClick() {
+  if (isRecurringMeeting.value) {
+    scopeDialogAction.value = 'delete'
+    showScopeDialog.value = true
+  } else {
+    showDeleteDialog.value = true
+  }
+}
+
+const onConfirmDelete = async () => {
+  await deleteMeeting({
+    kind: meeting.kind,
+    meetingId: meeting.id as MeetingId,
+    date: meeting.date,
+    scope: pendingDeleteScope.value,
+    onSuccess: () => {
+      showDeleteDialog.value = false
+      emit('close')
+    },
+  })
+}
+
 const isUpcoming = computed(() => {
   if (!meeting.date || !meeting.startTime) return false
   return combineDateAndTime(meeting.date, meeting.startTime) > new Date()
@@ -81,12 +165,22 @@ const isUpcoming = computed(() => {
           v-model="dateForm.date"
         />
         <span>de</span>
-        <el-time-picker size="small" style="width: 100px" v-model="dateForm.startTime" />
+        <el-time-picker
+          size="small"
+          style="width: 100px"
+          value-format="HH:mm:ss"
+          v-model="dateForm.startTime"
+        />
         <span>à</span>
-        <el-time-picker size="small" style="width: 100px" v-model="dateForm.endTime" />
+        <el-time-picker
+          size="small"
+          style="width: 100px"
+          v-model="dateForm.endTime"
+          value-format="HH:mm:ss"
+        />
       </div>
-      <!-- ANIMAL -->
 
+      <!-- ANIMAL -->
       <template v-if="meeting.kind === 'ANIMAL'">
         <div class="popup-animal-row">
           <span class="animal-cell"
@@ -121,7 +215,9 @@ const isUpcoming = computed(() => {
       <div class="popup-actions" v-if="!isEditing">
         <el-row>
           <el-button v-if="isUpcoming" @click="isEditing = true" plain> Modifier </el-button>
-          <el-button type="danger" v-if="isUpcoming" @click="onDelete" plain> Supprimer </el-button>
+          <el-button type="danger" v-if="isUpcoming" @click="onDeleteClick" plain>
+            Supprimer
+          </el-button>
         </el-row>
         <el-button @click="goToDetail" :type="MEETING_COLORS[meeting.kind]">
           <el-icon><Plus /></el-icon>
@@ -135,6 +231,14 @@ const isUpcoming = computed(() => {
       </div>
     </div>
   </div>
+  <ModalScope @on-confirm="(scope) => confirmScope(scope)" v-model="showScopeDialog" />
+  <ConfirmDeleteDialog
+    v-model="showDeleteDialog"
+    title="Supprimer le rendez-vous ?"
+    message="Cette action est définitive et ne peut pas être annulée."
+    :loading="deleting"
+    @confirm="onConfirmDelete"
+  />
 </template>
 
 <style lang="scss" scoped>

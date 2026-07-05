@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Animal, User, ClinicId, Clinic } from '@armali/schemas'
+import type { Animal, User, ClinicId, Staff } from '@armali/schemas'
 import DateField from './DateField.vue'
-import SearchSelectSingle from './SearchSelectSingle.vue'
 import AvailabilityTimeline from './timeline/AvailabilityTimeline.vue'
+import SearchSelectSingle from './SearchSelectSingle.vue'
 
 defineProps<{
   clients: User[]
   animals: Animal[]
-  vets: User[]
+  vets: Staff[]
   isVetLocked: boolean
-  myClinics: Clinic[]
-  showClinicSelect: boolean
 }>()
 
 const selectedClient = defineModel<User | null>('selectedClient', { required: true })
@@ -49,18 +47,6 @@ const veterinarianProfileId = computed(() => selectedVet.value?.id)
     :locked="isVetLocked"
   />
 
-  <div v-if="showClinicSelect" class="field">
-    <label class="field-label">Clinique</label>
-    <el-select
-      v-model="clinicId"
-      placeholder="Choisir une clinique"
-      size="large"
-      style="width: 100%"
-    >
-      <el-option v-for="c in myClinics" :key="c.id" :label="c.name" :value="c.id" />
-    </el-select>
-  </div>
-
   <DateField v-model:date="date" />
 
   <AvailabilityTimeline
@@ -72,12 +58,10 @@ const veterinarianProfileId = computed(() => selectedVet.value?.id)
     :clinic-id="clinicId"
     :date="date"
   />
-  <p v-else class="timeline-hint">
-    Sélectionnez un véto et une clinique pour voir les disponibilités.
-  </p>
+  <p v-else class="timeline-hint">Sélectionnez un véto pour voir les disponibilités.</p>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .field {
   display: flex;
   flex-direction: column;

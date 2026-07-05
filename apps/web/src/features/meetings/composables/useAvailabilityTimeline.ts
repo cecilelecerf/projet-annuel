@@ -21,7 +21,6 @@ function toMinutesOfDay(d: Date): number {
 // Les valeurs des el-time-picker sont des strings "HH:mm:ss" : on les parse
 // directement, sans jamais passer par Date/dayjs (source du bug précédent)
 function timeStringToMinutes(time: string): number {
-  console.log(time)
   const [h, m] = time.split(':').map(Number)
   if (!h || !m) throw new Error('not split')
   return h * 60 + m
@@ -69,14 +68,18 @@ export function useAvailabilityTimeline({
   watch([veterinarianId, clinicId, date], fetchTimeline, { immediate: true })
 
   const dayBounds = computed<{ startMinutes: number; endMinutes: number }>(() => {
-    if (!timeline.value || timeline.value.windows.length === 0) {
+    if (!timeline.value) {
       return { startMinutes: FALLBACK_START_MINUTES, endMinutes: FALLBACK_END_MINUTES }
     }
 
-    const allMinutes = timeline.value.windows.flatMap((w) => [
-      toMinutesOfDay(w.start),
-      toMinutesOfDay(w.end),
-    ])
+    const allMinutes = [
+      ...timeline.value.windows.flatMap((w) => [toMinutesOfDay(w.start), toMinutesOfDay(w.end)]),
+      ...timeline.value.busy.flatMap((b) => [toMinutesOfDay(b.start), toMinutesOfDay(b.end)]),
+    ]
+
+    if (allMinutes.length === 0) {
+      return { startMinutes: FALLBACK_START_MINUTES, endMinutes: FALLBACK_END_MINUTES }
+    }
 
     return {
       startMinutes: Math.max(0, Math.min(...allMinutes) - PADDING_MINUTES),

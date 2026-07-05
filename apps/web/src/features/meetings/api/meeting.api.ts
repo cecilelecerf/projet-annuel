@@ -67,9 +67,6 @@ export const meetingApi = {
     return meetingMetaSchema.parse(data)
   },
 
-  delete: async (meetingId: MeetingId, date?: string) => {
-    return await http.delete(`/meetings/${meetingId}${date ? `?date=${date}` : ''}`)
-  },
   getVetSlot: async ({
     veterinarianId,
     date,
@@ -94,12 +91,42 @@ export const meetingApi = {
       const data = await http.get(`/meetings/internal/${meetingId}`)
       return internalMeetingSchema.parse(data)
     },
-    update: async (meetingId: MeetingId, meeting: UpdateInternalMeeting) => {
-      const data = await http.patch(`/meetings/internal/${meetingId}`, meeting)
-      return internalMeetingField.extend({ meeting: meetingBaseSchema }).parse(data)
+
+    update: async ({
+      meeting,
+      meetingId,
+      scope,
+      date,
+    }: {
+      meetingId: MeetingId
+      meeting: UpdateInternalMeeting
+      scope: 'single' | 'all'
+      date?: string
+    }) => {
+      const params = new URLSearchParams({ scope, ...(date && { date }) })
+      const data = await http.patch(`/meetings/internal/${meetingId}?${params}`, meeting)
+      return internalMeetingField
+        .extend({
+          meeting: meetingBaseSchema.nullable(),
+          recurring: meetingRecurringSchema.nullable(),
+        })
+        .parse(data)
     },
     participantUpdate: async (meetingId: MeetingId, data: UpdateParticipantStatus) => {
       await http.patch(`/meetings/internal/${meetingId}/participants`, data)
+    },
+    delete: async ({
+      meetingId,
+      scope,
+      date,
+    }: {
+      meetingId: MeetingId
+      scope: 'single' | 'all'
+      date?: string
+    }) => {
+      const params = new URLSearchParams({ scope, ...(date && { date }) })
+
+      return await http.delete(`/meetings/internal/${meetingId}?${params}`)
     },
   },
   animal: {
@@ -114,7 +141,9 @@ export const meetingApi = {
       const data = await http.patch(`/meetings/animals/${meetingId}`, meeting)
       return animalMeetigWithMeetingSchema.parse(data)
     },
-
+    delete: async ({ meetingId }: { meetingId: MeetingId }) => {
+      return await http.delete(`/meetings/animals/${meetingId}`)
+    },
     getAllByAnimal: async (animalId: AnimalId) => {
       const data = await http.get(`/animals/${animalId}/meetings`)
       return animalMeetingFieldSchema

@@ -9,12 +9,11 @@ import ParticipantSection from './ParticipantSection.vue'
 import DescriptionSection from './DescriptionSection.vue'
 import DateTimeSection from './DateTimeSection.vue'
 import TitleSection from './TitleSection.vue'
-import { meetingApi } from '../../api/meeting.api.ts'
-import { useFormErrorStore } from '@/stores/formErrorStore.ts'
-import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore.ts'
 import HeaderMeetingSection from '../HeaderMeetingSection.vue'
 import RecurringComponent from './RecurringComponent.vue'
+import { useMeetingActions } from '../../composables/useMeetingActions.ts'
+import { combineDateAndTime } from '../utils'
 
 dayjs.extend(utc)
 dayjs.locale('fr')
@@ -32,9 +31,10 @@ const { meeting } = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const { user } = useAuthStore()
-const { handle } = useFormErrorStore()
+const { saveSchedule, deleteMeeting, deleting } = useMeetingActions()
+
 const showDeleteDialog = ref(false)
-const deleting = ref(false)
+const pendingDeleteScope = ref<'single' | 'all'>('single')
 const isEditing = ref(false)
 const edit = ref<Edit>({
   title: meeting.title,
@@ -51,68 +51,51 @@ const timeLabel = computed(() => {
   return `${start} — ${end}`
 })
 
-// Reconstruit un Date ancré 1970-01-01 UTC à partir d'une string "HH:mm:ss",
-// même convention que celle utilisée par les colonnes Prisma @db.Time
-function timeStringToDate(time: string): Date {
-  return dayjs.utc(`1970-01-01T${time}`).toDate()
-}
+const isUpcoming = computed(() => {
+  if (!meeting.date || !meeting.startTime) return false
+  return combineDateAndTime(meeting.date, meeting.startTime) > new Date()
+})
 
 const onSave = async (scope: 'single' | 'all') => {
-  if (scope === 'all' && meeting.parentId) {
-    try {
-      const result = await meetingApi.recurring.update(meeting.parentId, {
-        dateToStartAction: meeting.date,
-        startTime: timeStringToDate(edit.value.startTime),
-        endTime: timeStringToDate(edit.value.endTime),
-        internal: {
-          title: edit.value.title,
-          description: edit.value.description,
-          userIds: edit.value.userIds,
-        },
-      })
+  await saveSchedule({
+    meetingId: meeting.id,
+    parentId: meeting.parentId ?? null,
+    date: meeting.date,
+    startTime: edit.value.startTime,
+    endTime: edit.value.endTime,
+    scope,
+    internal: {
+      title: edit.value.title,
+      description: edit.value.description ?? '',
+      userIds: edit.value.userIds,
+    },
+    onSuccess: (resultId) => {
       isEditing.value = false
-
       router.push({
         name: route.name,
-        params: { id: result.id },
-        query: meeting.date ? { date: meeting.date.toISOString() } : undefined,
+        params: scope === 'all' ? { id: resultId } : { ...route.params, id: resultId },
+        query: scope === 'all' && meeting.date ? { date: meeting.date.toISOString() } : undefined,
       })
-    } catch (err) {
-      console.log(err)
-      handle(err)
-    }
-  } else {
-    try {
-      const result = await meetingApi.internal.update(meeting.id, {
-        ...edit.value,
-        startTime: timeStringToDate(edit.value.startTime),
-        endTime: timeStringToDate(edit.value.endTime),
-      })
-      isEditing.value = false
-
-      router.push({
-        name: route.name,
-        params: { ...route.params, id: result.meeting.id },
-      })
-    } catch (err) {
-      console.log(err)
-      handle(err)
-    }
-  }
+    },
+  })
 }
 
-async function onDelete() {
-  deleting.value = true
-  try {
-    await meetingApi.delete(meeting.id, meeting.date.toISOString())
-    ElMessage.success('Rendez-vous supprimé')
-    showDeleteDialog.value = false
-    router.back()
-  } catch {
-    ElMessage.error('Erreur lors de la suppression')
-  } finally {
-    deleting.value = false
-  }
+function onDeleteRequested(scope: 'single' | 'all') {
+  pendingDeleteScope.value = scope
+  showDeleteDialog.value = true
+}
+
+async function onConfirmDelete() {
+  await deleteMeeting({
+    kind: 'INTERNAL',
+    meetingId: meeting.id,
+    date: meeting.date,
+    scope: pendingDeleteScope.value,
+    onSuccess: () => {
+      showDeleteDialog.value = false
+      router.back()
+    },
+  })
 }
 </script>
 
@@ -120,13 +103,13 @@ async function onDelete() {
   <HeaderMeetingSection
     v-if="user"
     :editing="isEditing"
-    :is-recurring-occurrence="!!meeting.parentId && String(meeting.parentId) === String(meeting.id)"
+    :is-recurring-occurrence="!!meeting.parentId"
+    :is-upcoming="isUpcoming"
     @back="router.back()"
     @edit="isEditing = true"
     @save="onSave"
     @cancel="isEditing = false"
-    @delete="showDeleteDialog = true"
-    :date="meeting.date"
+    @delete="onDeleteRequested"
     :user="user"
   />
 
@@ -156,7 +139,7 @@ async function onDelete() {
     title="Supprimer le rendez-vous ?"
     message="Cette action est définitive et ne peut pas être annulée."
     :loading="deleting"
-    @confirm="onDelete"
+    @confirm="onConfirmDelete"
   />
 </template>
 

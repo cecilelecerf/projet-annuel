@@ -5,6 +5,7 @@ import {
   veterinarianClinicIdSchema,
   specialityIdSchema,
 } from "./ids";
+import { baseUserSchema, userSchema } from "./users";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
@@ -70,3 +71,12 @@ export const updateSpecialitySchema = createSpecialitySchema.partial();
 export type Speciality = z.infer<typeof specialitySchema>;
 export type CreateSpeciality = z.infer<typeof createSpecialitySchema>;
 export type UpdateSpeciality = z.infer<typeof updateSpecialitySchema>;
+
+export const staffSchema = baseUserSchema.pick({
+  id: true,
+  lastname: true,
+  firstname: true,
+  email: true,
+  role: true,
+});
+export type Staff = z.infer<typeof staffSchema>;

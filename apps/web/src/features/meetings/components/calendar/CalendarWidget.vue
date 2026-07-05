@@ -4,15 +4,11 @@ import DateDrawer from './DateDrawer.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
-import type { MeetingId, UserId } from '@armali/schemas'
-import { meetingApi } from '../../api/meeting.api.ts'
-import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
+import type { UserId } from '@armali/schemas'
 import BaseComponent from '../NewEventDrawer/BaseComponent.vue'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
-const router = useRouter()
 const {
   calendarOptions,
   dateSelect,
@@ -23,8 +19,6 @@ const {
 } = useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
-const showDeleteDialog = ref(false)
-const deleting = ref(false)
 const isDateDrawerOpen = computed({
   get: () => dateSelect.value !== null,
   set: (val) => {
@@ -35,23 +29,6 @@ const isDateDrawerOpen = computed({
 const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
-}
-const onDelete = async () => {
-  if (!selectedMeeting.value) return
-  deleting.value = true
-  try {
-    await meetingApi.delete(
-      selectedMeeting.value?.id as MeetingId,
-      selectedMeeting.value?.date.toISOString(),
-    )
-    ElMessage.success('Rendez-vous supprimé')
-    showDeleteDialog.value = false
-    router.back()
-  } catch {
-    ElMessage.error('Erreur lors de la suppression')
-  } finally {
-    deleting.value = false
-  }
 }
 </script>
 
@@ -85,8 +62,9 @@ const onDelete = async () => {
         }
       "
       @on-click-event="
-        (id, date) => {
-          selectedMeeting = { id, date: new Date(date) }
+        (id, date, kind) => {
+          if (kind === 'AVAILABILITY') return
+          selectedMeeting = { id, date: new Date(date), kind }
         }
       "
     />
@@ -110,14 +88,6 @@ const onDelete = async () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
-    @delete="showDeleteDialog = true"
-  />
-  <ConfirmDeleteDialog
-    v-model="showDeleteDialog"
-    title="Supprimer le rendez-vous ?"
-    message="Cette action est définitive et ne peut pas être annulée."
-    :loading="deleting"
-    @confirm="onDelete"
   />
 </template>
 

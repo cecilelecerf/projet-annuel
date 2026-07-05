@@ -1,15 +1,25 @@
-// src/features/meetings/composables/useMeetingDrawerForm.ts
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
-import type { MeetingKind, Animal, User, UserId, ClinicId, Clinic } from '@armali/schemas'
+import {
+  type MeetingKind,
+  type Animal,
+  type User,
+  type UserId,
+  type ClinicId,
+  type Clinic,
+  type Staff,
+  type BaseUser,
+  baseUserSchema,
+} from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
-import { usersApi } from '@/features/users/api/user.api'
 import { animalApi } from '@/features/animals/api'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { toUserId } from '@/features/users/utils'
 import { clinicApi } from '@/features/clinics/api.ts'
 import { meetingApi } from '../api/meeting.api'
+import { usersApi } from '@/features/users/api/user.api'
+import { http } from '@/lib/api'
 
 export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'close') => void) {
   const route = useRoute()
@@ -20,10 +30,11 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
 
   const veterinarianPromise = () => {
     if (id) return usersApi.get(id)
-    if (role === 'VETERINARIAN' && user) return usersApi.get(user.id)
+    if (role === 'VETERINARIAN')
+      return http.get('/auth/me').then((data) => baseUserSchema.parse(data))
     return Promise.resolve(null)
   }
-  let veterinarian: User | null = null
+  let veterinarian: BaseUser | null = null
 
   const canCreateAnimal = computed(() => role === 'VETERINARIAN' || role === 'SECRETARY')
 
@@ -41,22 +52,33 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
   const myClinics = ref<Clinic[]>([])
   const participants = ref<User[]>([])
   const selectedClient = ref<User | null>(null)
-  const selectedVet = ref<User | null>(null)
+  const selectedVet = ref<BaseUser | null>(null)
   const selectAnimal = ref<Animal | null>(null)
 
   const clients = ref<User[]>([])
-  const vets = ref<User[]>([])
-  const staffs = ref<User[]>([])
+  const vets = ref<Staff[]>([])
+  const staffs = ref<Staff[]>()
   const animals = ref<Animal[]>([])
 
   const isVetLocked = ref(false)
   const showClinicSelect = computed(() => role === 'VETERINARIAN' && myClinics.value.length > 0)
+
+  // Charge les cliniques du véto indépendamment du reste — nécessaire pour peupler
+  // le select clinique avant même qu'un clinicId ne soit choisi (cas multi-cliniques)
+  async function loadMyClinics() {
+    if (role !== 'VETERINARIAN') return
+    myClinics.value = await clinicApi.getMine()
+    if (myClinics.value.length === 1 && !clinicId.value) {
+      clinicId.value = myClinics.value[0]?.id
+    }
+  }
 
   // Résout le véto pré-sélectionné via la route (:id), une fois au démarrage
   async function init() {
     veterinarian = await veterinarianPromise()
     selectedVet.value = veterinarian
     isVetLocked.value = !!veterinarian
+    await loadMyClinics()
   }
 
   watch(selectedClient, async (client) => {
@@ -64,30 +86,28 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
     animals.value = client ? await animalApi.getAllByUser(client.id) : []
   })
 
+  // Se redéclenche sur changement de type OU de clinique — nécessaire pour un véto
+  // multi-cliniques qui choisit sa clinique après le montage initial du drawer
   watch(
-    type,
-    async (t) => {
+    [type, clinicId],
+    async ([t, cid]) => {
+      if (!cid) {
+        // Pas encore de clinique connue : on vide plutôt que de fetcher à vide
+        clients.value = []
+        vets.value = []
+        staffs.value = undefined
+        return
+      }
+
       if (t === 'ANIMAL') {
-        const promises: Promise<unknown>[] = [
-          usersApi.getUsersByRole(['CLIENT']),
-          usersApi.getUsersByRole(['VETERINARIAN']),
-        ]
-        if (role === 'VETERINARIAN' && myClinics.value.length === 0) {
-          promises.push(clinicApi.getMine())
-        }
-
-        const [clientsData, vetsData, clinicsData] = await Promise.all(promises)
+        const [clientsData, vetsData] = await Promise.all([
+          usersApi.getUsersByRole({ roles: ['CLIENT'] }),
+          clinicApi.staffByClinic({ clinicId: cid, roles: ['VETERINARIAN'] }),
+        ])
         clients.value = clientsData as User[]
-        vets.value = vetsData as User[]
-
-        if (clinicsData) {
-          myClinics.value = clinicsData as Clinic[]
-          if (myClinics.value.length === 1 && !clinicId.value) {
-            clinicId.value = myClinics.value[0]?.id
-          }
-        }
+        vets.value = vetsData as Staff[]
       } else {
-        staffs.value = await usersApi.getUsersByRole(['STAFF'])
+        staffs.value = await clinicApi.staffByClinic({ clinicId: cid })
       }
     },
     { immediate: true },
@@ -127,6 +147,7 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
       formErrorStore.handle(err)
     }
   }
+
   const isFormValid = computed(() => {
     if (type.value === 'INTERNAL') {
       return !!title.value && participants.value.length > 0
@@ -140,6 +161,7 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
       isTimeValid.value
     )
   })
+
   return {
     role,
     canCreateAnimal,

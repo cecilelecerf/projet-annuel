@@ -1,5 +1,5 @@
 import { meetingApi } from '../api/meeting.api'
-import type { Calendar, UserId } from '@armali/schemas'
+import type { Calendar, MeetingKind, UserId } from '@armali/schemas'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
@@ -25,7 +25,12 @@ export function useCalendar(userId?: UserId) {
   const calendarData = ref<Calendar | null>(null)
   const dateSelect = ref<Date | null>(null)
   const openNewEvent = ref(false)
-  const selectedMeeting = ref<{ id: string; isReccuring?: boolean; date: Date } | null>(null)
+  const selectedMeeting = ref<{
+    id: string
+    isReccuring?: boolean
+    date: Date
+    kind: Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>
+  } | null>(null)
 
   // Filtre multi-cliniques : vide = toutes les cliniques affichées
   const selectedClinicIds = ref<string[]>([])
@@ -105,6 +110,7 @@ export function useCalendar(userId?: UserId) {
       selectedMeeting.value = {
         id: id,
         date: info.event.extendedProps.date,
+        kind: info.event.extendedProps.kind,
       }
     },
     datesSet: async (info: DatesSetArg) => {

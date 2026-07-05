@@ -3,7 +3,6 @@ import {
   clinicIdSchema,
   internalMeetingParticipantIdSchema,
   meetingIdSchema,
-  meetingRecurringIdSchema,
   userIdSchema,
 } from "../ids";
 import {
@@ -80,3 +79,8 @@ export type InternalMeetingMeta = z.infer<typeof internalMeetingMetaSchema>;
 export type InternalMeeting = z.infer<typeof internalMeetingSchema>;
 export type CreateInternalMeeting = z.infer<typeof createInternalMeetingSchema>;
 export type UpdateInternalMeeting = z.infer<typeof updateInternalMeetingSchema>;
+
+export const deleteInternalMeetingQuerySchema = z.object({
+  scope: z.enum(["single", "all"]).default("single"),
+  date: z.coerce.date().optional(),
+});

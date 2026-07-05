@@ -34,6 +34,9 @@ export function formatTime(date: Date): string {
 export function subtractTime(start: Date, end: Date) {
   return `${formatTime(start)} — ${formatTime(end)}`
 }
+export const timeStringToDate = (time: string): Date => {
+  return dayjs.utc(`1970-01-01T${time}`).toDate()
+}
 
 export const toCalendarEvent = (base: FlatMeeting) => {
   const date = base.date

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Calendar, type UserId } from '@armali/schemas'
+import { type Calendar, type UserId, type MeetingKind } from '@armali/schemas'
 import FullCalendar from '@fullcalendar/vue3'
 
 import dayjs from 'dayjs'
@@ -27,7 +27,7 @@ const { date, userId } = defineProps<{
 const emit = defineEmits<{
   close: []
   newEvent: [date: Date]
-  onClickEvent: [id: string, date: string]
+  onClickEvent: [id: string, date: string, kind: MeetingKind]
 }>()
 
 const calendar = ref<Calendar | null>(null)
@@ -58,7 +58,7 @@ const calendarOptions = ref<CalendarOptions>({
   eventClick: (info: EventClickArg) => {
     const [id] = info.event.id.split('_')
     if (!id) return
-    emit('onClickEvent', id, info.event.extendedProps.date)
+    emit('onClickEvent', id, info.event.extendedProps.date, info.event.extendedProps.kind)
     emit('close')
   },
   dateClick: (info: DateClickArg) => {

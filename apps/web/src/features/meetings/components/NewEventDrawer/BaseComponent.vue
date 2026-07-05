@@ -47,6 +47,18 @@ onMounted(() => {
   <div class="drawer">
     <DrawerHeader :type="type" @close="$emit('close')" />
 
+    <div v-if="showClinicSelect" class="field">
+      <label class="field-label">Clinique</label>
+      <el-select
+        v-model="clinicId"
+        placeholder="Choisir une clinique"
+        size="large"
+        style="width: 100%"
+      >
+        <el-option v-for="c in myClinics" :key="c.id" :label="c.name" :value="c.id" />
+      </el-select>
+    </div>
+
     <MeetingTypeSelector
       :type="type"
       :can-create-animal="canCreateAnimal"
@@ -68,8 +80,6 @@ onMounted(() => {
         :animals="animals"
         :vets="vets"
         :is-vet-locked="isVetLocked"
-        :my-clinics="myClinics"
-        :show-clinic-select="showClinicSelect"
       />
 
       <template v-if="type === 'INTERNAL'">
@@ -91,12 +101,29 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
 <style lang="scss" scoped>
 .drawer {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--el-bg-color);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-lg);
+  margin-top: var(--spacing-md);
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .form {

@@ -8,8 +8,8 @@ import type { AnimalId } from '@armali/schemas'
 import { animalApi } from '../../api'
 import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
 import { actTypeLabel } from '@/features/medicalHistories/utils.ts'
-import WeightChart from './WeightChart.vue'
 import { useAuthStore } from '@/stores/authStore.ts'
+import WeightChart from '../../components/WeightChart.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
@@ -95,7 +95,9 @@ const lastSize = computed(() => {
         <el-divider />
 
         <!-- Propriétaire -->
+
         <div
+          v-if="user?.role !== 'CLIENT'"
           class="owner-row"
           @click="
             router.push({

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, UserFilled, OfficeBuilding, User } from '@element-plus/icons-vue'
+import { House, UserFilled, OfficeBuilding, User, ChatDotRound } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
@@ -18,6 +18,11 @@ const menuItems: MenuItem[] = [
     index: 'REFERANT.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
+  },
+  {
+    index: 'REFERANT.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
   },
   {
     index: 'REFERANT.Profil',

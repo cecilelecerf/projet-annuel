@@ -78,7 +78,7 @@ async function main() {
   });
   await seedPrescriptions(prisma, { meetings, products, users });
   await seedOrders(prisma, { users, clinics });
-  await seedMessaging(prisma, { users });
+  await seedMessaging(prisma, { users, clinics });
 
   console.log("✅ Seed terminé avec succès !");
   console.log("\n📋 Comptes créés :");

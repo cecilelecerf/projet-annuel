@@ -1,69 +1,61 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
-import { http } from '@/lib/api'
-import { useNotify } from '@/composables/useNotify'
+// import { reactive, ref, onMounted } from 'vue'
+// import { useNotify } from '@/composables/useNotify'
+// import { clinicApi } from '../clinic.api'
 
-const notify = useNotify()
+// const notify = useNotify()
 
-interface ClinicRequest {
-  id: string
-  name: string
-  address: string
-  siret: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  createdAt: string
-}
+// const form = reactive({
+//   name: '',
+//   address: '',
+//   siret: '',
+//   phone: '',
+//   website: '',
+//   description: '',
+// })
 
-const form = reactive({
-  name: '',
-  address: '',
-  siret: '',
-  phone: '',
-  website: '',
-  description: '',
-})
+// const loading = ref(false)
+// const requests = ref<ClinicRequest[]>([])
 
-const loading = ref(false)
-const requests = ref<ClinicRequest[]>([])
+// const statusLabel: Record<string, { label: string; type: 'warning' | 'success' | 'danger' }> = {
+//   PENDING: { label: 'En attente', type: 'warning' },
+//   APPROVED: { label: 'Approuvée', type: 'success' },
+//   REJECTED: { label: 'Refusée', type: 'danger' },
+// }
 
-const statusLabel: Record<string, { label: string; type: 'warning' | 'success' | 'danger' }> = {
-  PENDING: { label: 'En attente', type: 'warning' },
-  APPROVED: { label: 'Approuvée', type: 'success' },
-  REJECTED: { label: 'Refusée', type: 'danger' },
-}
+// async function loadRequests() {
+//   try {
+//     requests.value = await clinicApi.request.getAll()
+//   } catch {
+//     // silencieux si vide
+//   }
+// }
 
-async function loadRequests() {
-  try {
-    requests.value = await http.get('/director/clinics/requests')
-  } catch {
-    // silencieux si vide
-  }
-}
+// async function submit() {
+//   loading.value = true
+//   try {
+//     await clinicApi.request.create({ payload: form })
+//     notify.success('Demande envoyée, en attente de validation par un administrateur')
+//     Object.assign(form, {
+//       name: '',
+//       address: '',
+//       siret: '',
+//       phone: '',
+//       website: '',
+//       description: '',
+//     })
+//     await loadRequests()
+//   } catch (err: unknown) {
+//     notify.error(err instanceof Error ? err.message : "Erreur lors de l'envoi")
+//   } finally {
+//     loading.value = false
+//   }
+// }
 
-async function submit() {
-  loading.value = true
-  try {
-    await http.post('/director/clinics/request', form)
-    notify.success('Demande envoyée, en attente de validation par un administrateur')
-    Object.assign(form, {
-      name: '',
-      address: '',
-      siret: '',
-      phone: '',
-      website: '',
-      description: '',
-    })
-    await loadRequests()
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : "Erreur lors de l'envoi")
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(loadRequests)
+// onMounted(loadRequests)
 </script>
-
+<template>e</template>
+<!-- 
 <template>
   <div class="clinic-request-page">
     <div class="page-header">
@@ -139,7 +131,7 @@ onMounted(loadRequests)
       </el-table>
     </div>
   </div>
-</template>
+</template> -->
 
 <style scoped>
 .clinic-request-page {

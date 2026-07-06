@@ -97,7 +97,7 @@ export class AuthService {
     if (existingClinic)
       throw new ConflictError("Une clinique avec ce numéro SIRET existe déjà");
 
-    const existingRequest = await prisma.clinicCreationRequest.findFirst({
+    const existingRequest = await prisma.clinicRequest.findFirst({
       where: { siret: data.clinic.siret, status: "PENDING" },
     });
     if (existingRequest)
@@ -121,7 +121,7 @@ export class AuthService {
         },
       });
 
-      await tx.clinicCreationRequest.create({
+      await tx.clinicRequest.create({
         data: {
           name: clinic.name,
           address: clinic.address,

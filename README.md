@@ -125,6 +125,8 @@ pnpm --filter web dev
 apps/api/
 ├── src/
 │   ├── index.ts              # Point d'entrée Express
+│   ├── app.ts              # Définition des routes et autres
+│   ├── instances.ts              # Définition des controllers, services et repository
 │   ├── features/             # Organisation par feature
 │   │   └── <feature>/
 │   │       ├── <feature>.route.ts       # Définition des routes
@@ -132,8 +134,8 @@ apps/api/
 │   │       ├── <feature>.service.ts     # Logique métier
 │   │       ├── <feature>.repository.ts  # Accès aux données
 │   │       └── __tests__/
-│   │           └── <feature>.router.test.ts
-│   │           └── <feature>.service.test.ts
+│   │           └── <feature>.router.test.ts -> Test toute les route du router de la feature
+│   │           └── <feature>.service.test.ts -> Test tous les service de la feature
 │   └── lib/
 │       └── prisma.ts         # Instance Prisma
 ├── prisma/
@@ -403,3 +405,21 @@ Les archives `.tar.gz` seront générées dans le dossier `/app/backups`.
 Des tests de services et des tests de route.
 Les test de route ne doivent pas mocké de la donné. Au lancement il génère les migrations et applique les fixtures.
 Les tests de service peuvent mocker de la data
+
+## Sécurité
+
+pipeline ci cd
+protection des branchs
+75% du code api doit être tester pour pouvoir être sur main
+un merge sur main = une mise en prod
+pour merge sur dev
+
+- tous les tests doivent fonctionner
+- les linters api et web doivent passer
+- pas de packages trop recent
+- tous les packages build
+- la version des packages est en dur -> d'augmentation automatique
+
+à ajouter
+
+- verifier si faille critique d'un package

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
-import { loginAs } from "@api/meetings/__tests__/meeting.route.test";
+import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

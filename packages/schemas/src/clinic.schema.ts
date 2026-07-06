@@ -4,6 +4,7 @@ import {
   veterinarianIdSchema,
   veterinarianClinicIdSchema,
   specialityIdSchema,
+  directorClinicIdSchema,
 } from "./ids";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
@@ -16,6 +17,8 @@ export const clinicSchema = z.object({
   website: z.string().min(1, "Site web requis"),
   description: z.string().max(500).nullable().optional(),
   openingHours: z.string().max(500).nullable().optional(),
+  createdAt: z.coerce.date(),
+  directorId: directorClinicIdSchema,
 });
 
 export const createClinicSchema = clinicSchema.omit({ id: true });
@@ -73,19 +76,6 @@ export const clinicGuardRequest = z.object({
   request: clinicSchema.optional(),
 });
 export type ClinicStatus = z.infer<typeof clinicStatusSchema>;
-// ── Speciality ────────────────────────────────────────────────────────────────
-export const specialitySchema = z.object({
-  id: specialityIdSchema,
-  name: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
-});
-
-export const createSpecialitySchema = specialitySchema.omit({ id: true });
-export const updateSpecialitySchema = createSpecialitySchema.partial();
-
-export type Speciality = z.infer<typeof specialitySchema>;
-export type CreateSpeciality = z.infer<typeof createSpecialitySchema>;
-export type UpdateSpeciality = z.infer<typeof updateSpecialitySchema>;
 
 export const updateClinicSpecialitiesSchema = z.object({
   specialityIds: z.array(specialityIdSchema),

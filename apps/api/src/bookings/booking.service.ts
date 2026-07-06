@@ -6,6 +6,13 @@ import dayjs from "dayjs";
 import { ClinicRepository } from "@api/clinics/clinic.repository";
 import { haversineKm } from "@api/utils/distance";
 import { MeetingService } from "@api/meetings";
+import {
+  Availability,
+  MeetingBase,
+  User,
+  VeterinarianClinic,
+  VeterinarianProfile,
+} from "../../prisma/generated/prisma/client";
 
 export class BookingService {
   constructor(
@@ -128,12 +135,14 @@ export class BookingService {
       throw new BadRequestError("Animal introuvable ou non autorisé");
 
     // Vérifie que le veto est bien dans une clinique
+    // TODO : utiliser un service ou repository
     const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
       where: { veterinarianId: data.veterinarianId },
     });
     if (!veterinarianClinic) throw new NotFoundError("Vétérinaire");
 
     // Vérifie que le créneau est toujours disponible (double vérification)
+    // TODO : utiliser un service ou repository
     const conflict = await prisma.meetingBase.findFirst({
       where: {
         date: data.date,
@@ -147,6 +156,7 @@ export class BookingService {
     if (conflict) throw new BadRequestError("Ce créneau n'est plus disponible");
 
     // Crée le rendez-vous
+    // TODO : utiliser un service ou repository
     const meeting = await prisma.meetingBase.create({
       data: {
         kind: "ANIMAL",
@@ -210,7 +220,15 @@ export class BookingService {
   }
 
   // ── Helper : prochain créneau label ───────────────────────────────────────
-  private _getNextSlotLabel(veterinarianClinics: any[]): string | null {
+  private _getNextSlotLabel(
+    veterinarianClinics: (VeterinarianClinic & {
+      veterinarian: VeterinarianProfile & {
+        user: User & {
+          availabilities: (Availability & { meeting: MeetingBase | null })[];
+        };
+      };
+    })[],
+  ): string | null {
     const allDates: Date[] = [];
 
     for (const vc of veterinarianClinics) {

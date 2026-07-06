@@ -8,9 +8,11 @@ import {
   type UserId,
   type ClinicId,
   type Clinic,
-  type Staff,
   type BaseUser,
   baseUserSchema,
+  type StaffMember,
+  staffRoleSchema,
+  type StaffRole,
 } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
 import { animalApi } from '@/features/animals/api'
@@ -20,6 +22,7 @@ import { clinicApi } from '@/features/clinics/clinic.api'
 import { meetingApi } from '../api/meeting.api'
 import { usersApi } from '@/features/users/api/user.api'
 import { http } from '@/lib/api'
+import { staffApi } from '@/features/staffs/staff.api'
 
 export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'close') => void) {
   const route = useRoute()
@@ -50,14 +53,14 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
     user?.role === 'VETERINARIAN' ? undefined : user?.clinicId,
   )
   const myClinics = ref<Clinic[]>([])
-  const participants = ref<User[]>([])
+  const participants = ref<StaffMember[]>([])
   const selectedClient = ref<User | null>(null)
-  const selectedVet = ref<BaseUser | null>(null)
+  const selectedVet = ref<StaffMember | null>(null)
   const selectAnimal = ref<Animal | null>(null)
 
   const clients = ref<User[]>([])
-  const vets = ref<Staff[]>([])
-  const staffs = ref<Staff[]>()
+  const vets = ref<StaffMember[]>([])
+  const staffs = ref<StaffMember[]>()
   const animals = ref<Animal[]>([])
 
   const isVetLocked = ref(false)
@@ -76,7 +79,9 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
   // Résout le véto pré-sélectionné via la route (:id), une fois au démarrage
   async function init() {
     veterinarian = await veterinarianPromise()
-    selectedVet.value = veterinarian
+    if (!veterinarian) return
+    if (!staffRoleSchema.options.some((o) => o === veterinarian?.role)) return
+    selectedVet.value = { ...veterinarian, role: veterinarian.role as StaffRole }
     isVetLocked.value = !!veterinarian
     await loadMyClinics()
   }
@@ -102,12 +107,12 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
       if (t === 'ANIMAL') {
         const [clientsData, vetsData] = await Promise.all([
           usersApi.getUsersByRole({ roles: ['CLIENT'] }),
-          clinicApi.staffByClinic({ clinicId: cid, roles: ['VETERINARIAN'] }),
+          staffApi.getAllByClinic({ clinicId: cid, roles: ['VETERINARIAN'] }),
         ])
         clients.value = clientsData as User[]
-        vets.value = vetsData as Staff[]
+        vets.value = vetsData as StaffMember[]
       } else {
-        staffs.value = await clinicApi.staffByClinic({ clinicId: cid })
+        staffs.value = await staffApi.getAllByClinic({ clinicId: cid })
       }
     },
     { immediate: true },

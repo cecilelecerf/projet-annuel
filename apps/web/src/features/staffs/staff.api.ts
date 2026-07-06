@@ -6,6 +6,8 @@ import {
   type CreateSecretaryStaff,
   type StaffMember,
   staffMemberSchema,
+  type UserRole,
+  type ClinicId,
 } from '@armali/schemas'
 
 export const staffApi = {
@@ -17,6 +19,14 @@ export const staffApi = {
   getById: async (id: string): Promise<StaffMemberDetail> => {
     const data = await http.get(`/staffs/${id}`)
     return staffMemberDetailSchema.parse(data)
+  },
+  getAllByClinic: async ({ roles, clinicId }: { roles?: UserRole[]; clinicId: ClinicId }) => {
+    const params = new URLSearchParams()
+    if (roles) roles.forEach((role) => params.append('roles', role))
+
+    return await http
+      .get(`/clinics/${clinicId}/staffs?${params}`)
+      .then((data) => staffMemberSchema.array().parse(data))
   },
 
   createVeterinarian: async (data: CreateVeterinarianStaff): Promise<StaffMemberDetail> => {

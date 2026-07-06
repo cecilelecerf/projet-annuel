@@ -13,9 +13,7 @@ import {
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import z from "zod";
-function uniqueEmail(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@gmail.com`;
-}
+
 export class StaffController {
   constructor(private service: StaffService) {}
 
@@ -57,7 +55,6 @@ export class StaffController {
         authorId: req.user.id,
         memberId: req.params.id,
       });
-      console.log(member);
       res.status(200).json(staffMemberDetailSchema.parse(member));
     } catch (err) {
       next(err);

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { clinicApi } from '@/features/clinics/clinic.api'
 import { useAuthStore } from '@/stores/authStore'
 import StaffList from '../components/StaffList.vue'
 import type { StaffMember } from '@armali/schemas'
+import { staffApi } from '../staff.api.ts'
 
 const router = useRouter()
 
@@ -16,7 +16,7 @@ async function loadStaff() {
   loading.value = true
   if (user?.clinicId)
     try {
-      staffs.value = await clinicApi.staffByClinic({ clinicId: user.clinicId })
+      staffs.value = await staffApi.getAllByClinic({ clinicId: user.clinicId })
     } catch {
       /* silencieux */
     } finally {

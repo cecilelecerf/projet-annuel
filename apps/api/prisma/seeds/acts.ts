@@ -1,4 +1,4 @@
-import type { PrismaClient, Clinic, Pet } from "../generated/prisma/client";
+import type { PrismaClient, Pet } from "../generated/prisma/client";
 
 export async function seedActs(
   prisma: PrismaClient,
@@ -146,7 +146,7 @@ export async function seedActs(
   });
 
   // ── Prix par clinique ───────────────────────────────────────────────────────
-  const caCardioClinic1 = await prisma.clinicAct.create({
+  await prisma.clinicAct.create({
     data: { actId: actCardio.id, clinicId: clinics.clinic1.id, price: 70 },
   });
   const caEchoClinic1 = await prisma.clinicAct.create({
@@ -158,10 +158,10 @@ export async function seedActs(
   const caXrayClinic1 = await prisma.clinicAct.create({
     data: { actId: actXray.id, clinicId: clinics.clinic1.id, price: 80 },
   });
-  const caSurgeryClinic1 = await prisma.clinicAct.create({
+  await prisma.clinicAct.create({
     data: { actId: actSurgery.id, clinicId: clinics.clinic1.id, price: 195 },
   });
-  const caHospClinic1 = await prisma.clinicAct.create({
+  await prisma.clinicAct.create({
     data: {
       actId: actHospitalization.id,
       clinicId: clinics.clinic1.id,
@@ -193,7 +193,7 @@ export async function seedActs(
   await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting1.date,
-      animalMeetingId: animalMeeting1.animalMeeting?.id!,
+      animalMeetingId: animalMeeting1.animalMeeting!.id!,
       animalId: animalMeeting1.animalMeeting!.animalId,
       performedBy: {
         connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],

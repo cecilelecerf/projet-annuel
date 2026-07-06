@@ -8,9 +8,9 @@ import type {
 import {
   Availability,
   MeetingBase,
+  PrismaClient,
   User,
 } from "../../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
 
 export class AvailabilityRepository {
   constructor(private prisma: PrismaClient) {}

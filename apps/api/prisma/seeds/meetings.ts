@@ -1,4 +1,4 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedMeetings(
   prisma: PrismaClient,
@@ -287,7 +287,7 @@ export async function seedMeetings(
       animalMeeting: true,
     },
   });
-  const animalMeeting3 = await prisma.meetingBase.create({
+  await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",

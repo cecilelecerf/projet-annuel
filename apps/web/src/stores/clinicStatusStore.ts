@@ -27,8 +27,8 @@ export const useClinicStatusStore = defineStore('clinicStatus', {
       // Évite les appels concurrents si plusieurs guards se déclenchent en même temps
       if (this.loading) return this.loading
 
-      this.loading = clinicApi
-        .guard()
+      this.loading = clinicApi.request
+        .status()
         .then((data) => {
           this.status = data.status
           this.loaded = true

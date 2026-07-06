@@ -17,13 +17,13 @@ export async function seedClinicRequests(
   // resoumis après un refus), on ne peut pas faire un upsert dessus. On vérifie
   // donc l'existence via findFirst avant de créer, pour garder le seed idempotent.
   async function upsertRequest(
-    data: Parameters<typeof prisma.clinicCreationRequest.create>[0]["data"],
+    data: Parameters<typeof prisma.clinicRequest.create>[0]["data"],
   ) {
-    const existing = await prisma.clinicCreationRequest.findFirst({
+    const existing = await prisma.clinicRequest.findFirst({
       where: { siret: data.siret, status: data.status },
     });
     if (existing) return existing;
-    return prisma.clinicCreationRequest.create({ data });
+    return prisma.clinicRequest.create({ data });
   }
 
   const [requestPending, requestApproved, requestRejected] = await Promise.all([

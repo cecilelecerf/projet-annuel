@@ -23,7 +23,7 @@ export async function seedUsers(
       : never;
   },
 ) {
-  const { clinic1, clinic2 } = clinics;
+  const { clinic1 } = clinics;
 
   const password = await hash("Password123!", 10);
 

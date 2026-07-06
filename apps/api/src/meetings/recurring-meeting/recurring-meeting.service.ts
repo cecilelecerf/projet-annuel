@@ -34,7 +34,7 @@ export class RecurringService {
           data: data.internal,
         });
       }
-      const { dateToStartAction, ...d } = data;
+      const { dateToStartAction: _, ...d } = data;
       return this.repository.update(id, d);
     }
 

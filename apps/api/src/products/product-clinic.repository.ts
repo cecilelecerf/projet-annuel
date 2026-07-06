@@ -1,15 +1,11 @@
-import { prisma } from "@api/lib/prisma";
-import type {
-  CreateProductClinic,
-  UpdateProductClinic,
-} from "@armali/schemas";
+import type { CreateProductClinic, UpdateProductClinic } from "@armali/schemas";
 import { PrismaClient } from "@prisma/client/extension";
 
 export class ProductClinicRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findByClinic(clinicId: string) {
-    return prisma.clinicProduct.findMany({
+    return this.prisma.clinicProduct.findMany({
       where: { clinicId },
       include: { product: { include: { brand: true } } },
       orderBy: { createdAt: "desc" },
@@ -17,14 +13,14 @@ export class ProductClinicRepository {
   }
 
   async findById(id: string) {
-    return prisma.clinicProduct.findUnique({
+    return this.prisma.clinicProduct.findUnique({
       where: { id },
       include: { product: { include: { brand: true } } },
     });
   }
 
   async create(data: CreateProductClinic) {
-    return prisma.clinicProduct.create({
+    return this.prisma.clinicProduct.create({
       data: {
         clinicId: data.clinicId,
         productId: data.productId,
@@ -37,7 +33,7 @@ export class ProductClinicRepository {
   }
 
   async update(id: string, data: UpdateProductClinic) {
-    return prisma.clinicProduct.update({
+    return this.prisma.clinicProduct.update({
       where: { id },
       data,
       include: { product: { include: { brand: true } } },
@@ -45,7 +41,7 @@ export class ProductClinicRepository {
   }
 
   async incrementStock(id: string, quantity: number) {
-    return prisma.clinicProduct.update({
+    return this.prisma.clinicProduct.update({
       where: { id },
       data: { stock: { increment: quantity } },
       include: { product: { include: { brand: true } } },
@@ -53,6 +49,6 @@ export class ProductClinicRepository {
   }
 
   async delete(id: string) {
-    return prisma.clinicProduct.delete({ where: { id } });
+    return this.prisma.clinicProduct.delete({ where: { id } });
   }
 }

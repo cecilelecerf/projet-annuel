@@ -144,7 +144,7 @@ model DirectorClinicProfile {
 
   clinic Clinic?
 
-  clinicCreationRequests ClinicCreationRequest[]
+  clinicRequests ClinicRequest[]
 
   @@map("director_clinic_profiles")
 }

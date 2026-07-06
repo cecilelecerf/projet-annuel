@@ -1,9 +1,5 @@
 import { prisma } from "@api/lib/prisma";
 import { BadRequestError, NotFoundError } from "@api/errors";
-import type {
-  UpdateClinicReferent,
-  UpdateClinicSpecialities,
-} from "@armali/schemas";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
@@ -18,32 +14,6 @@ export class ReferentService {
         "Aucune clinique associée à ce compte référent",
       );
     return profile.clinicId;
-  }
-
-  async getClinicSpecialities(referentUserId: string) {
-    const clinicId = await this.getClinicId(referentUserId);
-    const clinic = await prisma.clinic.findUnique({
-      where: { id: clinicId },
-      include: { specialities: true },
-    });
-    return clinic?.specialities ?? [];
-  }
-
-  async updateClinicSpecialities(
-    referentUserId: string,
-    data: UpdateClinicSpecialities,
-  ) {
-    const clinicId = await this.getClinicId(referentUserId);
-    const clinic = await prisma.clinic.update({
-      where: { id: clinicId },
-      data: {
-        specialities: {
-          set: data.specialityIds.map((id) => ({ id })),
-        },
-      },
-      include: { specialities: true },
-    });
-    return clinic.specialities;
   }
 
   // ── Dashboard (page d'accueil référent) ───────────────────────────────────

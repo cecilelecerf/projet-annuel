@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { staffApi } from '@/features/staffs/staff.api'
-import type { StaffMemberDetail } from '@armali/schemas'
+import type { StaffMemberDetail, StaffRole } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
@@ -13,7 +13,7 @@ const { user } = useAuthStore()
 
 const member = ref<StaffMemberDetail | null>(null)
 const loading = ref(false)
-const roleLabel: Record<string, string> = {
+const roleLabel: Record<StaffRole, string> = {
   DIRECTOR: 'Directeur',
   REFERENT: 'Référent',
   VETERINARIAN: 'Vétérinaire',
@@ -90,7 +90,7 @@ function formatLongDate(value?: string | null) {
               </div>
               <div class="info-item info-item--wide">
                 <span class="label">Membre depuis</span>
-                <span class="value">{{ formatLongDate(member.createdAt) }}</span>
+                <span class="value">{{ formatLongDate(member.createdAt.toISOString()) }}</span>
               </div>
             </div>
           </div>

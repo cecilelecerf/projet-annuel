@@ -1,5 +1,10 @@
-import type { CreateSpeciality, UpdateSpeciality } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import type {
+  ClinicId,
+  CreateSpeciality,
+  UpdateClinicSpecialities,
+  UpdateSpeciality,
+} from "@armali/schemas";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class SpecialityRepository {
   constructor(private prisma: PrismaClient) {}
@@ -34,5 +39,30 @@ export class SpecialityRepository {
 
   async delete(id: string) {
     return this.prisma.speciality.delete({ where: { id } });
+  }
+
+  async linkWithClinic({
+    clinicId,
+    data,
+  }: {
+    clinicId: ClinicId;
+    data: UpdateClinicSpecialities;
+  }) {
+    return this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        specialities: {
+          set: data.specialityIds.map((id) => ({ id })),
+        },
+      },
+      include: { specialities: true },
+    });
+  }
+
+  async findAllByClinicId({ clinicId }: { clinicId: ClinicId }) {
+    return this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: { specialities: true },
+    });
   }
 }

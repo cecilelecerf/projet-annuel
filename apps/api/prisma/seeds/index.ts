@@ -28,9 +28,9 @@ export const prisma = new PrismaClient({ adapter });
 
 async function main() {
   await cleanup(prisma);
-  const existingUser = await prisma.user.findUnique({
-    where: { email: "admin@gmail.com" },
-  });
+  // const existingUser = await prisma.user.findUnique({
+  //   where: { email: "admin@gmail.com" },
+  // });
 
   // if (existingUser) {
   //   console.log("⏭️  Base de données déjà peuplée, seed ignoré.");

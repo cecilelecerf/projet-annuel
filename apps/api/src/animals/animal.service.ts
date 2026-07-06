@@ -106,15 +106,7 @@ export class AnimalService {
     return this.repository.update(pet.id, data);
   }
 
-  async delete({
-    id,
-    userId,
-    role,
-  }: {
-    id: string;
-    userId: string;
-    role: UserRole;
-  }) {
+  async delete({ id, userId }: { id: string; userId: string }) {
     await this.assertOwner({ petId: id, userId });
     return this.repository.delete(id);
   }

@@ -113,7 +113,7 @@ describe("GET /api/users", () => {
       const res = await request(app)
         .get("/api/users")
         .set("Authorization", `Bearer ${token}`);
-
+      console.log(res.body);
       expect(res.status).toBe(200);
     });
   });

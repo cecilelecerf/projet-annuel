@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { secretaryIdSchema, clinicIdSchema } from "../ids";
-import { baseUserSchema } from "./base-user.schema";
+import { baseUserSchema, registerSchema } from "./base-user.schema";
 import { bankingInfoInputSchema } from "./veterinarian.schema";
-import { registerSchema } from ".";
 
 export const secretaryProfileSchema = z.object({
   id: secretaryIdSchema,

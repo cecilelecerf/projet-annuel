@@ -14,6 +14,8 @@ declare module 'vue' {
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
     DevLoginSection: typeof import('./src/components/DevLoginSection.vue')['default']
+    DevSection: typeof import('./src/components/landingPage/DevSection.vue')['default']
+    EditAccountDialog: typeof import('./src/components/profile/EditAccountDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElBadge: typeof import('element-plus/es')['ElBadge']

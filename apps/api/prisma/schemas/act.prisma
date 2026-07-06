@@ -35,7 +35,7 @@ model ClinicAct {
   actId    String
   act      Act    @relation(fields: [actId], references: [id])
   clinicId String
-  clinic   Clinic @relation(fields: [clinicId], references: [id])
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   animalMedicalHistories AnimalMedicalHistory[]
 

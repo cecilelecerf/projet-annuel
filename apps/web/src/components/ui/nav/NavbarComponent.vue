@@ -15,11 +15,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 
-const profilRoute = computed(() => {
-  const role = user.value?.role
-  return `${role?.toUpperCase()}.Profil`
-})
-
 const userInitials = computed(() => {
   if (!user.value) return '?'
   return `${user.value.firstname[0]}${user.value.lastname[0]}`.toUpperCase()
@@ -59,7 +54,7 @@ const handleLogout = async () => {
 
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item v-if="profilRoute" @click="router.push({ name: profilRoute })">
+            <el-dropdown-item @click="router.push({ name: `${user?.role?.toUpperCase()}.Profil` })">
               <el-icon><User /></el-icon>
               Mon profil
             </el-dropdown-item>

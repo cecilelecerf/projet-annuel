@@ -196,7 +196,7 @@ export async function seedActs(
       animalMeetingId: animalMeeting1.animalMeeting?.id!,
       animalId: animalMeeting1.animalMeeting!.animalId,
       performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
+        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],
       },
       priceApplied: 70,
       type: "VACCINATION",
@@ -225,7 +225,7 @@ export async function seedActs(
       animalMeetingId: animalMeeting1.animalMeeting!.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
       performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
+        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],
       },
       imaging: {
         create: {
@@ -249,7 +249,7 @@ export async function seedActs(
       animalMeetingId: animalMeeting1.animalMeeting!.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
       performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
+        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],
       },
       analysis: {
         create: {
@@ -295,7 +295,7 @@ export async function seedActs(
       animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
       performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId }],
+        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId! }],
       },
       imaging: {
         create: {
@@ -319,7 +319,7 @@ export async function seedActs(
       animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
       performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId }],
+        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId! }],
       },
       notes: "Nettoyage et désinfection des plaies cutanées",
     },

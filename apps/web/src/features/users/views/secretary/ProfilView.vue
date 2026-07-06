@@ -4,10 +4,13 @@ import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import DeleteAccountDialog from '@/components/profile/DeleteAccountDialog.vue'
+import type EditAccountDialog from '@/components/profile/EditAccountDialog.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const deleteDialog = ref<InstanceType<typeof DeleteAccountDialog> | null>(null)
+const editDialog = ref<InstanceType<typeof EditAccountDialog> | null>(null)
+
 const user = authStore.user
 
 interface ClinicData {
@@ -94,6 +97,9 @@ async function handleLogout() {
     <el-divider />
 
     <div class="profil-actions">
+      <el-button type="primary" size="large" @click="editDialog?.open()">
+        Modifier mon profil
+      </el-button>
       <el-button size="large" @click="handleLogout">Se déconnecter</el-button>
       <el-button type="danger" size="large" plain @click="deleteDialog?.open()">
         Supprimer mon compte
@@ -101,6 +107,7 @@ async function handleLogout() {
     </div>
   </div>
   <DeleteAccountDialog ref="deleteDialog" />
+  <EditAccountDialog ref="editDialog" />
 
   <!-- Infos clinique (lecture seule) -->
   <div v-if="clinic" class="card" style="margin-top: 24px">

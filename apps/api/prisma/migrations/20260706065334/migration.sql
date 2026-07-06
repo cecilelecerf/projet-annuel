@@ -871,7 +871,7 @@ ALTER TABLE "acts" ADD CONSTRAINT "acts_vaccineId_fkey" FOREIGN KEY ("vaccineId"
 ALTER TABLE "clinic_acts" ADD CONSTRAINT "clinic_acts_actId_fkey" FOREIGN KEY ("actId") REFERENCES "acts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clinic_acts" ADD CONSTRAINT "clinic_acts_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "clinic_acts" ADD CONSTRAINT "clinic_acts_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "animal_medical_histories" ADD CONSTRAINT "animal_medical_histories_animalMeetingId_fkey" FOREIGN KEY ("animalMeetingId") REFERENCES "animal_meetings"("id") ON DELETE CASCADE ON UPDATE CASCADE;

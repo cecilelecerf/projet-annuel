@@ -27,7 +27,7 @@ await init()
 app.use(router)
 app.use(Toast, {
   position: 'bottom-center',
-  timeout: 3000,
+  timeout: 4000,
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,

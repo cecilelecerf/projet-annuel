@@ -226,7 +226,7 @@ CREATE TABLE "clinics" (
 );
 
 -- CreateTable
-CREATE TABLE "clinic_creation_requests" (
+CREATE TABLE "clinic_requests" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -239,7 +239,7 @@ CREATE TABLE "clinic_creation_requests" (
     "description" TEXT,
     "directorId" TEXT NOT NULL,
 
-    CONSTRAINT "clinic_creation_requests_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "clinic_requests_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -944,7 +944,7 @@ ALTER TABLE "animals_vaccines" ADD CONSTRAINT "animals_vaccines_animalId_fkey" F
 ALTER TABLE "clinics" ADD CONSTRAINT "clinics_directorId_fkey" FOREIGN KEY ("directorId") REFERENCES "director_clinic_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clinic_creation_requests" ADD CONSTRAINT "clinic_creation_requests_directorId_fkey" FOREIGN KEY ("directorId") REFERENCES "director_clinic_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "clinic_requests" ADD CONSTRAINT "clinic_requests_directorId_fkey" FOREIGN KEY ("directorId") REFERENCES "director_clinic_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "veterinarian_clinics" ADD CONSTRAINT "veterinarian_clinics_veterinarianId_fkey" FOREIGN KEY ("veterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;

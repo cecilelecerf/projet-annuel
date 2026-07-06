@@ -14,14 +14,14 @@ export class ClinicRequestRepository {
   }
 
   findLatestRequest(directorUserId: string) {
-    return this.prisma.clinicCreationRequest.findFirst({
+    return this.prisma.clinicRequest.findFirst({
       where: { directorId: directorUserId },
       orderBy: { createdAt: "desc" },
     });
   }
 
   findPendingRequestByDirector(directorUserId: string) {
-    return this.prisma.clinicCreationRequest.findFirst({
+    return this.prisma.clinicRequest.findFirst({
       where: { directorId: directorUserId, status: "PENDING" },
     });
   }
@@ -31,19 +31,19 @@ export class ClinicRequestRepository {
   }
 
   findPendingRequestBySiret(siret: string) {
-    return this.prisma.clinicCreationRequest.findFirst({
+    return this.prisma.clinicRequest.findFirst({
       where: { siret, status: "PENDING" },
     });
   }
 
   createRequest(directorUserId: string, data: CreateClinicRequest) {
-    return this.prisma.clinicCreationRequest.create({
+    return this.prisma.clinicRequest.create({
       data: { ...data, directorId: directorUserId },
     });
   }
 
   findRequestsByDirector(directorUserId: string) {
-    return this.prisma.clinicCreationRequest.findMany({
+    return this.prisma.clinicRequest.findMany({
       where: { directorId: directorUserId },
       orderBy: { createdAt: "desc" },
     });
@@ -52,7 +52,7 @@ export class ClinicRequestRepository {
   // ── Administration des demandes ───────────────────────────────────────────
 
   findAllRequests() {
-    return this.prisma.clinicCreationRequest.findMany({
+    return this.prisma.clinicRequest.findMany({
       include: {
         director: {
           select: {
@@ -72,13 +72,13 @@ export class ClinicRequestRepository {
   }
 
   findRequestById(requestId: string) {
-    return this.prisma.clinicCreationRequest.findUnique({
+    return this.prisma.clinicRequest.findUnique({
       where: { id: requestId },
     });
   }
 
   rejectRequest(requestId: string) {
-    return this.prisma.clinicCreationRequest.update({
+    return this.prisma.clinicRequest.update({
       where: { id: requestId },
       data: { status: "REJECTED" },
     });
@@ -117,7 +117,7 @@ export class ClinicRequestRepository {
         },
       });
 
-      return tx.clinicCreationRequest.update({
+      return tx.clinicRequest.update({
         where: { id: request.id },
         data: { status: "APPROVED" },
       });

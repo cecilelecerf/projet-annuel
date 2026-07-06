@@ -36,7 +36,7 @@ enum ClinicRequestStatus {
   REJECTED
 }
 
-model ClinicCreationRequest {
+model ClinicRequest {
   id          String              @id @default(uuid())
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @default(now()) @updatedAt
@@ -51,7 +51,7 @@ model ClinicCreationRequest {
   directorId String
   director   DirectorClinicProfile @relation(fields: [directorId], references: [id], onDelete: Cascade)
 
-  @@map("clinic_creation_requests")
+  @@map("clinic_requests")
 }
 
 model Speciality {

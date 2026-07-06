@@ -42,7 +42,7 @@ async function createDisposableRequest(
   }> = {},
 ) {
   const prisma = getPrisma();
-  return prisma.clinicCreationRequest.create({
+  return prisma.clinicRequest.create({
     data: {
       name: "Clinique jetable",
       address: "1 rue du Test",
@@ -59,7 +59,7 @@ async function cleanupDisposable(email: string) {
   const prisma = getPrisma();
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
-    await prisma.clinicCreationRequest.deleteMany({
+    await prisma.clinicRequest.deleteMany({
       where: { directorId: user.id },
     });
     await prisma.clinic.deleteMany({ where: { directorId: user.id } });
@@ -398,9 +398,9 @@ describe("GET /api/clinics/requests/:id/approve", () => {
 
       expect(res.status).toBe(200);
 
-      const updatedRequest = await getPrisma().clinicCreationRequest.findUnique(
-        { where: { id: req.id } },
-      );
+      const updatedRequest = await getPrisma().clinicRequest.findUnique({
+        where: { id: req.id },
+      });
       expect(updatedRequest?.status).toBe("APPROVED");
 
       const createdClinic = await getPrisma().clinic.findUnique({
@@ -458,9 +458,9 @@ describe("GET /api/clinics/requests/:id/reject", () => {
 
       expect(res.status).toBe(200);
 
-      const updatedRequest = await getPrisma().clinicCreationRequest.findUnique(
-        { where: { id: req.id } },
-      );
+      const updatedRequest = await getPrisma().clinicRequest.findUnique({
+        where: { id: req.id },
+      });
       expect(updatedRequest?.status).toBe("REJECTED");
     } finally {
       await cleanupDisposable(email);

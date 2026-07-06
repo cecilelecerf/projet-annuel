@@ -15,6 +15,9 @@ allowBuilds:
   unrs-resolver: true
 
 overrides:
+  browserslist: 4.28.4
+  caniuse-lite: 1.0.30001799
+  "@protobufjs/utf8": 1.1.1
   "@typescript-eslint/eslint-plugin": 8.62.0
   "@typescript-eslint/parser": 8.62.0
   "@typescript-eslint/project-service": 8.62.0

@@ -83,11 +83,10 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
     }
   }
 
-  const data = await response.json()
+  const data = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error ?? error.message ?? 'Erreur serveur')
+    throw new Error(data?.error ?? data?.message ?? 'Erreur serveur')
   }
 
   return data as T

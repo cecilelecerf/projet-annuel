@@ -26,7 +26,7 @@ const menuItems: MenuItem[] = [
     icon: ChatDotRound,
   },
   {
-    index: 'SECRETARY.Avaibalities',
+    index: 'SECRETARY.Avaibality',
     label: 'Dispobilité',
     icon: SetUp,
   },

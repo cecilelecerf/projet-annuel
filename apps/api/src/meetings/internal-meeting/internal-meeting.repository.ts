@@ -37,7 +37,7 @@ export class InternalMeetingRepository {
     data: CreateInternalMeeting;
     authorId: string;
     clinicId: string;
-    parentId: MeetingRecurringId;
+    parentId?: MeetingRecurringId;
   }) {
     return this.prisma.meetingBase.create({
       data: {
@@ -95,7 +95,7 @@ export class InternalMeetingRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.meetingBase.delete({ where: { id } });
+    return this.prisma.internalMeeting.delete({ where: { id } });
   }
   async findParticipant(internalMeetingId: string, userId: string) {
     return this.prisma.internalMeetingParticipant.findFirst({
@@ -171,6 +171,46 @@ export class InternalMeetingRepository {
         },
       },
       include: { internalMeeting: { include: { participants: true } } },
+    });
+  }
+
+  async createException({
+    parentId,
+    date,
+    startTime,
+    endTime,
+  }: {
+    parentId: MeetingRecurringId;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+  }) {
+    return this.prisma.meetingBase.create({
+      data: {
+        kind: "INTERNAL",
+        type: "EXCEPTION",
+        date,
+        startTime,
+        endTime,
+        parentId,
+      },
+    });
+  }
+
+  async deleteRecurring(recurringId: string) {
+    return this.prisma.meetingReccuring.delete({ where: { id: recurringId } });
+  }
+
+  async truncateRecurring(recurringId: string, dateEnd: Date) {
+    return this.prisma.meetingReccuring.update({
+      where: { id: recurringId },
+      data: { dateEnd },
+    });
+  }
+
+  async deleteFutureChildren(recurringId: string, fromDate: Date) {
+    return this.prisma.meetingBase.deleteMany({
+      where: { parentId: recurringId, date: { gte: fromDate } },
     });
   }
 }

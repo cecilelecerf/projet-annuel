@@ -51,7 +51,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'users/:id',
         name: 'SECRETARY.Clients.Detail',
-        component: () => import('@/features/users/views/client/UserView.vue'),
+        component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
         path: 'animals/:id',
@@ -109,37 +109,12 @@ export const secretaryRouter: RouteRecordRaw[] = [
       //     },
       //   ],
       // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'SECRETARY.Messagerie',
-      //   //        component: () => import('@/views/secretary/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'default-group',
-      //       name: 'SECRETARY.Messagerie.DefaultGroup',
-      //       //            component: () => import('@/views/secretary/messagerie/DefaultGroup.vue'),
-      //       // Groupe par défaut avec tous le personnel de la clinique (sauf directeur)
-      //     },
-      //     {
-      //       path: 'groupe',
-      //       name: 'SECRETARY.Messagerie.Groupe',
-      //       //            component: () => import('@/views/secretary/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'SECRETARY.Messagerie.Privees',
-      //       //            component: () => import('@/views/secretary/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'SECRETARY.Messagerie.Conversation',
-      //       //            component: () => import('@/views/secretary/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'SECRETARY.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
       // // ── Profil ───────────────────────────────────────────────
       // {
       //   path: 'profil',

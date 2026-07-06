@@ -18,7 +18,7 @@ export class ReferentService {
     });
     if (!profile)
       throw new BadRequestError(
-        "Aucune clinique associée à ce compte référent"
+        "Aucune clinique associée à ce compte référent",
       );
     return profile.clinicId;
   }
@@ -29,31 +29,64 @@ export class ReferentService {
     const [directorProfile, referents, vets, secretaries] = await Promise.all([
       prisma.directorClinicProfile.findFirst({
         where: { clinicId },
-        include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+        include: {
+          user: {
+            select: { id: true, firstname: true, lastname: true, email: true },
+          },
+        },
       }),
       prisma.referentClinicProfile.findMany({
         where: { clinicId },
-        include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+        include: {
+          user: {
+            select: { id: true, firstname: true, lastname: true, email: true },
+          },
+        },
       }),
       prisma.veterinarianClinic.findMany({
         where: { clinicId },
         include: {
           veterinarian: {
-            include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                },
+              },
+            },
           },
         },
       }),
       prisma.secretaryProfile.findMany({
         where: { clinicId },
-        include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+        include: {
+          user: {
+            select: { id: true, firstname: true, lastname: true, email: true },
+          },
+        },
       }),
     ]);
 
     return {
-      director: directorProfile ? { ...directorProfile.user, role: "DIRECTOR" as const } : null,
-      referents: referents.map((r) => ({ ...r.user, role: "REFERENT" as const })),
-      veterinarians: vets.map((v) => ({ ...v.veterinarian.user, role: "VETERINARIAN" as const, licenseNumber: v.veterinarian.licenseNumber })),
-      secretaries: secretaries.map((s) => ({ ...s.user, role: "SECRETARY" as const })),
+      director: directorProfile
+        ? { ...directorProfile.user, role: "DIRECTOR" as const }
+        : null,
+      referents: referents.map((r) => ({
+        ...r.user,
+        role: "REFERENT" as const,
+      })),
+      veterinarians: vets.map((v) => ({
+        ...v.veterinarian.user,
+        role: "VETERINARIAN" as const,
+        licenseNumber: v.veterinarian.licenseNumber,
+      })),
+      secretaries: secretaries.map((s) => ({
+        ...s.user,
+        role: "SECRETARY" as const,
+      })),
     };
   }
 
@@ -68,7 +101,7 @@ export class ReferentService {
             veterinarianIdentity: true,
             bankingInfo: true,
             speciality: true,
-            veterinarianClinic: true,
+            veterinarianClinics: true,
           },
         },
         secretaryProfile: {
@@ -82,7 +115,7 @@ export class ReferentService {
     if (!user) throw new NotFoundError("Membre du personnel");
 
     const belongsToClinic =
-      (user.veterinarianProfile?.veterinarianClinic ?? []).some(
+      (user.veterinarianProfile?.veterinarianClinics ?? []).some(
         (vc) => vc.clinicId === clinicId,
       ) ||
       user.secretaryProfile?.clinicId === clinicId ||
@@ -95,7 +128,10 @@ export class ReferentService {
     return safeUser;
   }
 
-  async createVeterinarian(referentUserId: string, data: CreateVeterinarianStaff) {
+  async createVeterinarian(
+    referentUserId: string,
+    data: CreateVeterinarianStaff,
+  ) {
     const clinicId = await this.getClinicId(referentUserId);
     const hashedPassword = await hash(data.password, 10);
 
@@ -110,7 +146,7 @@ export class ReferentService {
           create: {
             licenseNumber: data.licenseNumber,
             bio: data.bio,
-            veterinarianClinic: {
+            veterinarianClinics: {
               create: { clinicId },
             },
             ...(data.identity && {
@@ -183,9 +219,9 @@ export class ReferentService {
     const clinicId = await this.getClinicId(referentUserId);
     const clinic = await prisma.clinic.findUnique({
       where: { id: clinicId },
-      include: { speciality: true },
+      include: { specialities: true },
     });
-    return clinic?.speciality ?? [];
+    return clinic?.specialities ?? [];
   }
 
   async updateClinicSpecialities(
@@ -196,13 +232,13 @@ export class ReferentService {
     const clinic = await prisma.clinic.update({
       where: { id: clinicId },
       data: {
-        speciality: {
+        specialities: {
           set: data.specialityIds.map((id) => ({ id })),
         },
       },
-      include: { speciality: true },
+      include: { specialities: true },
     });
-    return clinic.speciality;
+    return clinic.specialities;
   }
 
   // ── Dashboard (page d'accueil référent) ───────────────────────────────────
@@ -232,12 +268,12 @@ export class ReferentService {
           prisma.veterinarianClinic.count({ where: { clinicId } }),
           prisma.secretaryProfile.count({ where: { clinicId } }),
         ]),
-        
+
         prisma.clinicProduct.findMany({
           where: { clinicId },
           select: { stock: true, minimumRequired: true },
         }),
-        
+
         prisma.order.findMany({
           where: { clinicId },
           select: {
@@ -271,7 +307,9 @@ export class ReferentService {
     );
     const clinicAverageRating =
       allRatings.length > 0
-        ? Math.round((allRatings.reduce((s, r) => s + r, 0) / allRatings.length) * 10) / 10
+        ? Math.round(
+            (allRatings.reduce((s, r) => s + r, 0) / allRatings.length) * 10,
+          ) / 10
         : null;
 
     // ── Stats stock ─────────────────────────────────────────────────────

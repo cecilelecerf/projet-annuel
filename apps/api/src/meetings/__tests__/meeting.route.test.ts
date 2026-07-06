@@ -64,6 +64,26 @@ describe("GET /api/meetings/calendar", () => {
       expect(res.body).toHaveProperty("meetings");
       expect(res.body).toHaveProperty("availabilities");
     });
+    it("200 — Director retourne son calendrier", async () => {
+      const token = await loginAs("directeur@gmail.com");
+      const res = await request(app)
+        .get(`/api/meetings/calendar?${validQuery}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("meetings");
+      expect(res.body).toHaveProperty("availabilities");
+    });
+    it("200 — Referent retourne son calendrier", async () => {
+      const token = await loginAs("referent@gmail.com");
+      const res = await request(app)
+        .get(`/api/meetings/calendar?${validQuery}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("meetings");
+      expect(res.body).toHaveProperty("availabilities");
+    });
   });
 });
 
@@ -123,14 +143,6 @@ describe("GET /api/meetings/:id", () => {
     expect(res.status).toBe(401);
   });
 
-  it("403 — rôle DIRECTOR non autorisé", async () => {
-    const token = await loginAs("directeur@gmail.com");
-    const res = await request(app)
-      .get("/api/meetings/some-id")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(403);
-  });
-
   it("404 — meeting introuvable", async () => {
     const token = await loginAs("veto@gmail.com");
     const res = await request(app)
@@ -164,8 +176,8 @@ describe("GET /api/meetings/:id", () => {
       },
       include: { animalMeeting: { include: { meeting: true } } },
     });
-    const meetingId = animal![1].animalMeeting[0].meeting!.id;
 
+    const meetingId = animal![1].animalMeeting[0].meeting!.id;
     const res = await request(app)
       .get(`/api/meetings/${meetingId}`)
       .set("Authorization", `Bearer ${token}`);

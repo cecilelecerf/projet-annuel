@@ -60,7 +60,7 @@ export class DirectorService {
           create: {
             licenseNumber: data.licenseNumber,
             bio: data.bio,
-            veterinarianClinic: {
+            veterinarianClinics: {
               create: { clinicId },
             },
           },

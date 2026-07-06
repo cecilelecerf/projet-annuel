@@ -2,18 +2,18 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { useRoute } from 'vue-router'
-import { calendarApi } from '../api/calendar.api'
-import AnimalMeeting from '../components/animal-meeting/AnimalMeetingComponent.vue'
-import InternalMeeting from '../components/internal-meeting/InternalMeeting.vue'
+import { meetingApi } from '../api/meeting.api.ts'
+import InternalMeetingDetail from '../components/internal-meeting/InternalMeetingDetail.vue'
+import AnimalMeetingDetail from '../components/animal-meeting/AnimalMeetingDetail.vue'
 
 dayjs.locale('fr')
 
 const { params, query } = useRoute()
 
-const meeting = await calendarApi.get(params.id as string, query.date as string | undefined)
+const meeting = await meetingApi.get(params.id as string, query.date as string | undefined)
 </script>
 
 <template>
-  <InternalMeeting v-if="meeting.kind === 'INTERNAL'" :meeting="meeting" />
-  <AnimalMeeting v-if="meeting.kind === 'ANIMAL'" :meeting="meeting" />
+  <InternalMeetingDetail v-if="meeting.kind === 'INTERNAL'" :meeting="meeting" />
+  <AnimalMeetingDetail v-if="meeting.kind === 'ANIMAL'" :meeting="meeting" />
 </template>

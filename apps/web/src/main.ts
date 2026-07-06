@@ -13,6 +13,9 @@ import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 import 'element-plus/es/components/notification/style/css'
 import 'element-plus/es/components/loading/style/css'
+
+import 'leaflet/dist/leaflet.css'
+
 const app = createApp(App)
 app.use(createPinia())
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
@@ -23,8 +26,8 @@ await init()
 
 app.use(router)
 app.use(Toast, {
-  position: 'bottom-center',
-  timeout: 3000,
+  position: 'top-center',
+  timeout: 4000,
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,

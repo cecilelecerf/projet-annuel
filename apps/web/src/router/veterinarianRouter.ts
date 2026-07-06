@@ -32,7 +32,7 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       {
         path: 'clients/:id',
         name: 'VETERINARIAN.Clients.Detail',
-        component: () => import('@/features/users/views/client/UserView.vue'),
+        component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
         path: 'animals/:id',
@@ -126,37 +126,12 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       //   // Liste de tous les RDV avec infos sur véto, actions réalisées,
       //   // médicaments données, etc.
       // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'VETERINARIAN.Messagerie',
-      //   //        component: () => import('@/views/veto/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'default-group',
-      //       name: 'VETERINARIAN.Messagerie.DefaultGroup',
-      //       //            component: () => import('@/views/veto/messagerie/DefaultGroup.vue'),
-      //       // Groupe par défaut avec tous le personnel de la clinique (sauf directeur)
-      //     },
-      //     {
-      //       path: 'groupe',
-      //       name: 'VETERINARIAN.Messagerie.Groupe',
-      //       //            component: () => import('@/views/veto/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'VETERINARIAN.Messagerie.Privees',
-      //       //            component: () => import('@/views/veto/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'VETERINARIAN.Messagerie.Conversation',
-      //       //            component: () => import('@/views/veto/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'VETERINARIAN.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
       // // ── Profil ───────────────────────────────────────────────
       // {
       //   path: 'profil',

@@ -3,37 +3,31 @@ import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId } from "./user.utils";
-import { isStaff } from "@api/utils";
+import { isStaff, STAFF_ROLES } from "@api/utils";
+import { UserWithProfileAndClinicId } from "./user.types";
+import { ClinicService } from "@api/clinics/clinic.service";
+import { UserId } from "@armali/schemas";
 
 export class UserService {
-  constructor(private repository: UserRepository) {}
+  constructor(
+    private repository: UserRepository,
+    private clinicService: ClinicService,
+  ) {}
 
   async getAllUsers(): Promise<Omit<User, "password">[]> {
     return await this.repository.getAllUsers();
   }
 
-  async getClinicId({
-    userId,
-    role,
-  }: {
-    userId: string;
-    role: UserRole;
-  }): Promise<string> {
-    const clinicId = await this.repository.getClinicIdByUserId({
-      id: userId,
+  async getUsers(userId: string, role: UserRole) {
+    const clinicIds = await this.clinicService.getClinicIdsByUserId({
+      userId,
       role,
     });
-    if (!clinicId) throw new ForbiddenError();
-    return clinicId;
-  }
-
-  async getUsers(userId: string, role: UserRole) {
-    const clinicId = await this.getClinicId({ userId, role });
-    return this.repository.getUsersByClinic({ clinicId });
+    return this.repository.getUsersByClinic({ clinicIds });
   }
 
   async getUsersByRoles(
-    userId: string,
+    userId: UserId,
     role: UserRole,
     targetRole: UserRole[],
   ) {
@@ -43,22 +37,36 @@ export class UserService {
       });
       return users.map(flatClinicId);
     }
+    if (targetRole.includes("ADMIN")) throw new ForbiddenError();
 
-    const clinicId = await this.getClinicId({ userId, role });
+    let clients: User[] = [];
+    if (targetRole.includes("CLIENT")) {
+      clients = await this.repository.getAllUsersByRole({ roles: ["CLIENT"] });
+    }
+
     const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
-    const [clients, staffs] = await Promise.all([
-      targetRole.includes("CLIENT")
-        ? this.repository.getAllUsersByRole({ roles: ["CLIENT"] })
-        : Promise.resolve([]),
-      nonClientRoles.length > 0
-        ? this.repository.getUsersByRoleAndClinic({
-            clinicId,
-            roles: nonClientRoles,
-          })
-        : Promise.resolve([]),
-    ]);
+    let staffs: User[] = [];
 
-    return [...clients, ...staffs].map(flatClinicId);
+    if (nonClientRoles.length > 0) {
+      const clinicIds = await this.clinicService.getClinicIdsByUserId({
+        userId,
+        role,
+      });
+      const staffsByClinic = await Promise.all(
+        clinicIds.flatMap((id) =>
+          this.clinicService.getStaffByClinicRole({
+            clinicId: id,
+            role,
+            authorId: userId,
+            targetRoles: nonClientRoles,
+          }),
+        ),
+      );
+
+      staffs = staffsByClinic.flat();
+    }
+
+    return [...clients, ...staffs];
   }
 
   async getUserById({
@@ -74,16 +82,15 @@ export class UserService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (requesterRole === "ADMIN") return user;
-
     if (user.role === "ADMIN") throw new ForbiddenError();
 
     if (isStaff(user.role)) {
-      const clinicId = await this.getClinicId({
+      const clinicIds = await this.clinicService.getClinicIdsByUserId({
         userId: requesterId,
         role: requesterRole,
       });
       const usersInClinic = await this.repository.getUsersByClinic({
-        clinicId,
+        clinicIds,
       });
       if (!usersInClinic.some((u) => u.id === targetId))
         throw new NotFoundError("Utilisateur");

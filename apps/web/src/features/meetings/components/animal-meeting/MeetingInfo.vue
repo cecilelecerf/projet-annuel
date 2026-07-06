@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
 
 const props = defineProps<{
@@ -16,15 +18,15 @@ const edit = defineModel<UpdateAnimalMeeting>('edit', { required: true })
 const dateLabel = computed(() => dayjs(props.meeting.date).format('dddd D MMMM YYYY'))
 
 const timeLabel = computed(() => {
-  const start = dayjs(props.meeting.startTime).format('H[h]mm')
-  const end = dayjs(props.meeting.endTime).format('H[h]mm')
+  const start = dayjs.utc(props.meeting.startTime).format('H[h]mm')
+  const end = dayjs.utc(props.meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
 
 // ── Combine date (jour) + heure (time) en un seul instant ────────────────────
 const meetingDateTime = computed(() => {
   const date = dayjs(props.meeting.date)
-  const time = dayjs(props.meeting.startTime)
+  const time = dayjs.utc(props.meeting.startTime)
   return date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
 })
 
@@ -156,7 +158,7 @@ const lockedReason = computed(() => {
 .meeting-title {
   font-size: 28px;
   font-weight: var(--fw-bold);
-  color: var(--el-color-teal-dark-3);
+  color: var(--el-color-#{meeting-color('animal')}-dark-3);
   margin: 0;
 }
 
@@ -186,7 +188,7 @@ const lockedReason = computed(() => {
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-md);
-  background: var(--el-color-teal-light-9);
+  background: var(--el-color-#{meeting-color('animal')}-light-9);
   border-radius: var(--radius-md);
   text-align: center;
 }
@@ -253,9 +255,9 @@ const lockedReason = computed(() => {
   width: fit-content;
 
   &.animal {
-    background: var(--el-color-success-light-9);
-    color: var(--el-color-success);
-    border: 1px solid var(--el-color-success-light-5);
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
+    color: var(--el-color-#{meeting-color('animal')});
+    border: 1px solid var(--el-color-#{meeting-color('animal')}-light-5);
   }
 }
 </style>

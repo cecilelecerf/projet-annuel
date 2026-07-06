@@ -5,6 +5,7 @@ import {
   veterinarianClinicIdSchema,
   specialityIdSchema,
 } from "./ids";
+import { baseUserSchema } from "./users/base-user.schema";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
@@ -78,7 +79,15 @@ export type UpdateSpeciality = z.infer<typeof updateSpecialitySchema>;
 export const updateClinicSpecialitiesSchema = z.object({
   specialityIds: z.array(specialityIdSchema),
 });
- 
+
 export type UpdateClinicSpecialities = z.infer<
   typeof updateClinicSpecialitiesSchema
 >;
+export const staffSchema = baseUserSchema.pick({
+  id: true,
+  lastname: true,
+  firstname: true,
+  email: true,
+  role: true,
+});
+export type Staff = z.infer<typeof staffSchema>;

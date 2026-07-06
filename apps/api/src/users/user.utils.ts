@@ -11,23 +11,32 @@ export const flatClinicId = (user: UserWithProfileAndClinicId) => {
     ...rest
   } = user;
 
-  let clinicId: Clinic["id"] | null = null;
+  let clinicIds: Clinic["id"][] | null = null;
   switch (user.role) {
     case "SECRETARY":
-      clinicId = secretaryProfile?.clinicId ?? null;
+      clinicIds = secretaryProfile?.clinicId
+        ? [secretaryProfile?.clinicId]
+        : null;
       break;
     case "DIRECTOR":
-      clinicId = directorClinicProfile?.clinicId ?? null;
+      clinicIds = directorClinicProfile?.clinicId
+        ? [directorClinicProfile?.clinicId]
+        : null;
       break;
     case "REFERENT":
-      clinicId = referentClinicProfile?.clinicId ?? null;
+      clinicIds = referentClinicProfile?.clinicId
+        ? [referentClinicProfile?.clinicId]
+        : null;
       break;
     case "VETERINARIAN":
-      clinicId = veterinarianProfile?.veterinarianClinic[0]?.clinicId ?? null;
+      clinicIds =
+        veterinarianProfile?.veterinarianClinics.map(
+          (veterinarianClinic) => veterinarianClinic.clinicId,
+        ) ?? null;
       break;
   }
 
-  return { ...rest, clinicId };
+  return { ...rest, clinicIds: [clinicIds] };
 };
 
 export const flatUser = <T extends { user: Record<string, unknown> }>(

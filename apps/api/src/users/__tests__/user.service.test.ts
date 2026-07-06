@@ -1,4 +1,5 @@
 import { userService } from "@api/instances";
+import { UserId } from "@armali/schemas";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockUserRepository = vi.hoisted(() => ({
@@ -10,11 +11,27 @@ const mockUserRepository = vi.hoisted(() => ({
   getUserById: vi.fn(),
 }));
 
+const mockClinicRepository = vi.hoisted(() => ({
+  findClinicIdByUser: vi.fn(),
+  findClinicByUserId: vi.fn(),
+  findStaff: vi.fn(),
+}));
+
 vi.mock("@api/users/user.repository", () => ({
   UserRepository: vi.fn(function () {
     return mockUserRepository;
   }),
 }));
+
+vi.mock("@api/clinics/clinic.repository", () => ({
+  ClinicRepository: vi.fn(function () {
+    return mockClinicRepository;
+  }),
+}));
+
+const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
+const ADMIN_ID = "22222222-2222-4222-8222-222222222222";
+const DIRECTOR_ID = "33333333-3333-4333-8333-333333333333";
 
 const mockUser = {
   id: "user-1",
@@ -42,48 +59,24 @@ describe("UserService.getAllUsers", () => {
   });
 });
 
-// ── getClinicId ───────────────────────────────────────────────────────────────
-
-describe("UserService.getClinicId", () => {
-  it("retourne le clinicId si trouvé", async () => {
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
-
-    const result = await userService.getClinicId({
-      userId: "user-1",
-      role: "DIRECTOR",
-    });
-
-    expect(result).toBe("clinic-1");
-  });
-
-  it("lève ForbiddenError si clinicId introuvable", async () => {
-    const { ForbiddenError } = await import("@api/errors");
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue(null);
-
-    await expect(
-      userService.getClinicId({ userId: "user-1", role: "DIRECTOR" }),
-    ).rejects.toThrow(ForbiddenError);
-  });
-});
-
 // ── getUsers ──────────────────────────────────────────────────────────────────
 
 describe("UserService.getUsers", () => {
   it("retourne les utilisateurs de la clinique", async () => {
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
     mockUserRepository.getUsersByClinic.mockResolvedValue([mockUser]);
 
     const result = await userService.getUsers("user-1", "DIRECTOR");
 
     expect(result).toHaveLength(1);
     expect(mockUserRepository.getUsersByClinic).toHaveBeenCalledWith({
-      clinicId: "clinic-1",
+      clinicIds: [CLINIC_ID],
     });
   });
 
   it("lève ForbiddenError si pas de clinique", async () => {
     const { ForbiddenError } = await import("@api/errors");
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue(null);
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue(null);
 
     await expect(userService.getUsers("user-1", "DIRECTOR")).rejects.toThrow(
       ForbiddenError,
@@ -97,9 +90,11 @@ describe("UserService.getUsersByRoles", () => {
   it("ADMIN — retourne tous les utilisateurs du rôle cible", async () => {
     mockUserRepository.getAllUsersByRole.mockResolvedValue([mockUser]);
 
-    const result = await userService.getUsersByRoles("admin-1", "ADMIN", [
-      "VETERINARIAN",
-    ]);
+    const result = await userService.getUsersByRoles(
+      ADMIN_ID as UserId,
+      "ADMIN",
+      ["VETERINARIAN"],
+    );
 
     expect(mockUserRepository.getAllUsersByRole).toHaveBeenCalledWith({
       roles: ["VETERINARIAN"],
@@ -108,26 +103,34 @@ describe("UserService.getUsersByRoles", () => {
   });
 
   it("non-ADMIN — retourne les utilisateurs du rôle dans la clinique", async () => {
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
-    mockUserRepository.getUsersByRoleAndClinic.mockResolvedValue([mockUser]);
-
-    const result = await userService.getUsersByRoles("dir-1", "DIRECTOR", [
-      "VETERINARIAN",
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
+    mockClinicRepository.findClinicByUserId.mockResolvedValue([
+      { id: CLINIC_ID, name: "Clinique Test" },
     ]);
-
-    expect(mockUserRepository.getUsersByRoleAndClinic).toHaveBeenCalledWith({
-      clinicId: "clinic-1",
-      roles: ["VETERINARIAN"],
+    mockClinicRepository.findStaff.mockResolvedValue({
+      director: { ...mockUser, role: "DIRECTOR" },
+      referents: [],
+      secretaries: [],
+      veterinarians: [mockUser],
     });
+
+    const result = await userService.getUsersByRoles(
+      DIRECTOR_ID as UserId,
+      "DIRECTOR",
+      ["VETERINARIAN"],
+    );
+
     expect(result).toHaveLength(1);
   });
 
   it("non-ADMIN — lève ForbiddenError si pas de clinique", async () => {
     const { ForbiddenError } = await import("@api/errors");
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue(null);
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue(null);
 
     await expect(
-      userService.getUsersByRoles("dir-1", "DIRECTOR", ["VETERINARIAN"]),
+      userService.getUsersByRoles(DIRECTOR_ID as UserId, "DIRECTOR", [
+        "VETERINARIAN",
+      ]),
     ).rejects.toThrow(ForbiddenError);
   });
 });
@@ -139,7 +142,7 @@ describe("UserService.getUserById", () => {
     mockUserRepository.getUserById.mockResolvedValue(mockUser);
 
     const result = await userService.getUserById({
-      requesterId: "admin-1",
+      requesterId: ADMIN_ID,
       requesterRole: "ADMIN",
       targetId: "user-1",
     });
@@ -156,7 +159,7 @@ describe("UserService.getUserById", () => {
 
     await expect(
       userService.getUserById({
-        requesterId: "admin-1",
+        requesterId: ADMIN_ID,
         requesterRole: "ADMIN",
         targetId: "unknown",
       }),
@@ -165,11 +168,11 @@ describe("UserService.getUserById", () => {
 
   it("non-ADMIN — retourne l'utilisateur s'il est dans la clinique", async () => {
     mockUserRepository.getUserById.mockResolvedValue(mockUser);
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
     mockUserRepository.getUsersByClinic.mockResolvedValue([mockUser]);
 
     const result = await userService.getUserById({
-      requesterId: "dir-1",
+      requesterId: DIRECTOR_ID,
       requesterRole: "DIRECTOR",
       targetId: "user-1",
     });
@@ -179,14 +182,14 @@ describe("UserService.getUserById", () => {
   it("non-ADMIN — lève NotFoundError si l'utilisateur n'est pas dans la clinique", async () => {
     const { NotFoundError } = await import("@api/errors");
     mockUserRepository.getUserById.mockResolvedValue(mockUser);
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue("clinic-1");
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
     mockUserRepository.getUsersByClinic.mockResolvedValue([
       { ...mockUser, id: "other-user" },
     ]);
 
     await expect(
       userService.getUserById({
-        requesterId: "dir-1",
+        requesterId: DIRECTOR_ID,
         requesterRole: "DIRECTOR",
         targetId: "user-1",
       }),
@@ -196,11 +199,11 @@ describe("UserService.getUserById", () => {
   it("non-ADMIN — lève ForbiddenError si pas de clinique", async () => {
     const { ForbiddenError } = await import("@api/errors");
     mockUserRepository.getUserById.mockResolvedValue(mockUser);
-    mockUserRepository.getClinicIdByUserId.mockResolvedValue(null);
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue(null);
 
     await expect(
       userService.getUserById({
-        requesterId: "dir-1",
+        requesterId: DIRECTOR_ID,
         requesterRole: "DIRECTOR",
         targetId: "user-1",
       }),

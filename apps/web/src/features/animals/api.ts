@@ -10,8 +10,12 @@ import {
 } from '@armali/schemas'
 
 export const animalApi = {
+  getAll: async (): Promise<AnimalWithRaceMeta[]> => {
+    const data = await http.get(`/animals`)
+    return animalWithRaceMetaSchema.array().parse(data)
+  },
   getAllByUser: async (userId: UserId): Promise<AnimalWithRaceMeta[]> => {
-    const data = await http.get(`/animals/user/${userId}`)
+    const data = await http.get(`/users/${userId}/animals`)
     return animalWithRaceMetaSchema.array().parse(data)
   },
   get: async (id: AnimalId): Promise<AnimalDetail> => {

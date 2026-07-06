@@ -8,7 +8,7 @@ export const veterinarianProfileSchema = z.object({
   licenseNumber: z.string().max(50),
   bio: z.string().nullable().optional(),
   speciality: z.array(specialitySchema).optional(),
-  veterinarianClinic: z.array(veterinarianClinicSchema).optional(),
+  veterinarianClinics: z.array(veterinarianClinicSchema).optional(),
 });
 
 export const veterinarianSchema = baseUserSchema.extend({
@@ -41,7 +41,7 @@ export const veterinarianIdentityInputSchema = z.object({
 export const createVeterinarianSchema = veterinarianProfileSchema.omit({
   id: true,
   speciality: true,
-  veterinarianClinic: true,
+  veterinarianClinics: true,
 });
 export const updateVeterinarianSchema = createVeterinarianSchema.partial();
 export const createVeterinarianStaffSchema = registerSchema.extend({

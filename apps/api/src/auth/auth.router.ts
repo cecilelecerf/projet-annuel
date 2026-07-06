@@ -6,6 +6,7 @@ import {
   registerSchema,
   registerDirectorSchema,
   deleteAccountConfirmSchema,
+  updateAccountSchema,
 } from "@armali/schemas";
 import { authController } from "@api/instances";
 
@@ -33,6 +34,12 @@ authRouter.post(
 );
 authRouter.post("/refresh", controller.refresh.bind(controller));
 authRouter.get("/me", authMiddleware, controller.me.bind(controller));
+authRouter.patch(
+  "/me",
+  authMiddleware,
+  validate(updateAccountSchema),
+  controller.updateAccount.bind(controller),
+);
 
 authRouter.post(
   "/delete-account/request",

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { InternalMeetingMeta, UpdateInternalMeeting } from '@armali/schemas'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -8,14 +9,21 @@ import ParticipantSection from './ParticipantSection.vue'
 import DescriptionSection from './DescriptionSection.vue'
 import DateTimeSection from './DateTimeSection.vue'
 import TitleSection from './TitleSection.vue'
-import { calendarApi } from '../../api/calendar.api.ts'
-import { useFormErrorStore } from '@/stores/formErrorStore.ts'
-import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore.ts'
 import HeaderMeetingSection from '../HeaderMeetingSection.vue'
 import RecurringComponent from './RecurringComponent.vue'
+import { useMeetingActions } from '../../composables/useMeetingActions.ts'
+import { combineDateAndTime } from '../utils'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
+
+type Edit = Required<
+  Omit<UpdateInternalMeeting, 'startTime' | 'endTime'> & {
+    startTime: string
+    endTime: string
+  }
+>
 
 const { meeting } = defineProps<{
   meeting: InternalMeetingMeta
@@ -23,86 +31,71 @@ const { meeting } = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const { user } = useAuthStore()
-const { handle } = useFormErrorStore()
+const { saveSchedule, deleteMeeting, deleting } = useMeetingActions()
+
 const showDeleteDialog = ref(false)
-const deleting = ref(false)
+const pendingDeleteScope = ref<'single' | 'all'>('single')
 const isEditing = ref(false)
-const edit = ref<
-  Required<Omit<UpdateInternalMeeting, 'startTime' | 'endTime'>> & {
-    startTime: string
-    endTime: string
-  }
->({
+const edit = ref<Edit>({
   title: meeting.title,
   description: meeting.description ?? '',
-  startTime: dayjs(meeting.startTime).toISOString(),
-  endTime: dayjs(meeting.endTime).toISOString(),
+  startTime: dayjs.utc(meeting.startTime).format('HH:mm:ss'),
+  endTime: dayjs.utc(meeting.endTime).format('HH:mm:ss'),
   date: meeting.date,
   userIds: meeting.participants.map((participant) => participant.userId),
 })
 
 const timeLabel = computed(() => {
-  const start = dayjs(meeting.startTime).format('H[h]mm')
-  const end = dayjs(meeting.endTime).format('H[h]mm')
+  const start = dayjs.utc(meeting.startTime).format('H[h]mm')
+  const end = dayjs.utc(meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
 
+const isUpcoming = computed(() => {
+  if (!meeting.date || !meeting.startTime) return false
+  return combineDateAndTime(meeting.date, meeting.startTime) > new Date()
+})
+
 const onSave = async (scope: 'single' | 'all') => {
-  if (scope === 'all' && meeting.parentId) {
-    try {
-      const result = await calendarApi.recurring.update(meeting.parentId, {
-        dateToStartAction: meeting.date,
-        startTime: dayjs(edit.value.startTime).toDate(),
-        endTime: dayjs(edit.value.endTime).toDate(),
-        internal: {
-          title: edit.value.title,
-          description: edit.value.description,
-          userIds: edit.value.userIds,
-        },
-      })
+  await saveSchedule({
+    meetingId: meeting.id,
+    parentId: meeting.parentId ?? null,
+    date: meeting.date,
+    startTime: edit.value.startTime,
+    endTime: edit.value.endTime,
+    scope,
+    internal: {
+      title: edit.value.title,
+      description: edit.value.description ?? '',
+      userIds: edit.value.userIds,
+    },
+    onSuccess: (resultId) => {
       isEditing.value = false
-
       router.push({
         name: route.name,
-        params: { id: result.id },
-        query: meeting.date ? { date: meeting.date.toISOString() } : undefined,
+        params: scope === 'all' ? { id: resultId } : { ...route.params, id: resultId },
+        query: scope === 'all' && meeting.date ? { date: meeting.date.toISOString() } : undefined,
       })
-    } catch (err) {
-      console.log(err)
-      handle(err)
-    }
-  } else {
-    try {
-      const result = await calendarApi.internal.update(meeting.id, {
-        ...edit.value,
-        startTime: dayjs(edit.value.startTime).toDate(),
-        endTime: dayjs(edit.value.endTime).toDate(),
-      })
-      isEditing.value = false
-
-      router.push({
-        name: route.name,
-        params: { ...route.params, id: result.meeting.id },
-      })
-    } catch (err) {
-      console.log(err)
-      handle(err)
-    }
-  }
+    },
+  })
 }
 
-async function onDelete() {
-  deleting.value = true
-  try {
-    await calendarApi.delete(meeting.id, meeting.date.toISOString())
-    ElMessage.success('Rendez-vous supprimé')
-    showDeleteDialog.value = false
-    router.back()
-  } catch {
-    ElMessage.error('Erreur lors de la suppression')
-  } finally {
-    deleting.value = false
-  }
+function onDeleteRequested(scope: 'single' | 'all') {
+  pendingDeleteScope.value = scope
+  showDeleteDialog.value = true
+}
+
+async function onConfirmDelete() {
+  await deleteMeeting({
+    kind: 'INTERNAL',
+    meetingId: meeting.id,
+    date: meeting.date,
+    scope: pendingDeleteScope.value,
+    onSuccess: () => {
+      showDeleteDialog.value = false
+      router.back()
+    },
+  })
 }
 </script>
 
@@ -110,13 +103,13 @@ async function onDelete() {
   <HeaderMeetingSection
     v-if="user"
     :editing="isEditing"
-    :is-recurring-occurrence="!!meeting.parentId && String(meeting.parentId) === String(meeting.id)"
+    :is-recurring-occurrence="!!meeting.parentId"
+    :is-upcoming="isUpcoming"
     @back="router.back()"
     @edit="isEditing = true"
     @save="onSave"
     @cancel="isEditing = false"
-    @delete="showDeleteDialog = true"
-    :date="meeting.date"
+    @delete="onDeleteRequested"
     :user="user"
   />
 
@@ -146,7 +139,7 @@ async function onDelete() {
     title="Supprimer le rendez-vous ?"
     message="Cette action est définitive et ne peut pas être annulée."
     :loading="deleting"
-    @confirm="onDelete"
+    @confirm="onConfirmDelete"
   />
 </template>
 

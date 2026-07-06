@@ -36,3 +36,20 @@ export const registerSchema = baseUserSchema
   })
   .extend({ password: userPasswordSchema });
 export type Register = z.infer<typeof registerSchema>;
+
+export const updateAccountSchema = baseUserSchema
+  .pick({
+    email: true,
+    firstname: true,
+    lastname: true,
+  })
+  .partial()
+  .extend({
+    currentPassword: z.string().min(1).optional(),
+    newPassword: userPasswordSchema.optional(),
+  })
+  .refine((data) => !data.newPassword || !!data.currentPassword, {
+    message: "Mot de passe actuel requis pour changer de mot de passe",
+    path: ["currentPassword"],
+  });
+export type UpdateAccount = z.infer<typeof updateAccountSchema>;

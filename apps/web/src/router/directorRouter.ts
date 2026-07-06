@@ -18,6 +18,16 @@ export const directorRouter: RouteRecordRaw[] = [
         component: () => import('@/features/users/views/director/ProfilView.vue'),
       },
       {
+        path: 'calendar',
+        name: 'DIRECTOR.Calendar',
+        component: () => import('@/features/meetings/views/MeCalendarView.vue'),
+      },
+      {
+        path: 'meetings/:id',
+        name: 'DIRECTOR.Meetings.Detail',
+        component: () => import('@/features/meetings/views/MeetingView.vue'),
+      },
+      {
         path: 'staff',
         name: 'DIRECTOR.Staff',
         component: () => import('@/features/users/views/director/Staff.vue'),
@@ -47,31 +57,12 @@ export const directorRouter: RouteRecordRaw[] = [
       //     },
       //   ],
       // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'DIRECTOR.Messagerie',
-      //   //        component: () => import('@/views/directeur/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'groupe',
-      //       name: 'DIRECTOR.Messagerie.Groupe',
-      //       //            component: () => import('@/views/directeur/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'DIRECTOR.Messagerie.Privees',
-      //       //            component: () => import('@/views/directeur/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'DIRECTOR.Messagerie.Conversation',
-      //       //            component: () => import('@/views/directeur/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'DIRECTOR.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
     ],
   },
 ]

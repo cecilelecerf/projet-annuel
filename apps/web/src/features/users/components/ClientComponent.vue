@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import type { Client } from '@armali/schemas'
 import { animalApi } from '@/features/animals/api'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { useAuthStore } from '@/stores/authStore'
 
 const { client } = defineProps<{ client: Client }>()
@@ -14,7 +14,7 @@ const router = useRouter()
 const { user } = useAuthStore()
 const [animals, meetings] = await Promise.all([
   animalApi.getAllByUser(client.id),
-  calendarApi.animal.getAllByClientId(client.id),
+  meetingApi.animal.getAllByClientId(client.id),
 ])
 const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 </script>

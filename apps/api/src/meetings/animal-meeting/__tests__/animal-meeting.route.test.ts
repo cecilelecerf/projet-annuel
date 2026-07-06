@@ -85,6 +85,7 @@ describe("PATCH /api/meetings/animals/:id", () => {
         animalId: animal!.id,
         veterinarianId: vetoClinic!.veterinarianId,
         specialityId: speciality!.id,
+        clinicId: vetoClinic?.clinicId,
       });
     meetingId = resCreate.body.id;
     const res = await request(app)
@@ -122,6 +123,7 @@ describe("DELETE /api/meetings/animals/:id", () => {
     const animal = await getPrisma().animal.findFirst();
     const veto = await getPrisma().veterinarianProfile.findFirst({
       where: { user: { email: "veto@gmail.com" } },
+      include: { veterinarianClinics: true },
     });
     const speciality = await getPrisma().speciality.findFirst();
 
@@ -135,7 +137,9 @@ describe("DELETE /api/meetings/animals/:id", () => {
         animalId: animal!.id,
         veterinarianId: veto?.id,
         specialityId: speciality!.id,
+        clinicId: veto?.veterinarianClinics[0].clinicId,
       });
+
     meetingId = created.body.id;
     const res = await request(app)
       .delete(`/api/meetings/animals/${created.body.id}`)

@@ -5,10 +5,10 @@ import { useRouter } from 'vue-router'
 import type { UserStore } from '@/stores/authStore'
 import ModalScope from './internal-meeting/ModalScope.vue'
 
-const { editing, isRecurringOccurrence } = defineProps<{
+const { editing, isRecurringOccurrence, isUpcoming } = defineProps<{
   editing: boolean
   isRecurringOccurrence?: boolean
-  date: Date
+  isUpcoming: boolean
   user: UserStore
 }>()
 
@@ -16,22 +16,35 @@ const emit = defineEmits<{
   edit: []
   save: [scope: 'single' | 'all']
   cancel: []
-  delete: []
+  delete: [scope: 'single' | 'all']
 }>()
 const router = useRouter()
 const showScopeDialog = ref(false)
+const pendingAction = ref<'save' | 'delete' | null>(null)
 
 function onSaveClick() {
   if (isRecurringOccurrence) {
+    pendingAction.value = 'save'
     showScopeDialog.value = true
   } else {
     emit('save', 'single')
   }
 }
 
+function onDeleteClick() {
+  if (isRecurringOccurrence) {
+    pendingAction.value = 'delete'
+    showScopeDialog.value = true
+  } else {
+    emit('delete', 'single')
+  }
+}
+
 function confirmScope(scope: 'single' | 'all') {
   showScopeDialog.value = false
-  emit('save', scope)
+  if (pendingAction.value === 'save') emit('save', scope)
+  if (pendingAction.value === 'delete') emit('delete', scope)
+  pendingAction.value = null
 }
 </script>
 
@@ -57,13 +70,7 @@ function confirmScope(scope: 'single' | 'all') {
       <el-button type="danger" v-if="editing && user?.role !== 'CLIENT'" @click="emit('cancel')">
         Annuler
       </el-button>
-      <el-button
-        v-if="new Date(date) > new Date()"
-        type="danger"
-        plain
-        @click="emit('delete')"
-        :icon="Delete"
-      >
+      <el-button v-if="isUpcoming" type="danger" plain @click="onDeleteClick" :icon="Delete">
         Supprimer
       </el-button>
     </div>

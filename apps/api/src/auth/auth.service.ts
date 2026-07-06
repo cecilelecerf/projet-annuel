@@ -1,5 +1,11 @@
 import { hash, compare } from "bcryptjs";
-import { baseUserSchema, ClinicId, Login, Register } from "@armali/schemas";
+import {
+  baseUserSchema,
+  ClinicId,
+  Login,
+  Register,
+  UpdateAccount,
+} from "@armali/schemas";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -7,7 +13,12 @@ import {
   verifyRefreshToken,
 } from "@api/utils";
 import { prisma } from "@api/lib/prisma";
-import { ConflictError, NotFoundError, UnauthorizedError } from "@api/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  UnauthorizedError,
+} from "@api/errors";
 import { EmailService } from "@api/emails/email.service";
 import type { RegisterDirector } from "@api/types/auth.types";
 
@@ -23,7 +34,9 @@ export class AuthService {
     secretaryProfile?: { clinicId: string } | null;
     directorClinicProfile?: { clinicId: string } | null;
     referentClinicProfile?: { clinicId: string } | null;
-    veterinarianProfile?: { veterinarianClinic: { clinicId: string }[] } | null;
+    veterinarianProfile?: {
+      veterinarianClinics: { clinicId: string }[];
+    } | null;
   }): ClinicId | null {
     switch (user.role) {
       case "SECRETARY":
@@ -34,7 +47,7 @@ export class AuthService {
         return (user.referentClinicProfile?.clinicId as ClinicId) ?? null;
       case "VETERINARIAN":
         return (
-          (user.veterinarianProfile?.veterinarianClinic[0]
+          (user.veterinarianProfile?.veterinarianClinics[0]
             ?.clinicId as ClinicId) ?? null
         );
       default:
@@ -147,7 +160,7 @@ export class AuthService {
         referentClinicProfile: true,
         veterinarianProfile: {
           include: {
-            veterinarianClinic: true,
+            veterinarianClinics: true,
           },
         },
       },
@@ -240,7 +253,7 @@ export class AuthService {
         referentClinicProfile: true,
         veterinarianProfile: {
           include: {
-            veterinarianClinic: true,
+            veterinarianClinics: true,
           },
         },
       },
@@ -251,6 +264,41 @@ export class AuthService {
     const clinicId = this.getClinicId(user);
 
     return { ...user, clinicId };
+  }
+
+  async updateAccount(userId: string, data: UpdateAccount) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError("Utilisateur");
+
+    if (data.email && data.email !== user.email) {
+      const existing = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (existing) throw new ConflictError("Cet email est déjà utilisé");
+    }
+
+    let hashedPassword: string | undefined;
+    if (data.newPassword) {
+      if (!data.currentPassword)
+        throw new BadRequestError("Mot de passe actuel requis");
+      const isValid = await compare(data.currentPassword, user.password);
+      if (!isValid)
+        throw new UnauthorizedError("Mot de passe actuel incorrect");
+      hashedPassword = await hash(data.newPassword, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.firstname && { firstname: data.firstname }),
+        ...(data.lastname && { lastname: data.lastname }),
+        ...(data.email && { email: data.email }),
+        ...(hashedPassword && { password: hashedPassword }),
+      },
+    });
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword;
   }
 
   async requestDeleteAccount(userId: string) {

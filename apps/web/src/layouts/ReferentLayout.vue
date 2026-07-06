@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, UserFilled, OfficeBuilding, User, ShoppingCart } from '@element-plus/icons-vue'
+import {
+  House,
+  UserFilled,
+  OfficeBuilding,
+  User,
+  ChatDotRound,
+  ShoppingCart,
+} from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
@@ -23,6 +30,11 @@ const menuItems: MenuItem[] = [
     index: 'REFERENT.Boutique',
     label: 'Boutique',
     icon: ShoppingCart,
+  },
+  {
+    index: 'REFERENT.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
   },
   {
     index: 'REFERENT.Profil',

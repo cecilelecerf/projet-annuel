@@ -12,11 +12,6 @@ animalRouter.get(
   authMiddleware,
   controller.getAll.bind(controller) as RequestHandler,
 );
-animalRouter.get(
-  "/user/:userId",
-  authMiddleware,
-  controller.getByUser.bind(controller) as RequestHandler,
-);
 
 animalRouter.get(
   "/:id",

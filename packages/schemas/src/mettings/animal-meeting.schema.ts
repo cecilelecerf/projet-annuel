@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   animalIdSchema,
+  clinicIdSchema,
   specialityIdSchema,
   veterinarianClinicIdSchema,
   veterinarianIdSchema,
@@ -11,8 +12,12 @@ import {
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { animalMetaSchema } from "../animals/meta.schema";
-import { clinicSchema, specialitySchema } from "../clinic.schema";
-import { clientSchema, userSchema, veterinarianSchema } from "../users";
+import {
+  clinicSchema,
+  specialitySchema,
+  veterinarianClinicSchema,
+} from "../clinic.schema";
+import { veterinarianSchema } from "../users";
 
 export const animalMeetingFieldSchema = z.object({
   description: z.string().nullable().optional(),
@@ -21,7 +26,7 @@ export const animalMeetingFieldSchema = z.object({
   report: z.string().nullable().optional(),
   specialityId: specialityIdSchema.nullable().optional(),
   animalId: animalIdSchema,
-  veterinarianClinicId: veterinarianClinicIdSchema,
+  veterinarianClinicId: veterinarianClinicIdSchema.nullable(),
 });
 export const animalMeetingSchema = meetingBaseSchema.extend({
   ...animalMeetingFieldSchema.shape,
@@ -31,6 +36,7 @@ export const animalMeetingSchema = meetingBaseSchema.extend({
 
 export const animalMeetingMetaSchema = animalMeetingSchema.extend({
   animal: animalMetaSchema,
+  veterinarianClinic: veterinarianClinicSchema.nullable(),
 });
 
 export const animalMeetigWithMeetingSchema = animalMeetingSchema
@@ -45,7 +51,7 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
   })
   .extend({
     animal: animalMetaSchema,
-    speciality: specialitySchema,
+    speciality: specialitySchema.nullable(),
     meeting: meetingBaseSchema,
     veterinarianClinic: z.object({
       clinic: clinicSchema,
@@ -68,6 +74,7 @@ export const createAnimalMeetingFields = createMeetingBaseSchema
   .extend(
     createAnimalMeetingBaseFields.omit({ veterinarianClinicId: true }).extend({
       veterinarianId: veterinarianIdSchema,
+      clinicId: clinicIdSchema,
     }).shape,
   );
 

@@ -3,6 +3,7 @@ import { Calendar, Refresh } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { DAYS, type AvailabilityForm } from '../types/availabilty'
+import { formatDate } from '@/features/meetings/components/utils'
 
 dayjs.locale('fr')
 
@@ -17,10 +18,6 @@ const show = defineModel<boolean>('show', { required: true })
 const emit = defineEmits<{
   save: []
 }>()
-
-function formatDate(date: Date | string) {
-  return dayjs(date).format('D MMMM YYYY')
-}
 
 function toggleDay(value: number) {
   if (form.value.dayOfWeek.includes(value)) {
@@ -100,6 +97,7 @@ const dialogTitle = props.isEditing
             <el-date-picker
               v-model="form.dateEnd"
               type="date"
+              value-format="YYYY-MM-DD"
               placeholder="Date de fin"
               style="width: 100%"
             />

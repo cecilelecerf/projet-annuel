@@ -2,9 +2,14 @@ import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { STAFF_ROLES } from "@api/utils";
-import { animalMeetingController, userController } from "@api/instances";
+import {
+  animalController,
+  animalMeetingController,
+  userController,
+} from "@api/instances";
 
 const userRouter: RouterType = Router();
+
 const controller = userController;
 
 userRouter.get(
@@ -13,6 +18,7 @@ userRouter.get(
   roleMiddleware(["ADMIN", "DIRECTOR", "REFERENT"]),
   controller.getUsers.bind(controller) as RequestHandler,
 );
+
 userRouter.get(
   "/roles/:role",
   authMiddleware,
@@ -21,9 +27,10 @@ userRouter.get(
 );
 
 userRouter.get(
-  "/:id",
+  "/:id/animals",
   authMiddleware,
-  controller.getUserById.bind(controller) as RequestHandler,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  animalController.getByUser.bind(animalController) as RequestHandler,
 );
 userRouter.get(
   "/:id/animal-meetings",
@@ -32,6 +39,11 @@ userRouter.get(
   animalMeetingController.getByClient.bind(
     animalMeetingController,
   ) as RequestHandler,
+);
+userRouter.get(
+  "/:id",
+  authMiddleware,
+  controller.getUserById.bind(controller) as RequestHandler,
 );
 
 export default userRouter;

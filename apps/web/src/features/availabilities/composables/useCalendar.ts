@@ -1,9 +1,12 @@
 import { ref, computed, type Ref } from 'vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import frLocale from '@fullcalendar/core/locales/fr'
 import type { AvailabilityResponse, ClinicId } from '@armali/schemas'
+
+dayjs.extend(utc)
 
 // Palette DS assignable aux clinics — natives + custom (cf. custom-colors.scss)
 const CLINIC_COLOR_PALETTE = [
@@ -29,9 +32,6 @@ export function useAvailabilityCalendar(availabilities: Ref<AvailabilityResponse
   const calendarStart = ref(dayjs().startOf('week'))
   const calendarEnd = ref(dayjs().endOf('week'))
 
-  // Référence stable — calculée une seule fois, pas à chaque recalcul du computed
-  // (sinon FullCalendar voit un nouvel objet Date à chaque render et se réinitialise,
-  // ce qui redéclenche datesSet → recalcule les refs → boucle infinie)
   const validRangeStart = dayjs().startOf('week').toDate()
 
   function onDatesSet(info: { start: Date; end: Date }) {
@@ -39,7 +39,6 @@ export function useAvailabilityCalendar(availabilities: Ref<AvailabilityResponse
     calendarEnd.value = dayjs(info.end)
   }
 
-  // ── Mapping clinic → couleur (déterministe, basé sur l'ordre d'apparition) ──
   const clinicColorList = computed<ClinicColorEntry[]>(() => {
     const seen = new Map<ClinicId, string>()
     for (const avail of availabilities.value) {
@@ -76,7 +75,6 @@ export function useAvailabilityCalendar(availabilities: Ref<AvailabilityResponse
       }
 
       if ('recurring' in avail) {
-        // ── Récurrence — expand sur la fenêtre visible ──────────────────────────
         const rec = avail.recurring
         const winStart = dayjs(rec.dateStart).isAfter(calendarStart.value)
           ? dayjs(rec.dateStart)
@@ -92,13 +90,13 @@ export function useAvailabilityCalendar(availabilities: Ref<AvailabilityResponse
               id: `${avail.id}-${cursor.format('YYYY-MM-DD')}`,
               title: avail.clinic.name,
               start: cursor
-                .hour(dayjs(rec.startTime).hour())
-                .minute(dayjs(rec.startTime).minute())
+                .hour(dayjs.utc(rec.startTime).hour())
+                .minute(dayjs.utc(rec.startTime).minute())
                 .second(0)
                 .toDate(),
               end: cursor
-                .hour(dayjs(rec.endTime).hour())
-                .minute(dayjs(rec.endTime).minute())
+                .hour(dayjs.utc(rec.endTime).hour())
+                .minute(dayjs.utc(rec.endTime).minute())
                 .second(0)
                 .toDate(),
               display: 'block',
@@ -108,20 +106,19 @@ export function useAvailabilityCalendar(availabilities: Ref<AvailabilityResponse
           cursor = cursor.add(1, 'day')
         }
       } else {
-        // ── Ponctuelle ────────────────────────────────────────────────────────────
         const mtg = avail.meeting
         const d = dayjs(mtg.date)
         events.push({
           id: avail.id,
           title: avail.clinic.name,
           start: d
-            .hour(dayjs(mtg.startTime).hour())
-            .minute(dayjs(mtg.startTime).minute())
+            .hour(dayjs.utc(mtg.startTime).hour())
+            .minute(dayjs.utc(mtg.startTime).minute())
             .second(0)
             .toDate(),
           end: d
-            .hour(dayjs(mtg.endTime).hour())
-            .minute(dayjs(mtg.endTime).minute())
+            .hour(dayjs.utc(mtg.endTime).hour())
+            .minute(dayjs.utc(mtg.endTime).minute())
             .second(0)
             .toDate(),
           display: 'block',

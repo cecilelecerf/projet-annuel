@@ -22,7 +22,7 @@ export class SpecialityService {
   }
 
   async create(data: CreateSpeciality, role: UserRole) {
-    if (!MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (role !== "ADMIN") throw new ForbiddenError();
     if (!data.description) {
       throw new BadRequestError(
         "La description est requise pour créer une spécialité",
@@ -34,14 +34,14 @@ export class SpecialityService {
   }
 
   async update(id: string, data: UpdateSpeciality, role: UserRole) {
-    if (!MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (role !== "ADMIN") throw new ForbiddenError();
     const speciality = await this.repository.findById(id);
     if (!speciality) throw new NotFoundError("Spécialité");
     return this.repository.update(id, data);
   }
 
   async delete(id: string, role: UserRole) {
-    if (!MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (role !== "ADMIN") throw new ForbiddenError();
     const speciality = await this.repository.findById(id);
     if (!speciality) throw new NotFoundError("Spécialité");
     return this.repository.delete(id);

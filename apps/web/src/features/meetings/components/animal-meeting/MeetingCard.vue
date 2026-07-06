@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useRouter } from 'vue-router'
-import type { MeetingStatus } from '../../views/Client/ListMeetingView.vue'
 import type { AnimalMeetingWithMeeting } from '@armali/schemas'
+import { MEETING_COLORS } from '@/utils/meetingColor.ts'
+import type { MeetingStatus } from '../../views/ListAnimalMeetingView.vue'
+import { subtractTime } from '../utils.ts'
+
+dayjs.extend(utc)
 
 const { animalMeeting } = defineProps<{
   status: MeetingStatus
@@ -13,9 +18,6 @@ const { animalMeeting } = defineProps<{
 const router = useRouter()
 const { user } = useAuthStore()
 
-function formatTime(start: Date, end: Date) {
-  return `${dayjs(start).format('H[h]mm')} — ${dayjs(end).format('H[h]mm')}`
-}
 function goToMeeting() {
   router.push({
     name: `${user?.role.toUpperCase()}.Meetings.Detail`,
@@ -42,7 +44,7 @@ function goToMeeting() {
       <div class="card-meta">
         <span class="meta-item">
           <el-icon><Clock /></el-icon>
-          {{ formatTime(animalMeeting.meeting.startTime, animalMeeting.meeting.endTime) }}
+          {{ subtractTime(animalMeeting.meeting.startTime, animalMeeting.meeting.endTime) }}
         </span>
         <span class="meta-item">
           <el-icon><User /></el-icon>
@@ -50,7 +52,11 @@ function goToMeeting() {
         </span>
       </div>
       <div class="card-bottom">
-        <el-tag :type="animalMeeting.speciality ? 'primary' : 'info'" size="small" round>
+        <el-tag
+          :type="animalMeeting.speciality ? MEETING_COLORS.ANIMAL : 'info'"
+          size="small"
+          round
+        >
           {{ animalMeeting.speciality?.name ?? 'Consultation générale' }}
         </el-tag>
         <span class="clinic-name">{{ animalMeeting.veterinarianClinic.clinic.name }}</span>
@@ -84,7 +90,7 @@ function goToMeeting() {
   transition: all 0.15s;
 
   &:hover {
-    border-color: var(--el-color-primary-light-5);
+    border-color: var(--el-color-#{meeting-color('animal')}-light-5);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
     transform: translateY(-1px);
   }
@@ -111,8 +117,8 @@ function goToMeeting() {
   width: 52px;
   height: 52px;
   border-radius: var(--radius-md);
-  background: var(--el-color-primary-light-9);
-  border: 1px solid var(--el-color-primary-light-7);
+  background: var(--el-color-#{meeting-color('animal')}-light-9);
+  border: 1px solid var(--el-color-#{meeting-color('animal')}-light-7);
 
   &.past {
     background: var(--el-fill-color-light);
@@ -123,7 +129,7 @@ function goToMeeting() {
 .date-day {
   font-size: 20px;
   font-weight: var(--fw-bold);
-  color: var(--el-color-primary);
+  color: var(--el-color-#{meeting-color('animal')});
   line-height: 1;
 
   .past & {
@@ -134,7 +140,7 @@ function goToMeeting() {
 .date-month {
   font-size: 11px;
   font-weight: var(--fw-semibold);
-  color: var(--el-color-primary-light-3);
+  color: var(--el-color-#{meeting-color('animal')}-light-3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 

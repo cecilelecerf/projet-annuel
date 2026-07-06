@@ -28,4 +28,18 @@ adminRouter.patch(
   controller.rejectClinicRequest.bind(controller),
 );
 
+adminRouter.get(
+  "/clinics",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.getClinics.bind(controller),
+);
+
+adminRouter.delete(
+  "/clinics/:id",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.deleteClinic.bind(controller),
+);
+
 export default adminRouter;

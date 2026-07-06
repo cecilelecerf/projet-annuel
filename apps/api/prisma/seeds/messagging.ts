@@ -2,43 +2,80 @@ import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedMessaging(
   prisma: PrismaClient,
-  { users }: { users: any },
+  {
+    users,
+    clinics,
+  }: {
+    users: any;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+  },
 ) {
-  const { vetoUser1, vetoUser2, secretaryUser1 } = users;
+  const { vetoUser1, vetoUser3, secretaryUser1, directorUser1, directorUser2 } =
+    users;
 
-  const conv1 = await prisma.conversation.create({
-    data: { name: "Équipe Clinique du Parc" },
-  });
-
-  const member1 = await prisma.conversationMember.create({
-    data: { role: "ADMIN", userId: vetoUser1.id, conversationId: conv1.id },
-  });
-  const member2 = await prisma.conversationMember.create({
-    data: { role: "MEMBER", userId: vetoUser2.id, conversationId: conv1.id },
-  });
-  const member3 = await prisma.conversationMember.create({
+  const clinicGroup = await prisma.conversation.create({
     data: {
-      role: "MEMBER",
-      userId: secretaryUser1.id,
-      conversationId: conv1.id,
+      type: "GROUP",
+      scope: "CLINIC",
+      name: "Équipe Clinique du Parc",
+      clinicId: clinics.clinic1.id,
+      createdById: vetoUser1.id,
+      lastMessageAt: new Date(),
+      conversationMembers: {
+        createMany: {
+          data: [
+            { role: "ADMIN", userId: vetoUser1.id },
+            { role: "MEMBER", userId: vetoUser3.id },
+            { role: "MEMBER", userId: secretaryUser1.id },
+            { role: "MEMBER", userId: directorUser1.id },
+          ],
+        },
+      },
     },
   });
 
-  const msg1 = await prisma.message.create({
+  await prisma.message.create({
     data: {
       content: "Bonjour à tous ! Réunion demain à 8h30.",
-      conversationId: conv1.id,
+      conversationId: clinicGroup.id,
+      senderId: vetoUser1.id,
     },
   });
-  const msg2 = await prisma.message.create({
-    data: { content: "Reçu, je serai là !", conversationId: conv1.id },
+  await prisma.message.create({
+    data: {
+      content: "Reçu, je serai là !",
+      conversationId: clinicGroup.id,
+      senderId: secretaryUser1.id,
+    },
   });
 
-  await prisma.messageRead.createMany({
-    data: [
-      { readAt: new Date(), messageId: msg1.id, readById: member1.id },
-      { readAt: new Date(), messageId: msg1.id, readById: member2.id },
-      { readAt: new Date(), messageId: msg2.id, readById: member1.id },
-    ],
+  const directorsConversation = await prisma.conversation.create({
+    data: {
+      type: "DIRECT",
+      scope: "DIRECTOR_NETWORK",
+      createdById: directorUser1.id,
+      lastMessageAt: new Date(),
+      conversationMembers: {
+        createMany: {
+          data: [
+            { role: "ADMIN", userId: directorUser1.id },
+            { role: "ADMIN", userId: directorUser2.id },
+          ],
+        },
+      },
+    },
+  });
+
+  await prisma.message.create({
+    data: {
+      content:
+        "Bonjour confrère, avez-vous un créneau pour échanger cette semaine ?",
+      conversationId: directorsConversation.id,
+      senderId: directorUser1.id,
+    },
   });
 }

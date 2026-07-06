@@ -15,12 +15,12 @@ const baseFilter = (start: Date, end: Date) => ({
 const recurringWithChildrenInclude = (start: Date, end: Date) =>
   ({
     internalMeeting: { include: { participants: true } },
-    availabilty: true,
+    availabilty: { include: { clinic: true } },
     childrens: {
       where: baseFilter(start, end),
       include: {
         internalMeeting: { include: { participants: true } },
-        availabilty: true,
+        availabilty: { include: { clinic: true } },
       },
     },
   }) satisfies Prisma.MeetingReccuringInclude;
@@ -92,7 +92,7 @@ const availabilitiesInclude = (start: Date, end: Date) =>
     },
     meeting: {
       where: { ...baseFilter(start, end), parentId: null },
-      include: { availabilty: true },
+      include: { availabilty: { include: { clinic: true } } },
     },
   }) satisfies Prisma.AvailabilityInclude;
 
@@ -100,26 +100,10 @@ export type AvailabilityWithSchedule = Prisma.AvailabilityGetPayload<{
   include: ReturnType<typeof availabilitiesInclude>;
 }>;
 
-const availabilitiesByClinicInclude = (start: Date, end: Date) =>
-  ({
-    recurring: {
-      where: recurringFilter(start, end),
-      include: recurringWithChildrenInclude(start, end),
-    },
-    meeting: {
-      where: baseFilter(start, end),
-      include: { availabilty: true },
-    },
-  }) satisfies Prisma.AvailabilityInclude;
-
-export type AvailabilityByClinic = Prisma.AvailabilityGetPayload<{
-  include: ReturnType<typeof availabilitiesByClinicInclude>;
-}>;
-
 const meetingByIdInclude = {
   animalMeeting: true,
   internalMeeting: { include: { participants: true } },
-  availabilty: true,
+  availabilty: { include: { clinic: true } },
   parent: true,
 } satisfies Prisma.MeetingBaseInclude;
 
@@ -180,14 +164,18 @@ export class MeetingRepository {
     userId,
     start,
     end,
+    clinicIds,
   }: {
     userId: string;
     start: Date;
     end: Date;
+    clinicIds?: string[];
   }): Promise<AvailabilityWithSchedule[]> {
     return this.prisma.availability.findMany({
       where: {
         userId,
+        ...(clinicIds &&
+          clinicIds.length > 0 && { clinicId: { in: clinicIds } }),
         OR: [
           {
             recurringId: { not: null },
@@ -197,44 +185,6 @@ export class MeetingRepository {
         ],
       },
       include: availabilitiesInclude(start, end),
-    });
-  }
-
-  async getAvailabilitiesByClinic({
-    clinicId,
-    start,
-    end,
-  }: {
-    clinicId: string;
-    start: Date;
-    end: Date;
-  }): Promise<AvailabilityByClinic[]> {
-    return this.prisma.availability.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              {
-                user: {
-                  OR: [
-                    { directorClinicProfile: { clinicId } },
-                    { referentClinicProfile: { clinicId } },
-                    { secretaryProfile: { clinicId } },
-                  ],
-                },
-              },
-              { clinicId },
-            ],
-          },
-          {
-            OR: [
-              { recurring: recurringFilter(start, end) },
-              { meeting: baseFilter(start, end) },
-            ],
-          },
-        ],
-      },
-      include: availabilitiesByClinicInclude(start, end),
     });
   }
 

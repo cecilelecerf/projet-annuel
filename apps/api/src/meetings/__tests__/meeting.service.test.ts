@@ -39,14 +39,9 @@ vi.mock("@api/meetings/internal-meeting/internal-meeting.repository", () => ({
 }));
 
 const { MeetingRepository } = await import("@api/meetings/meeting.repository");
-const { InternalMeetingRepository } =
-  await import("@api/meetings/internal-meeting/internal-meeting.repository");
 const { MeetingService } = await import("@api/meetings/meeting.service");
 
-const meetingService = new MeetingService(
-  new MeetingRepository({} as any),
-  new InternalMeetingRepository({} as any),
-);
+const meetingService = new MeetingService(new MeetingRepository({} as any));
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

@@ -7,12 +7,9 @@ import { specialityController } from "@api/instances";
 const specialityRouter: Router = Router();
 const controller = specialityController;
 
-const MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
-
 specialityRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(STAFF_ROLES),
   controller.getAll.bind(controller) as RequestHandler,
 );
 
@@ -26,21 +23,21 @@ specialityRouter.get(
 specialityRouter.post(
   "/",
   authMiddleware,
-  roleMiddleware([...MANAGER_ROLES]),
+  roleMiddleware(["ADMIN"]),
   controller.create.bind(controller) as RequestHandler,
 );
 
 specialityRouter.patch(
   "/:id",
   authMiddleware,
-  roleMiddleware([...MANAGER_ROLES]),
+  roleMiddleware(["ADMIN"]),
   controller.update.bind(controller) as RequestHandler,
 );
 
 specialityRouter.delete(
   "/:id",
   authMiddleware,
-  roleMiddleware([...MANAGER_ROLES]),
+  roleMiddleware(["ADMIN"]),
   controller.delete.bind(controller) as RequestHandler,
 );
 

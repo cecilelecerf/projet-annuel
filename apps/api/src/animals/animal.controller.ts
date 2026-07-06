@@ -94,13 +94,13 @@ export class AnimalController {
   }
 
   async getByUser(
-    req: RequestWithParams<{ userId: string }>,
+    req: RequestWithParams<{ id: string }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
       const pets = await this.service.getByUser({
-        targetUserId: req.params.userId,
+        targetUserId: req.params.id,
         requesterId: req.user.id,
         role: req.user.role,
       });

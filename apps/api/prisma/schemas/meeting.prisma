@@ -137,17 +137,15 @@ model AnimalMeeting {
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   specialityId         String?
-  speciality           Speciality?        @relation(fields: [specialityId], references: [id])
+  speciality           Speciality?         @relation(fields: [specialityId], references: [id])
   animalId             String
-  animal               Animal             @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  veterinarianClinicId String
-  veterinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id])
+  animal               Animal              @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  veterinarianClinicId String?
+  veterinarianClinic   VeterinarianClinic? @relation(fields: [veterinarianClinicId], references: [id])
 
   animalHealthConditions AnimalHealthCondition[]
   animalMedicalHistories AnimalMedicalHistory[]
   prescriptions          Prescription[]
-  veterinarianProfile    VeterinarianProfile?    @relation(fields: [veterinarianProfileId], references: [id])
-  veterinarianProfileId  String?
 
   @@map("animal_meetings")
 }

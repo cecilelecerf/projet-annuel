@@ -1,11 +1,10 @@
 import type { NextFunction, Response } from "express";
-import type {
-  AuthenticatedRequest,
-  RequestWithParams,
-} from "@api/middlewares";
+import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
   createSpecialitySchema,
+  SpecialityId,
+  specialitySchema,
   updateSpecialitySchema,
   type CreateSpeciality,
   type UpdateSpeciality,
@@ -20,20 +19,20 @@ export class SpecialityController {
       const search =
         typeof req.query.search === "string" ? req.query.search : undefined;
       const specialities = await this.service.getAll(search);
-      res.status(200).json(specialities);
+      res.status(200).json(specialitySchema.array().parse(specialities));
     } catch (err) {
       next(err);
     }
   }
 
   async getById(
-    req: RequestWithParams<{ id: string }>,
+    req: RequestWithParams<{ id: SpecialityId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
       const speciality = await this.service.getById(req.params.id);
-      res.status(200).json(speciality);
+      return res.status(200).json(specialitySchema.parse(speciality));
     } catch (err) {
       next(err);
     }
@@ -47,18 +46,15 @@ export class SpecialityController {
     try {
       const result = createSpecialitySchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const speciality = await this.service.create(
-        result.data,
-        req.user.role,
-      );
-      res.status(201).json(speciality);
+      const speciality = await this.service.create(result.data, req.user.role);
+      res.status(201).json(specialitySchema.parse(speciality));
     } catch (err) {
       next(err);
     }
   }
 
   async update(
-    req: RequestWithParams<{ id: string }> & { body: UpdateSpeciality },
+    req: RequestWithParams<{ id: SpecialityId }> & { body: UpdateSpeciality },
     res: Response,
     next: NextFunction,
   ) {
@@ -70,14 +66,14 @@ export class SpecialityController {
         result.data,
         req.user.role,
       );
-      res.status(200).json(speciality);
+      res.status(200).json(specialitySchema.parse(speciality));
     } catch (err) {
       next(err);
     }
   }
 
   async delete(
-    req: RequestWithParams<{ id: string }>,
+    req: RequestWithParams<{ id: SpecialityId }>,
     res: Response,
     next: NextFunction,
   ) {

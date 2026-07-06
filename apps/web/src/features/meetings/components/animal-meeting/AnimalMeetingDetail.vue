@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/authStore'
 import { useFormErrorStore } from '@/stores/formErrorStore'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { prescriptionApi } from '@/features/prescriptions/api'
 import MeetingPets from './MeetingPets.vue'
 import MeetingInfo from './MeetingInfo.vue'
@@ -12,14 +11,18 @@ import MeetingActs from './MeetingActs.vue'
 import MeetingPrescriptions from './MeetingPrescriptions.vue'
 import { medicalHistoriesApi } from '@/features/medicalHistories/api'
 import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
+import { useMeetingActions } from '../../composables/useMeetingActions.ts'
+import { combineDateAndTime } from '../utils.ts'
 import HeaderMeetingSection from '../HeaderMeetingSection.vue'
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
 const { user } = useAuthStore()
 const { handle } = useFormErrorStore()
+const { deleteMeeting, deleting } = useMeetingActions()
+
 const showDeleteDialog = ref(false)
-const deleting = ref(false)
+
 const [acts, prescriptions] = await Promise.all([
   medicalHistoriesApi.getByMeeting(meeting.id),
   prescriptionApi.getByMeeting(meeting.id),
@@ -38,9 +41,14 @@ const edit = ref<UpdateAnimalMeeting>({
   endTime: new Date(meeting.endTime),
 })
 
+const isUpcoming = computed(() => {
+  if (!meeting.date || !meeting.startTime) return false
+  return combineDateAndTime(meeting.date, meeting.startTime) > new Date()
+})
+
 const onSave = async () => {
   try {
-    await calendarApi.animal.update(meeting.id, { ...edit.value })
+    await meetingApi.animal.update(meeting.id, { ...edit.value })
     isEditing.value = false
   } catch (err) {
     console.log(err)
@@ -49,16 +57,15 @@ const onSave = async () => {
 }
 
 const onDelete = async () => {
-  deleting.value = true
-  try {
-    await calendarApi.delete(meeting.id)
-    ElMessage.success('Rendez-vous supprimé')
-    showDeleteDialog.value = false
-    router.back()
-  } catch {
-  } finally {
-    deleting.value = false
-  }
+  await deleteMeeting({
+    kind: 'ANIMAL',
+    meetingId: meeting.id,
+    date: meeting.date,
+    onSuccess: () => {
+      showDeleteDialog.value = false
+      router.back()
+    },
+  })
 }
 
 const onActSaved = async () => {
@@ -73,14 +80,15 @@ const onPrescriptionSaved = async () => {
 <template>
   <HeaderMeetingSection
     v-if="user"
-    :meeting="meeting"
     :editing="isEditing"
-    :user="user"
+    :is-recurring-occurrence="!!meeting.parentId && String(meeting.parentId) === String(meeting.id)"
+    :is-upcoming="isUpcoming"
+    @back="router.back()"
     @edit="isEditing = true"
+    @save="onSave"
     @cancel="isEditing = false"
-    @save="onSave()"
     @delete="showDeleteDialog = true"
-    :date="meeting.date"
+    :user="user"
   />
 
   <div class="meeting-content">
@@ -95,7 +103,12 @@ const onPrescriptionSaved = async () => {
         :is-editing="isEditing"
         :is-staff="user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN'"
       />
-      <MeetingActs :acts="localActs" :meeting-id="meeting.id" @saved="onActSaved" />
+      <MeetingActs
+        :acts="localActs"
+        :clinic-id="meeting.veterinarianClinic?.clinicId"
+        :meeting-id="meeting.id"
+        @saved="onActSaved"
+      />
       <MeetingPrescriptions
         :prescriptions="localPrescriptions"
         :meeting-id="meeting.id"

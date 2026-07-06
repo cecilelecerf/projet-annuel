@@ -40,7 +40,6 @@ export const conversationMemberIdSchema = z
   .uuid()
   .brand("ConversationMemberId");
 export const messageIdSchema = z.uuid().brand("MessageId");
-export const messageReadIdSchema = z.uuid().brand("MessageReadId");
 export const healthConditionIdSchema = z.uuid().brand("HealthConditionId");
 export const actIdSchema = z.uuid().brand("ActId");
 export const clinicActIdSchema = z.uuid().brand("ClinicActId");
@@ -85,7 +84,6 @@ export type OrderItemId = z.infer<typeof orderItemIdSchema>;
 export type ConversationId = z.infer<typeof conversationIdSchema>;
 export type ConversationMemberId = z.infer<typeof conversationMemberIdSchema>;
 export type MessageId = z.infer<typeof messageIdSchema>;
-export type MessageReadId = z.infer<typeof messageReadIdSchema>;
 export type HealthConditionId = z.infer<typeof healthConditionIdSchema>;
 export type ActId = z.infer<typeof actIdSchema>;
 export type ClinicActId = z.infer<typeof clinicActIdSchema>;

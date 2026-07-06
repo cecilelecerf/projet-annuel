@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { availabilitiesApi } from '../api'
 import type {
@@ -11,6 +12,8 @@ import type {
   MeetingRecurringId,
 } from '@armali/schemas'
 import { defaultForm, toTimeDate, validateForm, type AvailabilityForm } from '../types/availabilty'
+
+dayjs.extend(utc)
 
 export function useAvailabilities() {
   const formError = useFormErrorStore()
@@ -74,8 +77,8 @@ export function useAvailabilities() {
       form.value = {
         kind: 'RECURRING',
         dayOfWeek: [...rec.dayOfWeek],
-        startTime: dayjs(rec.startTime).format('HH:mm'),
-        endTime: dayjs(rec.endTime).format('HH:mm'),
+        startTime: dayjs.utc(rec.startTime).format('HH:mm'),
+        endTime: dayjs.utc(rec.endTime).format('HH:mm'),
         dateStart: dayjs(rec.dateStart).format('YYYY-MM-DD'),
         dateEnd: dayjs(rec.dateEnd).format('YYYY-MM-DD'),
         date: '',
@@ -87,8 +90,8 @@ export function useAvailabilities() {
       form.value = {
         kind: 'PUNCTUAL',
         dayOfWeek: [],
-        startTime: dayjs(mtg.startTime).format('HH:mm'),
-        endTime: dayjs(mtg.endTime).format('HH:mm'),
+        startTime: dayjs.utc(mtg.startTime).format('HH:mm'),
+        endTime: dayjs.utc(mtg.endTime).format('HH:mm'),
         date: dayjs(mtg.date).format('YYYY-MM-DD'),
         dateStart: '',
         dateEnd: '',
@@ -114,9 +117,6 @@ export function useAvailabilities() {
         await _update()
         ElMessage.success('Disponibilité mise à jour')
       } else {
-        console.log('fom')
-        console.log(form.value)
-
         await _create()
         ElMessage.success('Disponibilité ajoutée')
       }
@@ -133,7 +133,6 @@ export function useAvailabilities() {
 
   async function _create() {
     if (form.value.kind === 'RECURRING') {
-      console.log(form.value)
       await availabilitiesApi.create({
         payload: {
           type: 'RECURRING' as const,

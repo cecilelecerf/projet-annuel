@@ -11,7 +11,6 @@ import type {
 } from "@armali/schemas";
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
-import { Clinic } from "../../../prisma/generated/prisma/client";
 import { prisma } from "@api/lib/prisma";
 import { flatUser } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
@@ -80,7 +79,6 @@ export class AnimalMeetingService {
         endTime: { gte: endTime },
       },
     });
-
     const recurringAvailability =
       availability ??
       (await prisma.meetingReccuring.findFirst({
@@ -88,14 +86,13 @@ export class AnimalMeetingService {
           kind: "AVAILABILITY",
           dateStart: { lte: date },
           dateEnd: { gte: date },
-          startTime: { lte: startTime },
-          endTime: { gte: endTime },
-          availabilty: {
-            user: { veterinarianProfile: { id: veterinarianId } },
-          },
+          // startTime: { lte: startTime },
+          // endTime: { gte: endTime },
+          // availabilty: {
+          //   user: { veterinarianProfile: { user: { id: veterinarianId } } },
+          // },
         },
       }));
-
     if (!recurringAvailability) {
       throw new ConflictError(
         "Le vétérinaire n'est pas disponible sur ce créneau",
@@ -134,13 +131,7 @@ export class AnimalMeetingService {
     }
   }
 
-  async create({
-    data,
-    clinicId,
-  }: {
-    data: CreateAnimalMeeting;
-    clinicId: Clinic["id"];
-  }) {
+  async create({ data }: { data: CreateAnimalMeeting }) {
     this.assertIsFuture(
       data.date,
       data.startTime,
@@ -148,7 +139,7 @@ export class AnimalMeetingService {
     );
 
     const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
-      where: { clinicId, veterinarianId: data.veterinarianId },
+      where: { clinicId: data.clinicId, veterinarianId: data.veterinarianId },
     });
     if (!veterinarianClinic) throw new NotFoundError("veterinarianClinic");
 
@@ -266,13 +257,14 @@ export class AnimalMeetingService {
       );
 
       // ── Vérifie la dispo du véto sur le nouveau créneau ─────────────────────
-      await this.assertVeterinarianAvailable({
-        veterinarianId: meeting.veterinarianClinic.veterinarianId,
-        date: newDate,
-        startTime: newStart,
-        endTime: newEnd,
-        excludeMeetingId: id,
-      });
+      if (meeting.veterinarianClinic?.veterinarianId)
+        await this.assertVeterinarianAvailable({
+          veterinarianId: meeting.veterinarianClinic?.veterinarianId,
+          date: newDate,
+          startTime: newStart,
+          endTime: newEnd,
+          excludeMeetingId: id,
+        });
     }
 
     const updated = await this.repository.update({
@@ -361,7 +353,7 @@ export class AnimalMeetingService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-    return this.repository.findByUser(id);
+    return this.repository.findByClient(id);
   }
 
   async getByAnimal({

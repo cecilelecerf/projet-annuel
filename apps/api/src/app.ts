@@ -19,6 +19,9 @@ import animalMedicalHistoryRouter from "./medicalHistories/medical-history.route
 import productRouter from "./products/product.router";
 import brandRouter from "./brands/brand.router";
 import specialityRouter from "./specialities/speciality.router";
+import messagingRouter from "./messaging/messaging.router";
+import bookingRouter from "./bookings/booking.router";
+import veterinarianRouter from "./users/veterinarian.router";
 
 collectDefaultMetrics();
 
@@ -66,5 +69,8 @@ app.use("/api/medical-histories", animalMedicalHistoryRouter);
 app.use("/api/acts", actRouter);
 app.use("/api/products", productRouter);
 app.use("/api/brands", brandRouter);
+app.use("/api/conversations", messagingRouter);
+app.use("/api/booking", bookingRouter);
 app.use("/api/specialities", specialityRouter);
+app.use("/api/veterinarians", veterinarianRouter);
 app.use(errorHandler);

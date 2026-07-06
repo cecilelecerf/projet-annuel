@@ -49,7 +49,6 @@ describe("GET /api/users", () => {
       const res = await request(app)
         .get("/api/users")
         .set("Authorization", `Bearer ${token}`);
-
       expect(res.status).toBe(200);
       expect(res.body.length).toBeGreaterThanOrEqual(1);
     });
@@ -149,7 +148,6 @@ describe("GET /api/users/roles/:role", () => {
     const res = await request(app)
       .get("/api/users/roles/veterinarian")
       .set("Authorization", `Bearer ${token}`);
-
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
     res.body.forEach((user: any) => {
@@ -181,7 +179,7 @@ describe("GET /api/users/roles/:role", () => {
     const vetosInClinic = await getPrisma().user.findMany({
       where: {
         veterinarianProfile: {
-          veterinarianClinic: { some: { clinicId } },
+          veterinarianClinics: { some: { clinicId } },
         },
       },
       select: { id: true },
@@ -202,27 +200,28 @@ describe("GET /api/users/roles/:role", () => {
     const token = await loginAs("secretaire@gmail.com");
     const secretary = await getPrisma().user.findUnique({
       where: { email: "secretaire@gmail.com" },
-      include: { secretaryProfile: true },
-    });
-    const clinicId = secretary!.secretaryProfile!.clinicId;
-
-    const vetosInClinic = await getPrisma().user.findMany({
-      where: {
-        veterinarianProfile: {
-          veterinarianClinic: { some: { clinicId } },
+      select: {
+        secretaryProfile: {
+          select: {
+            clinic: {
+              select: {
+                veterinarianClinics: { select: { veterinarianId: true } },
+              },
+            },
+          },
         },
       },
-      select: { id: true },
     });
-    const vetoIds = new Set(vetosInClinic.map((u) => u.id));
+    const vetoIds = secretary?.secretaryProfile?.clinic.veterinarianClinics.map(
+      (veto) => veto.veterinarianId,
+    );
 
     const res = await request(app)
       .get("/api/users/roles/veterinarian")
       .set("Authorization", `Bearer ${token}`);
-
     expect(res.status).toBe(200);
     res.body.forEach((user: any) => {
-      expect(vetoIds.has(user.id)).toBe(true);
+      expect(vetoIds!.includes(user.id)).toBe(true);
     });
   });
 });
@@ -308,7 +307,7 @@ describe("GET /api/users/:id", () => {
     const otherClinicVeto = await getPrisma().user.findFirst({
       where: {
         veterinarianProfile: {
-          veterinarianClinic: {
+          veterinarianClinics: {
             none: { clinicId },
           },
         },
@@ -333,5 +332,56 @@ describe("GET /api/users/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).not.toHaveProperty("password");
+  });
+});
+
+// ── GET /api/users/:id/animal ─────────────────────────────────────────────
+
+describe("GET /api/users/:id/animals", () => {
+  it("401 — sans token", async () => {
+    const res = await request(app).get("/api/users/some-id/animals");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — CLIENT accède aux animaux d'un autre client", async () => {
+    const token = await loginAs("client@gmail.com");
+
+    const otherClient = await getPrisma().user.findFirst({
+      where: {
+        email: { not: "client@gmail.com" },
+        role: "CLIENT",
+      },
+    });
+
+    const res = await request(app)
+      .get(`/api/users/${otherClient!.id}/animals`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("200 — CLIENT accède à ses propres animaux", async () => {
+    const token = await loginAs("client@gmail.com");
+    const client = await getPrisma().user.findUnique({
+      where: { email: "client@gmail.com" },
+    });
+
+    const res = await request(app)
+      .get(`/api/users/${client!.id}/animals`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("200 — STAFF accède aux animaux d'un client", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const client = await getPrisma().user.findFirst({
+      where: { role: "CLIENT" },
+    });
+
+    const res = await request(app)
+      .get(`/api/users/${client!.id}/animals`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
   });
 });

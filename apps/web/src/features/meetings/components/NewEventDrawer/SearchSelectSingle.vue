@@ -18,15 +18,6 @@ const emit = defineEmits<{
 const search = ref('')
 const focused = ref(false)
 
-const displayValue = computed(() => {
-  if (props.modelValue) {
-    const primary = String(props.modelValue[props.displayKey])
-    const secondary = props.secondaryKey ? String(props.modelValue[props.secondaryKey]) : ''
-    return secondary ? `${primary} ${secondary}` : primary
-  }
-  return search.value
-})
-
 const filtered = computed(() => {
   if (!focused.value || props.modelValue) return []
   if (search.value.length < 2) return []
@@ -115,7 +106,7 @@ const onInput = (val: string) => {
   display: flex;
   align-items: center;
   border: 1px solid var(--el-border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   background: var(--el-bg-color);
   height: 40px;
   padding: 0 12px;
@@ -153,7 +144,6 @@ const onInput = (val: string) => {
   background: transparent;
   font-size: 14px;
   color: var(--el-text-color-primary);
-  font-family: inherit;
 
   &::placeholder {
     color: var(--el-text-color-placeholder);

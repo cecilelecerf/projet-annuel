@@ -1,21 +1,16 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
-import { AnimalController } from "./animal.controller";
 import { createAnimalSchema, updateAnimalSchema } from "@armali/schemas";
+import { animalController, animalMeetingController } from "@api/instances";
 
 const animalRouter: Router = Router();
-const controller = new AnimalController();
+const controller = animalController;
 
 animalRouter.get(
   "/",
   authMiddleware,
   controller.getAll.bind(controller) as RequestHandler,
-);
-animalRouter.get(
-  "/user/:userId",
-  authMiddleware,
-  controller.getByUser.bind(controller) as RequestHandler,
 );
 
 animalRouter.get(
@@ -27,6 +22,14 @@ animalRouter.get(
   "/:id/vaccines",
   authMiddleware,
   controller.getVaccines.bind(controller) as RequestHandler,
+);
+animalRouter.get(
+  "/:id/meetings",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  animalMeetingController.getByAnimal.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 
 animalRouter.post(

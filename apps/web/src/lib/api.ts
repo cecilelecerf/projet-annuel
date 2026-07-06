@@ -46,7 +46,7 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
   if (response.status === 204) return null as T
   if (response.status === 401 && !endpoint.includes('/auth/')) {
     if (isRefreshing) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         refreshQueue.push((newToken) => {
           options.headers = {
             ...options.headers,

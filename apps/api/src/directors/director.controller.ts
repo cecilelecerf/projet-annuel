@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { DirectorService } from "./director.service";
 
-const directorService = new DirectorService();
-
 export class DirectorController {
+  constructor(private service: DirectorService) {}
+
   async createReferent(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await directorService.createReferent(req.user!.id, req.body);
+      const user = await this.service.createReferent(req.user!.id, req.body);
       res.status(201).json(user);
     } catch (err) {
       next(err);
@@ -15,7 +15,7 @@ export class DirectorController {
 
   async createVeterinarian(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await directorService.createVeterinarian(
+      const user = await this.service.createVeterinarian(
         req.user!.id,
         req.body,
       );
@@ -27,10 +27,7 @@ export class DirectorController {
 
   async createSecretary(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await directorService.createSecretary(
-        req.user!.id,
-        req.body,
-      );
+      const user = await this.service.createSecretary(req.user!.id, req.body);
       res.status(201).json(user);
     } catch (err) {
       next(err);
@@ -39,7 +36,7 @@ export class DirectorController {
 
   async getClinicStaff(req: Request, res: Response, next: NextFunction) {
     try {
-      const staff = await directorService.getClinicStaff(req.user!.id);
+      const staff = await this.service.getClinicStaff(req.user!.id);
       res.status(200).json(staff);
     } catch (err) {
       next(err);
@@ -48,7 +45,7 @@ export class DirectorController {
 
   async getClinicStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      const status = await directorService.getClinicStatus(req.user!.id);
+      const status = await this.service.getClinicStatus(req.user!.id);
       res.status(200).json(status);
     } catch (err) {
       next(err);
@@ -57,10 +54,7 @@ export class DirectorController {
 
   async requestClinic(req: Request, res: Response, next: NextFunction) {
     try {
-      const request = await directorService.requestClinic(
-        req.user!.id,
-        req.body,
-      );
+      const request = await this.service.requestClinic(req.user!.id, req.body);
       res.status(201).json(request);
     } catch (err) {
       next(err);
@@ -69,7 +63,7 @@ export class DirectorController {
 
   async getMyRequests(req: Request, res: Response, next: NextFunction) {
     try {
-      const requests = await directorService.getMyRequests(req.user!.id);
+      const requests = await this.service.getMyRequests(req.user!.id);
       res.status(200).json(requests);
     } catch (err) {
       next(err);

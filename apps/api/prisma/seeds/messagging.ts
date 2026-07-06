@@ -2,7 +2,17 @@ import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedMessaging(
   prisma: PrismaClient,
-  { users, clinic1 }: { users: any; clinic1: { id: string } },
+  {
+    users,
+    clinics,
+  }: {
+    users: any;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+  },
 ) {
   const { vetoUser1, vetoUser3, secretaryUser1, directorUser1, directorUser2 } =
     users;
@@ -12,7 +22,7 @@ export async function seedMessaging(
       type: "GROUP",
       scope: "CLINIC",
       name: "Équipe Clinique du Parc",
-      clinicId: clinic1.id,
+      clinicId: clinics.clinic1.id,
       createdById: vetoUser1.id,
       lastMessageAt: new Date(),
       conversationMembers: {
@@ -62,7 +72,8 @@ export async function seedMessaging(
 
   await prisma.message.create({
     data: {
-      content: "Bonjour confrère, avez-vous un créneau pour échanger cette semaine ?",
+      content:
+        "Bonjour confrère, avez-vous un créneau pour échanger cette semaine ?",
       conversationId: directorsConversation.id,
       senderId: directorUser1.id,
     },

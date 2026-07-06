@@ -34,7 +34,9 @@ export class AuthService {
     secretaryProfile?: { clinicId: string } | null;
     directorClinicProfile?: { clinicId: string } | null;
     referentClinicProfile?: { clinicId: string } | null;
-    veterinarianProfile?: { veterinarianClinic: { clinicId: string }[] } | null;
+    veterinarianProfile?: {
+      veterinarianClinics: { clinicId: string }[];
+    } | null;
   }): ClinicId | null {
     switch (user.role) {
       case "SECRETARY":
@@ -45,7 +47,7 @@ export class AuthService {
         return (user.referentClinicProfile?.clinicId as ClinicId) ?? null;
       case "VETERINARIAN":
         return (
-          (user.veterinarianProfile?.veterinarianClinic[0]
+          (user.veterinarianProfile?.veterinarianClinics[0]
             ?.clinicId as ClinicId) ?? null
         );
       default:
@@ -158,7 +160,7 @@ export class AuthService {
         referentClinicProfile: true,
         veterinarianProfile: {
           include: {
-            veterinarianClinic: true,
+            veterinarianClinics: true,
           },
         },
       },
@@ -251,7 +253,7 @@ export class AuthService {
         referentClinicProfile: true,
         veterinarianProfile: {
           include: {
-            veterinarianClinic: true,
+            veterinarianClinics: true,
           },
         },
       },

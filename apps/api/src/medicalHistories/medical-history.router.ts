@@ -1,11 +1,11 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { AnimalMedicalHistoryController } from "./medical-history.controller";
 import { STAFF_ROLES } from "@api/utils";
+import { medicalHistoryController } from "@api/instances";
 
 const animalMedicalHistoryRouter: Router = Router();
-const controller = new AnimalMedicalHistoryController();
+const controller = medicalHistoryController;
 
 animalMedicalHistoryRouter.get(
   "/:id",

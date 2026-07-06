@@ -1,0 +1,28 @@
+// styles/element/dialog.scss
+
+.el-dialog {
+  border-radius: var(--radius-xl) !important;
+  overflow: hidden;
+
+  .el-dialog__title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: var(--fw-bold);
+    color: var(--el-text-color-primary);
+  }
+}
+
+// Overlay légèrement floutée pour moderniser
+.el-overlay {
+  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+.el-message-box {
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  .el-message-box__headerbtn {
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+  }
+}

@@ -10,29 +10,40 @@ import {
 } from "@armali/schemas";
 import { AnimalMedicalHistoryService } from "./medical-history.service";
 
-const service = new AnimalMedicalHistoryService();
-
 export class AnimalMedicalHistoryController {
+  constructor(private service: AnimalMedicalHistoryService) {}
+
   async getByMeeting(
-    req: RequestWithParams<{ meetingId: MeetingId }>,
+    req: RequestWithParams<{ id: MeetingId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const acts = await service.getByMeeting(req.params.meetingId);
+      const acts = await this.service.getByMeeting(req.params.id);
       res.status(200).json(acts);
     } catch (err) {
       next(err);
     }
   }
-
+  async getByClinic(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const acts = await this.service.getByClinic(req.params.id);
+      res.status(200).json(acts);
+    } catch (err) {
+      next(err);
+    }
+  }
   async getById(
     req: RequestWithParams<{ id: string }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const act = await service.getById(req.params.id);
+      const act = await this.service.getById(req.params.id);
       res.status(200).json(act);
     } catch (err) {
       next(err);
@@ -47,7 +58,11 @@ export class AnimalMedicalHistoryController {
     try {
       const result = createMedicalHistorySchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await service.create(result.data, req.user.role, req.user.id);
+      const act = await this.service.create(
+        result.data,
+        req.user.role,
+        req.user.id,
+      );
       res.status(201).json(act);
     } catch (err) {
       next(err);
@@ -62,7 +77,7 @@ export class AnimalMedicalHistoryController {
     try {
       const result = updateMedicalHistorySchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await service.update(
+      const act = await this.service.update(
         req.params.id,
         result.data,
         req.user.role,
@@ -79,7 +94,7 @@ export class AnimalMedicalHistoryController {
     next: NextFunction,
   ) {
     try {
-      await service.delete(req.params.id, req.user.role);
+      await this.service.delete(req.params.id, req.user.role);
       res.status(204).send();
     } catch (err) {
       next(err);

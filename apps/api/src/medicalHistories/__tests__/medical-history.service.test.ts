@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ForbiddenError, NotFoundError, BadRequestError } from "@api/errors";
+import { medicalHistoryService } from "@api/instances";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ vi.mock("@api/medicalHistories/medical-history.repository", () => ({
   }),
 }));
 
-vi.mock("@api/meetings", () => ({
+vi.mock("@api/meetings/animal-meeting/animal-meeting.repository", () => ({
   AnimalMeetingRepository: vi.fn(function () {
     return mockAnimalMeetingRepository;
   }),
@@ -71,9 +72,7 @@ vi.mock("@api/vaccines/vaccine.repository", () => ({
   }),
 }));
 
-const { AnimalMedicalHistoryService } =
-  await import("@api/medicalHistories/medical-history.service");
-const service = new AnimalMedicalHistoryService();
+const service = medicalHistoryService;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

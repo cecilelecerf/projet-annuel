@@ -13,14 +13,14 @@ import {
 } from "@armali/schemas";
 import { ActService } from "./act.service";
 
-const actService = new ActService();
-
 export class ActController {
+  constructor(private service: ActService) {}
+
   // ── Acts ──────────────────────────────────────────────────────────────────
 
   async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const acts = await actService.getAll();
+      const acts = await this.service.getAll();
       res.status(200).json(acts);
     } catch (err) {
       next(err);
@@ -33,7 +33,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      const act = await actService.getById(req.params.id);
+      const act = await this.service.getById(req.params.id);
       res.status(200).json(act);
     } catch (err) {
       next(err);
@@ -48,7 +48,7 @@ export class ActController {
     try {
       const result = createActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.create(result.data, req.user.role);
+      const act = await this.service.create(result.data, req.user.role);
       res.status(201).json(act);
     } catch (err) {
       next(err);
@@ -63,7 +63,7 @@ export class ActController {
     try {
       const result = updateActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.update(
+      const act = await this.service.update(
         req.params.id,
         result.data,
         req.user.role,
@@ -80,7 +80,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      await actService.delete(req.params.id, req.user.role);
+      await this.service.delete(req.params.id, req.user.role);
       res.status(204).send();
     } catch (err) {
       next(err);
@@ -92,7 +92,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      const acts = await actService.getByMeeting(req.params.meetingId);
+      const acts = await this.service.getByMeeting(req.params.meetingId);
       res.status(200).json(acts);
     } catch (err) {
       next(err);
@@ -106,7 +106,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      const acts = await actService.getClinicActs(req.params.clinicId);
+      const acts = await this.service.getClinicActs(req.params.clinicId);
       res.status(200).json(acts);
     } catch (err) {
       next(err);
@@ -119,7 +119,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      const act = await actService.getClinicActById(req.params.id);
+      const act = await this.service.getClinicActById(req.params.id);
       res.status(200).json(act);
     } catch (err) {
       next(err);
@@ -134,7 +134,10 @@ export class ActController {
     try {
       const result = createClinicActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.createClinicAct(result.data, req.user.role);
+      const act = await this.service.createClinicAct(
+        result.data,
+        req.user.role,
+      );
       res.status(201).json(act);
     } catch (err) {
       next(err);
@@ -149,7 +152,7 @@ export class ActController {
     try {
       const result = updateClinicActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.updateClinicAct(
+      const act = await this.service.updateClinicAct(
         req.params.id,
         result.data,
         req.user.role,
@@ -166,7 +169,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      await actService.deleteClinicAct(req.params.id, req.user.role);
+      await this.service.deleteClinicAct(req.params.id, req.user.role);
       res.status(204).send();
     } catch (err) {
       next(err);

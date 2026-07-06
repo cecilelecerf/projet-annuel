@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
 import { House, UserFilled, OfficeBuilding, User, ChatDotRound } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'Referent.Home',
+    index: 'REFERANT.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Referent.Staff',
+    index: 'REFERANT.Staff',
     label: 'Personnel',
     icon: UserFilled,
   },
   {
-    index: 'Referent.Clinic',
+    index: 'REFERANT.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
   },
   {
-    index: 'Referent.Messagerie',
+    index: 'REFERANT.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Referent.Profil',
+    index: 'REFERANT.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -38,7 +38,12 @@ const menuItems: MenuItem[] = [
 
     <Navbar :menu-items="menuItems" />
     <main class="main">
-      <router-view />
+      <Suspense>
+        <router-view />
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
     </main>
   </div>
 </template>

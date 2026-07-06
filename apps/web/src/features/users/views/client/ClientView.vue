@@ -1,0 +1,11 @@
+<script lang="ts" setup>
+import { useRoute } from 'vue-router'
+import { usersApi } from '../../api/user.api.ts'
+import ClientComponent from '../../components/ClientComponent.vue'
+const route = useRoute()
+const user = await usersApi.get(route.params.id as string)
+</script>
+<template>
+  <ClientComponent v-if="user.role === 'CLIENT'" :client="user" />
+  <div v-else>Autre rôle</div>
+</template>

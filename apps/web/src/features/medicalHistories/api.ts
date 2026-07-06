@@ -1,14 +1,24 @@
 import { http } from '@/lib/api'
 import {
+  clinicActSchema,
   medicalHistorySchema,
+  type ClinicId,
   type MedicalHistoryId,
   type MeetingId,
   type UpdateMedicalHistory,
 } from '@armali/schemas'
 
 export const medicalHistoriesApi = {
-  getAll: async (meetingId: MeetingId) => {
-    const data = await http.get(`/medical-histories/${meetingId}`)
+  getAll: async () => {
+    const data = await http.get(`/medical-histories`)
+    return clinicActSchema.array().parse(data)
+  },
+  getByClinic: async (clinicId: ClinicId) => {
+    const data = await http.get(`/clinics/${clinicId}/medical-histories`)
+    return clinicActSchema.array().parse(data)
+  },
+  getByMeeting: async (meetingId: MeetingId) => {
+    const data = await http.get(`/meetings/animals/${meetingId}/medical-histories`)
     return medicalHistorySchema.array().parse(data)
   },
   update: async (

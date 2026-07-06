@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ForbiddenError, NotFoundError } from "@api/errors";
+import { animalService } from "@api/instances";
 
 // ── Mock ──────────────────────────────────────────────────────────────────────
 
@@ -24,9 +25,6 @@ const mockPrisma = vi.hoisted(() => ({
 }));
 
 vi.mock("@api/lib/prisma", () => ({ prisma: mockPrisma }));
-
-const { AnimalService } = await import("@api/animals/animal.service");
-const animalService = new AnimalService();
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 

@@ -21,18 +21,14 @@ vi.mock("@api/utils/jwt", () => ({
   verifyRefreshToken: vi.fn(),
 }));
 
-vi.mock("@armali/schemas", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@armali/schemas")>();
-  return {
-    ...actual,
-    baseUserSchema: {
-      parse: vi.fn((user) => {
-        const { password, clinicId, ...parsedUser } = user;
-        return parsedUser;
-      }),
-    },
-  };
-});
+vi.mock("@armali/schemas", () => ({
+  baseUserSchema: {
+    parse: vi.fn((user) => {
+      const { password, clinicId, ...parsedUser } = user;
+      return parsedUser;
+    }),
+  },
+}));
 
 const getPrisma = async () => {
   const { prisma } = await import("@api/lib/prisma");

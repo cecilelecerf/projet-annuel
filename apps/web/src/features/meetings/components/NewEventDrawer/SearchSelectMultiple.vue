@@ -116,8 +116,6 @@ const getInitial = (item: T) => getLabel(item).charAt(0).toUpperCase()
   left: 0;
   right: 0;
   background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: var(--radius-md);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   z-index: 100;
   max-height: 200px;

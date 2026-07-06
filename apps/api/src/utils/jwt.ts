@@ -1,4 +1,4 @@
-import { BaseUser, ClinicId, UserRole } from "@armali/schemas";
+import { BaseUser, ClinicId, UserId, UserRole } from "@armali/schemas";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 
@@ -6,7 +6,7 @@ const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
 
 export interface JwtPayload {
-  id: BaseUser["id"];
+  id: UserId;
   email: BaseUser["email"];
   role: UserRole;
   clinicId?: ClinicId;

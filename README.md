@@ -67,6 +67,8 @@ JWT_REFRESH_SECRET=changeme
 
 ---
 
+<!-- TODO AJOUTER LE UP DU DOCKER -->
+
 ## 🗄️ Base de données
 
 ```bash
@@ -123,9 +125,15 @@ pnpm --filter web dev
 apps/api/
 ├── src/
 │   ├── index.ts              # Point d'entrée Express
-│   ├── routes/               # Définition des routes
-│   ├── controllers/          # Logique des endpoints
-│   ├── services/             # Logique métier
+│   ├── features/             # Organisation par feature
+│   │   └── <feature>/
+│   │       ├── <feature>.route.ts       # Définition des routes
+│   │       ├── <feature>.controller.ts  # Logique des endpoints
+│   │       ├── <feature>.service.ts     # Logique métier
+│   │       ├── <feature>.repository.ts  # Accès aux données
+│   │       └── __tests__/
+│   │           └── <feature>.router.test.ts
+│   │           └── <feature>.service.test.ts
 │   └── lib/
 │       └── prisma.ts         # Instance Prisma
 ├── prisma/
@@ -150,6 +158,12 @@ apps/web/
 │   ├── views/                # Pages
 │   ├── layouts/              # Layouts par rôle
 │   └── components/           # Composants réutilisables
+│   └──features/               # Vue Router
+│       ├── api.ts                # Call api
+│       ├── utils.ts              # Function utilitaire
+│       ├── views/                # Pages
+│       └── components/           # Composants
+│       └── composables/          # Composants
 ├── nginx.conf                # Config nginx (prod)
 └── package.json
 ```
@@ -379,3 +393,13 @@ chmod +x backup.sh
 ```
 
 Les archives `.tar.gz` seront générées dans le dossier `/app/backups`.
+
+---
+
+## 🐳 Test (vitest)
+
+### Api
+
+Des tests de services et des tests de route.
+Les test de route ne doivent pas mocké de la donné. Au lancement il génère les migrations et applique les fixtures.
+Les tests de service peuvent mocker de la data

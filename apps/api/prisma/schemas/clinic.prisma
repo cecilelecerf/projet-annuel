@@ -9,12 +9,14 @@ model Clinic {
   description  String?
   website      String
   openingHours String?
+  lat          Float
+  lng          Float
 
-  speciality             Speciality[]
-  veterinarianClinic     VeterinarianClinic[]
+  specialities           Speciality[]
   clinicPet              Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
+  veterinarianClinics    VeterinarianClinic[]
   secretaryProfile       SecretaryProfile[]
   directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]
@@ -57,9 +59,9 @@ model Speciality {
   name        String   @unique
   description String
 
-  veterinarianSpeciality VeterinarianProfile[]
-  clinicSpeciality       Clinic[]
-  meetings               AnimalMeeting[]
+  veterinarians VeterinarianProfile[]
+  clinics       Clinic[]
+  meetings      AnimalMeeting[]
 
   @@map("specialities")
 }

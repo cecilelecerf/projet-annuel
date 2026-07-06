@@ -2,11 +2,15 @@ import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { productRequestController } from "@api/instances";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const productRequestRouter: Router = Router();
 const controller = productRequestController;
 
 const REQUESTER_ROLES = ["DIRECTOR", "REFERENT"] as const;
+
+productRequestRouter.use(authMiddleware);
+productRequestRouter.use(requireApprovedClinic);
 
 // Admin uniquement : liste toutes les demandes (filtrable par ?status=)
 productRequestRouter.get(

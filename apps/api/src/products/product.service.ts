@@ -11,6 +11,7 @@ import type {
 } from "@armali/schemas";
 
 // Le catalogue global (Product) n'est modifiable que par l'admin,
+// désormais via le workflow de demande pour référent/directeur (ProductRequest)
 const CATALOG_MANAGER_ROLES: UserRole[] = ["ADMIN"];
 
 // Le stock par clinique (ClinicProduct), lui, reste géré par le référent/directeur
@@ -57,6 +58,11 @@ export class ProductService {
 
   async getClinicProducts(clinicId: string) {
     return this.clinicRepository.findByClinic(clinicId);
+  }
+
+  async getLowStockProducts(clinicId: string) {
+    const products = await this.clinicRepository.findByClinic(clinicId);
+    return products.filter((p) => p.stock <= p.minimumRequired);
   }
 
   async getClinicProductById(id: string) {

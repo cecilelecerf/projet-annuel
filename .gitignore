@@ -61,9 +61,7 @@ next-env.d.ts
 
 # Prisma
 prisma/generated/
-**/prisma/generated/
-prisma/migrations/**
-**/*.sql
+**/prisma/generated/ 
 # Turborepo cache
 .turbo/
 

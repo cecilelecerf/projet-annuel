@@ -22,6 +22,7 @@ import specialityRouter from "./specialities/speciality.router";
 import messagingRouter from "./messaging/messaging.router";
 import bookingRouter from "./bookings/booking.router";
 import veterinarianRouter from "./users/veterinarian.router";
+import staffRouter from "./staffs/staff.router";
 
 collectDefaultMetrics();
 
@@ -73,4 +74,5 @@ app.use("/api/conversations", messagingRouter);
 app.use("/api/booking", bookingRouter);
 app.use("/api/specialities", specialityRouter);
 app.use("/api/veterinarians", veterinarianRouter);
+app.use("/api/staffs", staffRouter);
 app.use(errorHandler);

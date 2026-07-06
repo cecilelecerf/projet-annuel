@@ -42,7 +42,7 @@ export const veterinarianRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'VETERINARIAN.Profil',
-        component: () => import('@/features/users/views/veterinarian/ProfilView.vue'),
+        component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       // {
       //   path: 'agenda/rdv/:id',

@@ -189,10 +189,10 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 }
 
 .profile-role {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color);
-  padding: 2px 10px;
+  padding: var(--spacing-2xs) var(--spacing-sm);
   border-radius: var(--radius-full);
 }
 
@@ -208,7 +208,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--el-text-color-secondary);
 
   .el-icon {
@@ -268,7 +268,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   flex-shrink: 0;
 }
@@ -277,12 +277,12 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs);
   min-width: 0;
 }
 
 .pet-name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
   color: var(--el-text-color-primary);
   white-space: nowrap;
@@ -291,7 +291,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 }
 
 .pet-meta {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
 }
 
@@ -332,13 +332,13 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 }
 
 .meeting-day {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   color: var(--el-color-primary);
 }
 
 .meeting-year {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--el-text-color-placeholder);
 }
 
@@ -346,17 +346,17 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs);
 }
 
 .meeting-pet {
-  font-size: 13px;
+  font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
   color: var(--el-text-color-primary);
 }
 
 .meeting-desc {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
 }
 </style>

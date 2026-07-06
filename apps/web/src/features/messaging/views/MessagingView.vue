@@ -19,7 +19,7 @@ const newDialog = ref<InstanceType<typeof NewConversationDialog> | null>(null)
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .messaging-view {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -27,7 +27,7 @@ const newDialog = ref<InstanceType<typeof NewConversationDialog> | null>(null)
   min-height: 480px;
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 

@@ -15,7 +15,7 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'DIRECTOR.Profil',
-        component: () => import('@/features/users/views/director/ProfilView.vue'),
+        component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
         path: 'calendar',
@@ -30,7 +30,17 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: 'staff',
         name: 'DIRECTOR.Staff',
-        component: () => import('@/features/users/views/director/Staff.vue'),
+        component: () => import('@/features/staffs/views/StaffListView.vue'),
+      },
+      {
+        path: 'staff/new',
+        name: 'DIRECTOR.Staff.Create',
+        component: () => import('@/features/staffs/views/StaffCreateView.vue'),
+      },
+      {
+        path: 'staff/:id',
+        name: 'DIRECTOR.Staff.Detail',
+        component: () => import('@/features/staffs/views/StaffDetailView.vue'),
       },
       {
         path: 'clinique',

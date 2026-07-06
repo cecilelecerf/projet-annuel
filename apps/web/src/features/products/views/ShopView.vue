@@ -4,12 +4,7 @@ import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
 import { productsApi } from '@/features/products/api/products.api'
 import { brandsApi } from '@/features/products/api/brands.api'
-import type {
-  ProductClinicWithProduct,
-  Brand,
-  BrandId,
-  ClinicId,
-} from '@armali/schemas'
+import type { ProductClinicWithProduct, Brand, BrandId, ClinicId } from '@armali/schemas'
 
 const notify = useNotify()
 
@@ -322,7 +317,9 @@ async function submitEdit() {
       </el-table-column>
 
       <el-table-column label="Prix" width="120">
-        <template #default="{ row }: { row: ProductClinicWithProduct }"> {{ row.price }} € </template>
+        <template #default="{ row }: { row: ProductClinicWithProduct }">
+          {{ row.price }} €
+        </template>
       </el-table-column>
 
       <el-table-column label="Actions" width="240">
@@ -347,7 +344,12 @@ async function submitEdit() {
             v-model="addForm.brandId"
             filterable
             remote
-            :remote-method="(q: string) => { brandQuery = q; searchBrands(q) }"
+            :remote-method="
+              (q: string) => {
+                brandQuery = q
+                searchBrands(q)
+              }
+            "
             :loading="brandSearchLoading || brandCreating"
             placeholder="Rechercher ou créer une marque..."
             style="width: 100%"
@@ -417,7 +419,12 @@ async function submitEdit() {
             v-model="editForm.brandId"
             filterable
             remote
-            :remote-method="(q: string) => { editBrandQuery = q; searchEditBrands(q) }"
+            :remote-method="
+              (q: string) => {
+                editBrandQuery = q
+                searchEditBrands(q)
+              }
+            "
             :loading="editBrandSearchLoading || editBrandCreating"
             placeholder="Rechercher ou créer une marque..."
             style="width: 100%"
@@ -459,32 +466,30 @@ async function submitEdit() {
   </div>
 </template>
 
-<style scoped>
-.boutique-page {
-}
+<style scoped lang="scss">
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-lg);
 }
 .page-header h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 4px;
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-bold);
+  color: var(--el-text-color-primary);
+  margin: 0 0 var(--spacing-xs);
 }
 .page-header p {
-  color: #6b7280;
+  color: var(--el-text-color-secondary);
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .product-cell {
   display: flex;
   flex-direction: column;
 }
 .product-cell .brand {
-  font-size: 12px;
-  color: #6b7280;
+  font-size: var(--fs-sm);
+  color: var(--el-text-color-secondary);
 }
 </style>

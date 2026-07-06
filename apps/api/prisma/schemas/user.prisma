@@ -142,7 +142,7 @@ model DirectorClinicProfile {
   id String @id @default(uuid())
 
   user     User   @relation(fields: [id], references: [id], onDelete: Cascade)
-  clinicId String
+  clinicId String @unique
   clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("director_clinic_profiles")

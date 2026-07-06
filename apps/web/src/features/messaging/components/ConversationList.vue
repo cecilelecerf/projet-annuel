@@ -65,7 +65,9 @@ const conversations = computed(() => messagingStore.sortedConversations)
         v-for="conversation in conversations"
         :key="conversation.id"
         class="conversation-item"
-        :class="{ 'conversation-item--active': conversation.id === messagingStore.activeConversationId }"
+        :class="{
+          'conversation-item--active': conversation.id === messagingStore.activeConversationId,
+        }"
         @click="messagingStore.openConversation(conversation.id)"
       >
         <div class="conversation-item__avatar-wrap">
@@ -93,7 +95,7 @@ const conversations = computed(() => messagingStore.sortedConversations)
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .conversation-list {
   display: flex;
   flex-direction: column;
@@ -104,25 +106,25 @@ const conversations = computed(() => messagingStore.sortedConversations)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: var(--spacing-md);
 }
 .conversation-list__header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--fs-2xl);
 }
 .conversation-list__scroll {
   flex: 1;
 }
 .conversation-list__empty {
-  padding: 24px;
+  padding: var(--spacing-lg);
   text-align: center;
   color: var(--el-text-color-secondary);
 }
 .conversation-item {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md);
   width: 100%;
-  padding: 10px 16px;
+  padding: 10px var(--spacing-md);
   border: none;
   background: transparent;
   cursor: pointer;
@@ -145,7 +147,7 @@ const conversations = computed(() => messagingStore.sortedConversations)
   right: 0;
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background: var(--el-color-success);
   border: 2px solid var(--el-bg-color);
 }
@@ -161,7 +163,7 @@ const conversations = computed(() => messagingStore.sortedConversations)
   justify-content: space-between;
 }
 .conversation-item__title {
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -170,17 +172,17 @@ const conversations = computed(() => messagingStore.sortedConversations)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 .conversation-item__preview {
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--el-text-color-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .conversation-item__subtitle {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-placeholder);
 }
 </style>

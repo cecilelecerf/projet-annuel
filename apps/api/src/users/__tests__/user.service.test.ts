@@ -11,6 +11,9 @@ const mockUserRepository = vi.hoisted(() => ({
 const mockClinicRepository = vi.hoisted(() => ({
   findClinicIdByUser: vi.fn(),
   findClinicByUserId: vi.fn(),
+}));
+
+const mockStaffRepository = vi.hoisted(() => ({
   findStaff: vi.fn(),
 }));
 
@@ -26,15 +29,11 @@ vi.mock("@api/clinics/clinic.repository", () => ({
   }),
 }));
 
-const { UserRepository } = await import("@api/users/user.repository");
-const { ClinicRepository } = await import("@api/clinics/clinic.repository");
-const { ClinicService } = await import("@api/clinics/clinic.service");
-const { UserService } = await import("@api/users/user.service");
-
-const userService = new UserService(
-  new UserRepository({} as any),
-  new ClinicService(new ClinicRepository({} as any)),
-);
+vi.mock("@api/staffs/staff.repository", () => ({
+  StaffRepository: vi.fn(function () {
+    return mockStaffRepository;
+  }),
+}));
 
 const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
 const ADMIN_ID = "22222222-2222-4222-8222-222222222222";
@@ -50,6 +49,24 @@ const mockUser = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+
+const { UserRepository } = await import("@api/users/user.repository");
+const { ClinicRepository } = await import("@api/clinics/clinic.repository");
+const { ClinicService } = await import("@api/clinics/clinic.service");
+const { StaffRepository } = await import("@api/staffs/staff.repository");
+const { StaffService } = await import("@api/staffs/staff.service");
+const { UserService } = await import("@api/users/user.service");
+
+const clinicService = new ClinicService(new ClinicRepository({} as any));
+const staffService = new StaffService(
+  new StaffRepository({} as any),
+  clinicService,
+);
+const userService = new UserService(
+  new UserRepository({} as any),
+  clinicService,
+  staffService,
+);
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -114,7 +131,7 @@ describe("UserService.getUsersByRoles", () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue([
       { id: CLINIC_ID, name: "Clinique Test" },
     ]);
-    mockClinicRepository.findStaff.mockResolvedValue({
+    mockStaffRepository.findStaff.mockResolvedValue({
       director: { ...mockUser, role: "DIRECTOR" },
       referents: [],
       secretaries: [],

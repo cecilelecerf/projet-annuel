@@ -46,6 +46,10 @@ import { SpecialityRepository } from "./specialities/speciality.repository";
 import { ContactsRepository } from "./messaging/contacts.repository";
 import { MessageRepository } from "./messaging/message.repository";
 import { ConversationRepository } from "./messaging/conversation.repository";
+
+// ── Staff ─────────────────────────────────────────────────────
+import { StaffRepository } from "./staffs/staff.repository";
+
 // ═══════════════════════════════════════════════════════════════
 // Services
 // ═══════════════════════════════════════════════════════════════
@@ -72,6 +76,7 @@ import { BrandService } from "./brands/brand.service";
 import { SpecialityService } from "./specialities/speciality.service";
 import { BookingService } from "./bookings/booking.service";
 import { MessagingService } from "./messaging/messaging.service";
+import { StaffService } from "./staffs/staff.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -101,6 +106,7 @@ import { SpecialityController } from "./specialities/speciality.controller";
 import { ClinicRepository } from "./clinics/clinic.repository";
 import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
+import { StaffController } from "./staffs/staff.controller";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -133,14 +139,21 @@ const messageRepository = new MessageRepository(prisma);
 const contactsRepository = new ContactsRepository(prisma);
 const conversationRepository = new ConversationRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
+const staffRepository = new StaffRepository(prisma);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 
 const emailService = new EmailService();
 const clinicService = new ClinicService(clinicRepository);
+const staffService = new StaffService(staffRepository, clinicService);
 
-const userService = new UserService(userRepository, clinicService);
+const userService = new UserService(
+  userRepository,
+  clinicService,
+  staffService,
+);
 
 const authService = new AuthService();
 
@@ -208,6 +221,7 @@ const messaginService = new MessagingService(
   conversationRepository,
   contactsRepository,
 );
+
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -253,3 +267,4 @@ export const userController = new UserController(userService);
 export const productController = new ProductController(productService);
 export const brandController = new BrandController(brandService);
 export const messagingController = new MessagingController(messaginService);
+export const staffController = new StaffController(staffService);

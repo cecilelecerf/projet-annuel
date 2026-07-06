@@ -20,14 +20,14 @@ export const secretaryRouter: RouteRecordRaw[] = [
         component: () => import('@/features/meetings/views/MeCalendarView.vue'),
       },
       {
-        path: 'profil',
+        path: 'avaibalities',
         name: 'SECRETARY.Avaibality',
         component: () => import('@/features/availabilities/view/AvaibalitiesView.vue'),
       },
       {
         path: 'profil',
         name: 'SECRETARY.Profil',
-        component: () => import('@/features/users/views/secretary/ProfilView.vue'),
+        component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
         path: 'veterinarian',

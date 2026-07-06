@@ -6,11 +6,13 @@ import { flatClinicId } from "./user.utils";
 import { isStaff } from "@api/utils";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { UserId } from "@armali/schemas";
+import { StaffService } from "@api/staffs/staff.service";
 
 export class UserService {
   constructor(
     private repository: UserRepository,
     private clinicService: ClinicService,
+    private staffService: StaffService,
   ) {}
 
   async getAllUsers(): Promise<Omit<User, "password">[]> {
@@ -53,7 +55,7 @@ export class UserService {
       });
       const staffsByClinic = await Promise.all(
         clinicIds.flatMap((id) =>
-          this.clinicService.getStaffByClinicRole({
+          this.staffService.getStaffByClinicRole({
             clinicId: id,
             role,
             authorId: userId,

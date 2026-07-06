@@ -83,11 +83,3 @@ export const updateClinicSpecialitiesSchema = z.object({
 export type UpdateClinicSpecialities = z.infer<
   typeof updateClinicSpecialitiesSchema
 >;
-export const staffSchema = baseUserSchema.pick({
-  id: true,
-  lastname: true,
-  firstname: true,
-  email: true,
-  role: true,
-});
-export type Staff = z.infer<typeof staffSchema>;

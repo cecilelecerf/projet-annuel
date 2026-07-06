@@ -49,14 +49,14 @@ describe("roleMiddleware", () => {
   });
 
   it("appelle next pour n'importe quel rôle dans la liste", () => {
-    const roles = ["ADMIN", "DIRECTOR", "REFERANT"] as const;
+    const roles = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
 
     for (const role of roles) {
       const req = { user: { id: "1", email: "t@t.com", role } } as any;
       const res = mockRes();
       const nextFn = vi.fn();
 
-      roleMiddleware(["ADMIN", "DIRECTOR", "REFERANT"])(req, res, nextFn);
+      roleMiddleware(["ADMIN", "DIRECTOR", "REFERENT"])(req, res, nextFn);
 
       expect(nextFn).toHaveBeenCalled();
     }

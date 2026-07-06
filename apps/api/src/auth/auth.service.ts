@@ -43,7 +43,7 @@ export class AuthService {
         return (user.secretaryProfile?.clinicId as ClinicId) ?? null;
       case "DIRECTOR":
         return (user.directorClinicProfile?.clinicId as ClinicId) ?? null;
-      case "REFERANT":
+      case "REFERENT":
         return (user.referentClinicProfile?.clinicId as ClinicId) ?? null;
       case "VETERINARIAN":
         return (

@@ -14,3 +14,6 @@ export * from "./acts";
 export * from "./prescription.schema";
 export * from "./animals/index.schema";
 export * from "./animals/meta.schema";
+
+export * from "./referent/staff.schema";
+export * from "./referent/dashboard.schema";

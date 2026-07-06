@@ -18,7 +18,7 @@ const ALLOWED_ROLES: UserRole[] = [
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",
-  "REFERANT",
+  "REFERENT",
   "ADMIN",
 ];
 

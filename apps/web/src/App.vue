@@ -6,7 +6,7 @@ import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
 import { useNotify } from '@/composables/useNotify'
 import type { UserRole } from '@armali/schemas'
 
-const MESSAGING_ROLES: UserRole[] = ['VETERINARIAN', 'SECRETARY', 'DIRECTOR', 'REFERANT']
+const MESSAGING_ROLES: UserRole[] = ['VETERINARIAN', 'SECRETARY', 'DIRECTOR', 'REFERENT']
 
 const authStore = useAuthStore()
 const { user, isAuthenticated } = storeToRefs(authStore)

@@ -53,7 +53,7 @@ CREATE TYPE "FoodType" AS ENUM ('KIBBLE', 'WET');
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CONFIRMED', 'READY', 'PICKED_UP', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('CLIENT', 'SECRETARY', 'VETERINARIAN', 'DIRECTOR', 'REFERANT', 'ADMIN');
+CREATE TYPE "UserRole" AS ENUM ('CLIENT', 'SECRETARY', 'VETERINARIAN', 'DIRECTOR', 'REFERENT', 'ADMIN');
 
 -- CreateEnum
 CREATE TYPE "MedicalVisitType" AS ENUM ('HIRING', 'PERIODIC', 'RETURN', 'SPONTANEOUS', 'PRE_RETIREMENT');
@@ -669,7 +669,7 @@ CREATE TABLE "banking_infos" (
     "beneficiary" TEXT,
     "veterinarianId" TEXT,
     "secretaryId" TEXT,
-    "referantId" TEXT,
+    "referentId" TEXT,
 
     CONSTRAINT "banking_infos_pkey" PRIMARY KEY ("id")
 );
@@ -848,7 +848,7 @@ CREATE UNIQUE INDEX "banking_infos_veterinarianId_key" ON "banking_infos"("veter
 CREATE UNIQUE INDEX "banking_infos_secretaryId_key" ON "banking_infos"("secretaryId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "banking_infos_referantId_key" ON "banking_infos"("referantId");
+CREATE UNIQUE INDEX "banking_infos_referentId_key" ON "banking_infos"("referentId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "refresh_tokens_token_key" ON "refresh_tokens"("token");
@@ -1106,7 +1106,7 @@ ALTER TABLE "banking_infos" ADD CONSTRAINT "banking_infos_veterinarianId_fkey" F
 ALTER TABLE "banking_infos" ADD CONSTRAINT "banking_infos_secretaryId_fkey" FOREIGN KEY ("secretaryId") REFERENCES "secretary_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "banking_infos" ADD CONSTRAINT "banking_infos_referantId_fkey" FOREIGN KEY ("referantId") REFERENCES "referent_clinic_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "banking_infos" ADD CONSTRAINT "banking_infos_referentId_fkey" FOREIGN KEY ("referentId") REFERENCES "referent_clinic_profiles"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "secretary_profiles" ADD CONSTRAINT "secretary_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

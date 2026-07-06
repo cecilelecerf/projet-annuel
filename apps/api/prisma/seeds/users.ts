@@ -73,7 +73,7 @@ export async function seedUsers(
         firstname: "Sophie",
         lastname: "Bernard",
         password,
-        role: "REFERANT",
+        role: "REFERENT",
       },
     }),
     prisma.user.create({

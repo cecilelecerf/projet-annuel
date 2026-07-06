@@ -15,7 +15,7 @@ interface StaffMember {
   firstname: string
   lastname: string
   email: string
-  role: 'REFERANT' | 'VETERINARIAN' | 'SECRETARY'
+  role: 'REFERENT' | 'VETERINARIAN' | 'SECRETARY'
   licenseNumber?: string
 }
 
@@ -30,14 +30,14 @@ const staff = ref<StaffList>({ director: null, referents: [], veterinarians: [],
 
 const roleLabel: Record<string, string> = {
   DIRECTOR: 'Directeur',
-  REFERANT: 'Référent',
+  REFERENT: 'Référent',
   VETERINARIAN: 'Vétérinaire',
   SECRETARY: 'Secrétaire',
 }
 
 const roleTag: Record<string, string> = {
   DIRECTOR: 'danger',
-  REFERANT: '',
+  REFERENT: '',
   VETERINARIAN: 'success',
   SECRETARY: 'warning',
 }

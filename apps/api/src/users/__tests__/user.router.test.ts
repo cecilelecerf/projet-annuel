@@ -107,13 +107,13 @@ describe("GET /api/users", () => {
     });
   });
 
-  describe("REFERANT", () => {
+  describe("REFERENT", () => {
     it("200 — retourne les utilisateurs de la clinique", async () => {
       const token = await loginAs("referent@gmail.com");
       const res = await request(app)
         .get("/api/users")
         .set("Authorization", `Bearer ${token}`);
-
+      console.log(res.body);
       expect(res.status).toBe(200);
     });
   });

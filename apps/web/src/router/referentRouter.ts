@@ -1,12 +1,17 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { requireRole } from './utils'
 
-export const referantRouter: RouteRecordRaw[] = [
+export const referentRouter: RouteRecordRaw[] = [
   {
     path: '/referent',
     component: () => import('@/layouts/ReferentLayout.vue'),
-    beforeEnter: requireRole('REFERANT'),
+    beforeEnter: requireRole('REFERENT'),
     children: [
+      {
+        path: '',
+        name: 'REFERENT.Home',
+        component: () => import('@/features/dashboard/views/HomeView.vue'),
+      },
       {
         path: 'profil',
         name: 'REFERENT.Profil',
@@ -15,12 +20,27 @@ export const referantRouter: RouteRecordRaw[] = [
       {
         path: 'staff',
         name: 'REFERENT.Staff',
-        component: () => import('@/features/users/views/referent/Staff.vue'),
+        component: () => import('@/features/staff/views/StaffListView.vue'),
+      },
+      {
+        path: 'staff/nouveau',
+        name: 'REFERENT.Staff.Create',
+        component: () => import('@/features/staff/views/StaffCreateView.vue'),
+      },
+      {
+        path: 'staff/:id',
+        name: 'REFERENT.Staff.Detail',
+        component: () => import('@/features/staff/views/StaffDetailView.vue'),
       },
       {
         path: 'clinic',
         name: 'REFERENT.Clinic',
-        component: () => import('@/features/users/views/referent/Clinic.vue'),
+        component: () => import('@/features/clinic/views/ClinicView.vue'),
+      },
+      {
+        path: 'boutique',
+        name: 'REFERENT.Boutique',
+        component: () => import('@/features/products/views/ShopView.vue'),
       },
 
       // ── Administration & Configuration ────────────────────────

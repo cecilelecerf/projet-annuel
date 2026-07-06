@@ -99,7 +99,7 @@ export class ClinicRepository {
         });
         return dp?.clinicId ? [dp.clinicId as ClinicId] : null;
       }
-      case "REFERANT": {
+      case "REFERENT": {
         const rp = await this.prisma.referentClinicProfile.findUnique({
           where: { id: userId },
         });
@@ -141,7 +141,7 @@ export class ClinicRepository {
         : null,
       referents: referents.map((r) => ({
         ...r.user,
-        role: "REFERANT" as const,
+        role: "REFERENT" as const,
       })),
       veterinarians: vets.map((v) => ({
         ...v.veterinarian.user,

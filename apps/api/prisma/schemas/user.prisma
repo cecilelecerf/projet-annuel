@@ -3,7 +3,7 @@ enum UserRole {
   SECRETARY
   VETERINARIAN
   DIRECTOR
-  REFERANT
+  REFERENT
   ADMIN
 }
 
@@ -120,8 +120,8 @@ model BankingInfo {
   veterinarian   VeterinarianProfile?   @relation(fields: [veterinarianId], references: [id])
   secretaryId    String?                @unique
   secretary      SecretaryProfile?      @relation(fields: [secretaryId], references: [id])
-  referantId     String?                @unique
-  referant       ReferentClinicProfile? @relation(fields: [referantId], references: [id])
+  referentId     String?                @unique
+  referent       ReferentClinicProfile? @relation(fields: [referentId], references: [id])
 
   @@map("banking_infos")
 }

@@ -34,6 +34,14 @@ import { VaccineRepository } from "./vaccines/vaccine.repository";
 // ── Veterinarian-clinics ──────────────────────────────────────
 import { VeterinarianClinicRepository } from "./clinics/veterinarian-clinics/veterinarian-clinic.repository";
 
+// ── Product ──────────────────────────────────────
+import { ProductRepository } from "./products/product.repository";
+import { ProductClinicRepository } from "./products/product-clinic.repository";
+import { BrandRepository } from "./brands/brand.repository";
+
+// ── Clinic ──────────────────────────────────────
+import { SpecialityRepository } from "./specialities/speciality.repository";
+
 // ═══════════════════════════════════════════════════════════════
 // Services
 // ═══════════════════════════════════════════════════════════════
@@ -55,6 +63,9 @@ import { PrescriptionService } from "./prescriptions/prescription.service";
 import { ReferentService } from "./referents/referent.service";
 import { ReviewService } from "./reviews/review.service";
 import { UserService } from "./users/user.service";
+import { ProductService } from "./products/product.service";
+import { BrandService } from "./brands/brand.service";
+import { SpecialityService } from "./specialities/speciality.service";
 import { BookingService } from "./bookings/booking.service";
 
 // ═══════════════════════════════════════════════════════════════
@@ -78,9 +89,9 @@ import { UserController } from "./users/user.controller";
 import { AnimalMedicalHistoryService } from "./medicalHistories/medical-history.service";
 import { AnimalMedicalHistoryController } from "./medicalHistories/medical-history.controller";
 import { RecurringMeetingController } from "./meetings/recurring-meeting/recurring-meeting.controller";
+import { ProductController } from "./products/product.controller";
+import { BrandController } from "./brands/brand.controller";
 import { BookingController } from "./bookings/booking.controller";
-import { SpecialityRepository } from "./specialities/speciality.repository";
-import { SpecialityService } from "./specialities/speciality.service";
 import { SpecialityController } from "./specialities/speciality.controller";
 import { ClinicRepository } from "./clinics/clinic.repository";
 
@@ -104,6 +115,12 @@ const prescriptionRepository = new PrescriptionRepository(prisma);
 const userRepository = new UserRepository(prisma);
 const vaccineRepository = new VaccineRepository(prisma);
 const veterinarianClinicRepository = new VeterinarianClinicRepository(prisma);
+
+const productRepository = new ProductRepository(prisma);
+const productClinicRepository = new ProductClinicRepository(prisma);
+const brandRepository = new BrandRepository(prisma);
+const specialityRepository = new SpecialityRepository(prisma);
+
 const clinicRepository = new ClinicRepository(prisma);
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
@@ -173,12 +190,18 @@ export const bookingService = new BookingService(
   meetingService,
 );
 
+export const productService = new ProductService(
+  productRepository,
+  productClinicRepository,
+);
+export const brandService = new BrandService(brandRepository);
+
+export const specialityService = new SpecialityService(specialityRepository);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 
-const specialityRepository = new SpecialityRepository(prisma);
-const specialityService = new SpecialityService(specialityRepository);
 export const specialityController = new SpecialityController(specialityService);
 export const actController = new ActController(actService);
 export const adminController = new AdminController();
@@ -216,3 +239,6 @@ export const prescriptionController = new PrescriptionController(
 export const referentController = new ReferentController(referentService);
 export const reviewController = new ReviewController(reviewService);
 export const userController = new UserController(userService);
+
+export const productController = new ProductController(productService);
+export const brandController = new BrandController(brandService);

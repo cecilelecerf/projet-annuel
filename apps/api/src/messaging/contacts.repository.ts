@@ -10,7 +10,11 @@ export class ContactsRepository {
           { secretaryProfile: { clinicId } },
           { directorClinicProfile: { clinicId } },
           { referentClinicProfile: { clinicId } },
-          { veterinarianProfile: { veterinarianClinic: { some: { clinicId } } } },
+          {
+            veterinarianProfile: {
+              veterinarianClinics: { some: { clinicId } },
+            },
+          },
         ],
       },
       select: conversationMemberUserSelect,
@@ -34,7 +38,7 @@ export class ContactsRepository {
         directorClinicProfile: { select: { clinicId: true } },
         referentClinicProfile: { select: { clinicId: true } },
         veterinarianProfile: {
-          include: { veterinarianClinic: { select: { clinicId: true } } },
+          include: { veterinarianClinics: { select: { clinicId: true } } },
         },
       },
     });
@@ -43,22 +47,25 @@ export class ContactsRepository {
       let clinicIds: string[] = [];
       switch (user.role) {
         case "SECRETARY":
-          clinicIds = user.secretaryProfile ? [user.secretaryProfile.clinicId] : [];
+          clinicIds = user.secretaryProfile
+            ? [user.secretaryProfile.clinicId]
+            : [];
           break;
         case "DIRECTOR":
           clinicIds = user.directorClinicProfile
             ? [user.directorClinicProfile.clinicId]
             : [];
           break;
-        case "REFERANT":
+        case "REFERENT":
           clinicIds = user.referentClinicProfile
             ? [user.referentClinicProfile.clinicId]
             : [];
           break;
         case "VETERINARIAN":
           clinicIds =
-            user.veterinarianProfile?.veterinarianClinic.map((c) => c.clinicId) ??
-            [];
+            user.veterinarianProfile?.veterinarianClinics.map(
+              (c) => c.clinicId,
+            ) ?? [];
           break;
       }
       return { id: user.id, role: user.role, clinicIds };

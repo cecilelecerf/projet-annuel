@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import Sidebar, { type MenuItem } from './SidebarComponent.vue'
 import { getStringRole } from '@/utils/role.utils'
-import type { Conversation, ConversationId, UserRole } from '@armali/schemas'
+import type { Conversation, ConversationId } from '@armali/schemas'
 import { useNotify } from '@/composables/useNotify'
 import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
 
@@ -17,13 +17,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 const messagingStore = useMessagingStore()
-
-const messagerieRouteMap: Partial<Record<UserRole, string>> = {
-  VETERINARIAN: 'VETERINARIAN.Messagerie',
-  SECRETARY: 'SECRETARY.Messagerie',
-  DIRECTOR: 'DIRECTOR.Messagerie',
-  REFERANT: 'REFERENT.Messagerie',
-}
 
 const unreadConversations = computed(() =>
   messagingStore.sortedConversations.filter((c) => (c.unreadCount ?? 0) > 0).slice(0, 5),
@@ -37,10 +30,8 @@ function conversationTitle(conversation: Conversation) {
 
 function goToConversation(conversationId: ConversationId) {
   const role = user.value?.role
-  const routeName = role ? messagerieRouteMap[role] : undefined
-  if (!routeName) return
   messagingStore.openConversation(conversationId)
-  router.push({ name: routeName })
+  router.push({ name: `${role?.toUpperCase()}.Messagerie` })
 }
 
 const userInitials = computed(() => {

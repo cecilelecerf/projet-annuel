@@ -33,7 +33,11 @@ export const productSchema = z.object({
   description: z.string().max(255).nullable().optional(),
 });
 
-export const createProductSchema = productSchema.omit({ id: true });
+export const createProductSchema = productSchema
+  .omit({ id: true, qrCode: true })
+  .extend({
+    qrCode: z.string().min(1).max(255).optional(),
+  });
 export const updateProductSchema = createProductSchema.partial();
 
 export type Product = z.infer<typeof productSchema>;
@@ -96,4 +100,23 @@ export type FoodRecommendation = z.infer<typeof foodRecommendationSchema>;
 export type FoodHealthCondition = z.infer<typeof foodHealthConditionSchema>;
 export type CreateFoodHealthCondition = z.infer<
   typeof createFoodHealthConditionSchema
+>;
+
+export const restockProductClinicSchema = z.object({
+  quantity: z.number().int().positive(),
+});
+
+export type RestockProductClinic = z.infer<typeof restockProductClinicSchema>;
+
+export const productWithBrandSchema = productSchema.extend({
+  brand: brandSchema,
+});
+ 
+export const productClinicWithProductSchema = productClinicSchema.extend({
+  product: productWithBrandSchema,
+});
+ 
+export type ProductWithBrand = z.infer<typeof productWithBrandSchema>;
+export type ProductClinicWithProduct = z.infer<
+  typeof productClinicWithProductSchema
 >;

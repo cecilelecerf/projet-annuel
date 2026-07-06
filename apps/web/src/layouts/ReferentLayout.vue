@@ -1,31 +1,43 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, UserFilled, OfficeBuilding, User, ChatDotRound } from '@element-plus/icons-vue'
+import {
+  House,
+  UserFilled,
+  OfficeBuilding,
+  User,
+  ChatDotRound,
+  ShoppingCart,
+} from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'REFERANT.Home',
+    index: 'REFERENT.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'REFERANT.Staff',
+    index: 'REFERENT.Staff',
     label: 'Personnel',
     icon: UserFilled,
   },
   {
-    index: 'REFERANT.Clinic',
+    index: 'REFERENT.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
   },
   {
-    index: 'REFERANT.Messagerie',
+    index: 'REFERENT.Boutique',
+    label: 'Boutique',
+    icon: ShoppingCart,
+  },
+  {
+    index: 'REFERENT.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'REFERANT.Profil',
+    index: 'REFERENT.Profil',
     label: 'Profil',
     icon: User,
   },

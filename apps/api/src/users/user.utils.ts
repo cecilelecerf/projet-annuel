@@ -23,7 +23,7 @@ export const flatClinicId = (user: UserWithProfileAndClinicId) => {
         ? [directorClinicProfile?.clinicId]
         : null;
       break;
-    case "REFERANT":
+    case "REFERENT":
       clinicIds = referentClinicProfile?.clinicId
         ? [referentClinicProfile?.clinicId]
         : null;

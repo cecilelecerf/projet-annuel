@@ -19,29 +19,6 @@ export class ClinicService {
     return clinics;
   }
 
-  async getClientsByClinic({
-    clinicId,
-    authorId,
-    role,
-  }: {
-    clinicId: ClinicId;
-    authorId: UserId;
-    role: UserRole;
-  }) {
-    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
-    const clinics = await this.getClinicByUser(authorId);
-    if (!clinics.some(({ id }) => id === clinicId)) {
-      throw new ForbiddenError();
-    }
-    const clinicWithClients = await this.repository.findClientsById(clinicId);
-    if (!clinicWithClients) throw new NotFoundError("Clients");
-    const clients = clinicWithClients.veterinarianClinics.flatMap(
-      ({ veterinarian }) =>
-        veterinarian.animals.flatMap((animal) => animal.client.user),
-    );
-    return clients;
-  }
-
   // ── Staff d'une clinique, filtré par rôle cible ─────────────────────────────
   async getStaffByClinicRole({
     role,
@@ -69,7 +46,7 @@ export class ClinicService {
 
     const staffs = [
       ...(wantsRole("DIRECTOR") ? [clinicStaff.director] : []),
-      ...(wantsRole("REFERANT") ? clinicStaff.referents : []),
+      ...(wantsRole("REFERENT") ? clinicStaff.referents : []),
       ...(wantsRole("SECRETARY") ? clinicStaff.secretaries : []),
       ...(wantsRole("VETERINARIAN") ? clinicStaff.veterinarians : []),
     ];

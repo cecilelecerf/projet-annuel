@@ -9,7 +9,7 @@ const allowedRoles = [
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",
-  "REFERANT",
+  "REFERENT",
   "ADMIN",
 ] as const;
 

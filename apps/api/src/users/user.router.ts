@@ -15,7 +15,7 @@ const controller = userController;
 userRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(["ADMIN", "DIRECTOR", "REFERANT"]),
+  roleMiddleware(["ADMIN", "DIRECTOR", "REFERENT"]),
   controller.getUsers.bind(controller) as RequestHandler,
 );
 

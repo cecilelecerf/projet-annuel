@@ -71,7 +71,13 @@ defineExpose({ open })
   <el-dialog v-model="visible" title="Nouvelle discussion" width="480px">
     <el-tabs v-model="activeTab">
       <el-tab-pane label="Discussion privée" name="direct">
-        <p v-if="(messagingStore.contacts?.clinic.length ?? 0) === 0 && (messagingStore.contacts?.directors?.length ?? 0) === 0" class="empty">
+        <p
+          v-if="
+            (messagingStore.contacts?.clinic.length ?? 0) === 0 &&
+            (messagingStore.contacts?.directors?.length ?? 0) === 0
+          "
+          class="empty"
+        >
           Aucun contact disponible.
         </p>
         <div v-else class="contact-section">
@@ -138,15 +144,15 @@ defineExpose({ open })
   </el-dialog>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .empty {
   color: var(--el-text-color-secondary);
   text-align: center;
-  padding: 16px 0;
+  padding: var(--spacing-md) 0;
 }
 .contact-section h4 {
-  margin: 12px 0 4px;
-  font-size: 13px;
+  margin: var(--spacing-md) 0 var(--spacing-xs);
+  font-size: var(--fs-base);
   color: var(--el-text-color-secondary);
 }
 .contact-row {
@@ -154,25 +160,25 @@ defineExpose({ open })
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 8px;
+  padding: var(--spacing-sm);
   border: none;
   background: transparent;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   text-align: left;
 }
 .contact-row:hover {
   background: var(--el-fill-color-light);
 }
 .scope-picker {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 .member-checkbox {
   display: block;
-  margin: 4px 0;
+  margin: var(--spacing-xs) 0;
 }
 .group-footer {
-  margin-top: 16px;
+  margin-top: var(--spacing-md);
   text-align: right;
 }
 </style>

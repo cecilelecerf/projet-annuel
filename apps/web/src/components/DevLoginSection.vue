@@ -57,14 +57,14 @@ const roles: Role[] = [
     email: 'referent@gmail.com',
     path: 'REFERENT',
   },
-  // {
-  //   key: 'superadmin',
-  //   label: 'Super Admin',
-  //   emoji: '🔐',
-  //   description: 'Accès complet à toute la plateforme',
-  //   email: 'admin@gmail.com',
-
-  // },
+  {
+    key: 'superadmin',
+    label: 'Super Admin',
+    emoji: '🔐',
+    description: 'Accès complet à toute la plateforme',
+    email: 'admin@gmail.com',
+    path: 'ADMIN',
+  },
 ]
 const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)

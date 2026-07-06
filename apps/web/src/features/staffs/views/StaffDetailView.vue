@@ -2,16 +2,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
-import { staffApi } from '@/features/staff/api/staff.api'
+import { staffApi } from '@/features/staffs/staff.api'
 import type { StaffMemberDetail } from '@armali/schemas'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
 const router = useRouter()
 const notify = useNotify()
+const { user } = useAuthStore()
 
 const member = ref<StaffMemberDetail | null>(null)
 const loading = ref(false)
-
 const roleLabel: Record<string, string> = {
   DIRECTOR: 'Directeur',
   REFERENT: 'Référent',
@@ -43,14 +44,18 @@ function formatDate(value?: string | null) {
 
 function formatLongDate(value?: string | null) {
   if (!value) return '—'
-  return new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(value).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 </script>
 
 <template>
   <div class="detail-page" v-loading="loading">
     <div class="page-header">
-      <el-button text @click="router.push({ name: 'REFERENT.Staff' })">
+      <el-button text @click="router.push({ name: `${user?.role?.toUpperCase()}.Staff` })">
         ← Retour au personnel
       </el-button>
     </div>
@@ -104,13 +109,15 @@ function formatLongDate(value?: string | null) {
                 </div>
                 <div class="info-item info-item--wide">
                   <span class="label">Biographie</span>
-                  <span class="value">{{ member.veterinarianProfile.bio || 'Aucune biographie' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.bio || 'Aucune biographie'
+                  }}</span>
                 </div>
               </div>
-              <template v-if="member.veterinarianProfile.speciality?.length">
+              <template v-if="member.veterinarianProfile.specialities?.length">
                 <div class="sub-label">Spécialités</div>
                 <div class="tags-row">
-                  <el-tag v-for="spec in member.veterinarianProfile.speciality" :key="spec.id">
+                  <el-tag v-for="spec in member.veterinarianProfile.specialities" :key="spec.id">
                     {{ spec.name }}
                   </el-tag>
                 </div>
@@ -122,48 +129,79 @@ function formatLongDate(value?: string | null) {
               <div class="info-grid info-grid--3">
                 <div class="info-item">
                   <span class="label">Ville de naissance</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.birthCity || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.birthCity || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Département de naissance</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.birthDepartment || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.birthDepartment || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Pays de naissance</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.birthCountry || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.birthCountry || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Nationalité</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.nationality || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.nationality || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Numéro INSEE</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.inseNumber || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.inseNumber || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Téléphone professionnel</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.proPhone || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.proPhone || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Diplôme</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.diploma || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.diploma || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Date d'obtention</span>
-                  <span class="value">{{ formatDate(member.veterinarianProfile.veterinarianIdentity.diplomaObtainedAt) }}</span>
+                  <span class="value">{{
+                    formatDate(member.veterinarianProfile.veterinarianIdentity.diplomaObtainedAt)
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Numéro RPPS</span>
-                  <span class="value">{{ member.veterinarianProfile.veterinarianIdentity.rppsNumber || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.veterinarianIdentity.rppsNumber || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Date d'inscription à l'Ordre</span>
-                  <span class="value">{{ formatDate(member.veterinarianProfile.veterinarianIdentity.orderRegisteredAt) }}</span>
+                  <span class="value">{{
+                    formatDate(member.veterinarianProfile.veterinarianIdentity.orderRegisteredAt)
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Autorisation d'exercice</span>
-                  <el-tag :type="member.veterinarianProfile.veterinarianIdentity.practiceAuthorization ? 'success' : 'info'" size="small">
-                    {{ member.veterinarianProfile.veterinarianIdentity.practiceAuthorization ? 'Oui' : 'Non renseigné' }}
+                  <el-tag
+                    :type="
+                      member.veterinarianProfile.veterinarianIdentity.practiceAuthorization
+                        ? 'success'
+                        : 'info'
+                    "
+                    size="small"
+                  >
+                    {{
+                      member.veterinarianProfile.veterinarianIdentity.practiceAuthorization
+                        ? 'Oui'
+                        : 'Non renseigné'
+                    }}
                   </el-tag>
                 </div>
               </div>
@@ -174,7 +212,9 @@ function formatLongDate(value?: string | null) {
               <div class="info-grid info-grid--2">
                 <div class="info-item">
                   <span class="label">IBAN</span>
-                  <span class="value">{{ member.veterinarianProfile.bankingInfo.iban || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.bankingInfo.iban || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">BIC</span>
@@ -182,11 +222,15 @@ function formatLongDate(value?: string | null) {
                 </div>
                 <div class="info-item">
                   <span class="label">Domiciliation</span>
-                  <span class="value">{{ member.veterinarianProfile.bankingInfo.domiciliation || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.bankingInfo.domiciliation || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Bénéficiaire</span>
-                  <span class="value">{{ member.veterinarianProfile.bankingInfo.beneficiary || '—' }}</span>
+                  <span class="value">{{
+                    member.veterinarianProfile.bankingInfo.beneficiary || '—'
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -207,11 +251,15 @@ function formatLongDate(value?: string | null) {
                 </div>
                 <div class="info-item">
                   <span class="label">Domiciliation</span>
-                  <span class="value">{{ member.secretaryProfile.bankingInfo.domiciliation || '—' }}</span>
+                  <span class="value">{{
+                    member.secretaryProfile.bankingInfo.domiciliation || '—'
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <span class="label">Bénéficiaire</span>
-                  <span class="value">{{ member.secretaryProfile.bankingInfo.beneficiary || '—' }}</span>
+                  <span class="value">{{
+                    member.secretaryProfile.bankingInfo.beneficiary || '—'
+                  }}</span>
                 </div>
               </div>
             </div>
@@ -226,60 +274,52 @@ function formatLongDate(value?: string | null) {
   </div>
 </template>
 
-<style scoped>
-.detail-page {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
+<style scoped lang="scss">
 .page-header {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
 }
 .profile-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 20px 24px;
-  margin-bottom: 20px;
+  gap: var(--spacing-md);
+  background: var(--el-bg-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-lg) var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 .avatar {
   width: 52px;
   height: 52px;
-  border-radius: 50%;
-  background: #e0e7ff;
-  color: #4f46e5;
+  border-radius: var(--radius-full);
+  background: var(--el-color-yellow-light-5);
+  color: var(--el-color-yellow);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
   flex-shrink: 0;
 }
 .profile-header h1 {
-  font-size: 19px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 2px;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--el-text-color-primary);
+  margin: 0 0 var(--spacing-2xs);
 }
 .profile-header p {
-  color: #6b7280;
+  color: var(--el-text-color-secondary);
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .profile-header .el-tag {
   margin-left: auto;
 }
 
-
 .layout {
   display: grid;
   grid-template-columns: 340px 1fr;
-  gap: 20px;
-
+  gap: var(--spacing-lg);
 }
 
 .layout--single {
@@ -290,7 +330,7 @@ function formatLongDate(value?: string | null) {
 .col-right {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--spacing-lg);
   min-height: 0;
 }
 
@@ -299,21 +339,21 @@ function formatLongDate(value?: string | null) {
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 22px 24px;
+  background: var(--el-bg-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 22px var(--spacing-lg);
 }
 .card h2 {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
   margin: 0 0 14px;
 }
 
 .info-grid {
   display: grid;
-  gap: 14px 16px;
+  gap: var(--spacing-md);
 }
 .info-grid--2 {
   grid-template-columns: repeat(2, 1fr);
@@ -324,42 +364,40 @@ function formatLongDate(value?: string | null) {
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--spacing-xs);
 }
 .info-item--wide {
   grid-column: span 2;
 }
 .label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-placeholder);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 .value {
-  font-size: 14px;
-  color: #1a1a1a;
+  font-size: var(--fs-md);
+  color: var(--el-text-color-primary);
 }
 .sub-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #9ca3af;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-placeholder);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin: 14px 0 8px;
+  margin: var(--spacing-md) 0 var(--spacing-sm);
 }
 .tags-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--spacing-sm);
 }
 .no-data {
-  color: #9ca3af;
-  font-size: 14px;
+  color: var(--el-text-color-placeholder);
+  font-size: var(--fs-md);
   margin: 0;
 }
 
-@media (max-width: 900px) {
+@include below('lg') {
   .layout {
     grid-template-columns: 1fr;
   }
@@ -368,7 +406,7 @@ function formatLongDate(value?: string | null) {
   }
 }
 
-@media (max-width: 480px) {
+@include below('xs') {
   .info-grid--2,
   .info-grid--3 {
     grid-template-columns: 1fr;

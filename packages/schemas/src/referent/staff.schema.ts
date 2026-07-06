@@ -34,7 +34,7 @@ export const staffListSchema = z.object({
 export const veterinarianStaffProfileSchema = z.object({
   licenseNumber: z.string(),
   bio: z.string().nullable().optional(),
-  speciality: z.array(specialitySchema),
+  specialities: z.array(specialitySchema),
   veterinarianIdentity: veterinarianIdentityInputSchema.nullable().optional(),
   bankingInfo: bankingInfoInputSchema.nullable().optional(),
 });

@@ -68,18 +68,18 @@ defineProps<{ prescription: Prescription }>()
 }
 
 .prescription-dates {
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--el-text-color-secondary);
 }
 
 .prescription-items {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs);
 }
 
 .prescription-item {
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--el-text-color-primary);
 }
 </style>

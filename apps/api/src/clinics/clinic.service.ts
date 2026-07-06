@@ -19,41 +19,6 @@ export class ClinicService {
     return clinics;
   }
 
-  // ── Staff d'une clinique, filtré par rôle cible ─────────────────────────────
-  async getStaffByClinicRole({
-    role,
-    clinicId,
-    targetRoles,
-    authorId,
-  }: {
-    clinicId: ClinicId;
-    authorId: UserId;
-    role: UserRole;
-    targetRoles?: UserRole[];
-  }) {
-    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
-
-    const clinics = await this.getClinicByUser(authorId);
-    if (!clinics.some(({ id }) => id === clinicId)) {
-      throw new ForbiddenError();
-    }
-    const clinicStaff = await this.repository.findStaff(clinicId);
-    if (!clinicStaff) throw new NotFoundError("Clinique");
-    if (!clinicStaff.director) throw new NotFoundError("Director clinique");
-
-    // Aucun filtre → tous les rôles inclus
-    const wantsRole = (r: UserRole) => !targetRoles || targetRoles.includes(r);
-
-    const staffs = [
-      ...(wantsRole("DIRECTOR") ? [clinicStaff.director] : []),
-      ...(wantsRole("REFERENT") ? clinicStaff.referents : []),
-      ...(wantsRole("SECRETARY") ? clinicStaff.secretaries : []),
-      ...(wantsRole("VETERINARIAN") ? clinicStaff.veterinarians : []),
-    ];
-
-    return staffs;
-  }
-
   async getClientsByClinic({
     role,
     clinicId,

@@ -15,30 +15,30 @@ export const referentRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'REFERENT.Profil',
-        component: () => import('@/features/users/views/referent/ProfilView.vue'),
+        component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
         path: 'staff',
         name: 'REFERENT.Staff',
-        component: () => import('@/features/staff/views/StaffListView.vue'),
+        component: () => import('@/features/staffs/views/StaffListView.vue'),
       },
       {
-        path: 'staff/nouveau',
+        path: 'staff/new',
         name: 'REFERENT.Staff.Create',
-        component: () => import('@/features/staff/views/StaffCreateView.vue'),
+        component: () => import('@/features/staffs/views/StaffCreateView.vue'),
       },
       {
         path: 'staff/:id',
         name: 'REFERENT.Staff.Detail',
-        component: () => import('@/features/staff/views/StaffDetailView.vue'),
+        component: () => import('@/features/staffs/views/StaffDetailView.vue'),
       },
       {
         path: 'clinic',
         name: 'REFERENT.Clinic',
-        component: () => import('@/features/clinic/views/ClinicView.vue'),
+        component: () => import('@/features/clinics/views/ClinicView.vue'),
       },
       {
-        path: 'boutique',
+        path: 'shop',
         name: 'REFERENT.Boutique',
         component: () => import('@/features/products/views/ShopView.vue'),
       },

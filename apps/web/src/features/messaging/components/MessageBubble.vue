@@ -32,10 +32,10 @@ const time = computed(() =>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .message-row {
   display: flex;
-  padding: 2px 16px;
+  padding: var(--spacing-2xs) var(--spacing-md);
 }
 .message-row--own {
   justify-content: flex-end;
@@ -43,18 +43,18 @@ const time = computed(() =>
 .message-bubble {
   max-width: 60%;
   background: var(--el-fill-color-light);
-  border-radius: 12px;
-  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
 }
 .message-bubble--own {
   background: var(--el-color-primary-light-8);
 }
 .message-bubble__sender {
   display: block;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   color: var(--el-color-primary);
-  margin-bottom: 2px;
+  margin-bottom: var(--spacing-2xs);
 }
 .message-bubble__content {
   margin: 0;
@@ -62,11 +62,11 @@ const time = computed(() =>
   word-break: break-word;
 }
 .message-bubble__meta {
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: var(--spacing-xs);
+  font-size: var(--fs-xs);
   color: var(--el-text-color-placeholder);
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-xs);
   justify-content: flex-end;
 }
 </style>

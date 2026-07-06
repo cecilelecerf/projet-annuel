@@ -2,8 +2,8 @@
 import { reactive, ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
-import { specialitiesApi } from '@/features/clinic/api/specialities.api'
 import type { Speciality } from '@armali/schemas'
+import { specialityApi } from '@/features/specialities/speciality.api'
 
 const notify = useNotify()
 
@@ -59,14 +59,12 @@ const specialitySaving = ref(false)
 
 async function loadClinicSpecialities() {
   try {
-    const current = await specialitiesApi.getClinicSpecialities()
+    const current = await specialityApi.getSpecialitiesByClinic()
     selectedSpecialityIds.value = current.map((s) => s.id)
     // Préremplit les options avec les spécialités déjà sélectionnées pour un affichage immédiat
     specialityOptions.value = current
   } catch (err: unknown) {
-    notify.error(
-      err instanceof Error ? err.message : 'Impossible de charger les spécialités',
-    )
+    notify.error(err instanceof Error ? err.message : 'Impossible de charger les spécialités')
   }
 }
 
@@ -74,16 +72,15 @@ async function searchSpecialities(query: string) {
   if (!query) return
   specialitySearchLoading.value = true
   try {
-    const results = await specialitiesApi.search(query)
+    const results = await specialityApi.search(query)
     // Fusionne avec les options déjà sélectionnées pour ne pas les perdre du select
     const selectedNotInResults = specialityOptions.value.filter(
-      (opt) => selectedSpecialityIds.value.includes(opt.id) && !results.some((r) => r.id === opt.id),
+      (opt) =>
+        selectedSpecialityIds.value.includes(opt.id) && !results.some((r) => r.id === opt.id),
     )
     specialityOptions.value = [...results, ...selectedNotInResults]
   } catch (err: unknown) {
-    notify.error(
-      err instanceof Error ? err.message : 'Erreur lors de la recherche de spécialité',
-    )
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la recherche de spécialité')
   } finally {
     specialitySearchLoading.value = false
   }
@@ -92,7 +89,7 @@ async function searchSpecialities(query: string) {
 async function saveSpecialities() {
   specialitySaving.value = true
   try {
-    const updated = await specialitiesApi.updateClinicSpecialities(selectedSpecialityIds.value)
+    const updated = await specialityApi.updateClinicSpecialities(selectedSpecialityIds.value)
     specialityOptions.value = updated
     notify.success('Spécialités mises à jour')
   } catch (err: unknown) {
@@ -120,7 +117,7 @@ async function submitNewSpeciality() {
   }
   newSpecialityLoading.value = true
   try {
-    const speciality = await specialitiesApi.create(
+    const speciality = await specialityApi.create(
       newSpecialityForm.name,
       newSpecialityForm.description,
     )
@@ -129,9 +126,7 @@ async function submitNewSpeciality() {
     notify.success(`Spécialité "${speciality.name}" créée`)
     newSpecialityDialog.value = false
   } catch (err: unknown) {
-    notify.error(
-      err instanceof Error ? err.message : 'Erreur lors de la création de la spécialité',
-    )
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la création de la spécialité')
   } finally {
     newSpecialityLoading.value = false
   }

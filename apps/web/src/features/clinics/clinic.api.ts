@@ -1,5 +1,13 @@
 import { http } from '@/lib/api'
-import { clinicSchema, staffSchema, type ClinicId, type UserRole } from '@armali/schemas'
+import {
+  clinicSchema,
+  specialitySchema,
+  staffSchema,
+  type ClinicId,
+  type CreateSpeciality,
+  type Speciality,
+  type UserRole,
+} from '@armali/schemas'
 
 export const clinicApi = {
   getMine: async () => {
@@ -11,7 +19,7 @@ export const clinicApi = {
     if (roles) roles.forEach((role) => params.append('roles', role))
 
     return await http
-      .get(`/clinics/${clinicId}/staff?${params}`)
+      .get(`/clinics/${clinicId}/staffs?${params}`)
       .then((data) => staffSchema.array().parse(data))
   },
   getClients: async ({ clinicId }: { clinicId: ClinicId }) => {

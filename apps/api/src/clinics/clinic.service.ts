@@ -7,7 +7,7 @@ import {
 import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import { ClinicRepository } from "./clinic.repository";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { STAFF_ROLES } from "@api/utils";
+import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
 import { Clinic } from "../../prisma/generated/prisma/client";
 
 export class ClinicService {
@@ -28,15 +28,15 @@ export class ClinicService {
     authorId: UserId;
     role: UserRole;
   }) {
-    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
+    if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
 
     const clinics = await this.getClinicByUser(authorId);
+    console.log(clinics);
+    console.log(clinicId);
     if (!clinics.some(({ id }) => id === clinicId)) {
       throw new ForbiddenError();
     }
-    const clients = await this.repository.findClientsById(clinicId);
-
-    return clients;
+    return await this.repository.findClientsById(clinicId);
   }
   async getClinicIdsByUserId({
     userId,

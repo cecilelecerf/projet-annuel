@@ -53,3 +53,11 @@ export const updateAccountSchema = baseUserSchema
     path: ["currentPassword"],
   });
 export type UpdateAccount = z.infer<typeof updateAccountSchema>;
+
+export const bankingInfoInputSchema = z.object({
+  iban: z.string().optional(),
+  bic: z.string().optional(),
+  domiciliation: z.string().optional(),
+  beneficiary: z.string().optional(),
+});
+export type BankingInfoInput = z.infer<typeof bankingInfoInputSchema>;

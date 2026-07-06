@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { veterinarianIdSchema, clinicIdSchema, specialityIdSchema } from "../ids";
-import { baseUserSchema, registerSchema } from "./base-user.schema";
+import { veterinarianIdSchema, clinicIdSchema } from "../ids";
+import { baseUserSchema } from "./base-user.schema";
 import { specialitySchema, veterinarianClinicSchema } from "../clinic.schema";
 
 export const veterinarianProfileSchema = z.object({
@@ -17,13 +17,6 @@ export const veterinarianSchema = baseUserSchema.extend({
   clinicId: clinicIdSchema.nullable().optional(),
 });
 
-export const bankingInfoInputSchema = z.object({
-  iban: z.string().optional(),
-  bic: z.string().optional(),
-  domiciliation: z.string().optional(),
-  beneficiary: z.string().optional(),
-});
- 
 export const veterinarianIdentityInputSchema = z.object({
   birthCity: z.string().optional(),
   birthDepartment: z.string().optional(),
@@ -44,20 +37,9 @@ export const createVeterinarianSchema = veterinarianProfileSchema.omit({
   veterinarianClinics: true,
 });
 export const updateVeterinarianSchema = createVeterinarianSchema.partial();
-export const createVeterinarianStaffSchema = registerSchema.extend({
-  licenseNumber: z.string().min(1, "Numéro de licence requis"),
-  bio: z.string().max(500).optional(),
-  specialityIds: z.array(specialityIdSchema).optional(),
-  identity: veterinarianIdentityInputSchema.optional(),
-  bankingInfo: bankingInfoInputSchema.optional(),
-});
 
-export type BankingInfoInput = z.infer<typeof bankingInfoInputSchema>;
 export type VeterinarianIdentityInput = z.infer<
   typeof veterinarianIdentityInputSchema
->;
-export type CreateVeterinarianStaff = z.infer<
-  typeof createVeterinarianStaffSchema
 >;
 
 export type VeterinarianProfile = z.infer<typeof veterinarianProfileSchema>;

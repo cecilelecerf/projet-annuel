@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Staff } from '@armali/schemas'
 import { clinicApi } from '@/features/clinics/clinic.api'
 import { useAuthStore } from '@/stores/authStore'
 import StaffList from '../components/StaffList.vue'
+import type { StaffMember } from '@armali/schemas'
 
 const router = useRouter()
 
-const staffs = ref<Staff[]>()
+const staffs = ref<StaffMember[]>()
 const { user } = useAuthStore()
 const loading = ref(false)
 

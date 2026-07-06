@@ -1,11 +1,10 @@
 import { http } from '@/lib/api'
 import {
+  baseUserSchema,
+  clientProfileSchema,
   clinicSchema,
-  specialitySchema,
-  staffSchema,
+  staffMemberSchema,
   type ClinicId,
-  type CreateSpeciality,
-  type Speciality,
   type UserRole,
 } from '@armali/schemas'
 
@@ -20,11 +19,11 @@ export const clinicApi = {
 
     return await http
       .get(`/clinics/${clinicId}/staffs?${params}`)
-      .then((data) => staffSchema.array().parse(data))
+      .then((data) => staffMemberSchema.array().parse(data))
   },
   getClients: async ({ clinicId }: { clinicId: ClinicId }) => {
     return await http
       .get(`/clinics/${clinicId}/clients`)
-      .then((data) => staffSchema.array().parse(data))
+      .then((data) => clientProfileSchema.extend({ user: baseUserSchema }).array().parse(data))
   },
 }

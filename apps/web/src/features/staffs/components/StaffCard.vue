@@ -1,29 +1,25 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/authStore'
-import type { Staff, UserRole } from '@armali/schemas'
+import type { StaffMember, StaffRole } from '@armali/schemas'
 import { useRouter } from 'vue-router'
 
 const { withPress } = defineProps<{
-  staff: Staff
+  staff: StaffMember
   withPress?: boolean
 }>()
 const router = useRouter()
 const { user } = useAuthStore()
-const roleLabel: Record<UserRole, string> = {
+const roleLabel: Record<StaffRole, string> = {
   DIRECTOR: 'Directeur',
   REFERENT: 'Référent',
   VETERINARIAN: 'Vétérinaire',
   SECRETARY: 'Secrétaire',
-  CLIENT: 'error',
-  ADMIN: 'error',
 }
-const roleTag: Record<UserRole, string> = {
+const roleTag: Record<StaffRole, string> = {
   DIRECTOR: 'danger',
   REFERENT: 'info',
   VETERINARIAN: 'success',
   SECRETARY: 'warning',
-  CLIENT: 'danger',
-  ADMIN: 'danger',
 }
 
 const goToDetail = (id: string) => {

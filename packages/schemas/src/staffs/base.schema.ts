@@ -1,10 +1,11 @@
 import { z } from "zod";
 import { userIdSchema } from "../ids";
+import { veterinarianIdentityInputSchema } from "../users/veterinarian.schema";
+import { specialitySchema } from "../clinic.schema";
 import {
   bankingInfoInputSchema,
-  veterinarianIdentityInputSchema,
-} from "../users/veterinarian.schema";
-import { specialitySchema } from "../clinic.schema";
+  baseUserSchema,
+} from "../users/base-user.schema";
 
 const staffRoleSchema = z.enum([
   "VETERINARIAN",
@@ -13,21 +14,14 @@ const staffRoleSchema = z.enum([
   "REFERENT",
 ]);
 
-export const staffMemberSchema = z.object({
-  id: userIdSchema,
-  firstname: z.string(),
-  lastname: z.string(),
-  email: z.email(),
-  role: staffRoleSchema,
-  licenseNumber: z.string().optional(),
-});
-
-export const staffListSchema = z.object({
-  director: staffMemberSchema.nullable(),
-  referents: z.array(staffMemberSchema),
-  veterinarians: z.array(staffMemberSchema),
-  secretaries: z.array(staffMemberSchema),
-});
+export const staffMemberSchema = baseUserSchema
+  .pick({
+    id: true,
+    lastname: true,
+    firstname: true,
+    email: true,
+  })
+  .extend({ role: staffRoleSchema });
 
 // ── Fiche détail (GET /referent/staff/:id) ─────────────────────────────────
 
@@ -49,14 +43,13 @@ export const staffMemberDetailSchema = z.object({
   lastname: z.string(),
   email: z.email(),
   role: staffRoleSchema,
-  createdAt: z.string(),
+  createdAt: z.coerce.date(),
   veterinarianProfile: veterinarianStaffProfileSchema.nullable().optional(),
   secretaryProfile: secretaryStaffProfileSchema.nullable().optional(),
 });
 
 export type StaffRole = z.infer<typeof staffRoleSchema>;
 export type StaffMember = z.infer<typeof staffMemberSchema>;
-export type StaffList = z.infer<typeof staffListSchema>;
 export type VeterinarianStaffProfile = z.infer<
   typeof veterinarianStaffProfileSchema
 >;

@@ -108,7 +108,7 @@ export class StaffRepository {
             }),
             ...(data.specialityIds &&
               data.specialityIds.length > 0 && {
-                speciality: {
+                specialities: {
                   connect: data.specialityIds.map((id) => ({ id })),
                 },
               }),
@@ -120,7 +120,7 @@ export class StaffRepository {
           include: {
             veterinarianIdentity: true,
             bankingInfo: true,
-            speciality: true,
+            specialities: true,
           },
         },
       },

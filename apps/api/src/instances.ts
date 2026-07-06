@@ -147,8 +147,13 @@ const staffRepository = new StaffRepository(prisma);
 
 const emailService = new EmailService();
 const clinicService = new ClinicService(clinicRepository);
+const staffService = new StaffService(staffRepository, clinicService);
 
-const userService = new UserService(userRepository, clinicService);
+const userService = new UserService(
+  userRepository,
+  clinicService,
+  staffService,
+);
 
 const authService = new AuthService();
 
@@ -175,7 +180,6 @@ const adminService = new AdminService();
 const directorService = new DirectorService();
 const referentService = new ReferentService();
 const reviewService = new ReviewService(reviewRepository);
-const staffService = new StaffService(staffRepository, clinicService);
 
 const recurringService = new RecurringService(
   recurringRepository,

@@ -18,7 +18,7 @@ model Clinic {
   clinicProducts         ClinicProduct[]
   veterinarianClinics    VeterinarianClinic[]
   secretaryProfile       SecretaryProfile[]
-  directorClinicProfiles DirectorClinicProfile[]
+  directorClinicProfile  DirectorClinicProfile?
   referentClinicProfiles ReferentClinicProfile[]
   internalMeetings       InternalMeeting[]
   clinicActs             ClinicAct[]

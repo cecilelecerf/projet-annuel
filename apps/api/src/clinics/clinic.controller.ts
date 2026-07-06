@@ -1,10 +1,12 @@
 import type { Response, NextFunction } from "express";
 import { ClinicService } from "./clinic.service";
 import {
+  baseUserSchema,
+  clientProfileSchema,
+  clientSchema,
   ClinicId,
   clinicSchema,
-  staffSchema,
-  userRoleSchema,
+  staffMemberSchema,
 } from "@armali/schemas";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import z from "zod";
@@ -17,12 +19,19 @@ export class ClinicController {
     next: NextFunction,
   ) {
     try {
-      const staff = await this.service.getClientsByClinic({
+      const clients = await this.service.getClientsByClinic({
         authorId: req.user.id,
         clinicId: req.params.id,
         role: req.user.role,
       });
-      res.status(200).json(staffSchema.array().parse(staff));
+      res
+        .status(200)
+        .json(
+          clientProfileSchema
+            .extend({ user: baseUserSchema })
+            .array()
+            .parse(clients),
+        );
     } catch (err) {
       next(err);
     }

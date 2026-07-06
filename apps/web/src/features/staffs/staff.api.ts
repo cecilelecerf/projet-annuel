@@ -1,17 +1,17 @@
 import { http } from '@/lib/api'
 import {
-  staffListSchema,
   staffMemberDetailSchema,
-  type StaffList,
   type StaffMemberDetail,
   type CreateVeterinarianStaff,
   type CreateSecretaryStaff,
+  type StaffMember,
+  staffMemberSchema,
 } from '@armali/schemas'
 
 export const staffApi = {
-  getAll: async (): Promise<StaffList> => {
+  getAll: async (): Promise<StaffMember[]> => {
     const data = await http.get('/staffs')
-    return staffListSchema.parse(data)
+    return staffMemberSchema.array().parse(data)
   },
 
   getById: async (id: string): Promise<StaffMemberDetail> => {

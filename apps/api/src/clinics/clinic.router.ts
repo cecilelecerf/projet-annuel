@@ -9,7 +9,7 @@ import {
   medicalHistoryController,
   staffController,
 } from "@api/instances";
-import { STAFF_ROLES } from "@api/utils";
+import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
 
 const clinicRouter: RouterType = Router();
 
@@ -24,13 +24,13 @@ clinicRouter.get(
 clinicRouter.get(
   "/:id/staffs",
   authMiddleware,
-  roleMiddleware(STAFF_ROLES),
+  roleMiddleware(CLINIC_STAFF_ROLES),
   staffController.getStaffByClinic.bind(staffController) as RequestHandler,
 );
 clinicRouter.get(
   "/:id/clients",
   authMiddleware,
-  roleMiddleware(STAFF_ROLES),
+  roleMiddleware(CLINIC_STAFF_ROLES),
   controller.getClientsByClinic.bind(controller) as RequestHandler,
 );
 

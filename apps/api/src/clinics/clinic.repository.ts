@@ -28,22 +28,19 @@ export class ClinicRepository {
   }
 
   async findClientsById(clinicId: string) {
-    return this.prisma.clinic.findUnique({
-      where: { id: clinicId },
-      include: {
-        veterinarianClinics: {
-          include: {
-            veterinarian: {
-              include: {
-                animals: { include: { client: { include: { user: true } } } },
-              },
+    return this.prisma.clientProfile.findMany({
+      where: {
+        animal: {
+          some: {
+            attendingVeterinarian: {
+              veterinarianClinics: { some: { clinicId } },
             },
           },
         },
       },
+      include: { user: true },
     });
   }
-
   // ── Trouve la clinique d'un utilisateur selon son rôle ────────────────────
   async findClinicByUserId(userId: string) {
     const director = await this.prisma.directorClinicProfile.findUnique({

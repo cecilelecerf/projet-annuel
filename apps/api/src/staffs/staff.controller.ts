@@ -2,18 +2,20 @@ import type { Response, NextFunction } from "express";
 import { StaffService } from "./staff.service";
 import {
   ClinicId,
-  clinicSchema,
-  staffSchema,
   userRoleSchema,
   createVeterinarianStaffSchema,
   createSecretaryStaffSchema,
   createReferentStaffSchema,
   UserId,
+  staffMemberSchema,
+  staffMemberDetailSchema,
 } from "@armali/schemas";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import z from "zod";
-
+function uniqueEmail(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@gmail.com`;
+}
 export class StaffController {
   constructor(private service: StaffService) {}
 
@@ -39,7 +41,7 @@ export class StaffController {
         role: req.user.role,
         targetRoles: query.roles,
       });
-      res.status(200).json(staffSchema.array().parse(staff));
+      res.status(200).json(staffMemberSchema.array().parse(staff));
     } catch (err) {
       next(err);
     }
@@ -55,7 +57,7 @@ export class StaffController {
         authorId: req.user.id,
         memberId: req.params.id,
       });
-      res.status(200).json(member);
+      res.status(200).json(staffMemberSchema.parse(member));
     } catch (err) {
       next(err);
     }
@@ -74,7 +76,7 @@ export class StaffController {
         authorId: req.user.id,
         data: result.data,
       });
-      res.status(201).json(user);
+      res.status(201).json(staffMemberDetailSchema.parse(user));
     } catch (err) {
       next(err);
     }
@@ -93,7 +95,7 @@ export class StaffController {
         authorId: req.user.id,
         data: result.data,
       });
-      res.status(201).json(user);
+      res.status(201).json(staffMemberDetailSchema.parse(user));
     } catch (err) {
       next(err);
     }
@@ -112,7 +114,7 @@ export class StaffController {
         authorId: req.user.id,
         data: result.data,
       });
-      res.status(201).json(user);
+      res.status(201).json(staffMemberDetailSchema.parse(user));
     } catch (err) {
       next(err);
     }

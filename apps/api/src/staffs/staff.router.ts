@@ -8,7 +8,6 @@ import {
   createSecretaryStaffSchema,
   createVeterinarianStaffSchema,
 } from "@armali/schemas";
-import { STAFF_ROLES } from "@api/utils";
 import { staffController } from "@api/instances";
 
 const staffRouter: RouterType = Router();

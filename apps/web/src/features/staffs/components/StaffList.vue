@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Staff } from '@armali/schemas'
+import type { StaffMember } from '@armali/schemas'
 import StaffCard from './StaffCard.vue'
 
 defineProps<{
   clinicName: string
-  staffs: Staff[]
+  staffs: StaffMember[]
   withGoToDetail?: boolean
 }>()
 </script>

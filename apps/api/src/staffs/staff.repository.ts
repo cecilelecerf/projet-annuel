@@ -13,7 +13,7 @@ export class StaffRepository {
   async findStaff(clinicId: string) {
     const [director, referents, vets, secretaries] = await Promise.all([
       this.prisma.directorClinicProfile.findFirst({
-        where: { clinicId },
+        where: { clinic: { id: clinicId } },
         include: { user: true },
       }),
       this.prisma.referentClinicProfile.findMany({
@@ -70,7 +70,7 @@ export class StaffRepository {
         secretaryProfile: {
           include: { bankingInfo: true },
         },
-        directorClinicProfile: true,
+        directorClinicProfile: { include: { clinic: true } },
         referentClinicProfile: true,
       },
     });

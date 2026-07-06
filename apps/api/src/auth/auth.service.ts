@@ -32,7 +32,9 @@ export class AuthService {
   private getClinicId(user: {
     role: string;
     secretaryProfile?: { clinicId: string } | null;
-    directorClinicProfile?: { clinicId: string } | null;
+    directorClinicProfile?: {
+      clinic?: { id: string } | null;
+    } | null;
     referentClinicProfile?: { clinicId: string } | null;
     veterinarianProfile?: {
       veterinarianClinics: { clinicId: string }[];
@@ -42,7 +44,7 @@ export class AuthService {
       case "SECRETARY":
         return (user.secretaryProfile?.clinicId as ClinicId) ?? null;
       case "DIRECTOR":
-        return (user.directorClinicProfile?.clinicId as ClinicId) ?? null;
+        return (user.directorClinicProfile?.clinic?.id as ClinicId) ?? null;
       case "REFERENT":
         return (user.referentClinicProfile?.clinicId as ClinicId) ?? null;
       case "VETERINARIAN":
@@ -115,6 +117,7 @@ export class AuthService {
           firstname,
           lastname,
           role: "DIRECTOR",
+          directorClinicProfile: { create: {} },
         },
       });
 
@@ -156,7 +159,9 @@ export class AuthService {
       where: { email: data.email },
       include: {
         secretaryProfile: true,
-        directorClinicProfile: true,
+        directorClinicProfile: {
+          select: { clinic: { select: { id: true } } },
+        },
         referentClinicProfile: true,
         veterinarianProfile: {
           include: {
@@ -170,8 +175,8 @@ export class AuthService {
     const isPasswordValid = await compare(data.password, user.password);
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
-    const parsedUser = baseUserSchema.parse(user);
     const clinicId = this.getClinicId(user);
+    const parsedUser = baseUserSchema.parse(user);
     const accessToken = generateAccessToken({
       ...parsedUser,
       clinicId: clinicId ?? undefined,
@@ -249,7 +254,7 @@ export class AuthService {
       where: { id: payload.id },
       include: {
         secretaryProfile: true,
-        directorClinicProfile: true,
+        directorClinicProfile: { include: { clinic: true } },
         referentClinicProfile: true,
         veterinarianProfile: {
           include: {

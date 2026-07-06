@@ -5,7 +5,7 @@ import type {
   ClinicId,
 } from "@armali/schemas";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { Clinic, PrismaClient } from "../../prisma/generated/prisma/client";
 
 const futureAvailabilityWhere = () => ({
   OR: [
@@ -42,7 +42,7 @@ export class ClinicRepository {
     });
   }
   // ── Trouve la clinique d'un utilisateur selon son rôle ────────────────────
-  async findClinicByUserId(userId: string) {
+  async findClinicByUserId(userId: string): Promise<(Clinic | null)[]> {
     const director = await this.prisma.directorClinicProfile.findUnique({
       where: { id: userId },
       include: { clinic: true },
@@ -67,6 +67,7 @@ export class ClinicRepository {
       include: { clinic: true },
     });
     if (secretary) return [secretary.clinic];
+    return [];
   }
 
   // ── Trouve le clinicId d'un utilisateur selon son rôle ───────────────────
@@ -93,8 +94,9 @@ export class ClinicRepository {
       case "DIRECTOR": {
         const dp = await this.prisma.directorClinicProfile.findUnique({
           where: { id: userId },
+          include: { clinic: true },
         });
-        return dp?.clinicId ? [dp.clinicId as ClinicId] : null;
+        return dp?.clinic?.id ? [dp.clinic.id as ClinicId] : null;
       }
       case "REFERENT": {
         const rp = await this.prisma.referentClinicProfile.findUnique({

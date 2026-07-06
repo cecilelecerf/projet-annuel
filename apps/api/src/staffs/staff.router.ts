@@ -9,14 +9,16 @@ import {
   createVeterinarianStaffSchema,
 } from "@armali/schemas";
 import { staffController } from "@api/instances";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const staffRouter: RouterType = Router();
 
+staffRouter.use(authMiddleware);
+staffRouter.use(requireApprovedClinic);
 const controller = staffController;
 
 staffRouter.post(
   "/veterinarian",
-  authMiddleware,
   roleMiddleware(["DIRECTOR", "REFERENT"]),
   validate(createVeterinarianStaffSchema),
   controller.createVeterinarian.bind(controller) as RequestHandler,
@@ -24,7 +26,6 @@ staffRouter.post(
 
 staffRouter.post(
   "/secretary",
-  authMiddleware,
   roleMiddleware(["REFERENT", "DIRECTOR"]),
   validate(createSecretaryStaffSchema),
   controller.createSecretary.bind(controller) as RequestHandler,
@@ -32,14 +33,12 @@ staffRouter.post(
 
 staffRouter.post(
   "/referent",
-  authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   validate(createReferentStaffSchema),
   controller.createReferent.bind(controller) as RequestHandler,
 );
 staffRouter.get(
   "/:id",
-  authMiddleware,
   roleMiddleware(["REFERENT", "DIRECTOR"]),
   controller.getStaffMemberDetail.bind(controller) as RequestHandler,
 );

@@ -72,12 +72,13 @@ export class StaffService {
     const clinicId = clinics[0].id;
     const user = await this.repository.findMemberDetailById(memberId);
     if (!user) throw new NotFoundError("Membre du personnel");
+
     const belongsToClinic =
       (user.veterinarianProfile?.veterinarianClinics ?? []).some(
         (vc) => vc.clinicId === clinicId,
       ) ||
       user.secretaryProfile?.clinicId === clinicId ||
-      user.directorClinicProfile?.clinicId === clinicId ||
+      user.directorClinicProfile?.clinic?.id === clinicId ||
       user.referentClinicProfile?.clinicId === clinicId;
     if (!belongsToClinic) throw new ForbiddenError();
 

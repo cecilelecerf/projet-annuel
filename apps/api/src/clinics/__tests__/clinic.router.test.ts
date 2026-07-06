@@ -50,7 +50,7 @@ describe("GET /api/clinics/:id/staffs", () => {
     const token = await loginAs("directeur@gmail.com");
     const clinic = await getPrisma().clinic.findFirst({
       where: {
-        directorClinicProfile: {
+        director: {
           user: { email: "directeur@gmail.com" },
         },
       },
@@ -87,7 +87,7 @@ describe("GET /api/clinics/:id/clients", () => {
     const token = await loginAs("directeur@gmail.com");
     const clinic = await getPrisma().clinic.findFirst({
       where: {
-        directorClinicProfile: {
+        director: {
           user: { email: "directeur@gmail.com" },
         },
       },
@@ -137,18 +137,18 @@ describe("GET /api/clinics/me", () => {
   });
 });
 
-// ── PATCH /api/clinics/me ──────────────────────────────────────────────────────
+// ── PATCH /api/clinics ──────────────────────────────────────────────────────
 
-describe("PATCH /api/clinics/me", () => {
+describe("PATCH /api/clinics", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).patch("/api/clinics/me").send({});
+    const res = await request(app).patch("/api/clinics").send({});
     expect(res.status).toBe(401);
   });
 
-  it("403 — rôle REFERENT non autorisé", async () => {
-    const token = await loginAs("referent@gmail.com");
+  it("403 — rôle Veterinarian non autorisé", async () => {
+    const token = await loginAs("veto@gmail.com");
     const res = await request(app)
-      .patch("/api/clinics/me")
+      .patch("/api/clinics")
       .set("Authorization", `Bearer ${token}`)
       .send({ name: "Nouveau nom" });
     expect(res.status).toBe(403);
@@ -157,7 +157,7 @@ describe("PATCH /api/clinics/me", () => {
   it("400 — body invalide", async () => {
     const token = await loginAs("directeur@gmail.com");
     const res = await request(app)
-      .patch("/api/clinics/me")
+      .patch("/api/clinics")
       .set("Authorization", `Bearer ${token}`)
       .send({ siret: "invalide" });
     expect(res.status).toBe(400);
@@ -166,7 +166,7 @@ describe("PATCH /api/clinics/me", () => {
   it("200 — DIRECTOR met à jour sa clinique", async () => {
     const token = await loginAs("directeur@gmail.com");
     const res = await request(app)
-      .patch("/api/clinics/me")
+      .patch("/api/clinics")
       .set("Authorization", `Bearer ${token}`)
       .send({ description: "Description mise à jour" });
 

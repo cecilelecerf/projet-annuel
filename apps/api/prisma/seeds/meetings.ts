@@ -9,6 +9,7 @@ export async function seedMeetings(
     specialities,
     healthConditions,
     pets,
+    directors,
   }: {
     users: ReturnType<typeof import("./users").seedUsers> extends Promise<
       infer T
@@ -38,6 +39,11 @@ export async function seedMeetings(
     pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
       ? T
       : never;
+    directors: ReturnType<
+      typeof import("./directors").seedDirectors
+    > extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
   const {
@@ -49,7 +55,6 @@ export async function seedMeetings(
     vetProfile1,
     vetProfile2,
     secretaryProfile,
-    directorUser1,
     referentUser1,
   } = users;
   const { vetoClinic1, vetoClinic2 } = veterinarianClinics;
@@ -434,7 +439,7 @@ export async function seedMeetings(
       },
       {
         meetingId: recurringInternal1.internalMeeting!.id,
-        userId: directorUser1.id,
+        userId: directors.directorUser1.id,
         status: "ACCEPTED",
       },
       {
@@ -461,7 +466,7 @@ export async function seedMeetings(
       },
       {
         meetingId: baseInternal2.internalMeeting!.id,
-        userId: directorUser1.id,
+        userId: directors.directorUser1.id,
         status: "PENDING",
       },
       {

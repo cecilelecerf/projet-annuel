@@ -5,8 +5,18 @@ export async function seedMessaging(
   {
     users,
     clinics,
+    directors,
   }: {
-    users: any;
+    users: ReturnType<typeof import("./users").seedUsers> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+    directors: ReturnType<
+      typeof import("./directors").seedDirectors
+    > extends Promise<infer T>
+      ? T
+      : never;
     clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
       infer T
     >
@@ -14,8 +24,7 @@ export async function seedMessaging(
       : never;
   },
 ) {
-  const { vetoUser1, vetoUser3, secretaryUser1, directorUser1, directorUser2 } =
-    users;
+  const { vetoUser1, vetoUser3, secretaryUser1 } = users;
 
   const clinicGroup = await prisma.conversation.create({
     data: {
@@ -31,7 +40,7 @@ export async function seedMessaging(
             { role: "ADMIN", userId: vetoUser1.id },
             { role: "MEMBER", userId: vetoUser3.id },
             { role: "MEMBER", userId: secretaryUser1.id },
-            { role: "MEMBER", userId: directorUser1.id },
+            { role: "MEMBER", userId: directors.directorUser1.id },
           ],
         },
       },
@@ -57,13 +66,13 @@ export async function seedMessaging(
     data: {
       type: "DIRECT",
       scope: "DIRECTOR_NETWORK",
-      createdById: directorUser1.id,
+      createdById: directors.directorUser1.id,
       lastMessageAt: new Date(),
       conversationMembers: {
         createMany: {
           data: [
-            { role: "ADMIN", userId: directorUser1.id },
-            { role: "ADMIN", userId: directorUser2.id },
+            { role: "ADMIN", userId: directors.directorUser1.id },
+            { role: "ADMIN", userId: directors.directorUser2.id },
           ],
         },
       },
@@ -75,7 +84,7 @@ export async function seedMessaging(
       content:
         "Bonjour confrère, avez-vous un créneau pour échanger cette semaine ?",
       conversationId: directorsConversation.id,
-      senderId: directorUser1.id,
+      senderId: directors.directorUser1.id,
     },
   });
 }

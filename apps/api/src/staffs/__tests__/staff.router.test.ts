@@ -192,7 +192,7 @@ describe("GET /api/staffs/:id", () => {
       },
     });
     const vetUser =
-      director?.directorClinicProfile?.clinic.veterinarianClinics[0]
+      director?.directorClinicProfile?.clinic?.veterinarianClinics[0]
         .veterinarian.user;
     const res = await request(app)
       .get(`/api/staffs/${vetUser!.id}`)

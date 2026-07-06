@@ -18,6 +18,8 @@ import { seedMedicalVisits } from "./medical-visit";
 import { seedMeetings } from "./meetings";
 import { seedPrescriptions } from "./prescriptions";
 import { cleanup } from "./cleanup";
+import { seedClinicRequests } from "./clinic-requests";
+import { seedDirectors } from "./directors";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -39,10 +41,14 @@ async function main() {
 
   const specialities = await seedSpecialities(prisma);
   const pets = await seedPets(prisma);
+  const directors = await seedDirectors(prisma);
+
+  await seedClinicRequests(prisma, { directors });
 
   const clinics = await seedClinics(prisma, {
     specialities,
     pets,
+    directors,
   });
   const users = await seedUsers(prisma, {
     clinics,
@@ -65,6 +71,7 @@ async function main() {
     specialities,
     healthConditions,
     pets,
+    directors,
   });
   await seedActs(prisma, {
     petCat: pets.petCat,
@@ -78,7 +85,7 @@ async function main() {
   });
   await seedPrescriptions(prisma, { meetings, products, users });
   await seedOrders(prisma, { users, clinics });
-  await seedMessaging(prisma, { users, clinics });
+  await seedMessaging(prisma, { users, clinics, directors });
 
   console.log("✅ Seed terminé avec succès !");
   console.log("\n📋 Comptes créés :");

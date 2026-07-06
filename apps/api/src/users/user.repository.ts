@@ -15,7 +15,7 @@ export class UserRepository {
       where: {
         OR: [
           { secretaryProfile: { clinicId: { in: clinicIds } } },
-          { directorClinicProfile: { clinicId: { in: clinicIds } } },
+          { directorClinicProfile: { clinic: { id: { in: clinicIds } } } },
           { referentClinicProfile: { clinicId: { in: clinicIds } } },
           {
             veterinarianProfile: {

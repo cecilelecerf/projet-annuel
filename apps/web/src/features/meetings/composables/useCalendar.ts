@@ -37,12 +37,9 @@ export function useCalendar(userId?: UserId) {
 
   const availableClinics = computed(() => extractDistinctClinics(calendarData.value))
 
-  let lastFetchedRange: { start: string; end: string } | null = null
-
   const fetchMeetings = (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
-    lastFetchedRange = { start, end }
     return meetingApi.getCalendar({ start, end, userId })
   }
 

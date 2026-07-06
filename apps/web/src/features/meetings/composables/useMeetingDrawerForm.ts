@@ -11,6 +11,8 @@ import {
   type BaseUser,
   baseUserSchema,
   type StaffMember,
+  staffRoleSchema,
+  type StaffRole,
 } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
 import { animalApi } from '@/features/animals/api'
@@ -51,9 +53,9 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
     user?.role === 'VETERINARIAN' ? undefined : user?.clinicId,
   )
   const myClinics = ref<Clinic[]>([])
-  const participants = ref<User[]>([])
+  const participants = ref<StaffMember[]>([])
   const selectedClient = ref<User | null>(null)
-  const selectedVet = ref<BaseUser | null>(null)
+  const selectedVet = ref<StaffMember | null>(null)
   const selectAnimal = ref<Animal | null>(null)
 
   const clients = ref<User[]>([])
@@ -77,7 +79,9 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
   // Résout le véto pré-sélectionné via la route (:id), une fois au démarrage
   async function init() {
     veterinarian = await veterinarianPromise()
-    selectedVet.value = veterinarian
+    if (!veterinarian) return
+    if (!staffRoleSchema.options.some((o) => o === veterinarian?.role)) return
+    selectedVet.value = { ...veterinarian, role: veterinarian.role as StaffRole }
     isVetLocked.value = !!veterinarian
     await loadMyClinics()
   }

@@ -4,6 +4,7 @@ import {
   clientProfileSchema,
   clinicGuardRequest,
   clinicSchema,
+  clinicStatusSchema,
   type ClinicId,
   type ClinicRequestId,
   type CreateClinicRequest,
@@ -26,8 +27,8 @@ export const clinicApi = {
   },
 
   // Director and admin
-  remove: async () => {
-    await http.delete('/clinics')
+  remove: async ({ id }: { id: ClinicId }) => {
+    await http.delete(`/clinics/${id}`)
   },
 
   // Admin
@@ -47,7 +48,9 @@ export const clinicApi = {
     },
 
     getAll: async () => {
-      return await http.get('/clinics/requests').then((data) => clinicSchema.array().parse(data))
+      return await http
+        .get('/clinics/requests')
+        .then((data) => clinicSchema.extend({ status: clinicStatusSchema }).array().parse(data))
     },
     approve: async ({ id }: { id: ClinicRequestId }) => {
       return await http.get(`/clinics/requests/${id}/approve`)

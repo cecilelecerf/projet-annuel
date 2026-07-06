@@ -185,7 +185,8 @@ async function deleteClinic() {
 
   deleting.value = true
   try {
-    await clinicApi.remove()
+    if (!clinic.value) return
+    await clinicApi.remove({ id: clinic.value?.id })
     notify.success('Clinique supprimée')
     clinic.value = null
     await loadStatus()

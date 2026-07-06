@@ -7,7 +7,7 @@ import {
 } from "../users/base-user.schema";
 import { specialitySchema } from "../specilities.schema";
 
-const staffRoleSchema = z.enum([
+export const staffRoleSchema = z.enum([
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",

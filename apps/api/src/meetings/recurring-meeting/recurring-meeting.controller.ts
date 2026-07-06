@@ -1,13 +1,17 @@
 import type { Response, NextFunction } from "express";
 import { RecurringService } from "./recurring-meeting.service";
-import { meetingRecurringSchema, UpdateRecurring } from "@armali/schemas";
+import {
+  MeetingRecurringId,
+  meetingRecurringSchema,
+  UpdateRecurring,
+} from "@armali/schemas";
 import { RequestWithParams } from "@api/middlewares";
 
 export class RecurringMeetingController {
   constructor(private service: RecurringService) {}
 
   async getRecurring(
-    req: RequestWithParams<{ id: string }>,
+    req: RequestWithParams<{ id: MeetingRecurringId }>,
     res: Response,
     next: NextFunction,
   ) {
@@ -20,7 +24,9 @@ export class RecurringMeetingController {
   }
 
   async patchRecurring(
-    req: RequestWithParams<{ id: string }> & { body: UpdateRecurring },
+    req: RequestWithParams<{ id: MeetingRecurringId }> & {
+      body: UpdateRecurring;
+    },
     res: Response,
     next: NextFunction,
   ) {

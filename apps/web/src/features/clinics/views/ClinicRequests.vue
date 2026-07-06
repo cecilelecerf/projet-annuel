@@ -2,29 +2,11 @@
 import { ref, onMounted } from 'vue'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import type { Clinic, ClinicStatus } from '@armali/schemas'
+import { clinicApi } from '@/features/clinics/clinic.api'
 
 const notify = useNotify()
-
-interface Director {
-  id: string
-  firstname: string
-  lastname: string
-  email: string
-}
-
-interface ClinicRequest {
-  id: string
-  name: string
-  address: string
-  siret: string
-  phone: string
-  website: string
-  description?: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  createdAt: string
-  director: Director
-}
-
+type ClinicRequest = Clinic & { status: ClinicStatus }
 const requests = ref<ClinicRequest[]>([])
 const loading = ref(false)
 
@@ -36,18 +18,19 @@ const dialog = ref<{ visible: boolean; type: 'approve' | 'reject'; row: ClinicRe
 const actionLoading = ref(false)
 
 const statusLabel: Record<
-  string,
+  ClinicStatus,
   { label: string; type: 'warning' | 'success' | 'danger' | 'info' }
 > = {
   PENDING: { label: 'En attente', type: 'warning' },
   APPROVED: { label: 'Approuvée', type: 'success' },
   REJECTED: { label: 'Refusée', type: 'danger' },
+  NONE: { label: 'Pas de demande', type: 'danger' },
 }
 
 async function load() {
   loading.value = true
   try {
-    requests.value = await http.get('/admin/clinic-requests')
+    requests.value = await clinicApi.request.getAll()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur de chargement')
   } finally {
@@ -99,9 +82,9 @@ onMounted(load)
       <el-table-column prop="address" label="Adresse" min-width="180" />
       <el-table-column prop="siret" label="SIRET" width="150" />
       <el-table-column label="Statut" width="120">
-        <template #default="{ row }">
-          <el-tag :type="statusLabel[row.status].type">
-            {{ statusLabel[row.status].label }}
+        <template #default="scope">
+          <el-tag :type="statusLabel[(scope.row as ClinicRequest).status].type">
+            {{ statusLabel[(scope.row as ClinicRequest).status].label }}
           </el-tag>
         </template>
       </el-table-column>

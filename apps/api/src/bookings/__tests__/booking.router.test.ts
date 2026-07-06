@@ -110,7 +110,7 @@ describe("GET /api/booking/clinics/:clinicId/vets", () => {
 // ── POST /api/booking ─────────────────────────────────────────────────────────
 
 describe("POST /api/booking", () => {
-  let meetingIds: string[] = [];
+  const meetingIds: string[] = [];
   afterAll(async () => {
     if (meetingIds.length > 0)
       await getPrisma().meetingBase.deleteMany({

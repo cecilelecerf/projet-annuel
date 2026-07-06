@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { requireRole } from './utils'
-import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
 
 export const directorRouter: RouteRecordRaw[] = [
   {

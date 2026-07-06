@@ -13,9 +13,7 @@ import {
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import z from "zod";
-function uniqueEmail(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@gmail.com`;
-}
+
 export class StaffController {
   constructor(private service: StaffService) {}
 

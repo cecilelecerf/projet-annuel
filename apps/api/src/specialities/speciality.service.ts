@@ -9,8 +9,6 @@ import type {
   UserRole,
 } from "@armali/schemas";
 
-const MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERENT"];
-
 export class SpecialityService {
   constructor(private repository: SpecialityRepository) {}
 

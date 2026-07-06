@@ -1,24 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import type { Clinic } from '@armali/schemas'
+import { clinicApi } from '../clinic.api'
 
 const notify = useNotify()
 
-interface ClinicRow {
-  id: string
-  name: string
-  address: string
-  siret: string
-  phone: string
-  website: string
-  createdAt: string
-}
-
-const clinics = ref<ClinicRow[]>([])
+const clinics = ref<Clinic[]>([])
 const loading = ref(false)
 
-const dialog = ref<{ visible: boolean; row: ClinicRow | null }>({
+const dialog = ref<{ visible: boolean; row: Clinic | null }>({
   visible: false,
   row: null,
 })
@@ -27,7 +18,7 @@ const actionLoading = ref(false)
 async function load() {
   loading.value = true
   try {
-    clinics.value = await http.get('/admin/clinics')
+    clinics.value = await clinicApi.getAll()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur de chargement')
   } finally {
@@ -35,7 +26,7 @@ async function load() {
   }
 }
 
-function openDialog(row: ClinicRow) {
+function openDialog(row: Clinic) {
   dialog.value = { visible: true, row }
 }
 
@@ -43,7 +34,7 @@ async function confirmDelete() {
   if (!dialog.value.row) return
   actionLoading.value = true
   try {
-    await http.delete(`/admin/clinics/${dialog.value.row.id}`)
+    await clinicApi.remove({ id: dialog.value.row.id })
     notify.success('Clinique supprimée')
     dialog.value.visible = false
     await load()

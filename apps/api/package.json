@@ -13,7 +13,9 @@
     "prisma:generate": "prisma generate",
     "schemas:update": "npx prisma format & pnpm prisma:generate & pnpm prisma:migrate",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.4.0",
@@ -36,6 +38,7 @@
   },
   "devDependencies": {
     "@armali/schemas": "workspace:*",
+    "@eslint/js": "^10.0.1",
     "@testcontainers/postgresql": "^11.14.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.19",
@@ -45,12 +48,18 @@
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.16.0",
     "@types/supertest": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.63.0",
+    "@typescript-eslint/parser": "^8.63.0",
     "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/eslint-plugin": "^1.6.17",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
     "supertest": "^7.2.2",
     "tsc-alias": "^1.8.16",
     "tsup": "^8.5.1",
     "tsx": "^4.20.6",
     "typescript": "5.8.2",
+    "typescript-eslint": "^8.63.0",
     "vitest": "^4.0.18",
     "vitest-mock-extended": "^4.0.0"
   }

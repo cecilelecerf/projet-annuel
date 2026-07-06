@@ -24,9 +24,9 @@ export async function setup() {
 
   console.log("✅ Seed terminé");
 
-  (globalThis as any).__pgContainer__ = container;
+  globalThis.__pgContainer__ = container;
 }
 
 export async function teardown() {
-  await (globalThis as any).__pgContainer__?.stop();
+  await globalThis.__pgContainer__?.stop();
 }

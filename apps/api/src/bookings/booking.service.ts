@@ -6,6 +6,13 @@ import dayjs from "dayjs";
 import { ClinicRepository } from "@api/clinics/clinic.repository";
 import { haversineKm } from "@api/utils/distance";
 import { MeetingService } from "@api/meetings";
+import {
+  Availability,
+  MeetingBase,
+  User,
+  VeterinarianClinic,
+  VeterinarianProfile,
+} from "../../prisma/generated/prisma/client";
 
 export class BookingService {
   constructor(
@@ -213,7 +220,15 @@ export class BookingService {
   }
 
   // ── Helper : prochain créneau label ───────────────────────────────────────
-  private _getNextSlotLabel(veterinarianClinics: any[]): string | null {
+  private _getNextSlotLabel(
+    veterinarianClinics: (VeterinarianClinic & {
+      veterinarian: VeterinarianProfile & {
+        user: User & {
+          availabilities: (Availability & { meeting: MeetingBase | null })[];
+        };
+      };
+    })[],
+  ): string | null {
     const allDates: Date[] = [];
 
     for (const vc of veterinarianClinics) {

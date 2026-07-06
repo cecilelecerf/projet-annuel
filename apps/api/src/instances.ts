@@ -59,7 +59,6 @@ import { ActService } from "./acts/act.service";
 import { AnimalService } from "./animals/animal.service";
 import { AuthService } from "./auth/auth.service";
 import { ClinicService } from "./clinics/clinic.service";
-import { VeterinarianClinicService } from "./clinics/veterinarian-clinics/veterinarian-clinic.service";
 import { EmailService } from "./emails/email.service";
 import { MeetingService } from "./meetings/meeting.service";
 import { AnimalMeetingService } from "./meetings/animal-meeting/animal-meeting.service";
@@ -169,10 +168,6 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
 );
 
 const prescriptionService = new PrescriptionService(prescriptionRepository);
-
-const veterinarianClinicService = new VeterinarianClinicService(
-  veterinarianClinicRepository,
-);
 
 const referentService = new ReferentService();
 const reviewService = new ReviewService(reviewRepository);

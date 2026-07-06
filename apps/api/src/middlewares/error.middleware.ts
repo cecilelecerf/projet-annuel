@@ -1,5 +1,5 @@
 import { ZodError } from "zod";
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 import { AppError, ValidationError } from "@api/errors";
 
 const PRISMA_UNIQUE_MESSAGES: Record<string, string> = {
@@ -15,12 +15,7 @@ function isPrismaError(
   return typeof err === "object" && err !== null && "code" in err;
 }
 
-export function errorHandler(
-  err: unknown,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function errorHandler(err: unknown, req: Request, res: Response) {
   if (err instanceof ZodError) {
     return res.status(422).json({
       error: "Validation failed",

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
+import { BaseUser } from "@armali/schemas";
 
 const loginAs = async (email: string, password = "Password123!") => {
   const res = await request(app)
@@ -60,7 +61,7 @@ describe("GET /api/users", () => {
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
-      res.body.forEach((user: any) => {
+      res.body.forEach((user: BaseUser) => {
         expect(user).not.toHaveProperty("password");
       });
     });
@@ -105,7 +106,7 @@ describe("GET /api/users", () => {
         .get("/api/users")
         .set("Authorization", `Bearer ${token}`);
       expect(res.status).toBe(200);
-      res.body.forEach((user: any) => {
+      res.body.forEach((user: BaseUser) => {
         expect(outsideIds.has(user.id)).toBe(false);
       });
     });
@@ -153,7 +154,7 @@ describe("GET /api/users/roles/:role", () => {
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
-    res.body.forEach((user: any) => {
+    res.body.forEach((user: BaseUser) => {
       expect(user.role).toBe("VETERINARIAN");
     });
   });
@@ -166,7 +167,7 @@ describe("GET /api/users/roles/:role", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
-    res.body.forEach((user: any) => {
+    res.body.forEach((user: BaseUser) => {
       expect(user.role).toBe("CLIENT");
     });
   });
@@ -198,7 +199,7 @@ describe("GET /api/users/roles/:role", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    res.body.forEach((user: any) => {
+    res.body.forEach((user: BaseUser) => {
       expect(vetoIds.has(user.id)).toBe(true);
     });
   });
@@ -227,7 +228,7 @@ describe("GET /api/users/roles/:role", () => {
       .get("/api/users/roles/veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
-    res.body.forEach((user: any) => {
+    res.body.forEach((user: BaseUser) => {
       expect(vetoIds!.includes(user.id)).toBe(true);
     });
   });

@@ -23,7 +23,6 @@ export class UserService {
       userId,
       role,
     });
-    console.log(clinicIds);
     return this.repository.getUsersByClinic({ clinicIds });
   }
 

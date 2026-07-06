@@ -15,7 +15,7 @@ specialityRouter.get("/", controller.getAll.bind(controller) as RequestHandler);
 
 specialityRouter.get(
   "/:id",
-  roleMiddleware(STAFF_ROLES),
+  roleMiddleware(["ADMIN"]),
   controller.getById.bind(controller) as RequestHandler,
 );
 

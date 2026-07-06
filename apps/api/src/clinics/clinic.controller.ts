@@ -3,13 +3,10 @@ import { ClinicService } from "./clinic.service";
 import {
   baseUserSchema,
   clientProfileSchema,
-  clientSchema,
   ClinicId,
   clinicSchema,
-  staffMemberSchema,
 } from "@armali/schemas";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
-import z from "zod";
 
 export class ClinicController {
   constructor(private service: ClinicService) {}
@@ -62,6 +59,32 @@ export class ClinicController {
         data: req.body,
       });
       res.status(200).json(clinicSchema.parse(clinic));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getAllClinics(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const clinics = await this.service.getClinics();
+      res.status(200).json(clinicSchema.array().parse(clinics));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteClinic(
+    req: RequestWithParams<{ id: ClinicId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const result = await this.service.deleteClinic(req.params.id);
+      res.status(200).json(result);
     } catch (err) {
       next(err);
     }

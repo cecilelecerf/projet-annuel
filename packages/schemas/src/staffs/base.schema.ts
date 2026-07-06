@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { userIdSchema } from "../ids";
 import { veterinarianIdentityInputSchema } from "../users/veterinarian.schema";
-import { specialitySchema } from "../clinic.schema";
 import {
   bankingInfoInputSchema,
   baseUserSchema,
 } from "../users/base-user.schema";
+import { specialitySchema } from "../specilities.schema";
 
 const staffRoleSchema = z.enum([
   "VETERINARIAN",

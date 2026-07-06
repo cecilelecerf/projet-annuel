@@ -686,7 +686,6 @@ CREATE TABLE "secretary_profiles" (
 -- CreateTable
 CREATE TABLE "director_clinic_profiles" (
     "id" TEXT NOT NULL,
-    "clinicId" TEXT,
 
     CONSTRAINT "director_clinic_profiles_pkey" PRIMARY KEY ("id")
 );

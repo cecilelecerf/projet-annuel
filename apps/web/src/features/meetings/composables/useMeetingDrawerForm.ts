@@ -8,9 +8,9 @@ import {
   type UserId,
   type ClinicId,
   type Clinic,
-  type Staff,
   type BaseUser,
   baseUserSchema,
+  type StaffMember,
 } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
 import { animalApi } from '@/features/animals/api'
@@ -20,6 +20,7 @@ import { clinicApi } from '@/features/clinics/clinic.api'
 import { meetingApi } from '../api/meeting.api'
 import { usersApi } from '@/features/users/api/user.api'
 import { http } from '@/lib/api'
+import { staffApi } from '@/features/staffs/staff.api'
 
 export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'close') => void) {
   const route = useRoute()
@@ -56,8 +57,8 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
   const selectAnimal = ref<Animal | null>(null)
 
   const clients = ref<User[]>([])
-  const vets = ref<Staff[]>([])
-  const staffs = ref<Staff[]>()
+  const vets = ref<StaffMember[]>([])
+  const staffs = ref<StaffMember[]>()
   const animals = ref<Animal[]>([])
 
   const isVetLocked = ref(false)
@@ -102,12 +103,12 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
       if (t === 'ANIMAL') {
         const [clientsData, vetsData] = await Promise.all([
           usersApi.getUsersByRole({ roles: ['CLIENT'] }),
-          clinicApi.staffByClinic({ clinicId: cid, roles: ['VETERINARIAN'] }),
+          staffApi.getAllByClinic({ clinicId: cid, roles: ['VETERINARIAN'] }),
         ])
         clients.value = clientsData as User[]
-        vets.value = vetsData as Staff[]
+        vets.value = vetsData as StaffMember[]
       } else {
-        staffs.value = await clinicApi.staffByClinic({ clinicId: cid })
+        staffs.value = await staffApi.getAllByClinic({ clinicId: cid })
       }
     },
     { immediate: true },

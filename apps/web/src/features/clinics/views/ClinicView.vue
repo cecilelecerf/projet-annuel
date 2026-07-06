@@ -1,27 +1,32 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { ElMessageBox } from 'element-plus'
 import { useNotify } from '@/composables/useNotify'
 import { http } from '@/lib/api'
-import type { Clinic, Speciality } from '@armali/schemas'
+import type { Clinic, Speciality, SpecialityId } from '@armali/schemas'
 import { specialityApi } from '@/features/specialities/speciality.api'
 import { clinicApi } from '../clinic.api'
+import { useAuthStore } from '@/stores/authStore'
 
 const notify = useNotify()
 
-type Status = 'loading' | 'NONE' | 'PENDING' | 'REJECTED' | 'APPROVED'
+// storeToRefs est indispensable ici : déstructurer un store Pinia directement
+// (`const { status } = useStore()`) casse la réactivité — on ne récupère
+// qu'un instantané figé au moment du montage, jamais les mises à jour
+// ultérieures (ex: fetchStatus() qui résout après coup).
+const { user } = storeToRefs(useAuthStore())
 
-interface RequestData {
-  id: string
-  name: string
-  address: string
-  siret: string
-  status: string
-  createdAt: string
-}
+type DirectorPageStatus = 'loading' | 'NONE' | 'PENDING' | 'REJECTED' | 'APPROVED'
 
-const status = ref<Status>('loading')
+// Statut propre à cette page, indépendant du cache du guard router.
+// Cette vue EST la source de vérité affichée à l'utilisateur : elle doit
+// toujours refléter l'état réel, pas une valeur potentiellement obsolète.
+const directorStatus = ref<DirectorPageStatus>('loading')
+const staffLoading = ref(false)
+
 const clinic = ref<Clinic | null>(null)
-const request = ref<RequestData | null>(null)
+const request = ref<Clinic | null>(null)
 
 // ── Formulaire de demande de création (statut NONE / REJECTED) ─────────
 
@@ -36,19 +41,42 @@ const requestForm = reactive({
 const submittingRequest = ref(false)
 
 async function loadStatus() {
-  status.value = 'loading'
-  try {
-    const data = await http.get('/director/clinic')
-    status.value = data.status
-    if (data.clinic) {
-      clinic.value = data.clinic
-      populateFormFromClinic()
-      await loadClinicSpecialities()
+  if (user.value?.role === 'DIRECTOR') {
+    directorStatus.value = 'loading'
+    try {
+      const data = await clinicApi.request.status()
+
+      if (data.status === 'APPROVED' && data.clinic) {
+        clinic.value = data.clinic
+        populateFormFromClinic()
+        await loadClinicSpecialities()
+        directorStatus.value = 'APPROVED'
+      } else if (data.status === 'PENDING' || data.status === 'REJECTED') {
+        request.value = data.request ?? null
+        directorStatus.value = data.status
+      } else {
+        directorStatus.value = 'NONE'
+      }
+    } catch (err: unknown) {
+      notify.error(err instanceof Error ? err.message : 'Erreur lors du chargement')
+      directorStatus.value = 'NONE'
     }
-    if (data.request) request.value = data.request
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors du chargement')
-    status.value = 'NONE'
+  } else {
+    staffLoading.value = true
+    try {
+      const data = await clinicApi.getMine()
+      if (data[0]) {
+        clinic.value = data[0]
+        populateFormFromClinic()
+        await loadClinicSpecialities()
+      } else {
+        throw new Error('not fetch clinic')
+      }
+    } catch (err: unknown) {
+      notify.error(err instanceof Error ? err.message : 'Erreur lors du chargement')
+    } finally {
+      staffLoading.value = false
+    }
   }
 }
 
@@ -77,9 +105,9 @@ async function submitRequest() {
   }
 }
 
-// ── Formulaire d'édition de la clinique (statut APPROVED) ──────────────
+// ── Vue lecture / édition de la clinique (statut APPROVED) ─────────────
 
-const loading = ref(false)
+const editMode = ref(false)
 const saving = ref(false)
 
 const form = reactive({
@@ -101,6 +129,16 @@ function populateFormFromClinic() {
   form.openingHours = clinic.value.openingHours ?? ''
 }
 
+function startEdit() {
+  populateFormFromClinic()
+  editMode.value = true
+}
+
+function cancelEdit() {
+  populateFormFromClinic()
+  editMode.value = false
+}
+
 async function save() {
   saving.value = true
   try {
@@ -116,6 +154,7 @@ async function save() {
     })
     clinic.value = updated
     notify.success('Clinique mise à jour avec succès')
+    editMode.value = false
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
   } finally {
@@ -123,16 +162,54 @@ async function save() {
   }
 }
 
-// ── Spécialités (statut APPROVED) ───────────────────────────────────────
+// ── Suppression de la clinique (directeur uniquement) ───────────────────
 
-const selectedSpecialityIds = ref<string[]>([])
+const deleting = ref(false)
+
+async function deleteClinic() {
+  try {
+    await ElMessageBox.confirm(
+      'Cette action est irréversible. Voulez-vous vraiment supprimer votre clinique ?',
+      'Supprimer la clinique',
+      {
+        confirmButtonText: 'Supprimer',
+        cancelButtonText: 'Annuler',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+      },
+    )
+  } catch {
+    // Annulé par l'utilisateur
+    return
+  }
+
+  deleting.value = true
+  try {
+    await clinicApi.remove()
+    notify.success('Clinique supprimée')
+    clinic.value = null
+    await loadStatus()
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la suppression')
+  } finally {
+    deleting.value = false
+  }
+}
+
+// ── Spécialités — visuellement et fonctionnellement indépendantes ──────
+// Éditables à tout moment, sans dépendre du mode édition des infos clinique.
+
+const selectedSpecialityIds = ref<SpecialityId[]>([])
 const specialityOptions = ref<Speciality[]>([])
 const specialitySearchLoading = ref(false)
 const specialitySaving = ref(false)
 
 async function loadClinicSpecialities() {
+  if (!user.value?.clinicId) return
   try {
-    const current = await specialityApi.getSpecialitiesByClinic()
+    const current = await specialityApi.getSpecialitiesByClinic({
+      clinicId: user.value.clinicId,
+    })
     selectedSpecialityIds.value = current.map((s) => s.id)
     // Préremplit les options avec les spécialités déjà sélectionnées pour un affichage immédiat
     specialityOptions.value = current
@@ -160,9 +237,13 @@ async function searchSpecialities(query: string) {
 }
 
 async function saveSpecialities() {
+  if (!user.value?.clinicId) return
   specialitySaving.value = true
   try {
-    const updated = await specialityApi.updateClinicSpecialities(selectedSpecialityIds.value)
+    const updated = await specialityApi.updateClinicSpecialities({
+      clinicId: user.value.clinicId,
+      specialityIds: selectedSpecialityIds.value,
+    })
     specialityOptions.value = updated
     notify.success('Spécialités mises à jour')
   } catch (err: unknown) {
@@ -173,37 +254,6 @@ async function saveSpecialities() {
 }
 
 // Création d'une nouvelle spécialité (description obligatoire → mini-dialog dédiée)
-const newSpecialityDialog = ref(false)
-const newSpecialityForm = reactive({ name: '', description: '' })
-const newSpecialityLoading = ref(false)
-
-function openNewSpecialityDialog() {
-  newSpecialityForm.name = ''
-  newSpecialityForm.description = ''
-  newSpecialityDialog.value = true
-}
-
-async function submitNewSpeciality() {
-  if (!newSpecialityForm.name.trim() || !newSpecialityForm.description.trim()) {
-    notify.error('Nom et description sont requis')
-    return
-  }
-  newSpecialityLoading.value = true
-  try {
-    const speciality = await specialityApi.create(
-      newSpecialityForm.name,
-      newSpecialityForm.description,
-    )
-    specialityOptions.value = [speciality, ...specialityOptions.value]
-    selectedSpecialityIds.value = [...selectedSpecialityIds.value, speciality.id]
-    notify.success(`Spécialité "${speciality.name}" créée`)
-    newSpecialityDialog.value = false
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la création de la spécialité')
-  } finally {
-    newSpecialityLoading.value = false
-  }
-}
 
 onMounted(loadStatus)
 </script>
@@ -211,12 +261,18 @@ onMounted(loadStatus)
 <template>
   <div class="clinic-page">
     <!-- Chargement -->
-    <div v-if="status === 'loading'" class="card">
+    <div
+      v-if="
+        (user?.role === 'DIRECTOR' && directorStatus === 'loading') ||
+        (user?.role !== 'DIRECTOR' && staffLoading)
+      "
+      class="card"
+    >
       <el-skeleton :rows="5" animated />
     </div>
 
     <!-- En attente -->
-    <div v-else-if="status === 'PENDING'" class="card">
+    <div v-else-if="user?.role === 'DIRECTOR' && directorStatus === 'PENDING'" class="card">
       <div class="state-icon pending">⏳</div>
       <h2 class="state-title">Demande en cours de validation</h2>
       <p class="state-desc">
@@ -245,8 +301,12 @@ onMounted(loadStatus)
     </div>
 
     <!-- Refusée ou sans clinique → formulaire de nouvelle demande -->
-    <div v-else-if="status === 'REJECTED' || status === 'NONE'">
-      <div v-if="status === 'REJECTED'" class="card rejection-banner">
+    <div
+      v-else-if="
+        user?.role === 'DIRECTOR' && (directorStatus === 'REJECTED' || directorStatus === 'NONE')
+      "
+    >
+      <div v-if="directorStatus === 'REJECTED'" class="card rejection-banner">
         <div class="state-icon rejected">✗</div>
         <h2 class="state-title">Demande refusée</h2>
         <p class="state-desc">
@@ -273,7 +333,9 @@ onMounted(loadStatus)
       </div>
       <div class="card" style="margin-top: 20px">
         <h2 class="section-title">
-          {{ status === 'REJECTED' ? 'Nouvelle demande' : 'Demande de création de clinique' }}
+          {{
+            directorStatus === 'REJECTED' ? 'Nouvelle demande' : 'Demande de création de clinique'
+          }}
         </h2>
         <el-form label-position="top" @submit.prevent="submitRequest">
           <el-row :gutter="16">
@@ -313,121 +375,31 @@ onMounted(loadStatus)
       </div>
     </div>
 
-    <!-- Approuvée → gestion complète de la clinique -->
-    <div v-else-if="status === 'APPROVED' && clinic" v-loading="loading">
+    <!-- Approuvée / staff → gestion de la clinique -->
+    <div v-else-if="(user?.role === 'DIRECTOR' ? directorStatus === 'APPROVED' : true) && clinic">
       <div class="page-header">
         <div>
           <h1>Ma clinique</h1>
           <p>{{ clinic.name }}</p>
         </div>
-        <el-tag type="info" size="large">SIRET : {{ clinic.siret }}</el-tag>
-      </div>
-
-      <div class="cards-grid">
-        <!-- Identification -->
-        <div class="form-card">
-          <h2>Identification</h2>
-          <el-form label-position="top">
-            <el-form-item label="Nom de la clinique">
-              <el-input v-model="form.name" placeholder="Clinique Vétérinaire du Parc" />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- Contact -->
-        <div class="form-card">
-          <h2>Contact</h2>
-          <el-form label-position="top">
-            <el-form-item label="Téléphone">
-              <el-input v-model="form.phone" placeholder="01 23 45 67 89" />
-            </el-form-item>
-            <el-form-item label="Site web">
-              <el-input v-model="form.website" placeholder="https://www.maclinique.fr" />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- Adresse -->
-        <div class="form-card">
-          <h2>Adresse</h2>
-          <el-form label-position="top">
-            <el-form-item label="Adresse">
-              <el-input v-model="form.address" placeholder="12 rue de la Paix, 75001 Paris" />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- Horaires -->
-        <div class="form-card">
-          <h2>Horaires d'ouverture</h2>
-          <el-form label-position="top">
-            <el-form-item label="Horaires">
-              <el-input
-                v-model="form.openingHours"
-                type="textarea"
-                :rows="4"
-                placeholder="Lundi - Vendredi : 9h00 - 19h00&#10;Samedi : 9h00 - 13h00&#10;Dimanche : Fermé"
-              />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- Description -->
-        <div class="form-card form-card--wide">
-          <h2>Description</h2>
-          <el-form label-position="top">
-            <el-form-item label="Présentation de la clinique">
-              <el-input
-                v-model="form.description"
-                type="textarea"
-                :rows="3"
-                placeholder="Une courte description visible par les clients (spécialités, ambiance, équipements...)"
-                maxlength="500"
-                show-word-limit
-              />
-            </el-form-item>
-          </el-form>
-        </div>
-
-        <!-- Spécialités -->
-        <div class="form-card form-card--wide">
-          <div class="card-header-row">
-            <h2>Spécialités proposées</h2>
-            <el-button size="small" @click="openNewSpecialityDialog">
-              + Nouvelle spécialité
-            </el-button>
-          </div>
-          <el-select
-            v-model="selectedSpecialityIds"
-            multiple
-            filterable
-            remote
-            :remote-method="searchSpecialities"
-            :loading="specialitySearchLoading"
-            placeholder="Rechercher des spécialités..."
-            style="width: 100%; margin-bottom: 16px"
+        <div class="page-header__actions">
+          <el-tag type="info" size="large">SIRET : {{ clinic.siret }}</el-tag>
+          <el-button v-if="!editMode" type="primary" @click="startEdit">Modifier</el-button>
+          <el-button
+            v-if="user?.role === 'DIRECTOR'"
+            type="danger"
+            plain
+            :loading="deleting"
+            @click="deleteClinic"
           >
-            <el-option
-              v-for="spec in specialityOptions"
-              :key="spec.id"
-              :label="spec.name"
-              :value="spec.id"
-            />
-          </el-select>
-          <el-button type="primary" :loading="specialitySaving" @click="saveSpecialities">
-            Enregistrer les spécialités
+            Supprimer la clinique
           </el-button>
         </div>
       </div>
 
-      <div class="save-bar">
-        <el-button type="primary" size="large" :loading="saving" @click="save">
-          Enregistrer les modifications
-        </el-button>
-      </div>
-
-      <div class="info-card">
-        <h2>Résumé</h2>
+      <!-- Vue lecture (par défaut) -->
+      <div v-if="!editMode" class="info-card">
+        <h2>Informations</h2>
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Nom</span>
@@ -459,49 +431,129 @@ onMounted(loadStatus)
             <span class="info-label">Description</span>
             <span class="info-value">{{ clinic.description || 'Aucune description' }}</span>
           </div>
-          <div class="info-item info-item--wide">
-            <span class="info-label">Spécialités</span>
-            <div class="speciality-tags">
-              <el-tag v-for="id in selectedSpecialityIds" :key="id" size="small">
-                {{ specialityOptions.find((s) => s.id === id)?.name }}
-              </el-tag>
-              <span v-if="selectedSpecialityIds.length === 0" class="info-value">
-                Aucune spécialité renseignée
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
-      <!-- Dialog : création d'une nouvelle spécialité -->
-      <el-dialog v-model="newSpecialityDialog" title="Nouvelle spécialité" width="420px">
-        <el-form label-position="top" @submit.prevent="submitNewSpeciality">
-          <el-form-item label="Nom">
-            <el-input v-model="newSpecialityForm.name" placeholder="Ex : Dermatologie" />
-          </el-form-item>
-          <el-form-item label="Description">
-            <el-input
-              v-model="newSpecialityForm.description"
-              type="textarea"
-              :rows="3"
-              placeholder="Décrivez brièvement cette spécialité"
-            />
-          </el-form-item>
-        </el-form>
-        <template #footer>
-          <el-button @click="newSpecialityDialog = false">Annuler</el-button>
-          <el-button type="primary" :loading="newSpecialityLoading" @click="submitNewSpeciality">
-            Créer
+      <!-- Vue édition -->
+      <div v-else>
+        <div class="cards-grid">
+          <div class="form-card">
+            <h2>Identification</h2>
+            <el-form label-position="top">
+              <el-form-item label="Nom de la clinique">
+                <el-input v-model="form.name" placeholder="Clinique Vétérinaire du Parc" />
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div class="form-card">
+            <h2>Contact</h2>
+            <el-form label-position="top">
+              <el-form-item label="Téléphone">
+                <el-input v-model="form.phone" placeholder="01 23 45 67 89" />
+              </el-form-item>
+              <el-form-item label="Site web">
+                <el-input v-model="form.website" placeholder="https://www.maclinique.fr" />
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div class="form-card">
+            <h2>Adresse</h2>
+            <el-form label-position="top">
+              <el-form-item label="Adresse">
+                <el-input v-model="form.address" placeholder="12 rue de la Paix, 75001 Paris" />
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div class="form-card">
+            <h2>Horaires d'ouverture</h2>
+            <el-form label-position="top">
+              <el-form-item label="Horaires">
+                <el-input
+                  v-model="form.openingHours"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="Lundi - Vendredi : 9h00 - 19h00&#10;Samedi : 9h00 - 13h00&#10;Dimanche : Fermé"
+                />
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <div class="form-card form-card--wide">
+            <h2>Description</h2>
+            <el-form label-position="top">
+              <el-form-item label="Présentation de la clinique">
+                <el-input
+                  v-model="form.description"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="Une courte description visible par les clients (spécialités, ambiance, équipements...)"
+                  maxlength="500"
+                  show-word-limit
+                />
+              </el-form-item>
+            </el-form>
+          </div>
+        </div>
+
+        <div class="save-bar">
+          <el-button @click="cancelEdit">Annuler</el-button>
+          <el-button type="primary" :loading="saving" @click="save">
+            Enregistrer les modifications
           </el-button>
-        </template>
-      </el-dialog>
+        </div>
+      </div>
+
+      <!-- Spécialités : indépendantes du mode édition, toujours actives -->
+      <div class="form-card form-card--standalone">
+        <div class="card-header-row">
+          <h2>Spécialités proposées</h2>
+        </div>
+        <el-select
+          v-model="selectedSpecialityIds"
+          multiple
+          filterable
+          remote
+          :remote-method="searchSpecialities"
+          :loading="specialitySearchLoading"
+          placeholder="Rechercher des spécialités..."
+          style="width: 100%; margin-bottom: 16px"
+        >
+          <el-option
+            v-for="spec in specialityOptions"
+            :key="spec.id"
+            :label="spec.name"
+            :value="spec.id"
+          >
+            <div class="speciality-option">
+              <span class="speciality-option__name">{{ spec.name }}</span>
+              <span class="speciality-option__description">{{ spec.description }}</span>
+            </div>
+          </el-option>
+        </el-select>
+
+        <div v-if="selectedSpecialityIds.length > 0" class="speciality-list">
+          <div v-for="id in selectedSpecialityIds" :key="id" class="speciality-list__item">
+            <span class="speciality-list__name">{{
+              specialityOptions.find((s) => s.id === id)?.name
+            }}</span>
+            <span class="speciality-list__description">{{
+              specialityOptions.find((s) => s.id === id)?.description
+            }}</span>
+          </div>
+        </div>
+
+        <el-button type="primary" :loading="specialitySaving" @click="saveSpecialities">
+          Enregistrer les spécialités
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.clinic-page {
-}
 .card {
   background: white;
   border-radius: 12px;
@@ -552,6 +604,8 @@ onMounted(loadStatus)
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 .page-header h1 {
   font-size: 24px;
@@ -563,6 +617,12 @@ onMounted(loadStatus)
   color: #6b7280;
   margin: 0;
   font-size: 14px;
+}
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .cards-grid {
@@ -583,7 +643,7 @@ onMounted(loadStatus)
   padding: 24px;
 }
 .info-card {
-  margin-top: 24px;
+  margin-bottom: 24px;
 }
 .form-card h2,
 .info-card h2 {
@@ -591,6 +651,13 @@ onMounted(loadStatus)
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 16px;
+}
+
+/* Section spécialités : distincte visuellement du reste (bordure + espace
+   marqué), pour bien montrer qu'elle est indépendante du mode édition. */
+.form-card--standalone {
+  margin-top: 24px;
+  border: 1px solid #e5e7eb;
 }
 
 .card-header-row {
@@ -609,9 +676,53 @@ onMounted(loadStatus)
   gap: 6px;
 }
 
+.speciality-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  line-height: 1.3;
+}
+.speciality-option__name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+.speciality-option__description {
+  font-size: 12px;
+  color: #9ca3af;
+  white-space: normal;
+}
+
+.speciality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.speciality-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+.speciality-list__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.speciality-list__description {
+  font-size: 13px;
+  color: #6b7280;
+}
+
 .save-bar {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .info-grid {
@@ -639,7 +750,11 @@ onMounted(loadStatus)
   color: #1a1a1a;
   line-height: 1.6;
 }
-
+:deep(.el-select-dropdown__item) {
+  height: auto;
+  min-height: 34px;
+  padding: 6px 12px;
+}
 @media (max-width: 768px) {
   .cards-grid,
   .info-grid {

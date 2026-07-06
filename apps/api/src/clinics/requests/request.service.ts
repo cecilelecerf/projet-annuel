@@ -1,11 +1,26 @@
-import { BadRequestError, ConflictError } from "@api/errors";
+import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
 import type { CreateClinicRequest } from "@armali/schemas";
 import { ClinicRequestRepository } from "./request.repository";
 
 export class ClinicRequestService {
-  constructor(
-    private readonly repository: ClinicRequestRepository = new ClinicRequestRepository(),
-  ) {}
+  constructor(private readonly repository: ClinicRequestRepository) {}
+
+  private async geocodeAddress(address: string) {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      { headers: { "User-Agent": "Armali/1.0" } },
+    );
+    const results = await res.json();
+    const [result] = results;
+
+    if (!result) {
+      console.warn(`⚠️ Geocoding failed for: "${address}"`);
+      return { lat: 0, lng: 0 };
+    }
+
+    console.log(`✅ ${address} → ${result.lat}, ${result.lon}`);
+    return { lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
+  }
 
   async getClinicStatus(directorUserId: string) {
     const profile = await this.repository.findProfileWithClinic(directorUserId);
@@ -28,18 +43,17 @@ export class ClinicRequestService {
     return { status: "NONE" as const };
   }
 
-  async requestClinic(directorUserId: string, data: CreateClinicRequest) {
-    const profile = await this.repository.findProfile(directorUserId);
-    // Même correction ici : vérifier clinicId, pas juste l'existence du profil.
+  async createRequestClinic(directorUserId: string, data: CreateClinicRequest) {
+    const profile = await this.repository.findProfileWithClinic(directorUserId);
     if (profile?.clinic)
       throw new BadRequestError("Vous avez déjà une clinique approuvée");
 
-    // const pendingRequest =
-    //   await this.repository.findPendingRequestByRequest(directorUserId);
-    // if (pendingRequest)
-    //   throw new ConflictError(
-    //     "Vous avez déjà une demande en attente de validation",
-    //   );
+    const pendingRequest =
+      await this.repository.findPendingRequestByDirector(directorUserId);
+    if (pendingRequest)
+      throw new ConflictError(
+        "Vous avez déjà une demande en attente de validation",
+      );
 
     const existingClinic = await this.repository.findClinicBySiret(data.siret);
     if (existingClinic)
@@ -53,10 +67,45 @@ export class ClinicRequestService {
         "Une demande avec ce numéro SIRET est déjà en attente",
       );
 
-    return this.repository.createRequest(directorUserId, data);
+    const request = await this.repository.createRequest(directorUserId, data);
+    return { status: request.status, request };
   }
 
   async getMyRequests(directorUserId: string) {
-    return this.repository.findRequestsByRequest(directorUserId);
+    return this.repository.findRequestsByDirector(directorUserId);
+  }
+
+  async getClinicRequests() {
+    return this.repository.findAllRequests();
+  }
+
+  async approveClinicRequest(requestId: string) {
+    const request = await this.repository.findRequestById(requestId);
+    if (!request) throw new NotFoundError("Demande");
+    if (request.status !== "PENDING") {
+      throw new BadRequestError("Cette demande a déjà été traitée");
+    }
+
+    const existingClinic = await this.repository.findClinicBySiret(
+      request.siret,
+    );
+    if (existingClinic) {
+      throw new ConflictError(
+        "Une clinique avec ce numéro SIRET existe déjà. Veuillez rejeter cette demande.",
+      );
+    }
+
+    const geo = await this.geocodeAddress(request.address);
+
+    await this.repository.approveRequest(request, geo);
+
+    return { message: "Demande approuvée, clinique créée" };
+  }
+
+  async rejectClinicRequest(requestId: string) {
+    const request = await this.repository.findRequestById(requestId);
+    if (!request) throw new NotFoundError("Demande");
+
+    return this.repository.rejectRequest(requestId);
   }
 }

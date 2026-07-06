@@ -125,6 +125,8 @@ pnpm --filter web dev
 apps/api/
 ├── src/
 │   ├── index.ts              # Point d'entrée Express
+│   ├── app.ts              # Définition des routes et autres
+│   ├── instances.ts              # Définition des controllers, services et repository
 │   ├── features/             # Organisation par feature
 │   │   └── <feature>/
 │   │       ├── <feature>.route.ts       # Définition des routes
@@ -132,8 +134,8 @@ apps/api/
 │   │       ├── <feature>.service.ts     # Logique métier
 │   │       ├── <feature>.repository.ts  # Accès aux données
 │   │       └── __tests__/
-│   │           └── <feature>.router.test.ts
-│   │           └── <feature>.service.test.ts
+│   │           └── <feature>.router.test.ts -> Test toute les route du router de la feature
+│   │           └── <feature>.service.test.ts -> Test tous les service de la feature
 │   └── lib/
 │       └── prisma.ts         # Instance Prisma
 ├── prisma/

@@ -1,14 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ForbiddenError, NotFoundError, ConflictError } from "@api/errors";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+  BadRequestError,
+} from "@api/errors";
 import type { UserId } from "@armali/schemas";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const mockClinicRepository = vi.hoisted(() => ({
+  findAll: vi.fn(),
   findClinicByUserId: vi.fn(),
   findClinicIdByUser: vi.fn(),
   findClientsById: vi.fn(),
   findDirectorProfile: vi.fn(),
+  findClinicById: vi.fn(),
+  countClinicDependencies: vi.fn(),
+  deleteClinicById: vi.fn(),
   update: vi.fn(),
 }));
 
@@ -168,8 +177,6 @@ describe("ClinicService.getClinicIdsByUserId", () => {
 });
 
 // ── updateClinic ──────────────────────────────────────────────────────────────
-// Réécrit : updateClinic passe désormais par getClinicIdsByUserId
-// (donc repository.findClinicIdByUser), plus par findDirectorProfile.
 
 describe("ClinicService.updateClinic", () => {
   it("aucun clinicId trouvé pour l'utilisateur — ForbiddenError", async () => {
@@ -223,5 +230,84 @@ describe("ClinicService.updateClinic", () => {
       name: "Nouveau nom",
     });
     expect(result.name).toBe("Nouveau nom");
+  });
+});
+
+// ── getClinics ─────────────────────────────────────────────────────────────────
+
+describe("ClinicService.getClinics", () => {
+  it("retourne toutes les cliniques", async () => {
+    mockClinicRepository.findAll.mockResolvedValue([
+      makeClinic(),
+      makeClinic({ id: OTHER_CLINIC_ID }),
+    ]);
+
+    const result = await clinicService.getClinics();
+
+    expect(result).toHaveLength(2);
+    expect(mockClinicRepository.findAll).toHaveBeenCalled();
+  });
+});
+
+// ── deleteClinic ───────────────────────────────────────────────────────────────
+
+describe("ClinicService.deleteClinic", () => {
+  it("clinique introuvable — NotFoundError", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(null);
+
+    await expect(clinicService.deleteClinic(CLINIC_ID)).rejects.toThrow(
+      NotFoundError,
+    );
+    expect(mockClinicRepository.countClinicDependencies).not.toHaveBeenCalled();
+    expect(mockClinicRepository.deleteClinicById).not.toHaveBeenCalled();
+  });
+
+  it("clinique avec des commandes en cours — BadRequestError", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(makeClinic());
+    mockClinicRepository.countClinicDependencies.mockResolvedValue({
+      orderCount: 2,
+      meetingCount: 0,
+      appointmentCount: 0,
+      medicalHistoryCount: 0,
+    });
+
+    await expect(clinicService.deleteClinic(CLINIC_ID)).rejects.toThrow(
+      BadRequestError,
+    );
+    expect(mockClinicRepository.deleteClinicById).not.toHaveBeenCalled();
+  });
+
+  it("clinique avec plusieurs types de dépendances — message détaillé", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(makeClinic());
+    mockClinicRepository.countClinicDependencies.mockResolvedValue({
+      orderCount: 1,
+      meetingCount: 3,
+      appointmentCount: 0,
+      medicalHistoryCount: 2,
+    });
+
+    await expect(clinicService.deleteClinic(CLINIC_ID)).rejects.toThrow(
+      /1 commande.*3 réunions internes.*2 entrées d'historique médical/,
+    );
+    expect(mockClinicRepository.deleteClinicById).not.toHaveBeenCalled();
+  });
+
+  it("supprime la clinique sans dépendances", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(makeClinic());
+    mockClinicRepository.countClinicDependencies.mockResolvedValue({
+      orderCount: 0,
+      meetingCount: 0,
+      appointmentCount: 0,
+      medicalHistoryCount: 0,
+    });
+    mockClinicRepository.deleteClinicById.mockResolvedValue(undefined);
+
+    const result = await clinicService.deleteClinic(CLINIC_ID);
+
+    expect(mockClinicRepository.findClinicById).toHaveBeenCalledWith(CLINIC_ID);
+    expect(mockClinicRepository.deleteClinicById).toHaveBeenCalledWith(
+      CLINIC_ID,
+    );
+    expect(result).toEqual({ message: "Clinique supprimée" });
   });
 });

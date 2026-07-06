@@ -1,34 +1,42 @@
 import { Router } from "express";
-import type { Router as RouterType } from "express";
+import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import { createClinicRequestSchema } from "@armali/schemas";
-import { ClinicRequestController } from "./request.controller";
+import { clinicRequestController } from "@api/instances";
 
 const clinicRequestRouter: RouterType = Router();
-const controller = new ClinicRequestController();
+const controller = clinicRequestController;
+clinicRequestRouter.use(authMiddleware);
 
 clinicRequestRouter.get(
-  "/clinic",
-  authMiddleware,
+  "/status",
   roleMiddleware(["DIRECTOR"]),
-  controller.getClinicStatus.bind(controller),
+  controller.getClinicStatus.bind(controller) as RequestHandler,
 );
 
 clinicRequestRouter.post(
-  "/clinics/request",
-  authMiddleware,
+  "/",
   roleMiddleware(["DIRECTOR"]),
   validate(createClinicRequestSchema),
   controller.requestClinic.bind(controller),
 );
 
 clinicRequestRouter.get(
-  "/clinics/requests",
-  authMiddleware,
-  roleMiddleware(["DIRECTOR"]),
-  controller.getMyRequests.bind(controller),
+  "/",
+  roleMiddleware(["DIRECTOR", "ADMIN"]),
+  controller.getRequests.bind(controller) as RequestHandler,
+);
+clinicRequestRouter.get(
+  "/:id/approve",
+  roleMiddleware(["ADMIN"]),
+  controller.approveClinicRequest.bind(controller) as RequestHandler,
 );
 
+clinicRequestRouter.get(
+  "/:id/reject",
+  roleMiddleware(["ADMIN"]),
+  controller.rejectClinicRequest.bind(controller) as RequestHandler,
+);
 export default clinicRequestRouter;

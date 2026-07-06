@@ -3,32 +3,62 @@ import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
-import { updateClinicSchema } from "@armali/schemas";
+import {
+  updateClinicSchema,
+  updateClinicSpecialitiesSchema,
+} from "@armali/schemas";
 import {
   clinicController,
   medicalHistoryController,
+  specialityController,
   staffController,
 } from "@api/instances";
-import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
+import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
-import requestRouter from "@api/directors/director.router";
+import clinicRequestRouter from "./requests/request.router";
 
 const clinicRouter: RouterType = Router();
 const controller = clinicController;
-
 clinicRouter.use(authMiddleware);
-// clinicRouter.use(requireApprovedClinic);
+
+clinicRouter.use("/requests", clinicRequestRouter);
+
+clinicRouter.get(
+  "/",
+  requireApprovedClinic,
+  roleMiddleware(["ADMIN"]),
+  controller.getAllClinics.bind(controller) as RequestHandler,
+);
 
 clinicRouter.get(
   "/me",
-  roleMiddleware(STAFF_ROLES),
+  roleMiddleware(CLINIC_STAFF_ROLES),
   controller.getMyClinic.bind(controller) as RequestHandler,
 );
 clinicRouter.get(
   "/:id/medical-histories",
   requireApprovedClinic,
+  roleMiddleware(CLINIC_STAFF_ROLES),
   medicalHistoryController.getByClinic.bind(
     medicalHistoryController,
+  ) as RequestHandler,
+);
+
+clinicRouter.get(
+  "/:id/specialities",
+  requireApprovedClinic,
+  specialityController.getAllByClinic.bind(
+    specialityController,
+  ) as RequestHandler,
+);
+
+clinicRouter.patch(
+  "/:id/specialities",
+  requireApprovedClinic,
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  validate(updateClinicSpecialitiesSchema),
+  specialityController.linkWithClinic.bind(
+    specialityController,
   ) as RequestHandler,
 );
 
@@ -52,5 +82,12 @@ clinicRouter.patch(
   validate(updateClinicSchema),
   controller.updateClinic.bind(controller) as RequestHandler,
 );
-clinicRouter.use(requestRouter);
+
+clinicRouter.delete(
+  "/:id",
+  requireApprovedClinic,
+  roleMiddleware(["ADMIN", "DIRECTOR"]),
+  controller.deleteClinic.bind(controller) as RequestHandler,
+);
+
 export default clinicRouter;

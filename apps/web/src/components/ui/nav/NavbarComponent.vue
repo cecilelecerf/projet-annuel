@@ -69,11 +69,17 @@ const handleLogout = async () => {
             <el-dropdown-item v-if="unreadConversations.length === 0" disabled>
               Aucune nouvelle notification
             </el-dropdown-item>
+            <!-- Passer toutes les items (sotcks+conversations), boucler dessus -->
             <el-dropdown-item
               v-for="conversation in unreadConversations"
               :key="conversation.id"
               @click="goToConversation(conversation.id)"
             >
+              <!-- En fonction du type -->
+              <!-- <ItemMessageNotif/>-->
+              <!-- <ItemStockNotif/>-->
+              <!-- Avec la possiblité de rajouter d'autr item notif au besoin
+                -->
               <div class="navbar__notif-item">
                 <div class="navbar__notif-top">
                   <strong>{{ conversationTitle(conversation) }}</strong>

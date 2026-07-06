@@ -4,24 +4,15 @@ import {
   clientProfileSchema,
   clinicGuardRequest,
   clinicSchema,
-  staffMemberSchema,
   type ClinicId,
+  type ClinicRequestId,
+  type CreateClinicRequest,
   type UpdateClinic,
-  type UserRole,
 } from '@armali/schemas'
 
 export const clinicApi = {
   getMine: async () => {
     return await http.get('/clinics/me').then((data) => clinicSchema.array().parse(data))
-  },
-
-  staffByClinic: async ({ roles, clinicId }: { roles?: UserRole[]; clinicId: ClinicId }) => {
-    const params = new URLSearchParams()
-    if (roles) roles.forEach((role) => params.append('roles', role))
-
-    return await http
-      .get(`/clinics/${clinicId}/staffs?${params}`)
-      .then((data) => staffMemberSchema.array().parse(data))
   },
 
   getClients: async ({ clinicId }: { clinicId: ClinicId }) => {
@@ -33,7 +24,36 @@ export const clinicApi = {
   update: async ({ payload }: { payload: UpdateClinic }) => {
     return await http.patch('/clinics', payload).then((data) => clinicSchema.parse(data))
   },
-  guard: async () => {
-    return await http.get('/director/clinic').then((data) => clinicGuardRequest.parse(data))
+
+  // Director and admin
+  remove: async () => {
+    await http.delete('/clinics')
+  },
+
+  // Admin
+  getAll: async () => {
+    return await http.get('/clinics').then((data) => clinicSchema.array().parse(data))
+  },
+
+  request: {
+    // Director status
+    status: async () => {
+      return await http
+        .get('/clinics/requests/status')
+        .then((data) => clinicGuardRequest.parse(data))
+    },
+    create: async ({ payload }: { payload: CreateClinicRequest }) => {
+      return await http.post('/clinics/requests', payload).then()
+    },
+
+    getAll: async () => {
+      return await http.get('/clinics/requests').then((data) => clinicSchema.array().parse(data))
+    },
+    approve: async ({ id }: { id: ClinicRequestId }) => {
+      return await http.get(`/clinics/requests/${id}/approve`)
+    },
+    reject: async ({ id }: { id: ClinicRequestId }) => {
+      return await http.get(`/clinics/requests/${id}/reject`)
+    },
   },
 }

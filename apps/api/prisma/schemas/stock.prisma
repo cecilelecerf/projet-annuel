@@ -11,6 +11,7 @@ model Product {
   brandId        String
   brand          Brand           @relation(fields: [brandId], references: [id])
   clinicProducts ClinicProduct[]
+  productRequest ProductRequest?
 
   Food Food?
 
@@ -51,6 +52,7 @@ model Brand {
   logo      String?
 
   product Product[]
+  productRequests ProductRequest[]
 
   @@map("brands")
 }
@@ -137,4 +139,42 @@ model OrderItem {
   order   Order  @relation(fields: [orderId], references: [id])
 
   @@map("order_items")
+}
+
+enum ProductRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ProductRequest {
+  id        String               @id @default(uuid())
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @default(now()) @updatedAt
+  status    ProductRequestStatus @default(PENDING)
+
+  name        String
+  description String?
+  picture     String?
+  websiteUrl  String?
+
+  brandId      String?
+  brand        Brand?  @relation(fields: [brandId], references: [id])
+  newBrandName String?
+
+  rejectionReason String?
+
+  createdProductId String?  @unique
+  createdProduct    Product? @relation(fields: [createdProductId], references: [id])
+
+  requestedById String
+  requestedBy   User   @relation("ProductRequestsMade", fields: [requestedById], references: [id], onDelete: Cascade)
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  reviewedById String?
+  reviewedBy   User?   @relation("ProductRequestsReviewed", fields: [reviewedById], references: [id])
+
+  @@map("product_requests")
 }

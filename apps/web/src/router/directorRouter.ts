@@ -47,26 +47,11 @@ export const directorRouter: RouteRecordRaw[] = [
         name: 'DIRECTOR.Clinic',
         component: () => import('@/features/users/views/director/ClinicView.vue'),
       },
-      // ── Administration & Configuration ────────────────────────
-      // {
-      //   path: 'administration',
-      //   name: 'DIRECTOR.Administration',
-      //   //        component: () => import('@/views/directeur/administration/Administration.vue'),
-      //   children: [
-      //     {
-      //       path: 'etablissement',
-      //       name: 'DIRECTOR.Admin.Etablissement',
-      //       //            component: () => import('@/views/directeur/administration/GestionEtablissement.vue'),
-      //       // Demandes de création d'une clinique, Modification de ses établissements
-      //     },
-      //     {
-      //       path: 'personnel',
-      //       name: 'DIRECTOR.Admin.Personnel',
-      //       //            component: () => import('@/views/directeur/administration/GestionPersonnel.vue'),
-      //       // CRUD des référents cliniques, CRUD des vétérinaires, CRUD des secrétaires
-      //     },
-      //   ],
-      // },
+      {
+        path: 'shop',
+        name: 'DIRECTOR.Boutique',
+        component: () => import('@/features/products/views/ShopView.vue'),
+      },
       // ── Messagerie ────────────────────────────────────────────
       {
         path: 'messagerie',

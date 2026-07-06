@@ -38,6 +38,7 @@ import { VeterinarianClinicRepository } from "./clinics/veterinarian-clinics/vet
 import { ProductRepository } from "./products/product.repository";
 import { ProductClinicRepository } from "./products/product-clinic.repository";
 import { BrandRepository } from "./brands/brand.repository";
+import { ProductRequestRepository } from "./product-requests/product-request.repository";
 
 // ── Clinic ──────────────────────────────────────
 import { SpecialityRepository } from "./specialities/speciality.repository";
@@ -77,6 +78,7 @@ import { SpecialityService } from "./specialities/speciality.service";
 import { BookingService } from "./bookings/booking.service";
 import { MessagingService } from "./messaging/messaging.service";
 import { StaffService } from "./staffs/staff.service";
+import { ProductRequestService } from "./product-requests/product-request.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -107,6 +109,7 @@ import { ClinicRepository } from "./clinics/clinic.repository";
 import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
 import { StaffController } from "./staffs/staff.controller";
+import { ProductRequestController } from "./product-requests/product-request.controller";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -132,6 +135,7 @@ const veterinarianClinicRepository = new VeterinarianClinicRepository(prisma);
 const productRepository = new ProductRepository(prisma);
 const productClinicRepository = new ProductClinicRepository(prisma);
 const brandRepository = new BrandRepository(prisma);
+const productRequestRepository = new ProductRequestRepository(prisma);
 const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
@@ -222,6 +226,12 @@ const messaginService = new MessagingService(
   contactsRepository,
 );
 
+const productRequestService = new ProductRequestService(
+  productRequestRepository,
+  productRepository,
+  brandRepository,
+);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -268,3 +278,4 @@ export const productController = new ProductController(productService);
 export const brandController = new BrandController(brandService);
 export const messagingController = new MessagingController(messaginService);
 export const staffController = new StaffController(staffService);
+export const productRequestController = new ProductRequestController(productRequestService);

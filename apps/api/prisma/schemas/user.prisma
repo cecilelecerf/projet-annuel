@@ -36,6 +36,8 @@ model User {
   meticalVisites              MedicalVisit[]
   availabilities              Availability[]
   adminInternalMeetings       InternalMeeting[]
+  productRequestsMade     ProductRequest[] @relation("ProductRequestsMade")
+  productRequestsReviewed ProductRequest[] @relation("ProductRequestsReviewed")
 
   @@index([email])
   @@index([role])

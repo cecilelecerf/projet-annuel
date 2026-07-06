@@ -23,6 +23,7 @@ export const foodIdSchema = z.uuid().brand("FoodId");
 export const productClinicIdSchema = z.uuid().brand("ProductClinicId");
 export const reviewIdSchema = z.uuid().brand("ReviewId");
 export const petFoodIdSchema = z.number().int().brand("PetFoodId");
+export const productRequestIdSchema = z.uuid().brand("ProductRequestId");
 export const clientPetHealthConditionIdSchema = z
   .uuid()
   .brand("ClientPetHealthConditionId");
@@ -99,3 +100,4 @@ export type AnalysisId = z.infer<typeof analysisIdSchema>;
 export type SurgeryId = z.infer<typeof surgeryIdSchema>;
 export type ClinicProductId = z.infer<typeof clinicProductIdSchema>;
 export type MeetingRecurringId = z.infer<typeof meetingRecurringIdSchema>;
+export type ProductRequestId = z.infer<typeof productRequestIdSchema>;

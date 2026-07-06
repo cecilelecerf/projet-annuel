@@ -7,10 +7,10 @@ import { productController } from "@api/instances";
 const productRouter: Router = Router();
 const controller = productController;
 
+const CATALOG_MANAGER_ROLES = ["ADMIN"] as const;
 const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
 
-// ── Products (catalogue global) ─────────────────────────────────────────────
-
+// ── Products (catalogue global) : lecture ouverte, écriture admin-only ─────
 productRouter.get(
   "/",
   authMiddleware,
@@ -28,25 +28,25 @@ productRouter.get(
 productRouter.post(
   "/",
   authMiddleware,
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware([...CATALOG_MANAGER_ROLES]),
   controller.create.bind(controller) as RequestHandler,
 );
 
 productRouter.patch(
   "/:id",
   authMiddleware,
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware([...CATALOG_MANAGER_ROLES]),
   controller.update.bind(controller) as RequestHandler,
 );
 
 productRouter.delete(
   "/:id",
   authMiddleware,
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware([...CATALOG_MANAGER_ROLES]),
   controller.delete.bind(controller) as RequestHandler,
 );
 
-// ── ClinicProducts (stock par clinique) ──────────────────────────────────────
+// ── ClinicProducts (stock par clinique) : référent/directeur conservent la main ──
 
 productRouter.get(
   "/clinic-products/:clinicId",

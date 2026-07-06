@@ -9,6 +9,7 @@ import {
   OfficeBuilding,
   Calendar,
   ChatDotRound,
+  ShoppingCart,
 } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
@@ -36,6 +37,11 @@ const menuItems: MenuItem[] = [
     index: 'DIRECTOR.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
+  },
+  {
+    index: 'DIRECTOR.Boutique',
+    label: 'Boutique',
+    icon: ShoppingCart,
   },
   {
     index: 'DIRECTOR.Profil',

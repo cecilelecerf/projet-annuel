@@ -7,8 +7,9 @@ import { brandController } from "@api/instances";
 const brandRouter: Router = Router();
 const controller = brandController;
 
-const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
+const CATALOG_MANAGER_ROLES = ["ADMIN"] as const;
 
+// GET /brands?search=xxx — recherche ouverte à tout le staff (utile pour les demandes)
 brandRouter.get(
   "/",
   authMiddleware,
@@ -26,21 +27,21 @@ brandRouter.get(
 brandRouter.post(
   "/",
   authMiddleware,
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware([...CATALOG_MANAGER_ROLES]),
   controller.create.bind(controller) as RequestHandler,
 );
 
 brandRouter.patch(
   "/:id",
   authMiddleware,
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware([...CATALOG_MANAGER_ROLES]),
   controller.update.bind(controller) as RequestHandler,
 );
 
 brandRouter.delete(
   "/:id",
   authMiddleware,
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware([...CATALOG_MANAGER_ROLES]),
   controller.delete.bind(controller) as RequestHandler,
 );
 

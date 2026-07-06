@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { CreateMedicalHistory, MedicalHistory, MeetingId } from '@armali/schemas'
+import type { ClinicId, CreateMedicalHistory, MedicalHistory, MeetingId } from '@armali/schemas'
 import { ref, computed, watch } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
 import { medicalHistoriesApi } from '../api'
 
-const { meetingId, act } = defineProps<{
+const { meetingId, act, clinicId } = defineProps<{
   modelValue: boolean
   meetingId: MeetingId
+  clinicId?: ClinicId
   act?: MedicalHistory | null
 }>()
 const emit = defineEmits<{
@@ -14,10 +14,11 @@ const emit = defineEmits<{
   saved: []
 }>()
 
-const { user } = useAuthStore()
 const loading = ref(false)
 
-const clinicActs = await medicalHistoriesApi.getByClinic(user!.clinicId!)
+const clinicActs = clinicId
+  ? await medicalHistoriesApi.getByClinic(clinicId)
+  : await medicalHistoriesApi.getAll()
 
 const defaultForm = (): Partial<CreateMedicalHistory> => ({
   meetingId,

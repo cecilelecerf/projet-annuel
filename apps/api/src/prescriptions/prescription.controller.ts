@@ -14,14 +14,12 @@ export class PrescriptionController {
   constructor(private service: PrescriptionService) {}
 
   async getByMeeting(
-    req: RequestWithParams<{ meetingId: MeetingId }>,
+    req: RequestWithParams<{ id: MeetingId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const prescriptions = await this.service.getByMeeting(
-        req.params.meetingId,
-      );
+      const prescriptions = await this.service.getByMeeting(req.params.id);
       res.status(200).json(prescriptions);
     } catch (err) {
       next(err);

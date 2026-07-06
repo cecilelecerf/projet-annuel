@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { User, Check, Close, Edit } from '@element-plus/icons-vue'
 import type { InternalMeetingMeta } from '@armali/schemas'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import ModalScope from './ModalScope.vue'
 
@@ -45,7 +45,7 @@ async function respond(status: 'ACCEPTED' | 'DECLINED') {
 
   responding.value = true
   try {
-    await calendarApi.internal.participantUpdate(meeting.id, { status, scope: 'single' })
+    await meetingApi.internal.participantUpdate(meeting.id, { status, scope: 'single' })
     emit('updated')
   } finally {
     responding.value = false
@@ -57,7 +57,7 @@ async function confirmScope(scope: 'single' | 'all') {
 
   responding.value = true
   try {
-    await calendarApi.internal.participantUpdate(meeting.id, {
+    await meetingApi.internal.participantUpdate(meeting.id, {
       status: pendingStatus.value,
       scope,
       date: scope === 'single' ? meeting.date : undefined,
@@ -134,7 +134,7 @@ async function confirmScope(scope: 'single' | 'all') {
   <ModalScope v-model="showScopeDialog" @on-confirm="confirmScope" />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .section {
   display: flex;
   flex-direction: column;
@@ -203,8 +203,8 @@ async function confirmScope(scope: 'single' | 'all') {
 }
 
 .participant-avatar {
-  background: var(--el-color-purple-light-7);
-  color: var(--el-color-purple);
+  background: var(--el-color-#{meeting-color('internal')}-light-7);
+  color: var(--el-color-#{meeting-color('internal')});
   font-size: 14px;
   font-weight: var(--fw-bold);
   flex-shrink: 0;

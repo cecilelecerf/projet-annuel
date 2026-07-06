@@ -1,141 +1,101 @@
-import { prisma } from "@api/lib/prisma";
-import { UpdateClinic } from "@armali/schemas";
-import { BadRequestError, NotFoundError } from "@api/errors";
+import {
+  ClinicId,
+  clinicIdSchema,
+  UpdateClinic,
+  UserId,
+} from "@armali/schemas";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
+import { ClinicRepository } from "./clinic.repository";
+import { UserRole } from "../../prisma/generated/prisma/enums";
+import { STAFF_ROLES } from "@api/utils";
+import { Clinic } from "../../prisma/generated/prisma/client";
 
 export class ClinicService {
-  async getMyClinic(userId: string) {
-    const director = await prisma.directorClinicProfile.findUnique({
-      where: { id: userId },
-      include: { clinic: true },
-    });
-    if (director) return director.clinic;
+  constructor(private repository: ClinicRepository) {}
 
-    const referent = await prisma.referentClinicProfile.findUnique({
-      where: { id: userId },
-      include: { clinic: true },
-    });
-    if (referent) return referent.clinic;
-
-    const vetClinic = await prisma.veterinarianClinic.findFirst({
-      where: { veterinarianId: userId },
-      include: { clinic: true },
-    });
-    if (vetClinic) return vetClinic.clinic;
-
-    const secretary = await prisma.secretaryProfile.findUnique({
-      where: { id: userId },
-      include: { clinic: true },
-    });
-    if (secretary) return secretary.clinic;
-
-    throw new NotFoundError("Clinique");
+  async getClinicByUser(userId: string): Promise<Clinic[]> {
+    const clinics = await this.repository.findClinicByUserId(userId);
+    if (!clinics) throw new NotFoundError("Clinique");
+    return clinics;
   }
 
-  async getClinicStaff(userId: string, role: string) {
-    let clinicId: string | null = null;
-
-    if (role === "VETERINARIAN") {
-      const vc = await prisma.veterinarianClinic.findFirst({
-        where: { veterinarianId: userId },
-      });
-      clinicId = vc?.clinicId ?? null;
-    } else if (role === "SECRETARY") {
-      const sp = await prisma.secretaryProfile.findUnique({
-        where: { id: userId },
-      });
-      clinicId = sp?.clinicId ?? null;
-    } else if (role === "DIRECTOR") {
-      const dp = await prisma.directorClinicProfile.findUnique({
-        where: { id: userId },
-      });
-      clinicId = dp?.clinicId ?? null;
-    } else if (role === "REFERANT") {
-      const rp = await prisma.referentClinicProfile.findUnique({
-        where: { id: userId },
-      });
-      clinicId = rp?.clinicId ?? null;
+  async getClientsByClinic({
+    clinicId,
+    authorId,
+    role,
+  }: {
+    clinicId: ClinicId;
+    authorId: UserId;
+    role: UserRole;
+  }) {
+    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
+    const clinics = await this.getClinicByUser(authorId);
+    if (!clinics.some(({ id }) => id === clinicId)) {
+      throw new ForbiddenError();
     }
-
-    if (!clinicId) throw new NotFoundError("Clinique");
-
-    const [directorProfile, referents, vets, secretaries] = await Promise.all([
-      prisma.directorClinicProfile.findFirst({
-        where: { clinicId },
-        include: {
-          user: {
-            select: { id: true, firstname: true, lastname: true, email: true },
-          },
-        },
-      }),
-      prisma.referentClinicProfile.findMany({
-        where: { clinicId },
-        include: {
-          user: {
-            select: { id: true, firstname: true, lastname: true, email: true },
-          },
-        },
-      }),
-      prisma.veterinarianClinic.findMany({
-        where: { clinicId },
-        include: {
-          veterinarian: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.secretaryProfile.findMany({
-        where: { clinicId },
-        include: {
-          user: {
-            select: { id: true, firstname: true, lastname: true, email: true },
-          },
-        },
-      }),
-    ]);
-
-    return {
-      director: directorProfile
-        ? { ...directorProfile.user, role: "DIRECTOR" as const }
-        : null,
-      referents: referents.map((r) => ({
-        ...r.user,
-        role: "REFERANT" as const,
-      })),
-      veterinarians: vets.map((v) => ({
-        ...v.veterinarian.user,
-        role: "VETERINARIAN" as const,
-        licenseNumber: v.veterinarian.licenseNumber,
-      })),
-      secretaries: secretaries.map((s) => ({
-        ...s.user,
-        role: "SECRETARY" as const,
-      })),
-    };
+    const clinicWithClients = await this.repository.findClientsById(clinicId);
+    if (!clinicWithClients) throw new NotFoundError("Clients");
+    const clients = clinicWithClients.veterinarianClinics.flatMap(
+      ({ veterinarian }) =>
+        veterinarian.animals.flatMap((animal) => animal.client.user),
+    );
+    return clients;
   }
 
-  async updateClinic(userId: string, data: UpdateClinic) {
-    const profile = await prisma.directorClinicProfile.findUnique({
-      where: { id: userId },
+  // ── Staff d'une clinique, filtré par rôle cible ─────────────────────────────
+  async getStaffByClinicRole({
+    role,
+    clinicId,
+    targetRoles,
+    authorId,
+  }: {
+    clinicId: ClinicId;
+    authorId: UserId;
+    role: UserRole;
+    targetRoles?: UserRole[];
+  }) {
+    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
+
+    const clinics = await this.getClinicByUser(authorId);
+    if (!clinics.some(({ id }) => id === clinicId)) {
+      throw new ForbiddenError();
+    }
+    const clinicStaff = await this.repository.findStaff(clinicId);
+    if (!clinicStaff) throw new NotFoundError("Clinique");
+    if (!clinicStaff.director) throw new NotFoundError("Director clinique");
+
+    // Aucun filtre → tous les rôles inclus
+    const wantsRole = (r: UserRole) => !targetRoles || targetRoles.includes(r);
+
+    const staffs = [
+      ...(wantsRole("DIRECTOR") ? [clinicStaff.director] : []),
+      ...(wantsRole("REFERANT") ? clinicStaff.referents : []),
+      ...(wantsRole("SECRETARY") ? clinicStaff.secretaries : []),
+      ...(wantsRole("VETERINARIAN") ? clinicStaff.veterinarians : []),
+    ];
+
+    return staffs;
+  }
+  async getClinicIdsByUserId({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<ClinicId[]> {
+    const clinicIds = await this.repository.findClinicIdByUser({
+      userId,
+      role,
     });
+    if (!clinicIds) throw new ForbiddenError();
+    return clinicIdSchema.array().parse(clinicIds);
+  }
+  async updateClinic(userId: string, data: UpdateClinic) {
+    const profile = await this.repository.findDirectorProfile(userId);
     if (!profile)
       throw new BadRequestError(
         "Aucune clinique associée à ce compte directeur",
       );
-
-    const clinic = await prisma.clinic.update({
-      where: { id: profile.clinicId },
-      data,
-    });
-
-    return clinic;
+    return this.repository.update(profile.clinicId, data);
   }
 }

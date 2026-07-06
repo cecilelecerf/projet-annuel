@@ -11,7 +11,6 @@ import {
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { ForbiddenError } from "@api/errors";
 import { flatUser } from "@api/users/user.utils";
 
 export class AnimalMeetingController {
@@ -23,10 +22,8 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      if (!req.user.clinicId) throw new ForbiddenError();
       const meeting = await this.service.create({
         data: req.body,
-        clinicId: req.user.clinicId,
       });
       res.status(201).json(meeting);
     } catch (err) {
@@ -105,9 +102,11 @@ export class AnimalMeetingController {
               ...meeting.animal,
               client: flatUser(meeting.animal.client),
             },
-            veterinarianClinic: {
+            veterinarianClinics: {
               ...meeting.veterinarianClinic,
-              veterinarian: flatUser(meeting.veterinarianClinic.veterinarian),
+              veterinarian: meeting.veterinarianClinic
+                ? flatUser(meeting.veterinarianClinic?.veterinarian)
+                : undefined,
             },
           })),
         ),

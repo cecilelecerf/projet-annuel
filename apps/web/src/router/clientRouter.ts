@@ -18,6 +18,11 @@ export const clientRouter: RouteRecordRaw[] = [
         component: () => import('@/features/users/views/client/ProfilView.vue'),
       },
       {
+        path: 'booking',
+        name: 'CLIENT.Booking',
+        component: () => import('@/features/meetings/views/BookingView.vue'),
+      },
+      {
         path: 'veterinaires',
         name: 'CLIENT.Reviews',
         component: () => import('@/features/users/views/client/Reviews.vue'),
@@ -53,7 +58,7 @@ export const clientRouter: RouteRecordRaw[] = [
       {
         path: 'meetings',
         name: 'CLIENT.Meetings',
-        component: () => import('@/features/meetings/views/Client/ListMeetingView.vue'),
+        component: () => import('@/features/meetings/views/ListAnimalMeetingView.vue'),
       },
       {
         path: 'meetings/:id',

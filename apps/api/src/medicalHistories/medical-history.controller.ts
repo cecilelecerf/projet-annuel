@@ -14,18 +14,29 @@ export class AnimalMedicalHistoryController {
   constructor(private service: AnimalMedicalHistoryService) {}
 
   async getByMeeting(
-    req: RequestWithParams<{ meetingId: MeetingId }>,
+    req: RequestWithParams<{ id: MeetingId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const acts = await this.service.getByMeeting(req.params.meetingId);
+      const acts = await this.service.getByMeeting(req.params.id);
       res.status(200).json(acts);
     } catch (err) {
       next(err);
     }
   }
-
+  async getByClinic(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const acts = await this.service.getByClinic(req.params.id);
+      res.status(200).json(acts);
+    } catch (err) {
+      next(err);
+    }
+  }
   async getById(
     req: RequestWithParams<{ id: string }>,
     res: Response,

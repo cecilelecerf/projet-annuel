@@ -42,15 +42,15 @@ const title = defineModel<string>('title', { default: '' })
 }
 
 .kind-badge.internal {
-  background: var(--el-color-purple-light-9);
-  color: var(--el-color-purple);
-  border: 1px solid var(--el-color-purple-light-5);
+  background: var(--el-color-#{meeting-color('internal')}-light-9);
+  color: var(--el-color-#{meeting-color('internal')});
+  border: 1px solid var(--el-color-#{meeting-color('internal')}-light-5);
 }
 
 .meeting-title {
   font-size: 28px;
   font-weight: var(--fw-bold);
-  color: var(--el-color-purple-dark-3);
+  color: var(--el-color-#{meeting-color('internal')}-dark-3);
   margin: 0;
 }
 

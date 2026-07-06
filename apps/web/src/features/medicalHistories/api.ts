@@ -9,8 +9,12 @@ import {
 } from '@armali/schemas'
 
 export const medicalHistoriesApi = {
+  getAll: async () => {
+    const data = await http.get(`/medical-histories`)
+    return clinicActSchema.array().parse(data)
+  },
   getByClinic: async (clinicId: ClinicId) => {
-    const data = await http.get(`/acts/clinic/${clinicId}`)
+    const data = await http.get(`/clinics/${clinicId}/medical-histories`)
     return clinicActSchema.array().parse(data)
   },
   getByMeeting: async (meetingId: MeetingId) => {

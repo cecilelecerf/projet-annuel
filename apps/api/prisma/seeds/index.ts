@@ -37,23 +37,30 @@ async function main() {
 
   console.log("🌱 Seeding database...");
 
-  const { clinic1, clinic2 } = await seedClinics(prisma);
-  const users = await seedUsers(prisma, [clinic1, clinic2]);
+  const specialities = await seedSpecialities(prisma);
+  const pets = await seedPets(prisma);
+
+  const clinics = await seedClinics(prisma, {
+    specialities,
+    pets,
+  });
+  const users = await seedUsers(prisma, {
+    clinics,
+    specialities,
+    pets,
+  });
   await seedMedicalVisits(prisma, { users });
   await seedBankingInfo(prisma, { users });
-  const pets = await seedPets(prisma);
-  const specialities = await seedSpecialities(prisma);
   const vetoClinic = await seedVeterinarianClinics(prisma, {
     users,
-    clinic1,
-    clinic2,
+    clinics,
   });
   const healthConditions = await seedHealthConditions(prisma, {
     petDog: pets.petDog,
   });
   const meetings = await seedMeetings(prisma, {
     users,
-    clinic1,
+    clinics,
     veterinarianClinics: vetoClinic,
     specialities,
     healthConditions,
@@ -62,17 +69,15 @@ async function main() {
   await seedActs(prisma, {
     petCat: pets.petCat,
     petDog: pets.petDog,
-    clinic1,
-    clinic2,
+    clinics,
     meetings,
   });
   const products = await seedProducts(prisma, {
-    clinic1,
-    clinic2,
+    clinics,
     healthConditions,
   });
   await seedPrescriptions(prisma, { meetings, products, users });
-  await seedOrders(prisma, { users, clinic1 });
+  await seedOrders(prisma, { users, clinics });
   await seedMessaging(prisma, { users });
 
   console.log("✅ Seed terminé avec succès !");

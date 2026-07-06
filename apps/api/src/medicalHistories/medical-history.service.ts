@@ -171,4 +171,9 @@ export class AnimalMedicalHistoryService {
     if (!acts) throw new NotFoundError("acts historys");
     return acts;
   }
+  async getByClinic(clinicId: string) {
+    const acts = await this.repository.findByMeeting(clinicId);
+    if (!acts) throw new NotFoundError("acts historys");
+    return acts;
+  }
 }

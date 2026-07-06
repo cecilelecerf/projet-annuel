@@ -11,7 +11,21 @@ const { date } = defineProps<{
 
 const startTime = defineModel<string>('startTime', { required: true })
 const endTime = defineModel<string>('endTime', { required: true })
-const isPast = computed(() => dayjs(date).isBefore(dayjs()))
+
+// Capturé une seule fois à la création du composant, avant toute édition —
+// sert de référence fixe pour savoir si le RDV a réellement déjà commencé,
+// indépendamment de ce que l'utilisateur tape ensuite dans le time-picker
+const initialStartTime = startTime.value
+
+const isPast = computed(() => {
+  if (!initialStartTime) return false
+  const [hoursStr, minutesStr] = initialStartTime.split(':')
+  const hours = Number(hoursStr ?? 0)
+  const minutes = Number(minutesStr ?? 0)
+  const meetingDateTime = dayjs(date).hour(hours).minute(minutes).second(0).millisecond(0)
+  return meetingDateTime.isBefore(dayjs())
+})
+
 const dateLabel = computed(() => dayjs(date).format('dddd D MMMM YYYY'))
 const canEditSchedule = computed(() => !isPast.value)
 </script>
@@ -28,9 +42,21 @@ const canEditSchedule = computed(() => !isPast.value)
       <span class="info-value">{{ timeLabel }}</span>
     </div>
     <div v-else class="edit-time-row">
-      <el-time-picker v-model="startTime" format="HH:mm" placeholder="Début" size="large" />
+      <el-time-picker
+        v-model="startTime"
+        format="HH:mm"
+        placeholder="Début"
+        size="large"
+        value-format="HH:mm:ss"
+      />
       <span class="time-arrow">→</span>
-      <el-time-picker v-model="endTime" format="HH:mm" placeholder="Fin" size="large" />
+      <el-time-picker
+        v-model="endTime"
+        format="HH:mm"
+        placeholder="Fin"
+        size="large"
+        value-format="HH:mm:ss"
+      />
     </div>
   </div>
 </template>

@@ -5,7 +5,8 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Edit, RefreshRight, InfoFilled, Calendar } from '@element-plus/icons-vue'
 import { type MeetingRecurring, type MeetingRecurringId } from '@armali/schemas'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api'
+import { MEETING_COLORS } from '@/utils/meetingColor'
 
 const props = defineProps<{
   recurringId: MeetingRecurringId
@@ -44,7 +45,7 @@ async function fetchMeeting() {
   loading.value = true
   error.value = false
   try {
-    meeting.value = await calendarApi.recurring.get(props.recurringId)
+    meeting.value = await meetingApi.recurring.get(props.recurringId)
   } catch {
     error.value = true
   } finally {
@@ -75,7 +76,7 @@ async function save() {
 
   saving.value = true
   try {
-    await calendarApi.recurring.update(props.recurringId, {
+    await meetingApi.recurring.update(props.recurringId, {
       dateToStartAction: props.date,
       dayOfWeek: form.dayOfWeek,
       dateStart: form.dateRange[0] ? new Date(form.dateRange[0]) : undefined,
@@ -97,7 +98,7 @@ async function save() {
     <header class="card-header">
       <div class="header-title">
         <span class="icon-badge"
-          ><el-icon color="purple"><RefreshRight /></el-icon
+          ><el-icon :color="MEETING_COLORS.INTERNAL"><RefreshRight /></el-icon
         ></span>
         <h3>Récurrence</h3>
       </div>
@@ -188,7 +189,7 @@ async function save() {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .recurring-card {
   display: flex;
   flex-direction: column;
@@ -225,8 +226,8 @@ async function save() {
   width: 30px;
   height: 30px;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--el-color-purple) 12%, transparent);
-  color: var(--el-color-purple);
+  background: color-mix(in srgb, var(--el-color-#{meeting-color('internal')}) 12%, transparent);
+  color: var(--el-color-#{meeting-color('internal')});
   font-size: 15px;
 }
 
@@ -264,7 +265,7 @@ async function save() {
 }
 
 .day-chip.active {
-  background: var(--el-color-purple);
+  background: var(--el-color-#{meeting-color('internal')});
   color: white;
 }
 

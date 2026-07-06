@@ -95,8 +95,8 @@ const petAge = computed(() => {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--el-color-success-light-7);
-  color: var(--el-color-success);
+  background: var(--el-color-primary-light-7);
+  color: var(--el-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;

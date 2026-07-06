@@ -51,7 +51,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'users/:id',
         name: 'SECRETARY.Clients.Detail',
-        component: () => import('@/features/users/views/client/UserView.vue'),
+        component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
         path: 'animals/:id',

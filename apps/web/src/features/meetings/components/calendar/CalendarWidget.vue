@@ -4,20 +4,21 @@ import DateDrawer from './DateDrawer.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
-import type { MeetingId, UserId } from '@armali/schemas'
-import { calendarApi } from '../../api/calendar.api.ts'
-import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
+import type { UserId } from '@armali/schemas'
 import BaseComponent from '../NewEventDrawer/BaseComponent.vue'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
-const router = useRouter()
-const { calendarOptions, dateSelect, openNewEvent, selectedMeeting } = useCalendar(userId)
+const {
+  calendarOptions,
+  dateSelect,
+  openNewEvent,
+  selectedMeeting,
+  availableClinics,
+  selectedClinicIds,
+} = useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
-const showDeleteDialog = ref(false)
-const deleting = ref(false)
 const isDateDrawerOpen = computed({
   get: () => dateSelect.value !== null,
   set: (val) => {
@@ -29,27 +30,22 @@ const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
 }
-const onDelete = async () => {
-  if (!selectedMeeting.value) return
-  deleting.value = true
-  try {
-    await calendarApi.delete(
-      selectedMeeting.value?.id as MeetingId,
-      selectedMeeting.value?.date.toISOString(),
-    )
-    ElMessage.success('Rendez-vous supprimé')
-    showDeleteDialog.value = false
-    router.back()
-  } catch {
-    ElMessage.error('Erreur lors de la suppression')
-  } finally {
-    deleting.value = false
-  }
-}
 </script>
 
 <template>
   <div class="calendar-container">
+    <div v-if="availableClinics.length > 1" class="clinic-filter">
+      <el-select
+        v-model="selectedClinicIds"
+        multiple
+        collapse-tags
+        placeholder="Toutes les cliniques"
+        clearable
+        style="width: 280px"
+      >
+        <el-option v-for="c in availableClinics" :key="c.id" :label="c.name" :value="c.id" />
+      </el-select>
+    </div>
     <FullCalendar :options="calendarOptions"> </FullCalendar>
   </div>
 
@@ -66,8 +62,9 @@ const onDelete = async () => {
         }
       "
       @on-click-event="
-        (id, date) => {
-          selectedMeeting = { id, date: new Date(date) }
+        (id, date, kind) => {
+          if (kind === 'AVAILABILITY') return
+          selectedMeeting = { id, date: new Date(date), kind }
         }
       "
     />
@@ -77,7 +74,7 @@ const onDelete = async () => {
     v-model="openNewEvent"
     direction="rtl"
     :with-header="false"
-    size="420px"
+    size="520px"
     @close="onNewEventDrawerClose"
   >
     <BaseComponent
@@ -91,18 +88,10 @@ const onDelete = async () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
-    @delete="showDeleteDialog = true"
-  />
-  <ConfirmDeleteDialog
-    v-model="showDeleteDialog"
-    title="Supprimer le rendez-vous ?"
-    message="Cette action est définitive et ne peut pas être annulée."
-    :loading="deleting"
-    @confirm="onDelete"
   />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .calendar-container {
   flex: 1;
   min-height: 0;
@@ -221,25 +210,25 @@ const onDelete = async () => {
   padding: var(--spacing-xs);
 }
 :deep(.kind-ANIMAL) {
-  background: var(--el-color-teal-light-5) !important;
+  background: var(--el-color-#{meeting-color('animal')}-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-teal) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-teal-dark-5);
+    color: var(--el-color-#{meeting-color('animal')}-dark-5);
   }
 }
 :deep(.kind-INTERNAL) {
-  background: var(--el-color-purple-light-5) !important;
+  background: var(--el-color-#{meeting-color('internal')}-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
-    border: 0.5px solid var(--el-color-purple) !important;
+    border: 0.5px solid var(--el-color-#{meeting-color('internal')}) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-purple-dark-5);
+    color: var(--el-color-#{meeting-color('internal')}-dark-5);
   }
 }
 

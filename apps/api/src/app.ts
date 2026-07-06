@@ -16,6 +16,9 @@ import { default as meetingRouter } from "./meetings/meeting.router";
 import animalRouter from "./animals/animal.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
 import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
+import bookingRouter from "./bookings/booking.router";
+import specialityRouter from "./specialities/speciality.router";
+import veterinarianRouter from "./users/veterinarian.router";
 
 collectDefaultMetrics();
 
@@ -61,4 +64,7 @@ app.use("/api/animals", animalRouter);
 app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/medical-histories", animalMedicalHistoryRouter);
 app.use("/api/acts", actRouter);
+app.use("/api/booking", bookingRouter);
+app.use("/api/specialities", specialityRouter);
+app.use("/api/veterinarians", veterinarianRouter);
 app.use(errorHandler);

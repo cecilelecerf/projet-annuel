@@ -25,9 +25,10 @@ export const availabilitySchema = z.object({
 
 export type Availability = z.infer<typeof availabilitySchema>;
 
-export const availabilitiesSchema = meetingBaseSchema.extend(
-  availabilitySchema.shape,
-);
+export const availabilitiesSchema = meetingBaseSchema.extend({
+  ...availabilitySchema.shape,
+  clinic: clinicSchema,
+});
 
 // ── Requests ──────────────────────────────────────────────────────────────────
 
@@ -134,7 +135,6 @@ export const updatePunctualAvailabilitySchema = z
   })
   .refine(
     (d) => {
-      console.log(d.startTime);
       if (d.startTime && d.endTime) return d.startTime < d.endTime;
       return true;
     },
@@ -194,3 +194,16 @@ export const availabilityResponseSchema = z.discriminatedUnion("type", [
 ]);
 
 export type AvailabilityResponse = z.infer<typeof availabilityResponseSchema>;
+
+export const timeRangeSchema = z.object({
+  start: z.coerce.date(),
+  end: z.coerce.date(),
+});
+
+export const availabilityTimelineSchema = z.object({
+  windows: timeRangeSchema.array(),
+  busy: timeRangeSchema.array(),
+});
+
+export type TimeRange = z.infer<typeof timeRangeSchema>;
+export type AvailabilityTimeline = z.infer<typeof availabilityTimelineSchema>;

@@ -1,26 +1,42 @@
 import { Router } from "express";
-import type { Router as RouterType } from "express";
+import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import { updateClinicSchema } from "@armali/schemas";
-import { clinicController } from "@api/instances";
+import { clinicController, medicalHistoryController } from "@api/instances";
+import { STAFF_ROLES } from "@api/utils";
 
 const clinicRouter: RouterType = Router();
+
 const controller = clinicController;
 
 clinicRouter.get(
-  "/staff",
+  "/:id/medical-histories",
   authMiddleware,
-  roleMiddleware(["DIRECTOR", "REFERANT", "VETERINARIAN", "SECRETARY"]),
-  controller.getClinicStaff.bind(controller),
+  medicalHistoryController.getByClinic.bind(
+    medicalHistoryController,
+  ) as RequestHandler,
+);
+clinicRouter.get(
+  "/:id/staff",
+  authMiddleware,
+  roleMiddleware(STAFF_ROLES),
+  controller.getStaffByClinic.bind(controller) as RequestHandler,
+);
+
+clinicRouter.get(
+  "/:id/clients",
+  authMiddleware,
+  roleMiddleware(STAFF_ROLES),
+  controller.getClientsByClinic.bind(controller) as RequestHandler,
 );
 
 clinicRouter.get(
   "/me",
   authMiddleware,
-  roleMiddleware(["DIRECTOR", "REFERANT", "VETERINARIAN", "SECRETARY"]),
-  controller.getMyClinic.bind(controller),
+  roleMiddleware(STAFF_ROLES),
+  controller.getMyClinic.bind(controller) as RequestHandler,
 );
 
 clinicRouter.patch(
@@ -28,7 +44,7 @@ clinicRouter.patch(
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   validate(updateClinicSchema),
-  controller.updateClinic.bind(controller),
+  controller.updateClinic.bind(controller) as RequestHandler,
 );
 
 export default clinicRouter;

@@ -2,13 +2,18 @@
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, User, UserFilled, OfficeBuilding } from '@element-plus/icons-vue'
+import { House, User, UserFilled, OfficeBuilding, Calendar } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
     index: 'DIRECTOR.Home',
     label: 'Accueil',
     icon: House,
+  },
+  {
+    index: 'DIRECTOR.Calendar',
+    label: 'Agenda',
+    icon: Calendar,
   },
   {
     index: 'DIRECTOR.Staff',

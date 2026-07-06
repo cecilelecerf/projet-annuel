@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Delete, Edit, Clock, Calendar } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import type { AvailabilityPunctualResponse, AvailabilityId } from '@armali/schemas'
+import { formatDate, formatTime } from '@/features/meetings/components/utils'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
 
 defineProps<{
@@ -16,14 +19,6 @@ const emit = defineEmits<{
   remove: [id: AvailabilityId]
   create: []
 }>()
-
-function formatTime(date: Date | string) {
-  return dayjs(date).format('H[h]mm')
-}
-
-function formatDate(date: Date | string) {
-  return dayjs(date).format('D MMMM YYYY')
-}
 
 function isPast(date: Date | string) {
   return dayjs(date).isBefore(dayjs(), 'day')

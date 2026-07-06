@@ -2,13 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
-
-const loginAs = async (email: string, password = "Password123!") => {
-  const res = await request(app)
-    .post("/api/auth/login")
-    .send({ email, password });
-  return res.body.accessToken as string;
-};
+import { loginAs } from "@api/meetings/__tests__/meeting.route.test";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

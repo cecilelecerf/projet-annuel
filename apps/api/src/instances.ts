@@ -42,6 +42,10 @@ import { BrandRepository } from "./brands/brand.repository";
 // ── Clinic ──────────────────────────────────────
 import { SpecialityRepository } from "./specialities/speciality.repository";
 
+// Chat
+import { ContactsRepository } from "./messaging/contacts.repository";
+import { MessageRepository } from "./messaging/message.repository";
+import { ConversationRepository } from "./messaging/conversation.repository";
 // ═══════════════════════════════════════════════════════════════
 // Services
 // ═══════════════════════════════════════════════════════════════
@@ -67,6 +71,7 @@ import { ProductService } from "./products/product.service";
 import { BrandService } from "./brands/brand.service";
 import { SpecialityService } from "./specialities/speciality.service";
 import { BookingService } from "./bookings/booking.service";
+import { MessagingService } from "./messaging/messaging.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -94,6 +99,8 @@ import { BrandController } from "./brands/brand.controller";
 import { BookingController } from "./bookings/booking.controller";
 import { SpecialityController } from "./specialities/speciality.controller";
 import { ClinicRepository } from "./clinics/clinic.repository";
+import { MessagingController } from "./messaging/messaging.controller";
+import { ReviewRepository } from "./reviews/review.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -122,25 +129,26 @@ const brandRepository = new BrandRepository(prisma);
 const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
+const messageRepository = new MessageRepository(prisma);
+const contactsRepository = new ContactsRepository(prisma);
+const conversationRepository = new ConversationRepository(prisma);
+const reviewRepository = new ReviewRepository(prisma);
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
 
-export const emailService = new EmailService();
-export const clinicService = new ClinicService(clinicRepository);
+const emailService = new EmailService();
+const clinicService = new ClinicService(clinicRepository);
 
-export const userService = new UserService(userRepository, clinicService);
+const userService = new UserService(userRepository, clinicService);
 
-export const authService = new AuthService();
+const authService = new AuthService();
 
-export const actService = new ActService(actRepository, clinicActRepository);
+const actService = new ActService(actRepository, clinicActRepository);
 
-export const animalService = new AnimalService(
-  animalRepository,
-  vaccineRepository,
-);
+const animalService = new AnimalService(animalRepository, vaccineRepository);
 
-export const medicalHistoryService = new AnimalMedicalHistoryService(
+const medicalHistoryService = new AnimalMedicalHistoryService(
   medicalHistoryRepository,
   animalMeetingRepository,
   animalRepository,
@@ -149,55 +157,57 @@ export const medicalHistoryService = new AnimalMedicalHistoryService(
   clinicActRepository,
 );
 
-export const prescriptionService = new PrescriptionService(
-  prescriptionRepository,
-);
+const prescriptionService = new PrescriptionService(prescriptionRepository);
 
-export const veterinarianClinicService = new VeterinarianClinicService(
+const veterinarianClinicService = new VeterinarianClinicService(
   veterinarianClinicRepository,
 );
 
-export const adminService = new AdminService();
-export const directorService = new DirectorService();
-export const referentService = new ReferentService();
-export const reviewService = new ReviewService();
+const adminService = new AdminService();
+const directorService = new DirectorService();
+const referentService = new ReferentService();
+const reviewService = new ReviewService(reviewRepository);
 
-export const recurringService = new RecurringService(
+const recurringService = new RecurringService(
   recurringRepository,
   internalMeetingRepository,
 );
 
-export const internalMeetingService = new InternalMeetingService(
+const internalMeetingService = new InternalMeetingService(
   internalMeetingRepository,
   recurringService,
 );
 
-export const availabilityService = new AvailabilityService(
+const availabilityService = new AvailabilityService(
   availabilityRepository,
   recurringService,
 );
 
-export const animalMeetingService = new AnimalMeetingService(
+const animalMeetingService = new AnimalMeetingService(
   animalMeetingRepository,
   userRepository,
   emailService,
 );
-export const meetingService = new MeetingService(meetingRepository);
+const meetingService = new MeetingService(meetingRepository);
 
-export const bookingService = new BookingService(
+const bookingService = new BookingService(
   bookingRepository,
   clinicRepository,
   meetingService,
 );
 
-export const productService = new ProductService(
+const productService = new ProductService(
   productRepository,
   productClinicRepository,
 );
-export const brandService = new BrandService(brandRepository);
+const brandService = new BrandService(brandRepository);
 
-export const specialityService = new SpecialityService(specialityRepository);
-
+const specialityService = new SpecialityService(specialityRepository);
+const messaginService = new MessagingService(
+  messageRepository,
+  conversationRepository,
+  contactsRepository,
+);
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -242,3 +252,4 @@ export const userController = new UserController(userService);
 
 export const productController = new ProductController(productService);
 export const brandController = new BrandController(brandService);
+export const messagingController = new MessagingController(messaginService);

@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { ReviewService } from "./review.service";
+import { RequestWithParams } from "@api/middlewares";
+import { VeterinarianId } from "@armali/schemas";
 
 export class ReviewController {
   constructor(private service: ReviewService) {}
@@ -31,9 +33,13 @@ export class ReviewController {
     }
   }
 
-  async getVetReviews(req: Request, res: Response, next: NextFunction) {
+  async getVetReviews(
+    req: RequestWithParams<{ id: VeterinarianId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const reviews = await this.service.getVetReviews(req.params.vetId);
+      const reviews = await this.service.getVetReviews(req.params.id);
       res.status(200).json(reviews);
     } catch (err) {
       next(err);

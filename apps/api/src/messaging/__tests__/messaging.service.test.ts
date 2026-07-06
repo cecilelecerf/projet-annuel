@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ForbiddenError, BadRequestError } from "@api/errors";
 import type { JwtPayload } from "@api/utils/jwt";
+import { ClinicId, UserId } from "@armali/schemas";
 
 const mockConversationRepository = vi.hoisted(() => ({
   findExistingDirect: vi.fn(),
@@ -46,15 +47,25 @@ vi.mock("@api/messaging/contacts.repository", () => ({
 }));
 
 const { MessagingService } = await import("@api/messaging/messaging.service");
-const messagingService = new MessagingService();
+const { MessageRepository } = await import("@api/messaging/message.repository");
+const { ConversationRepository } =
+  await import("@api/messaging/conversation.repository");
+const { ContactsRepository } =
+  await import("@api/messaging/contacts.repository");
+
+const messagingService = new MessagingService(
+  new MessageRepository({} as any),
+  new ConversationRepository({} as any),
+  new ContactsRepository({} as any),
+);
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const makeActor = (overrides: Partial<JwtPayload> = {}): JwtPayload => ({
-  id: "actor-1",
+  id: "actor-1" as UserId,
   email: "actor@clinic.fr",
   role: "VETERINARIAN",
-  clinicId: "clinic-1",
+  clinicId: "clinic-1" as ClinicId,
   ...overrides,
 });
 
@@ -105,13 +116,15 @@ describe("createConversation — scope CLINIC", () => {
       makeSecretaryUser("sec-1", "clinic-1"),
       makeVetUser("vet-2", ["clinic-1"]),
     ]);
-    mockConversationRepository.createGroup.mockResolvedValue(makeConversation());
+    mockConversationRepository.createGroup.mockResolvedValue(
+      makeConversation(),
+    );
 
     await messagingService.createConversation(makeActor(), {
       type: "GROUP",
       scope: "CLINIC",
       name: "Équipe",
-      memberIds: ["sec-1", "vet-2"],
+      memberIds: ["sec-1" as UserId, "vet-2" as UserId],
     });
 
     expect(mockConversationRepository.createGroup).toHaveBeenCalledWith(
@@ -129,7 +142,7 @@ describe("createConversation — scope CLINIC", () => {
         type: "GROUP",
         scope: "CLINIC",
         name: "Équipe",
-        memberIds: ["sec-1"],
+        memberIds: ["sec-1"] as UserId[],
       }),
     ).rejects.toThrow(ForbiddenError);
     expect(mockConversationRepository.createGroup).not.toHaveBeenCalled();
@@ -139,14 +152,19 @@ describe("createConversation — scope CLINIC", () => {
     mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
       makeVetUser("vet-multi", ["clinic-2", "clinic-1"]),
     ]);
-    mockConversationRepository.createGroup.mockResolvedValue(makeConversation());
+    mockConversationRepository.createGroup.mockResolvedValue(
+      makeConversation(),
+    );
 
-    await messagingService.createConversation(makeActor({ clinicId: "clinic-1" }), {
-      type: "GROUP",
-      scope: "CLINIC",
-      name: "Équipe",
-      memberIds: ["vet-multi"],
-    });
+    await messagingService.createConversation(
+      makeActor({ clinicId: "clinic-1" as ClinicId }),
+      {
+        type: "GROUP",
+        scope: "CLINIC",
+        name: "Équipe",
+        memberIds: ["vet-multi" as UserId],
+      },
+    );
 
     expect(mockConversationRepository.createGroup).toHaveBeenCalledWith(
       expect.objectContaining({ clinicId: "clinic-1", scope: "CLINIC" }),
@@ -155,15 +173,12 @@ describe("createConversation — scope CLINIC", () => {
 
   it("rejette si l'acteur n'a pas de clinique", async () => {
     await expect(
-      messagingService.createConversation(
-        makeActor({ clinicId: undefined }),
-        {
-          type: "GROUP",
-          scope: "CLINIC",
-          name: "Équipe",
-          memberIds: ["sec-1"],
-        },
-      ),
+      messagingService.createConversation(makeActor({ clinicId: undefined }), {
+        type: "GROUP",
+        scope: "CLINIC",
+        name: "Équipe",
+        memberIds: ["sec-1"] as UserId[],
+      }),
     ).rejects.toThrow(ForbiddenError);
   });
 });
@@ -173,17 +188,16 @@ describe("createConversation — scope CLINIC", () => {
 describe("createConversation — scope DIRECTOR_NETWORK", () => {
   it("rejette un acteur qui n'est pas directeur", async () => {
     await expect(
-      messagingService.createConversation(
-        makeActor({ role: "VETERINARIAN" }),
-        {
-          type: "GROUP",
-          scope: "DIRECTOR_NETWORK",
-          name: "Réseau",
-          memberIds: ["dir-2", "dir-3"],
-        },
-      ),
+      messagingService.createConversation(makeActor({ role: "VETERINARIAN" }), {
+        type: "GROUP",
+        scope: "DIRECTOR_NETWORK",
+        name: "Réseau",
+        memberIds: ["dir-2", "dir-3"] as UserId[],
+      }),
     ).rejects.toThrow(ForbiddenError);
-    expect(mockContactsRepository.findUsersWithClinicIds).not.toHaveBeenCalled();
+    expect(
+      mockContactsRepository.findUsersWithClinicIds,
+    ).not.toHaveBeenCalled();
   });
 
   it("rejette si un membre n'est pas directeur", async () => {
@@ -194,12 +208,12 @@ describe("createConversation — scope DIRECTOR_NETWORK", () => {
 
     await expect(
       messagingService.createConversation(
-        makeActor({ role: "DIRECTOR", clinicId: "clinic-1" }),
+        makeActor({ role: "DIRECTOR", clinicId: "clinic-1" as ClinicId }),
         {
           type: "GROUP",
           scope: "DIRECTOR_NETWORK",
           name: "Réseau",
-          memberIds: ["dir-2", "vet-3"],
+          memberIds: ["dir-2", "vet-3"] as UserId[],
         },
       ),
     ).rejects.toThrow(ForbiddenError);
@@ -215,12 +229,12 @@ describe("createConversation — scope DIRECTOR_NETWORK", () => {
     );
 
     await messagingService.createConversation(
-      makeActor({ role: "DIRECTOR", clinicId: "clinic-1" }),
+      makeActor({ role: "DIRECTOR", clinicId: "clinic-1" as ClinicId }),
       {
         type: "GROUP",
         scope: "DIRECTOR_NETWORK",
         name: "Réseau",
-        memberIds: ["dir-2", "dir-3"],
+        memberIds: ["dir-2", "dir-3"] as UserId[],
       },
     );
 
@@ -239,7 +253,7 @@ describe("createConversation — type DIRECT", () => {
 
     const result = await messagingService.createConversation(makeActor(), {
       type: "DIRECT",
-      userId: "other-user",
+      userId: "other-user" as UserId,
     });
 
     expect(result).toBe(existing);
@@ -250,7 +264,7 @@ describe("createConversation — type DIRECT", () => {
     await expect(
       messagingService.createConversation(makeActor(), {
         type: "DIRECT",
-        userId: "actor-1",
+        userId: "actor-1" as UserId,
       }),
     ).rejects.toThrow(BadRequestError);
   });
@@ -260,11 +274,13 @@ describe("createConversation — type DIRECT", () => {
     mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
       makeDirectorUser("dir-2", "clinic-2"),
     ]);
-    mockConversationRepository.createDirect.mockResolvedValue(makeConversation());
+    mockConversationRepository.createDirect.mockResolvedValue(
+      makeConversation(),
+    );
 
     await messagingService.createConversation(
-      makeActor({ role: "DIRECTOR", clinicId: "clinic-1" }),
-      { type: "DIRECT", userId: "dir-2" },
+      makeActor({ role: "DIRECTOR", clinicId: "clinic-1" as ClinicId }),
+      { type: "DIRECT", userId: "dir-2" as UserId },
     );
 
     expect(mockConversationRepository.createDirect).toHaveBeenCalledWith(
@@ -277,11 +293,13 @@ describe("createConversation — type DIRECT", () => {
     mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
       makeVetUser("vet-multi", ["clinic-2", "clinic-1"]),
     ]);
-    mockConversationRepository.createDirect.mockResolvedValue(makeConversation());
+    mockConversationRepository.createDirect.mockResolvedValue(
+      makeConversation(),
+    );
 
     await messagingService.createConversation(
-      makeActor({ role: "DIRECTOR", clinicId: "clinic-1" }),
-      { type: "DIRECT", userId: "vet-multi" },
+      makeActor({ role: "DIRECTOR", clinicId: "clinic-1" as ClinicId }),
+      { type: "DIRECT", userId: "vet-multi" as UserId },
     );
 
     expect(mockConversationRepository.createDirect).toHaveBeenCalledWith(
@@ -335,7 +353,9 @@ describe("droits admin d'un groupe", () => {
   it("autorise un membre à quitter lui-même le groupe", async () => {
     mockConversationRepository.findById.mockResolvedValue(
       makeConversation({
-        conversationMembers: [makeMember({ role: "MEMBER", userId: "actor-1" })],
+        conversationMembers: [
+          makeMember({ role: "MEMBER", userId: "actor-1" }),
+        ],
       }),
     );
     mockConversationRepository.removeMember.mockResolvedValue(undefined);
@@ -357,7 +377,12 @@ describe("droits admin d'un groupe", () => {
     );
 
     await expect(
-      messagingService.updateMemberRole("conv-1", "actor-1", "target-1", "ADMIN"),
+      messagingService.updateMemberRole(
+        "conv-1",
+        "actor-1",
+        "target-1",
+        "ADMIN",
+      ),
     ).rejects.toThrow(BadRequestError);
   });
 });

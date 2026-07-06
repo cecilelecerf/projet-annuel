@@ -3,8 +3,7 @@ import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId } from "./user.utils";
-import { isStaff, STAFF_ROLES } from "@api/utils";
-import { UserWithProfileAndClinicId } from "./user.types";
+import { isStaff } from "@api/utils";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { UserId } from "@armali/schemas";
 

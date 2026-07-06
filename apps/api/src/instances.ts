@@ -212,7 +212,7 @@ const productService = new ProductService(
 const brandService = new BrandService(brandRepository);
 
 const specialityService = new SpecialityService(specialityRepository);
-const messaginService = new MessagingService(
+export const messagingService = new MessagingService(
   messageRepository,
   conversationRepository,
   contactsRepository,
@@ -261,7 +261,7 @@ export const userController = new UserController(userService);
 
 export const productController = new ProductController(productService);
 export const brandController = new BrandController(brandService);
-export const messagingController = new MessagingController(messaginService);
+export const messagingController = new MessagingController(messagingService);
 export const staffController = new StaffController(staffService);
 export const clinicRequestController = new ClinicRequestController(
   clinicRequestService,

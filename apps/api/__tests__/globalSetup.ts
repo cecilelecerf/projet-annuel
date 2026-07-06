@@ -10,6 +10,7 @@ export async function setup() {
     .start();
 
   const url = container.getConnectionUri();
+
   process.env.DATABASE_URL = url; // ← setté AVANT tout import de l'app
 
   execSync("npx prisma migrate deploy", {

@@ -57,7 +57,6 @@ export class StaffController {
         authorId: req.user.id,
         memberId: req.params.id,
       });
-      console.log(member);
       res.status(200).json(staffMemberDetailSchema.parse(member));
     } catch (err) {
       next(err);

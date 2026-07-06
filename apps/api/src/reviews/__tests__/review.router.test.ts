@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
-import { loginAs } from "@api/meetings/__tests__/meeting.route.test";
+import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
 import { getPrisma } from "../../../__tests__/setup";
 
 describe("Review router", () => {

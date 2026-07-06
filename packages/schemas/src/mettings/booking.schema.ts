@@ -51,8 +51,8 @@ export const bookingClinicSchema = clinicSchema
     openingHours: true,
   })
   .extend({
-    lat: z.number(),
-    lng: z.number(),
+    lat: z.coerce.number(),
+    lng: z.coerce.number(),
     distanceKm: z.number(),
     rating: z.number().min(0).max(5).nullable().optional(),
     vetCount: z.number().int().nonnegative(),

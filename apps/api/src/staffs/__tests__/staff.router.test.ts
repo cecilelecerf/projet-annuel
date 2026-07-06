@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
-import { loginAs } from "@api/meetings/__tests__/meeting.route.test";
+import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
 
 function uniqueEmail(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@gmail.com`;

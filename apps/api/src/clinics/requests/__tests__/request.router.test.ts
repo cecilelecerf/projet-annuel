@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { hash } from "bcryptjs";
 import request from "supertest";
 import { app } from "@api/app";
-import { loginAs } from "@api/meetings/__tests__/meeting.route.test";
+import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
 import { getPrisma } from "../../../../__tests__/setup";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -260,7 +260,6 @@ describe("POST /api/clinics/requests/", () => {
         .post("/api/clinics/requests/")
         .set("Authorization", `Bearer ${token}`)
         .send({ ...validPayload, siret });
-      console.log(res.body);
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty("status", "PENDING");
       expect(res.body).toHaveProperty("request");

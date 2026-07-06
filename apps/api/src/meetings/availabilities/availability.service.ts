@@ -1,5 +1,9 @@
 import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
-import type { CreateAvailability, UpdateAvailability } from "@armali/schemas";
+import type {
+  CreateAvailability,
+  MeetingRecurringId,
+  UpdateAvailability,
+} from "@armali/schemas";
 import { AvailabilityRepository } from "./availability.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { Availability, User } from "../../../prisma/generated/prisma/client";
@@ -82,7 +86,7 @@ export class AvailabilityService {
           throw new ConflictError("RecurringId doesn't exist");
         const { recurringId, type, ...rest } = d;
         return this.reccuringService.update({
-          id: existing.recurringId,
+          id: existing.recurringId as MeetingRecurringId,
           data: rest,
         });
       })

@@ -128,12 +128,14 @@ export class BookingService {
       throw new BadRequestError("Animal introuvable ou non autorisé");
 
     // Vérifie que le veto est bien dans une clinique
+    // TODO : utiliser un service ou repository
     const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
       where: { veterinarianId: data.veterinarianId },
     });
     if (!veterinarianClinic) throw new NotFoundError("Vétérinaire");
 
     // Vérifie que le créneau est toujours disponible (double vérification)
+    // TODO : utiliser un service ou repository
     const conflict = await prisma.meetingBase.findFirst({
       where: {
         date: data.date,
@@ -147,6 +149,7 @@ export class BookingService {
     if (conflict) throw new BadRequestError("Ce créneau n'est plus disponible");
 
     // Crée le rendez-vous
+    // TODO : utiliser un service ou repository
     const meeting = await prisma.meetingBase.create({
       data: {
         kind: "ANIMAL",

@@ -3,12 +3,12 @@ import type { PrismaClient } from "../generated/prisma/client";
 export async function seedClinicRequests(
   prisma: PrismaClient,
   {
-    users,
+    directors,
   }: {
     // Adapte cette clé/typage à la forme réelle de ton seed de directeurs
-    users: ReturnType<typeof import("./users").seedUsers> extends Promise<
-      infer T
-    >
+    directors: ReturnType<
+      typeof import("./directors").seedDirectors
+    > extends Promise<infer T>
       ? T
       : never;
   },
@@ -26,7 +26,7 @@ export async function seedClinicRequests(
     return prisma.clinicCreationRequest.create({ data });
   }
 
-  const [requestPending, requestRejected] = await Promise.all([
+  const [requestPending, requestApproved, requestRejected] = await Promise.all([
     upsertRequest({
       status: "PENDING",
       name: "Clinique Vétérinaire des Buttes-Chaumont",
@@ -35,7 +35,19 @@ export async function seedClinicRequests(
       phone: "01 42 33 44 55",
       website: "https://vetbuttes-chaumont.fr",
       description: "Nouvelle clinique généraliste en cours d'ouverture",
-      directorId: users.directorPending.id,
+      directorId: directors.directorPending.id,
+    }),
+
+    upsertRequest({
+      status: "APPROVED",
+      name: "Clinique Vétérinaire du Parc",
+      address: "15 Rue de la Convention, Paris 75015",
+      siret: "12345678901234",
+      phone: "01 23 45 67 89",
+      website: "https://vetparc.fr",
+      description:
+        "Clinique généraliste et spécialisée en cardiologie et neurologie",
+      directorId: directors.directorApproved.id,
     }),
 
     upsertRequest({
@@ -46,9 +58,9 @@ export async function seedClinicRequests(
       phone: "01 40 50 60 70",
       website: "https://vet-express.fr",
       description: "Dossier incomplet, informations SIRET invalides",
-      directorId: users.directorRejected.id,
+      directorId: directors.directorRejected.id,
     }),
   ]);
 
-  return { requestPending, requestRejected };
+  return { requestPending, requestApproved, requestRejected };
 }

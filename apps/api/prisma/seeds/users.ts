@@ -30,11 +30,6 @@ export async function seedUsers(
   // ── Users ────────────────────────────────────────────────────────────────────
   const [
     adminUser,
-    directorUser1,
-    directorUser2,
-    directorPending,
-    directorRejected,
-    directorApproved,
     referentUser1,
     vetoUser1,
     vetoUser2,
@@ -50,51 +45,6 @@ export async function seedUsers(
         lastname: "Admin",
         password,
         role: "ADMIN",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "directeur@gmail.com",
-        firstname: "Jean",
-        lastname: "Martin",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "directeur@vetsaintmichel.fr",
-        firstname: "Marie",
-        lastname: "Dupont",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "pending@gmail.fr",
-        firstname: "Marie",
-        lastname: "Dupont",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "rejected@gmail.fr",
-        firstname: "Marie",
-        lastname: "Dupont",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "approved@gmail.fr",
-        firstname: "Marie",
-        lastname: "Dupont",
-        password,
-        role: "DIRECTOR",
       },
     }),
     prisma.user.create({
@@ -161,14 +111,6 @@ export async function seedUsers(
       },
     }),
   ]);
-
-  // ── Profiles clinic ───────────────────────────────────────────────────────────
-  await prisma.directorClinicProfile.createMany({
-    data: [
-      { id: directorUser1.id, clinicId: clinic1.id },
-      { id: directorUser2.id, clinicId: clinic2.id },
-    ],
-  });
 
   await prisma.referentClinicProfile.create({
     data: { id: referentUser1.id, clinicId: clinic1.id },
@@ -252,11 +194,6 @@ export async function seedUsers(
 
   return {
     adminUser,
-    directorUser1,
-    directorUser2,
-    directorPending,
-    directorApproved,
-    directorRejected,
     referentUser1,
     vetoUser1,
     vetoUser2,

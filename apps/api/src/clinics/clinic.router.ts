@@ -10,40 +10,42 @@ import {
   staffController,
 } from "@api/instances";
 import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const clinicRouter: RouterType = Router();
 
+clinicRouter.use(authMiddleware);
+// clinicRouter.use(requireApprovedClinic);
 const controller = clinicController;
 clinicRouter.get(
   "/:id/medical-histories",
-  authMiddleware,
+  requireApprovedClinic,
   medicalHistoryController.getByClinic.bind(
     medicalHistoryController,
   ) as RequestHandler,
 );
 clinicRouter.get(
   "/:id/staffs",
-  authMiddleware,
+  requireApprovedClinic,
   roleMiddleware(CLINIC_STAFF_ROLES),
   staffController.getStaffByClinic.bind(staffController) as RequestHandler,
 );
 clinicRouter.get(
   "/:id/clients",
-  authMiddleware,
+  requireApprovedClinic,
   roleMiddleware(CLINIC_STAFF_ROLES),
   controller.getClientsByClinic.bind(controller) as RequestHandler,
 );
 
 clinicRouter.get(
   "/me",
-  authMiddleware,
   roleMiddleware(STAFF_ROLES),
   controller.getMyClinic.bind(controller) as RequestHandler,
 );
 
 clinicRouter.patch(
   "/",
-  authMiddleware,
+  requireApprovedClinic,
   roleMiddleware(["DIRECTOR", "REFERENT"]),
   validate(updateClinicSchema),
   controller.updateClinic.bind(controller) as RequestHandler,

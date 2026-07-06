@@ -81,10 +81,14 @@ describe("GET /api/users", () => {
       const token = await loginAs("directeur@gmail.com");
       const director = await getPrisma().user.findUnique({
         where: { email: "directeur@gmail.com" },
-        include: { directorClinicProfile: true },
+        select: {
+          directorClinicProfile: {
+            select: { clinic: { select: { id: true } } },
+          },
+        },
       });
 
-      const clinicId = director!.directorClinicProfile!.clinicId;
+      const clinicId = director!.directorClinicProfile!.clinic!.id;
 
       const usersOutsideClinic = await getPrisma().user.findMany({
         where: {
@@ -171,9 +175,13 @@ describe("GET /api/users/roles/:role", () => {
     const token = await loginAs("directeur@gmail.com");
     const director = await getPrisma().user.findUnique({
       where: { email: "directeur@gmail.com" },
-      include: { directorClinicProfile: true },
+      select: {
+        directorClinicProfile: {
+          select: { clinic: { select: { id: true } } },
+        },
+      },
     });
-    const clinicId = director!.directorClinicProfile!.clinicId;
+    const clinicId = director!.directorClinicProfile!.clinic!.id;
 
     const vetosInClinic = await getPrisma().user.findMany({
       where: {
@@ -299,9 +307,13 @@ describe("GET /api/users/:id", () => {
     const token = await loginAs("directeur@gmail.com");
     const director = await getPrisma().user.findUnique({
       where: { email: "directeur@gmail.com" },
-      include: { directorClinicProfile: true },
+      select: {
+        directorClinicProfile: {
+          select: { clinic: { select: { id: true } } },
+        },
+      },
     });
-    const clinicId = director!.directorClinicProfile!.clinicId;
+    const clinicId = director!.directorClinicProfile!.clinic!.id;
 
     const otherClinicVeto = await getPrisma().user.findFirst({
       where: {

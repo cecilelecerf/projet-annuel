@@ -78,7 +78,7 @@ export class StaffService {
         (vc) => vc.clinicId === clinicId,
       ) ||
       user.secretaryProfile?.clinicId === clinicId ||
-      user.directorClinicProfile?.clinicId === clinicId ||
+      user.directorClinicProfile?.clinic?.id === clinicId ||
       user.referentClinicProfile?.clinicId === clinicId;
     if (!belongsToClinic) throw new ForbiddenError();
 

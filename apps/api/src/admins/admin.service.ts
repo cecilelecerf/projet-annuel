@@ -2,6 +2,22 @@ import { prisma } from "@api/lib/prisma";
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
 
 export class AdminService {
+  private async geocodeAddress(address: string) {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      { headers: { "User-Agent": "Armali/1.0" } },
+    );
+    const results = await res.json();
+    const [result] = results;
+
+    if (!result) {
+      console.warn(`⚠️ Geocoding failed for: "${address}"`);
+      return { lat: 0, lng: 0 };
+    }
+
+    console.log(`✅ ${address} → ${result.lat}, ${result.lon}`);
+    return { lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
+  }
   async getClinicRequests() {
     return prisma.clinicCreationRequest.findMany({
       include: {
@@ -27,12 +43,13 @@ export class AdminService {
     });
     if (existingClinic) {
       throw new ConflictError(
-        "Une clinique avec ce numéro SIRET existe déjà. Veuillez rejeter cette demande."
+        "Une clinique avec ce numéro SIRET existe déjà. Veuillez rejeter cette demande.",
       );
     }
-
+    const geo = await this.geocodeAddress(request.address);
+    if (!geo) throw new ConflictError("Not lat and lng");
     await prisma.$transaction(async (tx) => {
-      const clinic = await tx.clinic.create({
+      await tx.clinic.create({
         data: {
           name: request.name,
           address: request.address,
@@ -40,13 +57,10 @@ export class AdminService {
           phone: request.phone,
           website: request.website,
           description: request.description ?? undefined,
+          directorId: request.directorId,
+          lat: geo.lat,
+          lng: geo.lng,
         },
-      });
-
-      await tx.directorClinicProfile.upsert({
-        where: { id: request.directorId },
-        update: { clinicId: clinic.id },
-        create: { id: request.directorId, clinicId: clinic.id },
       });
 
       await tx.clinicCreationRequest.update({

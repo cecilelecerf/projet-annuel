@@ -27,7 +27,6 @@ model User {
   vetReviews                  VetReview[]                  @relation("ClientReviews")
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]
-  clinicCreationRequests      ClinicCreationRequest[]
   animalConditionHealths      AnimalHealthCondition[]
   conversationMembers         ConversationMember[]
   createdConversations        Conversation[]               @relation("CreatedConversations")
@@ -141,9 +140,11 @@ model SecretaryProfile {
 model DirectorClinicProfile {
   id String @id @default(uuid())
 
-  user     User   @relation(fields: [id], references: [id], onDelete: Cascade)
-  clinicId String @unique
-  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  clinic Clinic?
+
+  clinicCreationRequests ClinicCreationRequest[]
 
   @@map("director_clinic_profiles")
 }

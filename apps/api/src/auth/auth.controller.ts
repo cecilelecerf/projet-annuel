@@ -85,7 +85,7 @@ export class AuthController {
   async updateAccount(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
-      const user = await authService.updateAccount(userId, req.body);
+      const user = await this.service.updateAccount(userId, req.body);
       res.status(200).json(user);
     } catch (err) {
       next(err);

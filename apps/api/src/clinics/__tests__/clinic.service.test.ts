@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ForbiddenError, NotFoundError, BadRequestError } from "@api/errors";
+import { ForbiddenError, NotFoundError, ConflictError } from "@api/errors";
 import type { UserId } from "@armali/schemas";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -67,6 +67,16 @@ describe("ClinicService.getClinicByUser", () => {
 
   it("aucune clinique trouvée (undefined) — NotFoundError", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue(undefined);
+
+    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+      NotFoundError,
+    );
+  });
+
+  it("une clinique nulle dans le tableau — NotFoundError", async () => {
+    // findClinicByUserId peut renvoyer (Clinic | null)[] : un directeur/référent
+    // sans clinique renvoie [null] plutôt qu'un tableau vide.
+    mockClinicRepository.findClinicByUserId.mockResolvedValue([null]);
 
     await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
@@ -158,31 +168,57 @@ describe("ClinicService.getClinicIdsByUserId", () => {
 });
 
 // ── updateClinic ──────────────────────────────────────────────────────────────
+// Réécrit : updateClinic passe désormais par getClinicIdsByUserId
+// (donc repository.findClinicIdByUser), plus par findDirectorProfile.
 
 describe("ClinicService.updateClinic", () => {
-  it("aucun profil directeur — BadRequestError", async () => {
-    mockClinicRepository.findDirectorProfile.mockResolvedValue(null);
+  it("aucun clinicId trouvé pour l'utilisateur — ForbiddenError", async () => {
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue(null);
 
     await expect(
-      clinicService.updateClinic(AUTHOR_ID, { name: "Nouveau nom" } as any),
-    ).rejects.toThrow(BadRequestError);
+      clinicService.updateClinic({
+        userId: AUTHOR_ID,
+        role: "REFERENT",
+        data: { name: "Nouveau nom" },
+      }),
+    ).rejects.toThrow(ForbiddenError);
 
     expect(mockClinicRepository.update).not.toHaveBeenCalled();
   });
 
-  it("met à jour la clinique du directeur", async () => {
-    mockClinicRepository.findDirectorProfile.mockResolvedValue({
-      id: AUTHOR_ID,
-      clinicId: CLINIC_ID,
-    });
+  it("plusieurs cliniques associées à l'utilisateur — ConflictError", async () => {
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue([
+      CLINIC_ID,
+      OTHER_CLINIC_ID,
+    ]);
+
+    await expect(
+      clinicService.updateClinic({
+        userId: AUTHOR_ID,
+        role: "VETERINARIAN",
+        data: { name: "Nouveau nom" },
+      }),
+    ).rejects.toThrow(ConflictError);
+
+    expect(mockClinicRepository.update).not.toHaveBeenCalled();
+  });
+
+  it("met à jour la clinique de l'utilisateur", async () => {
+    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
     mockClinicRepository.update.mockResolvedValue(
       makeClinic({ name: "Nouveau nom" }),
     );
 
-    const result = await clinicService.updateClinic(AUTHOR_ID, {
-      name: "Nouveau nom",
-    } as any);
+    const result = await clinicService.updateClinic({
+      userId: AUTHOR_ID,
+      role: "DIRECTOR",
+      data: { name: "Nouveau nom" },
+    });
 
+    expect(mockClinicRepository.findClinicIdByUser).toHaveBeenCalledWith({
+      userId: AUTHOR_ID,
+      role: "DIRECTOR",
+    });
     expect(mockClinicRepository.update).toHaveBeenCalledWith(CLINIC_ID, {
       name: "Nouveau nom",
     });

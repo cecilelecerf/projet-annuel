@@ -21,7 +21,8 @@ export class ClinicService {
   async getClinicByUser(userId: string): Promise<Clinic[]> {
     const clinics = await this.repository.findClinicByUserId(userId);
     if (!clinics) throw new NotFoundError("Clinique");
-    return clinics;
+    if (clinics.some((clinic) => !clinic)) throw new NotFoundError("Clinique");
+    return clinics as Clinic[];
   }
 
   async getClientsByClinic({

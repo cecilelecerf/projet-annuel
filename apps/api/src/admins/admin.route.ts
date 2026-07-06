@@ -7,37 +7,33 @@ import { adminController } from "@api/instances";
 const adminRouter: RouterType = Router();
 const controller = adminController;
 
+adminRouter.use(authMiddleware);
 adminRouter.get(
   "/clinic-requests",
-  authMiddleware,
   roleMiddleware(["ADMIN"]),
   controller.getClinicRequests.bind(controller),
 );
 
 adminRouter.patch(
   "/clinic-requests/:id/approve",
-  authMiddleware,
   roleMiddleware(["ADMIN"]),
   controller.approveClinicRequest.bind(controller),
 );
 
 adminRouter.patch(
   "/clinic-requests/:id/reject",
-  authMiddleware,
   roleMiddleware(["ADMIN"]),
   controller.rejectClinicRequest.bind(controller),
 );
 
 adminRouter.get(
   "/clinics",
-  authMiddleware,
   roleMiddleware(["ADMIN"]),
   controller.getClinics.bind(controller),
 );
 
 adminRouter.delete(
   "/clinics/:id",
-  authMiddleware,
   roleMiddleware(["ADMIN"]),
   controller.deleteClinic.bind(controller),
 );

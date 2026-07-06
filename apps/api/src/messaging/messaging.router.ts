@@ -10,10 +10,14 @@ import {
 } from "@armali/schemas";
 import { CLINIC_STAFF_ROLES } from "@api/utils/role";
 import { messagingController } from "@api/instances";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const messagingRouter: RouterType = Router();
 
-messagingRouter.use(authMiddleware, roleMiddleware(CLINIC_STAFF_ROLES));
+messagingRouter.use(authMiddleware);
+messagingRouter.use(requireApprovedClinic);
+
+messagingRouter.use(roleMiddleware(CLINIC_STAFF_ROLES));
 
 messagingRouter.get(
   "/contacts",

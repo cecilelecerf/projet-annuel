@@ -7,25 +7,24 @@ import internalMeetingRouter from "./internal-meeting/internal-meeting.router";
 import recurringMeetingRouter from "./recurring-meeting/recurring-meeting.router";
 import { meetingController } from "@api/instances";
 import { STAFF_ROLES } from "@api/utils";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const meetingRouter: RouterType = Router();
-
+meetingRouter.use(authMiddleware);
+meetingRouter.use(requireApprovedClinic);
 // ── Calendrier ────────────────────────────────────────────────────────────────
 meetingRouter.get(
   "/calendar",
-  authMiddleware,
   roleMiddleware(STAFF_ROLES),
   meetingController.getMyCalendar.bind(meetingController) as RequestHandler,
 );
 meetingRouter.get(
   "/veterinarians/:veterinarianId/slots",
-  authMiddleware,
   roleMiddleware(["CLIENT"]),
   meetingController.getVetSlots.bind(meetingController) as RequestHandler,
 );
 meetingRouter.get(
   "/calendar/:veterinarianId",
-  authMiddleware,
   roleMiddleware(["SECRETARY"]),
   meetingController.getVeterinarianCalendar.bind(
     meetingController,
@@ -38,7 +37,6 @@ meetingRouter.use("/animals", animalMeetingRouter);
 meetingRouter.use("/internal", internalMeetingRouter);
 meetingRouter.get(
   "/:id",
-  authMiddleware,
   roleMiddleware([...STAFF_ROLES, "CLIENT"]),
   meetingController.getMeeting.bind(meetingController) as RequestHandler,
 );

@@ -220,6 +220,7 @@ CREATE TABLE "clinics" (
     "openingHours" TEXT,
     "lat" DOUBLE PRECISION NOT NULL,
     "lng" DOUBLE PRECISION NOT NULL,
+    "directorId" TEXT NOT NULL,
 
     CONSTRAINT "clinics_pkey" PRIMARY KEY ("id")
 );
@@ -685,7 +686,7 @@ CREATE TABLE "secretary_profiles" (
 -- CreateTable
 CREATE TABLE "director_clinic_profiles" (
     "id" TEXT NOT NULL,
-    "clinicId" TEXT NOT NULL,
+    "clinicId" TEXT,
 
     CONSTRAINT "director_clinic_profiles_pkey" PRIMARY KEY ("id")
 );
@@ -786,6 +787,9 @@ CREATE UNIQUE INDEX "clinic_acts_actId_clinicId_key" ON "clinic_acts"("actId", "
 
 -- CreateIndex
 CREATE UNIQUE INDEX "clinics_siret_key" ON "clinics"("siret");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "clinics_directorId_key" ON "clinics"("directorId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "specialities_name_key" ON "specialities"("name");
@@ -938,7 +942,10 @@ ALTER TABLE "animals_vaccines" ADD CONSTRAINT "animals_vaccines_id_fkey" FOREIGN
 ALTER TABLE "animals_vaccines" ADD CONSTRAINT "animals_vaccines_animalId_fkey" FOREIGN KEY ("animalId") REFERENCES "animals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clinic_creation_requests" ADD CONSTRAINT "clinic_creation_requests_directorId_fkey" FOREIGN KEY ("directorId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "clinics" ADD CONSTRAINT "clinics_directorId_fkey" FOREIGN KEY ("directorId") REFERENCES "director_clinic_profiles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clinic_creation_requests" ADD CONSTRAINT "clinic_creation_requests_directorId_fkey" FOREIGN KEY ("directorId") REFERENCES "director_clinic_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "veterinarian_clinics" ADD CONSTRAINT "veterinarian_clinics_veterinarianId_fkey" FOREIGN KEY ("veterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1116,9 +1123,6 @@ ALTER TABLE "secretary_profiles" ADD CONSTRAINT "secretary_profiles_clinicId_fke
 
 -- AddForeignKey
 ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "director_clinic_profiles" ADD CONSTRAINT "director_clinic_profiles_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "referent_clinic_profiles" ADD CONSTRAINT "referent_clinic_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

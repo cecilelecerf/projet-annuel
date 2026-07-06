@@ -21,6 +21,7 @@ export async function seedClinics(
   {
     specialities,
     pets,
+    directors,
   }: {
     specialities: ReturnType<
       typeof import("./specialities").seedSpecialities
@@ -28,6 +29,12 @@ export async function seedClinics(
       ? T
       : never;
     pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
+      ? T
+      : never;
+
+    directors: ReturnType<
+      typeof import("./directors").seedDirectors
+    > extends Promise<infer T>
       ? T
       : never;
   },
@@ -42,7 +49,7 @@ export async function seedClinics(
     geocodeAddress(address3),
     geocodeAddress(address4),
   ]);
-  const [clinic1, clinic2, clinic3, clinic4] = await Promise.all([
+  const [clinic1, clinic2, clinic3] = await Promise.all([
     prisma.clinic.upsert({
       where: { siret: "12345678901234" },
       update: {},
@@ -54,6 +61,8 @@ export async function seedClinics(
         website: "https://vetparc.fr",
         description:
           "Clinique généraliste et spécialisée en cardiologie et neurologie",
+        directorId: directors.directorUser1.id,
+
         openingHours: "Lun-Ven 8h-19h · Sam 9h-17h",
         lat: coord1.lat,
         lng: coord1.lng,
@@ -77,34 +86,6 @@ export async function seedClinics(
     }),
 
     prisma.clinic.upsert({
-      where: { siret: "98765432109876" },
-      update: {},
-      create: {
-        name: "Cabinet Vétérinaire Saint-Michel",
-        address: address2,
-        siret: "98765432109876",
-        phone: "01 98 76 54 32",
-        website: "https://vetsaintmichel.fr",
-        description:
-          "Clinique généraliste avec expertise en dermatologie et comportement",
-        openingHours: "Lun-Sam 9h-18h",
-        lat: coord2.lat,
-        lng: coord2.lng,
-        clinicPet: {
-          connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }],
-        },
-        specialities: {
-          connect: [
-            { id: specialities.medecineGenerale.id },
-            { id: specialities.dermatologie.id },
-            { id: specialities.comportementAnimal.id },
-            { id: specialities.dentisterie.id },
-          ],
-        },
-      },
-    }),
-
-    prisma.clinic.upsert({
       where: { siret: "11122233344455" },
       update: {},
       create: {
@@ -118,6 +99,8 @@ export async function seedClinics(
         openingHours: "Lun-Ven 8h-20h · Sam-Dim 9h-18h (urgences)",
         lat: coord3.lat,
         lng: coord3.lng,
+
+        directorId: directors.directorUser2.id,
         clinicPet: {
           connect: [{ id: pets.petDog.id }, { id: pets.petRabbit.id }],
         },
@@ -147,6 +130,7 @@ export async function seedClinics(
         openingHours: "Mar-Sam 9h-18h",
         lat: coord4.lat,
         lng: coord4.lng,
+        directorId: directors.directorApproved.id,
         clinicPet: {
           connect: [
             { id: pets.petCat.id },
@@ -166,5 +150,5 @@ export async function seedClinics(
     }),
   ]);
 
-  return { clinic1, clinic2, clinic3, clinic4 };
+  return { clinic1, clinic2, clinic3 };
 }

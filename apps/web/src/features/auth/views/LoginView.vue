@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotify } from '@/composables/useNotify'
-import DevLoginSection from '@/components/DevLoginSection.vue'
+import DevLoginSection from '../components/DevLoginSection.vue'
 
 const notify = useNotify()
 

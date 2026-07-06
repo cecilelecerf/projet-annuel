@@ -3,15 +3,17 @@ import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { createBookingSchema } from "@armali/schemas";
 import { bookingController } from "@api/instances";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const bookingRouter: RouterType = Router();
 
+bookingRouter.use(authMiddleware);
+bookingRouter.use(requireApprovedClinic);
 // ── Recherche publique (ou client authentifié) ────────────────────────────────
 
 // GET /booking/clinics?lat=&lng=&address=&radiusKm=&date=&specialityId=&petId=
 bookingRouter.get(
   "/clinics",
-  authMiddleware,
   roleMiddleware(["CLIENT"]),
   bookingController.searchClinics.bind(bookingController) as RequestHandler,
 );
@@ -19,7 +21,6 @@ bookingRouter.get(
 // GET /booking/clinics/:clinicId/vets?date=&specialityId=&petId=
 bookingRouter.get(
   "/clinics/:clinicId/vets",
-  authMiddleware,
   roleMiddleware(["CLIENT"]),
   bookingController.getClinicVets.bind(bookingController) as RequestHandler,
 );
@@ -31,7 +32,6 @@ bookingRouter.get(
 // POST /booking
 bookingRouter.post(
   "/",
-  authMiddleware,
   roleMiddleware(["CLIENT"]),
   validate(createBookingSchema),
   bookingController.create.bind(bookingController) as RequestHandler,

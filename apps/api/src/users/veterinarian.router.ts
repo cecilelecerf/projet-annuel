@@ -3,12 +3,15 @@ import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { STAFF_ROLES } from "@api/utils";
 import { meetingController, reviewController } from "@api/instances";
+import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const veterinarianRouter: RouterType = Router();
 
+veterinarianRouter.use(authMiddleware);
+veterinarianRouter.use(requireApprovedClinic);
+
 veterinarianRouter.get(
   "/:id/availabilities/timeline",
-  authMiddleware,
   roleMiddleware(STAFF_ROLES),
   meetingController.getAvailabilityTimeline.bind(
     meetingController,
@@ -16,7 +19,6 @@ veterinarianRouter.get(
 );
 veterinarianRouter.get(
   "/:id/reviews",
-  authMiddleware,
   reviewController.getVetReviews.bind(reviewController) as RequestHandler,
 );
 

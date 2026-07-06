@@ -1,11 +1,12 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { requireRole } from './utils'
+import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
 
 export const directorRouter: RouteRecordRaw[] = [
   {
     path: '/director',
     component: () => import('@/layouts/DirectorLayout.vue'),
-    beforeEnter: requireRole('DIRECTOR'),
+    beforeEnter: [requireRole('DIRECTOR')],
     children: [
       {
         path: '',

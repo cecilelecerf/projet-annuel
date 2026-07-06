@@ -12,13 +12,15 @@ model Clinic {
   lat          Float
   lng          Float
 
+  directorId String                @unique
+  director   DirectorClinicProfile @relation(fields: [directorId], references: [id])
+
   specialities           Speciality[]
   clinicPet              Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
   veterinarianClinics    VeterinarianClinic[]
   secretaryProfile       SecretaryProfile[]
-  directorClinicProfile  DirectorClinicProfile?
   referentClinicProfiles ReferentClinicProfile[]
   internalMeetings       InternalMeeting[]
   clinicActs             ClinicAct[]
@@ -48,7 +50,7 @@ model ClinicCreationRequest {
   description String?
 
   directorId String
-  director   User   @relation(fields: [directorId], references: [id], onDelete: Cascade)
+  director   DirectorClinicProfile @relation(fields: [directorId], references: [id], onDelete: Cascade)
 
   @@map("clinic_creation_requests")
 }

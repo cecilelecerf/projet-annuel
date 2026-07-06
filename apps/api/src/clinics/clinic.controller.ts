@@ -56,8 +56,12 @@ export class ClinicController {
     next: NextFunction,
   ) {
     try {
-      const clinic = await this.service.updateClinic(req.user!.id, req.body);
-      res.status(200).json(clinic);
+      const clinic = await this.service.updateClinic({
+        userId: req.user!.id,
+        role: req.user.role,
+        data: req.body,
+      });
+      res.status(200).json(clinicSchema.parse(clinic));
     } catch (err) {
       next(err);
     }

@@ -1,13 +1,10 @@
-import { userService } from "@api/instances";
 import { UserId } from "@armali/schemas";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockUserRepository = vi.hoisted(() => ({
   getAllUsers: vi.fn(),
-  getClinicIdByUserId: vi.fn(),
   getUsersByClinic: vi.fn(),
   getAllUsersByRole: vi.fn(),
-  getUsersByRoleAndClinic: vi.fn(),
   getUserById: vi.fn(),
 }));
 
@@ -28,6 +25,16 @@ vi.mock("@api/clinics/clinic.repository", () => ({
     return mockClinicRepository;
   }),
 }));
+
+const { UserRepository } = await import("@api/users/user.repository");
+const { ClinicRepository } = await import("@api/clinics/clinic.repository");
+const { ClinicService } = await import("@api/clinics/clinic.service");
+const { UserService } = await import("@api/users/user.service");
+
+const userService = new UserService(
+  new UserRepository({} as any),
+  new ClinicService(new ClinicRepository({} as any)),
+);
 
 const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
 const ADMIN_ID = "22222222-2222-4222-8222-222222222222";

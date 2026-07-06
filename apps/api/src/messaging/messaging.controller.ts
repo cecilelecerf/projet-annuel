@@ -15,12 +15,16 @@ import {
   joinConversationRoom,
 } from "./socket.gateway";
 
-const messagingService = new MessagingService();
-
 export class MessagingController {
-  async getContacts(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  constructor(private service: MessagingService) {}
+
+  async getContacts(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const contacts = await messagingService.getContacts(req.user);
+      const contacts = await this.service.getContacts(req.user);
       res.status(200).json(contacts);
     } catch (err) {
       next(err);
@@ -29,9 +33,7 @@ export class MessagingController {
 
   async list(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const conversations = await messagingService.listConversations(
-        req.user.id,
-      );
+      const conversations = await this.service.listConversations(req.user.id);
       res.status(200).json(conversations);
     } catch (err) {
       next(err);
@@ -44,7 +46,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      const conversation = await messagingService.createConversation(
+      const conversation = await this.service.createConversation(
         req.user,
         req.body,
       );
@@ -69,7 +71,7 @@ export class MessagingController {
       const before =
         typeof req.query.before === "string" ? req.query.before : undefined;
       const limit = req.query.limit ? Number(req.query.limit) : undefined;
-      const detail = await messagingService.getConversation(
+      const detail = await this.service.getConversation(
         req.params.id,
         req.user.id,
         { before, limit },
@@ -86,7 +88,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      const conversation = await messagingService.rename(
+      const conversation = await this.service.rename(
         req.params.id,
         req.user.id,
         req.body.name,
@@ -104,7 +106,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      const conversation = await messagingService.addMembers(
+      const conversation = await this.service.addMembers(
         req.params.id,
         req.user.id,
         req.body.memberIds,
@@ -127,7 +129,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      await messagingService.removeMember(
+      await this.service.removeMember(
         req.params.id,
         req.user.id,
         req.params.userId,
@@ -150,7 +152,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      const member = await messagingService.updateMemberRole(
+      const member = await this.service.updateMemberRole(
         req.params.id,
         req.user.id,
         req.params.userId,
@@ -169,7 +171,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      const message = await messagingService.sendMessage(
+      const message = await this.service.sendMessage(
         req.user,
         req.params.id,
         req.body.content,
@@ -187,7 +189,7 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
-      await messagingService.markRead(req.params.id, req.user.id);
+      await this.service.markRead(req.params.id, req.user.id);
       emitToConversation(req.params.id, "conversation:read", {
         conversationId: req.params.id,
         userId: req.user.id,

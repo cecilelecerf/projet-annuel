@@ -56,22 +56,6 @@ export class ClinicController {
     }
   }
 
-  async getMineStaff(
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const staff = await this.service.getStaffByUser(
-        req.user!.id,
-        req.user!.role,
-      );
-      res.status(200).json(staff);
-    } catch (err) {
-      next(err);
-    }
-  }
-
   async getMyClinic(
     req: AuthenticatedRequest,
     res: Response,

@@ -1,9 +1,11 @@
-import { prisma } from "@api/lib/prisma";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 import { conversationMemberUserSelect } from "./messaging.types";
 
 export class ContactsRepository {
+  constructor(private prisma: PrismaClient) {}
+  // TODO : delete this, is in clinic repository and service
   async listClinicColleagues(clinicId: string, excludeUserId: string) {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: {
         id: { not: excludeUserId },
         OR: [
@@ -21,17 +23,19 @@ export class ContactsRepository {
       orderBy: [{ lastname: "asc" }, { firstname: "asc" }],
     });
   }
+  // TODO : delete this, is in user repository and service
 
   async listDirectors(excludeUserId: string) {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: { role: "DIRECTOR", id: { not: excludeUserId } },
       select: conversationMemberUserSelect,
       orderBy: [{ lastname: "asc" }, { firstname: "asc" }],
     });
   }
+  // TODO : delete this, is in clinics repository and service
 
   async findUsersWithClinicIds(userIds: string[]) {
-    const users = await prisma.user.findMany({
+    const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       include: {
         secretaryProfile: { select: { clinicId: true } },

@@ -9,10 +9,9 @@ import {
   updateConversationMemberRoleSchema,
 } from "@armali/schemas";
 import { CLINIC_STAFF_ROLES } from "@api/utils/role";
-import { MessagingController } from "./messaging.controller";
+import { messagingController } from "@api/instances";
 
 const messagingRouter: RouterType = Router();
-const messagingController = new MessagingController();
 
 messagingRouter.use(authMiddleware, roleMiddleware(CLINIC_STAFF_ROLES));
 

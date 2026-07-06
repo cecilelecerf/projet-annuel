@@ -73,17 +73,17 @@ export class AnimalMedicalHistoryService {
       if (!clinicAct) throw new NotFoundError("clinic act");
 
       actId = clinicAct.actId;
-
-      const veterinarianClinic =
-        await this.veterinarianClinicRepository.findById(
-          animalMeeting.veterinarianClinicId,
-        );
-      if (!veterinarianClinic) throw new NotFoundError("veterinarian clinic");
-
-      if (veterinarianClinic.clinicId !== clinicAct.clinicId) {
-        throw new BadRequestError(
-          "Le meeting et l'acte ne sont pas de la même clinique",
-        );
+      if (animalMeeting.veterinarianClinicId) {
+        const veterinarianClinic =
+          await this.veterinarianClinicRepository.findById(
+            animalMeeting.veterinarianClinicId,
+          );
+        if (!veterinarianClinic) throw new NotFoundError("veterinarian clinic");
+        if (veterinarianClinic.clinicId !== clinicAct.clinicId) {
+          throw new BadRequestError(
+            "Le meeting et l'acte ne sont pas de la même clinique",
+          );
+        }
       }
 
       type = clinicAct.act.type;
@@ -97,7 +97,7 @@ export class AnimalMedicalHistoryService {
       if (data.performedByIds?.length) {
         performedBy = (
           await Promise.all(
-            data.performedByIds.map(({ id }) =>
+            data.performedByIds.map((id) =>
               this.veterinarianClinicRepository.findByVeterinarianAndClinic(
                 id,
                 clinicAct.clinicId,

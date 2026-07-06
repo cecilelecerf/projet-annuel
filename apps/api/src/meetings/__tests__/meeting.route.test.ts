@@ -5,7 +5,7 @@ import { getPrisma } from "../../../__tests__/setup";
 
 const validQuery = "startDate=2026-01-01&endDate=2026-12-31";
 
-const loginAs = async (email: string, password = "Password123!") => {
+export const loginAs = async (email: string, password = "Password123!") => {
   const res = await request(app)
     .post("/api/auth/login")
     .send({ email, password });

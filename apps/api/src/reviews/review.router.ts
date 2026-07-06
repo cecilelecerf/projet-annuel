@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { Router as RouterType } from "express";
+import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
@@ -29,12 +29,6 @@ reviewRouter.get(
   authMiddleware,
   roleMiddleware(["CLIENT"]),
   controller.getMyReviews.bind(controller),
-);
-
-reviewRouter.get(
-  "/vet/:vetId",
-  authMiddleware,
-  controller.getVetReviews.bind(controller),
 );
 
 export default reviewRouter;

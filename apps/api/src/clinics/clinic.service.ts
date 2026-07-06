@@ -53,6 +53,26 @@ export class ClinicService {
 
     return staffs;
   }
+
+  async getClientsByClinic({
+    role,
+    clinicId,
+    authorId,
+  }: {
+    clinicId: ClinicId;
+    authorId: UserId;
+    role: UserRole;
+  }) {
+    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
+
+    const clinics = await this.getClinicByUser(authorId);
+    if (!clinics.some(({ id }) => id === clinicId)) {
+      throw new ForbiddenError();
+    }
+    const clients = await this.repository.findClientsById(clinicId);
+
+    return clients;
+  }
   async getClinicIdsByUserId({
     userId,
     role,

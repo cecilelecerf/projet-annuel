@@ -1,6 +1,11 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { AnimalRepository } from "./animal.repository";
-import type { CreateAnimal, UpdateAnimal, UserRole } from "@armali/schemas";
+import type {
+  CreateAnimal,
+  UpdateAnimal,
+  UserId,
+  UserRole,
+} from "@armali/schemas";
 import { isStaff } from "@api/utils";
 import dayjs from "dayjs";
 import { VaccineRepository } from "@api/vaccines/vaccine.repository";
@@ -76,12 +81,10 @@ export class AnimalService {
     role,
   }: {
     data: CreateAnimal;
-    userId: string;
+    userId: UserId;
     role: UserRole;
   }) {
-    const clientId = isStaff(role)
-      ? ((data as any).clientId ?? userId)
-      : userId;
+    const clientId: UserId = isStaff(role) ? (data.clientId ?? userId) : userId;
 
     return this.repository.create({ ...data, clientId });
   }

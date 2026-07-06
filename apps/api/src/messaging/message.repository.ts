@@ -1,7 +1,9 @@
-import { prisma } from "@api/lib/prisma";
 import { messageInclude } from "./messaging.types";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class MessageRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async create({
     conversationId,
     senderId,
@@ -11,7 +13,7 @@ export class MessageRepository {
     senderId: string;
     content: string;
   }) {
-    return prisma.message.create({
+    return this.prisma.message.create({
       data: { conversationId, senderId, content },
       include: messageInclude,
     });
@@ -21,7 +23,7 @@ export class MessageRepository {
     conversationId: string,
     { before, limit = 30 }: { before?: string; limit?: number },
   ) {
-    return prisma.message.findMany({
+    return this.prisma.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: "desc" },
       take: limit + 1,
@@ -31,7 +33,7 @@ export class MessageRepository {
   }
 
   async countUnread(conversationId: string, since: Date | null) {
-    return prisma.message.count({
+    return this.prisma.message.count({
       where: {
         conversationId,
         ...(since ? { createdAt: { gt: since } } : {}),

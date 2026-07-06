@@ -9,13 +9,15 @@ import { ConversationRepository } from "./conversation.repository";
 import { MessageRepository } from "./message.repository";
 import { ContactsRepository } from "./contacts.repository";
 
-const conversationRepository = new ConversationRepository();
-const messageRepository = new MessageRepository();
-const contactsRepository = new ContactsRepository();
-
 export class MessagingService {
+  constructor(
+    private repository: MessageRepository,
+    private conversationRepository: ConversationRepository,
+    private contactsRepository: ContactsRepository,
+  ) {}
+
   private async resolveClinicSets(userIds: string[]) {
-    const users = await contactsRepository.findUsersWithClinicIds(userIds);
+    const users = await this.contactsRepository.findUsersWithClinicIds(userIds);
     if (users.length !== userIds.length) throw new NotFoundError("Utilisateur");
     return users;
   }
@@ -33,12 +35,15 @@ export class MessagingService {
     const eligible =
       scope === "DIRECTOR_NETWORK"
         ? members.every((m) => m.role === "DIRECTOR")
-        : members.every((m) => clinicId !== null && m.clinicIds.includes(clinicId));
+        : members.every(
+            (m) => clinicId !== null && m.clinicIds.includes(clinicId),
+          );
     if (!eligible) throw new ForbiddenError();
   }
 
   private async getMember(conversationId: string, userId: string) {
-    const conversation = await conversationRepository.findById(conversationId);
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
     if (!conversation) throw new NotFoundError("Conversation");
     const member = conversation.conversationMembers.find(
       (m) => m.userId === userId,
@@ -62,23 +67,23 @@ export class MessagingService {
 
   async getContacts(actor: JwtPayload) {
     if (!actor.clinicId) throw new ForbiddenError();
-    const clinic = await contactsRepository.listClinicColleagues(
+    const clinic = await this.contactsRepository.listClinicColleagues(
       actor.clinicId,
       actor.id,
     );
     if (actor.role !== "DIRECTOR") return { clinic };
-    const directors = await contactsRepository.listDirectors(actor.id);
+    const directors = await this.contactsRepository.listDirectors(actor.id);
     return { clinic, directors };
   }
 
   async listConversations(userId: string) {
-    const conversations = await conversationRepository.listForUser(userId);
+    const conversations = await this.conversationRepository.listForUser(userId);
     return Promise.all(
       conversations.map(async (conversation) => {
         const me = conversation.conversationMembers.find(
           (m) => m.userId === userId,
         );
-        const unreadCount = await messageRepository.countUnread(
+        const unreadCount = await this.repository.countUnread(
           conversation.id,
           me?.lastReadAt ?? null,
         );
@@ -94,13 +99,13 @@ export class MessagingService {
         throw new BadRequestError("Impossible de discuter avec soi-même");
       }
 
-      const existing = await conversationRepository.findExistingDirect(
+      const existing = await this.conversationRepository.findExistingDirect(
         actor.id,
         data.userId,
       );
       if (existing) return existing;
 
-      const [target] = await contactsRepository.findUsersWithClinicIds([
+      const [target] = await this.contactsRepository.findUsersWithClinicIds([
         data.userId,
       ]);
       if (!target) throw new NotFoundError("Utilisateur");
@@ -116,7 +121,7 @@ export class MessagingService {
         throw new ForbiddenError();
       }
 
-      return conversationRepository.createDirect({
+      return this.conversationRepository.createDirect({
         createdById: actor.id,
         otherUserId: data.userId,
         scope,
@@ -129,14 +134,15 @@ export class MessagingService {
     }
     if (data.scope === "CLINIC" && !actor.clinicId) throw new ForbiddenError();
 
-    const clinicId = data.scope === "CLINIC" ? (actor.clinicId as string) : null;
+    const clinicId =
+      data.scope === "CLINIC" ? (actor.clinicId as string) : null;
     await this.assertMembersEligible({
       scope: data.scope,
       clinicId,
       memberIds: data.memberIds,
     });
 
-    return conversationRepository.createGroup({
+    return this.conversationRepository.createGroup({
       createdById: actor.id,
       name: data.name,
       scope: data.scope,
@@ -152,7 +158,7 @@ export class MessagingService {
   ) {
     const { conversation } = await this.getMember(conversationId, userId);
     const limit = pagination.limit ?? 30;
-    const page = await messageRepository.listByConversation(conversationId, {
+    const page = await this.repository.listByConversation(conversationId, {
       ...pagination,
       limit,
     });
@@ -164,14 +170,18 @@ export class MessagingService {
     };
   }
 
-  async sendMessage(actor: JwtPayload, conversationId: string, content: string) {
+  async sendMessage(
+    actor: JwtPayload,
+    conversationId: string,
+    content: string,
+  ) {
     await this.assertIsMember(conversationId, actor.id);
-    const message = await messageRepository.create({
+    const message = await this.repository.create({
       conversationId,
       senderId: actor.id,
       content,
     });
-    await conversationRepository.touchLastMessageAt(
+    await this.conversationRepository.touchLastMessageAt(
       conversationId,
       message.createdAt,
     );
@@ -180,7 +190,7 @@ export class MessagingService {
 
   async markRead(conversationId: string, userId: string) {
     await this.assertIsMember(conversationId, userId);
-    return conversationRepository.updateLastReadAt(
+    return this.conversationRepository.updateLastReadAt(
       conversationId,
       userId,
       new Date(),
@@ -192,7 +202,7 @@ export class MessagingService {
     if (conversation.type !== "GROUP") {
       throw new BadRequestError("Seuls les groupes peuvent être renommés");
     }
-    return conversationRepository.rename(conversationId, name);
+    return this.conversationRepository.rename(conversationId, name);
   }
 
   async addMembers(
@@ -211,7 +221,7 @@ export class MessagingService {
       clinicId: conversation.clinicId,
       memberIds,
     });
-    return conversationRepository.addMembers(conversationId, memberIds);
+    return this.conversationRepository.addMembers(conversationId, memberIds);
   }
 
   async removeMember(
@@ -229,7 +239,10 @@ export class MessagingService {
     const isSelf = actorId === targetUserId;
     if (!isSelf && actorMember.role !== "ADMIN") throw new ForbiddenError();
 
-    return conversationRepository.removeMember(conversationId, targetUserId);
+    return this.conversationRepository.removeMember(
+      conversationId,
+      targetUserId,
+    );
   }
 
   async updateMemberRole(
@@ -242,7 +255,7 @@ export class MessagingService {
     if (conversation.type !== "GROUP") {
       throw new BadRequestError("Seuls les groupes ont des administrateurs");
     }
-    return conversationRepository.updateMemberRole(
+    return this.conversationRepository.updateMemberRole(
       conversationId,
       targetUserId,
       role,
@@ -250,6 +263,6 @@ export class MessagingService {
   }
 
   async listConversationIdsForUser(userId: string) {
-    return conversationRepository.listConversationIdsForUser(userId);
+    return this.conversationRepository.listConversationIdsForUser(userId);
   }
 }

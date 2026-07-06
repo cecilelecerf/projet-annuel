@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ForbiddenError, NotFoundError, BadRequestError } from "@api/errors";
-import { medicalHistoryService } from "@api/instances";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
@@ -72,7 +71,26 @@ vi.mock("@api/vaccines/vaccine.repository", () => ({
   }),
 }));
 
-const service = medicalHistoryService;
+const { AnimalMedicalHistoryService } =
+  await import("@api/medicalHistories/medical-history.service");
+const { AnimalMedicalHistoryRepository } =
+  await import("@api/medicalHistories/medical-history.repository");
+const { AnimalMeetingRepository } =
+  await import("@api/meetings/animal-meeting/animal-meeting.repository");
+const { AnimalRepository } = await import("@api/animals/animal.repository");
+const { VaccineRepository } = await import("@api/vaccines/vaccine.repository");
+const { VeterinarianClinicRepository } =
+  await import("@api/clinics/veterinarian-clinics/veterinarian-clinic.repository");
+const { ClinicActRepository } = await import("@api/acts/clinic-act.repository");
+
+const service = new AnimalMedicalHistoryService(
+  new AnimalMedicalHistoryRepository({} as any),
+  new AnimalMeetingRepository({} as any),
+  new AnimalRepository({} as any),
+  new VaccineRepository({} as any),
+  new VeterinarianClinicRepository({} as any),
+  new ClinicActRepository({} as any),
+);
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -288,7 +306,7 @@ describe("AnimalMedicalHistoryService.create", () => {
 
     expect(mockRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        priceApplied: clinicAct.price, // même référence
+        priceApplied: clinicAct.price,
       }),
     );
   });
@@ -301,7 +319,7 @@ describe("AnimalMedicalHistoryService.create", () => {
     );
     mockVeterinarianClinicRepository.findByVeterinarianAndClinic
       .mockResolvedValueOnce({ id: "vc-1" })
-      .mockResolvedValueOnce(null); // le deuxième n'est pas dans la clinique
+      .mockResolvedValueOnce(null);
     mockRepository.create.mockResolvedValue(makeHistory());
 
     await service.create(

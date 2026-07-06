@@ -59,8 +59,6 @@ const selection = computed(() => {
     isValid: currentIsValid.value,
   }
 })
-console.log('l')
-console.log(segments.value)
 </script>
 
 <template>

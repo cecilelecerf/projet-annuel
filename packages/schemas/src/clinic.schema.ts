@@ -5,7 +5,7 @@ import {
   veterinarianClinicIdSchema,
   specialityIdSchema,
 } from "./ids";
-import { baseUserSchema, userSchema } from "./users";
+import { baseUserSchema } from "./users/base-user.schema";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({

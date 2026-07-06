@@ -100,7 +100,6 @@ const onEdit = async () => {
 
 const onSaveInternal = async (scope: 'single' | 'all' = 'single') => {
   if (meeting.kind !== 'INTERNAL') return
-  console.log(dateForm.value.date)
 
   await saveSchedule({
     meetingId: meeting.id,

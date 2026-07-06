@@ -6,29 +6,29 @@ import { validate } from "@api/middlewares/validate.middleware";
 import { createClinicRequestSchema } from "@armali/schemas";
 import { directorController } from "@api/instances";
 
-const requestRouter: RouterType = Router();
+const directorRouter: RouterType = Router();
 const controller = directorController;
 
-requestRouter.get(
-  "/status",
+directorRouter.get(
+  "/clinic",
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   controller.getClinicStatus.bind(controller),
 );
 
-requestRouter.post(
-  "/",
+directorRouter.post(
+  "/clinics/request",
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   validate(createClinicRequestSchema),
   controller.requestClinic.bind(controller),
 );
 
-requestRouter.get(
-  "/",
+directorRouter.get(
+  "/clinics/requests",
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   controller.getMyRequests.bind(controller),
 );
 
-export default requestRouter;
+export default directorRouter;

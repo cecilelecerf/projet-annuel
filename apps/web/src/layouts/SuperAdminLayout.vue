@@ -16,12 +16,12 @@ const menuItems: MenuItem[] = [
     icon: List,
   },
   {
-    index: 'Admin.Clinics',
+    index: 'ADMIN.Clinics',
     label: 'Cliniques',
     icon: OfficeBuilding,
   },
   {
-    index: 'Admin.Profil',
+    index: 'ADMIN.Profil',
     label: 'Profil',
     icon: User,
   },

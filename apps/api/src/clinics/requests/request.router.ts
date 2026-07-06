@@ -4,19 +4,19 @@ import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import { createClinicRequestSchema } from "@armali/schemas";
-import { directorController } from "@api/instances";
+import { ClinicRequestController } from "./request.controller";
 
-const directorRouter: RouterType = Router();
-const controller = directorController;
+const clinicRequestRouter: RouterType = Router();
+const controller = new ClinicRequestController();
 
-directorRouter.get(
+clinicRequestRouter.get(
   "/clinic",
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   controller.getClinicStatus.bind(controller),
 );
 
-directorRouter.post(
+clinicRequestRouter.post(
   "/clinics/request",
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
@@ -24,11 +24,11 @@ directorRouter.post(
   controller.requestClinic.bind(controller),
 );
 
-directorRouter.get(
+clinicRequestRouter.get(
   "/clinics/requests",
   authMiddleware,
   roleMiddleware(["DIRECTOR"]),
   controller.getMyRequests.bind(controller),
 );
 
-export default directorRouter;
+export default clinicRequestRouter;

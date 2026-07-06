@@ -1,10 +1,10 @@
 import { BadRequestError, ConflictError } from "@api/errors";
 import type { CreateClinicRequest } from "@armali/schemas";
-import { RequestRepository } from "./request.repository";
+import { ClinicRequestRepository } from "./request.repository";
 
-export class RequestService {
+export class ClinicRequestService {
   constructor(
-    private readonly repository: RequestRepository = new RequestRepository(),
+    private readonly repository: ClinicRequestRepository = new ClinicRequestRepository(),
   ) {}
 
   async getClinicStatus(directorUserId: string) {
@@ -34,12 +34,12 @@ export class RequestService {
     if (profile?.clinic)
       throw new BadRequestError("Vous avez déjà une clinique approuvée");
 
-    const pendingRequest =
-      await this.repository.findPendingRequestByRequest(directorUserId);
-    if (pendingRequest)
-      throw new ConflictError(
-        "Vous avez déjà une demande en attente de validation",
-      );
+    // const pendingRequest =
+    //   await this.repository.findPendingRequestByRequest(directorUserId);
+    // if (pendingRequest)
+    //   throw new ConflictError(
+    //     "Vous avez déjà une demande en attente de validation",
+    //   );
 
     const existingClinic = await this.repository.findClinicBySiret(data.siret);
     if (existingClinic)

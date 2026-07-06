@@ -192,6 +192,7 @@ export const medicalHistoryController = new AnimalMedicalHistoryController(
 export const meetingController = new MeetingController(
   meetingService,
   userService,
+  clinicService,
   animalMeetingService,
   availabilityService,
   internalMeetingService,

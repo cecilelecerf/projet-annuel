@@ -3,7 +3,7 @@ import { Prisma } from "../../prisma/generated/prisma/client";
 export const userWithProfileAndClinicIdInclude = {
   veterinarianProfile: {
     include: {
-      veterinarianClinic: { select: { clinicId: true } },
+      veterinarianClinics: { select: { clinicId: true } },
     },
   },
   clientProfile: true,

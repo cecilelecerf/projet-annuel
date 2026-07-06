@@ -7,7 +7,7 @@ export class ReviewService {
       include: {
         user: { select: { id: true, firstname: true, lastname: true } },
         reviews: { select: { rating: true } },
-        veterinarianClinic: {
+        veterinarianClinics: {
           include: { clinic: { select: { name: true } } },
         },
       },

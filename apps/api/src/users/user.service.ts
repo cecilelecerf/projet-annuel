@@ -19,7 +19,10 @@ export class UserService {
   }
 
   async getUsers(userId: string, role: UserRole) {
-    const clinicIds = await this.clinicService.getClinicId({ userId, role });
+    const clinicIds = await this.clinicService.getClinicIdsByUserId({
+      userId,
+      role,
+    });
     return this.repository.getUsersByClinic({ clinicIds });
   }
 
@@ -45,7 +48,10 @@ export class UserService {
     let staffs: User[] = [];
 
     if (nonClientRoles.length > 0) {
-      const clinicIds = await this.clinicService.getClinicId({ userId, role });
+      const clinicIds = await this.clinicService.getClinicIdsByUserId({
+        userId,
+        role,
+      });
       const staffsByClinic = await Promise.all(
         clinicIds.flatMap((id) =>
           this.clinicService.getStaffByClinicRole({
@@ -79,7 +85,7 @@ export class UserService {
     if (user.role === "ADMIN") throw new ForbiddenError();
 
     if (isStaff(user.role)) {
-      const clinicIds = await this.clinicService.getClinicId({
+      const clinicIds = await this.clinicService.getClinicIdsByUserId({
         userId: requesterId,
         role: requesterRole,
       });

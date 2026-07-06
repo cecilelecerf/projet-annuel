@@ -18,11 +18,13 @@ import { AnimalMeetingService } from "./animal-meeting";
 import { InternalMeetingService } from "./internal-meeting";
 import { AvailabilityService } from "./availabilities";
 import z from "zod";
+import { ClinicService } from "@api/clinics/clinic.service";
 
 export class MeetingController {
   constructor(
     private service: MeetingService,
     private userService: UserService,
+    private clinicService: ClinicService,
     private animalMeetingService: AnimalMeetingService,
     private availabilityService: AvailabilityService,
     private internalMeetingService: InternalMeetingService,
@@ -51,7 +53,9 @@ export class MeetingController {
           ? prisma.clientProfile.findFirst({ where: { user: { id: userId } } })
           : null,
         ["SECRETARY", "DIRECTOR", "REFERANT"].includes(role)
-          ? this.userService.getClinicId({ userId, role }).catch(() => null)
+          ? this.clinicService
+              .getClinicIdsByUserId({ userId, role })
+              .catch(() => null)
           : null,
       ]);
 
@@ -87,7 +91,7 @@ export class MeetingController {
         prisma.veterinarianProfile.findUnique({
           where: { id: veterinarianId },
         }),
-        this.userService.getClinicId({
+        this.clinicService.getClinicIdsByUserId({
           userId: req.user.id,
           role: req.user.role,
         }),

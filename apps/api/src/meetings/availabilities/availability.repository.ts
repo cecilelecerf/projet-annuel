@@ -181,7 +181,7 @@ export class AvailabilityRepository {
     // Récupère les disponibilités du veto pour cette date
     const availabilities = await this.prisma.availability.findMany({
       where: {
-        veterinarianClinic: {
+        veterinarianClinics: {
           veterinarianId,
           clinicId,
         },
@@ -211,7 +211,7 @@ export class AvailabilityRepository {
     // Récupère les RDV déjà pris ce jour pour ce veto
     const existingMeetings = await this.prisma.animalMeeting.findMany({
       where: {
-        veterinarianClinic: { veterinarianId, clinicId },
+        veterinarianClinics: { veterinarianId, clinicId },
         meeting: { date: targetDate },
       },
       include: { meeting: true },

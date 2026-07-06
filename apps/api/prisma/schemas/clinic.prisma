@@ -58,9 +58,9 @@ model Speciality {
   name        String   @unique
   description String
 
-  veterinarianSpeciality VeterinarianProfile[]
-  clinicSpeciality       Clinic[]
-  meetings               AnimalMeeting[]
+  veterinarians VeterinarianProfile[]
+  clinics       Clinic[]
+  meetings      AnimalMeeting[]
 
   @@map("specialities")
 }

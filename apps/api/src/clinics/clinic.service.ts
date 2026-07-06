@@ -8,11 +8,12 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import { ClinicRepository } from "./clinic.repository";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { STAFF_ROLES } from "@api/utils";
+import { Clinic } from "../../prisma/generated/prisma/client";
 
 export class ClinicService {
   constructor(private repository: ClinicRepository) {}
 
-  async getClinicByUser(userId: string) {
+  async getClinicByUser(userId: string): Promise<Clinic[]> {
     const clinics = await this.repository.findClinicByUserId(userId);
     if (!clinics) throw new NotFoundError("Clinique");
     return clinics;
@@ -75,19 +76,19 @@ export class ClinicService {
 
     return staffs;
   }
-  async getClinicId({
+  async getClinicIdsByUserId({
     userId,
     role,
   }: {
     userId: string;
     role: UserRole;
   }): Promise<ClinicId[]> {
-    const clinicId = await this.repository.getClinicIdByUserId({
-      id: userId,
+    const clinicIds = await this.repository.findClinicIdByUser({
+      userId,
       role,
     });
-    if (!clinicId) throw new ForbiddenError();
-    return clinicIdSchema.array().parse(clinicId);
+    if (!clinicIds) throw new ForbiddenError();
+    return clinicIdSchema.array().parse(clinicIds);
   }
   async updateClinic(userId: string, data: UpdateClinic) {
     const profile = await this.repository.findDirectorProfile(userId);

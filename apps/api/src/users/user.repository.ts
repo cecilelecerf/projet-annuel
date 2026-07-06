@@ -19,7 +19,7 @@ export class UserRepository {
           { referentClinicProfile: { clinicId: { in: clinicIds } } },
           {
             veterinarianProfile: {
-              veterinarianClinic: { clinicId: { in: clinicIds } },
+              veterinarianClinics: { some: { clinicId: { in: clinicIds } } },
             },
           },
         ],
@@ -29,7 +29,7 @@ export class UserRepository {
   }
 
   async getUserById({ id }: { id: string }) {
-    return this.prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id },
       omit: { password: true },
       include: {

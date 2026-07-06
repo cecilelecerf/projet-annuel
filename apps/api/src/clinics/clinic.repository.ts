@@ -7,13 +7,6 @@ import type {
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
-const USER_SELECT = {
-  id: true,
-  firstname: true,
-  lastname: true,
-  email: true,
-} as const;
-
 const futureAvailabilityWhere = () => ({
   OR: [
     {
@@ -63,14 +56,15 @@ export class ClinicRepository {
       where: { id: userId },
       include: { clinic: true },
     });
+
     if (referent) return [referent.clinic];
 
     const vetClinic = await this.prisma.veterinarianClinic.findMany({
       where: { veterinarianId: userId },
       include: { clinic: true },
     });
-    if (vetClinic) return vetClinic.map(({ clinic }) => clinic);
 
+    if (vetClinic.length > 0) return vetClinic.map(({ clinic }) => clinic);
     const secretary = await this.prisma.secretaryProfile.findUnique({
       where: { id: userId },
       include: { clinic: true },
@@ -79,10 +73,13 @@ export class ClinicRepository {
   }
 
   // ── Trouve le clinicId d'un utilisateur selon son rôle ───────────────────
-  async findClinicIdByUser(
-    userId: string,
-    role: UserRole,
-  ): Promise<ClinicId[] | null> {
+  async findClinicIdByUser({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<ClinicId[] | null> {
     switch (role) {
       case "VETERINARIAN": {
         const vcs = await this.prisma.veterinarianClinic.findMany({
@@ -236,42 +233,5 @@ export class ClinicRepository {
         },
       },
     });
-  }
-
-  async getClinicIdByUserId({
-    id,
-    role,
-  }: {
-    id: string;
-    role: UserRole;
-  }): Promise<string[] | null> {
-    switch (role) {
-      case "VETERINARIAN": {
-        const profiles = await this.prisma.veterinarianClinic.findMany({
-          where: { veterinarianId: id },
-        });
-        return profiles.map((profile) => profile.clinicId) ?? null;
-      }
-      case "SECRETARY": {
-        const profile = await this.prisma.secretaryProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ? [profile?.clinicId] : null;
-      }
-      case "DIRECTOR": {
-        const profile = await this.prisma.directorClinicProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ? [profile?.clinicId] : null;
-      }
-      case "REFERANT": {
-        const profile = await this.prisma.referentClinicProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ? [profile?.clinicId] : null;
-      }
-      default:
-        return null;
-    }
   }
 }

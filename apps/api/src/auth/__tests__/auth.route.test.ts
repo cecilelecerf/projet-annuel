@@ -226,6 +226,8 @@ describe("POST /api/auth/register-director", () => {
         website: "https://existant.fr",
         description: null,
         openingHours: "09:00",
+        lat: 42,
+        lng: 2,
       },
     });
 

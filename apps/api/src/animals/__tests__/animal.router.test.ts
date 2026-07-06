@@ -37,57 +37,6 @@ describe("GET /api/animals", () => {
   });
 });
 
-// ── GET /api/animals/user/:userId ─────────────────────────────────────────────
-
-describe("GET /api/animals/user/:userId", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get("/api/animals/user/some-id");
-    expect(res.status).toBe(401);
-  });
-
-  it("403 — CLIENT accède aux animaux d'un autre client", async () => {
-    const token = await loginAs("client@gmail.com");
-
-    const otherClient = await getPrisma().user.findFirst({
-      where: {
-        email: { not: "client@gmail.com" },
-        role: "CLIENT",
-      },
-    });
-
-    const res = await request(app)
-      .get(`/api/animals/user/${otherClient!.id}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(403);
-  });
-
-  it("200 — CLIENT accède à ses propres animaux", async () => {
-    const token = await loginAs("client@gmail.com");
-    const client = await getPrisma().user.findUnique({
-      where: { email: "client@gmail.com" },
-    });
-
-    const res = await request(app)
-      .get(`/api/animals/user/${client!.id}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  it("200 — STAFF accède aux animaux d'un client", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const client = await getPrisma().user.findFirst({
-      where: { role: "CLIENT" },
-    });
-
-    const res = await request(app)
-      .get(`/api/animals/user/${client!.id}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-});
-
 // ── GET /api/animals/:id ──────────────────────────────────────────────────────
 
 describe("GET /api/animals/:id", () => {

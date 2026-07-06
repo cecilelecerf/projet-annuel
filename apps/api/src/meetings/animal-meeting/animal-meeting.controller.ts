@@ -102,7 +102,7 @@ export class AnimalMeetingController {
               ...meeting.animal,
               client: flatUser(meeting.animal.client),
             },
-            veterinarianClinic: {
+            veterinarianClinics: {
               ...meeting.veterinarianClinic,
               veterinarian: meeting.veterinarianClinic
                 ? flatUser(meeting.veterinarianClinic?.veterinarian)

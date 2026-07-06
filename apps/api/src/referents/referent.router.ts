@@ -19,14 +19,6 @@ referentRouter.get(
   controller.getDashboard.bind(controller),
 );
 
-referentRouter.patch(
-  "/clinic",
-  authMiddleware,
-  roleMiddleware(["REFERENT"]),
-  validate(updateClinicReferentSchema),
-  controller.updateClinic.bind(controller),
-);
-
 referentRouter.get(
   "/clinic/specialities",
   authMiddleware,

@@ -66,6 +66,24 @@ const roles: Role[] = [
     path: 'ADMIN',
   },
 ]
+const directors: Role[] = [
+  {
+    key: 'rejected',
+    label: 'Rejected',
+    emoji: '👤',
+    description: "Propriétaire d'animaux, gestion des RDV",
+    email: 'rejected@gmail.fr',
+    path: 'DIRECTOR',
+  },
+  {
+    key: 'pending',
+    label: 'Pending',
+    emoji: '👤',
+    description: "Propriétaire d'animaux, gestion des RDV",
+    email: 'pending@gmail.fr',
+    path: 'DIRECTOR',
+  },
+]
 const authStore = useAuthStore()
 const { isAuthenticated } = storeToRefs(authStore)
 
@@ -111,6 +129,29 @@ const loginAs = async (role: Role) => {
         </div>
         <div class="role-card__arrow">
           <el-icon><Right /></el-icon>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="!isAuthenticated" class="directors-section">
+      <p>Status de directeurs</p>
+      <div class="dev-section__grid">
+        <div
+          v-for="role in directors"
+          :key="role.key"
+          class="role-card"
+          :class="`role-card--${role.key}`"
+          @click="loginAs(role)"
+        >
+          <div class="role-card__icon">{{ role.emoji }}</div>
+          <div class="role-card__content">
+            <h3 class="role-card__title">{{ role.label }}</h3>
+            <p class="role-card__desc">{{ role.description }}</p>
+            <span class="role-card__email">{{ role.email }}</span>
+          </div>
+          <div class="role-card__arrow">
+            <el-icon><Right /></el-icon>
+          </div>
         </div>
       </div>
     </div>
@@ -271,5 +312,9 @@ const loginAs = async (role: Role) => {
   .dev-section__grid {
     grid-template-columns: 1fr;
   }
+}
+
+.directors-section {
+  margin-top: 20px;
 }
 </style>

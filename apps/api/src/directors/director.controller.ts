@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { DirectorService } from "./director.service";
+import { clinicGuardRequest } from "@armali/schemas";
 
 export class DirectorController {
   constructor(private service: DirectorService) {}
@@ -7,7 +8,8 @@ export class DirectorController {
   async getClinicStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const status = await this.service.getClinicStatus(req.user!.id);
-      res.status(200).json(status);
+
+      res.status(200).json(clinicGuardRequest.parse(status));
     } catch (err) {
       next(err);
     }

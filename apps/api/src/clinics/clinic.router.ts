@@ -42,9 +42,9 @@ clinicRouter.get(
 );
 
 clinicRouter.patch(
-  "/me",
+  "/",
   authMiddleware,
-  roleMiddleware(["DIRECTOR"]),
+  roleMiddleware(["DIRECTOR", "REFERENT"]),
   validate(updateClinicSchema),
   controller.updateClinic.bind(controller) as RequestHandler,
 );

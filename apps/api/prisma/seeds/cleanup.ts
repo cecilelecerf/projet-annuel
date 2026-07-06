@@ -39,6 +39,7 @@ export async function cleanup(prisma: PrismaClient) {
   await prisma.clientProfile.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.clinic.deleteMany();
+  await prisma.clinicCreationRequest.deleteMany();
   await prisma.bankingInfo.deleteMany();
   await prisma.medicalVisit.deleteMany();
   await prisma.user.deleteMany();

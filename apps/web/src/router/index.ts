@@ -6,6 +6,7 @@ import { directorRouter } from './directorRouter'
 import { secretaryRouter } from './secretaryRouter'
 import { referentRouter } from './referentRouter'
 import { adminRouter } from './adminRouter'
+import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
   DIRECTOR: '/director',
@@ -67,6 +68,7 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
+registerClinicStatusGuard(router)
 
 let authInitialized = false
 

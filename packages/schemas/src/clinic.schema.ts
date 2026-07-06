@@ -5,7 +5,6 @@ import {
   veterinarianClinicIdSchema,
   specialityIdSchema,
 } from "./ids";
-import { baseUserSchema } from "./users/base-user.schema";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
@@ -62,6 +61,18 @@ export type CreateVeterinarianClinic = z.infer<
   typeof createVeterinarianClinicSchema
 >;
 
+export const clinicStatusSchema = z.enum([
+  "NONE",
+  "PENDING",
+  "REJECTED",
+  "APPROVED",
+]);
+export const clinicGuardRequest = z.object({
+  status: clinicStatusSchema,
+  clinic: clinicSchema.optional(),
+  request: clinicSchema.optional(),
+});
+export type ClinicStatus = z.infer<typeof clinicStatusSchema>;
 // ── Speciality ────────────────────────────────────────────────────────────────
 export const specialitySchema = z.object({
   id: specialityIdSchema,

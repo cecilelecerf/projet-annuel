@@ -4,7 +4,12 @@ import {
   UpdateClinic,
   UserId,
 } from "@armali/schemas";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@api/errors";
 import { ClinicRepository } from "./clinic.repository";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
@@ -31,8 +36,6 @@ export class ClinicService {
     if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
 
     const clinics = await this.getClinicByUser(authorId);
-    console.log(clinics);
-    console.log(clinicId);
     if (!clinics.some(({ id }) => id === clinicId)) {
       throw new ForbiddenError();
     }
@@ -52,12 +55,21 @@ export class ClinicService {
     if (!clinicIds) throw new ForbiddenError();
     return clinicIdSchema.array().parse(clinicIds);
   }
-  async updateClinic(userId: string, data: UpdateClinic) {
-    const profile = await this.repository.findDirectorProfile(userId);
-    if (!profile)
-      throw new BadRequestError(
-        "Aucune clinique associée à ce compte directeur",
-      );
-    return this.repository.update(profile.clinicId, data);
+  async updateClinic({
+    userId,
+    role,
+    data,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    data: UpdateClinic;
+  }) {
+    const clinicIds = await this.getClinicIdsByUserId({ userId, role });
+
+    if (!clinicIds) throw new NotFoundError("clinic");
+    if (clinicIds.length !== 1)
+      throw new ConflictError("Multiple clinics associated with the user");
+
+    return this.repository.update(clinicIds[0], data);
   }
 }

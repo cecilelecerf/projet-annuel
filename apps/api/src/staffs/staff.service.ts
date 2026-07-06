@@ -72,6 +72,7 @@ export class StaffService {
     const clinicId = clinics[0].id;
     const user = await this.repository.findMemberDetailById(memberId);
     if (!user) throw new NotFoundError("Membre du personnel");
+
     const belongsToClinic =
       (user.veterinarianProfile?.veterinarianClinics ?? []).some(
         (vc) => vc.clinicId === clinicId,

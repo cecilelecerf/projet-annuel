@@ -18,6 +18,7 @@ import { seedMedicalVisits } from "./medical-visit";
 import { seedMeetings } from "./meetings";
 import { seedPrescriptions } from "./prescriptions";
 import { cleanup } from "./cleanup";
+import { seedClinicRequests } from "./clinic-requests";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -49,6 +50,7 @@ async function main() {
     specialities,
     pets,
   });
+  await seedClinicRequests(prisma, { users });
   await seedMedicalVisits(prisma, { users });
   await seedBankingInfo(prisma, { users });
   const vetoClinic = await seedVeterinarianClinics(prisma, {

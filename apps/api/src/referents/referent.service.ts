@@ -20,15 +20,6 @@ export class ReferentService {
     return profile.clinicId;
   }
 
-  async updateClinic(referentUserId: string, data: UpdateClinicReferent) {
-    const clinicId = await this.getClinicId(referentUserId);
-
-    return prisma.clinic.update({
-      where: { id: clinicId },
-      data,
-    });
-  }
-
   async getClinicSpecialities(referentUserId: string) {
     const clinicId = await this.getClinicId(referentUserId);
     const clinic = await prisma.clinic.findUnique({

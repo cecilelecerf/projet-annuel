@@ -32,6 +32,9 @@ export async function seedUsers(
     adminUser,
     directorUser1,
     directorUser2,
+    directorPending,
+    directorRejected,
+    directorApproved,
     referentUser1,
     vetoUser1,
     vetoUser2,
@@ -61,6 +64,33 @@ export async function seedUsers(
     prisma.user.create({
       data: {
         email: "directeur@vetsaintmichel.fr",
+        firstname: "Marie",
+        lastname: "Dupont",
+        password,
+        role: "DIRECTOR",
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "pending@gmail.fr",
+        firstname: "Marie",
+        lastname: "Dupont",
+        password,
+        role: "DIRECTOR",
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "rejected@gmail.fr",
+        firstname: "Marie",
+        lastname: "Dupont",
+        password,
+        role: "DIRECTOR",
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "approved@gmail.fr",
         firstname: "Marie",
         lastname: "Dupont",
         password,
@@ -224,6 +254,9 @@ export async function seedUsers(
     adminUser,
     directorUser1,
     directorUser2,
+    directorPending,
+    directorApproved,
+    directorRejected,
     referentUser1,
     vetoUser1,
     vetoUser2,

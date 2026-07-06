@@ -2,6 +2,7 @@ import z from "zod";
 import {
   baseUserSchema,
   clientProfileSchema,
+  clientSchema,
   userSchema,
   veterinarianProfileSchema,
 } from "../users";
@@ -14,17 +15,20 @@ export const animalWithUserSchema = animalSchema.extend({
   client: userSchema,
 });
 export const animalMetaSchema = animalSchema.extend({
-  client: userSchema,
-  age: z.object({
-    years: z.number().nonnegative(),
-    months: z.number().nonnegative(),
-  }),
+  client: clientSchema,
+  age: z
+    .object({
+      years: z.number().nonnegative(),
+      months: z.number().nonnegative(),
+    })
+    .optional(),
   race: raceMetaSchema,
 });
-
-export const animalWithRaceMeta = animalSchema.extend({
+export type AnimalMeta = z.infer<typeof animalMetaSchema>;
+export const animalWithRaceMetaSchema = animalSchema.extend({
   race: raceMetaSchema,
 });
+export type AnimalWithRaceMeta = z.infer<typeof animalWithRaceMetaSchema>;
 export type AnimalWithUser = z.infer<typeof animalWithUserSchema>;
 
 export const animalDetailSchema = animalSchema.extend({

@@ -4,7 +4,7 @@ export async function seedMeetings(
   prisma: PrismaClient,
   {
     users,
-    clinic1,
+    clinics,
     veterinarianClinics,
     specialities,
     healthConditions,
@@ -15,7 +15,11 @@ export async function seedMeetings(
     >
       ? T
       : never;
-    clinic1: Clinic;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
     veterinarianClinics: ReturnType<
       typeof import("./veterinarian-clinics").seedVeterinarianClinics
     > extends Promise<infer T>
@@ -44,11 +48,11 @@ export async function seedMeetings(
     clientUser2,
     vetProfile1,
     vetProfile2,
-    vetProfile3,
     secretaryProfile,
+    directorUser1,
+    referentUser1,
   } = users;
-  const { vetoClinic1, vetoClinic2, vetoClinic3 } = veterinarianClinics;
-  const { specCardio, specDerma } = specialities;
+  const { vetoClinic1, vetoClinic2 } = veterinarianClinics;
   const { conditionCardio, conditionRenal } = healthConditions;
   const { raceLab, racePersan, raceGolden } = pets;
 
@@ -258,7 +262,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-02-10"),
+      date: new Date("2026-06-10"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T09:30:00Z"),
       animalMeeting: {
@@ -268,7 +272,7 @@ export async function seedMeetings(
           petSize: 58,
           report:
             "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
-          specialityId: specCardio.id,
+          specialityId: specialities.cardiologie.id,
           animalId: animal1.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -282,7 +286,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-05-10"),
+      date: new Date("2026-07-10"),
       startTime: new Date("1970-01-01T09:00:00Z"),
       endTime: new Date("1970-01-01T09:30:00Z"),
       animalMeeting: {
@@ -292,7 +296,7 @@ export async function seedMeetings(
           petSize: 58,
           report:
             "Rex présente un souffle cardiaque léger. Surveillance recommandée.",
-          specialityId: specCardio.id,
+          specialityId: specialities.cardiologie.id,
           animalId: animal1.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -307,7 +311,7 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-03-05"),
+      date: new Date("2026-06-05"),
       startTime: new Date("1970-01-01T14:00:00Z"),
       endTime: new Date("1970-01-01T14:20:00Z"),
       animalMeeting: {
@@ -315,7 +319,7 @@ export async function seedMeetings(
           description: "Problème de peau",
           petWeight: 4,
           petSize: 32,
-          specialityId: specDerma.id,
+          specialityId: specialities.dermatologie.id,
           animalId: animal2.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -330,12 +334,12 @@ export async function seedMeetings(
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
-      date: new Date("2026-04-01"),
+      date: new Date("2026-08-01"),
       startTime: new Date("1970-01-01T10:00:00Z"),
       endTime: new Date("1970-01-01T10:30:00Z"),
       animalMeeting: {
         create: {
-          specialityId: specDerma.id,
+          specialityId: specialities.dermatologie.id,
           animalId: animal3.id,
           veterinarianClinicId: vetoClinic1.id,
         },
@@ -359,7 +363,7 @@ export async function seedMeetings(
         create: {
           title: "Réunion hebdomadaire équipe",
           description: "Point de la semaine",
-          clinicId: clinic1.id,
+          clinicId: clinics.clinic1.id,
           adminId: vetProfile1.id,
         },
       },
@@ -382,7 +386,7 @@ export async function seedMeetings(
         create: {
           title: "Réunion hebdomadaire — bilan mensuel",
           description: "Bilan du mois de mars",
-          clinicId: clinic1.id,
+          clinicId: clinics.clinic1.id,
           adminId: vetProfile1.id,
         },
       },
@@ -400,7 +404,7 @@ export async function seedMeetings(
         create: {
           title: "Formation nouveaux équipements",
           description: "Présentation échographie",
-          clinicId: clinic1.id,
+          clinicId: clinics.clinic1.id,
           adminId: secretaryProfile.id,
         },
       },
@@ -412,6 +416,7 @@ export async function seedMeetings(
 
   await prisma.internalMeetingParticipant.createMany({
     data: [
+      // ── Réunion récurrente hebdomadaire ────────────────────────────────────────
       {
         meetingId: recurringInternal1.internalMeeting!.id,
         userId: vetoUser1.id,
@@ -428,6 +433,18 @@ export async function seedMeetings(
         status: "PENDING",
       },
       {
+        meetingId: recurringInternal1.internalMeeting!.id,
+        userId: directorUser1.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: recurringInternal1.internalMeeting!.id,
+        userId: referentUser1.id,
+        status: "PENDING",
+      },
+
+      // ── Formation nouveaux équipements ─────────────────────────────────────────
+      {
         meetingId: baseInternal2.internalMeeting!.id,
         userId: vetoUser1.id,
         status: "ACCEPTED",
@@ -437,9 +454,23 @@ export async function seedMeetings(
         userId: vetoUser2.id,
         status: "DECLINED",
       },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: secretaryUser1.id,
+        status: "ACCEPTED",
+      },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: directorUser1.id,
+        status: "PENDING",
+      },
+      {
+        meetingId: baseInternal2.internalMeeting!.id,
+        userId: referentUser1.id,
+        status: "ACCEPTED",
+      },
     ],
   });
-
   // ── Health conditions owned pets ────────────────────────────────────────────
   await prisma.animalHealthCondition.create({
     data: {

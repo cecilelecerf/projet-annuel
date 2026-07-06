@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import type { AnimalMeetingMeta } from '@armali/schemas'
+import { useAuthStore } from '@/stores/authStore'
 
 const props = defineProps<{ meeting: AnimalMeetingMeta }>()
+const { user } = useAuthStore()
 const router = useRouter()
 const petAge = computed(() => {
   if (!props.meeting.animal?.dateOfBirth) return null
@@ -32,7 +34,10 @@ const petAge = computed(() => {
         text
         size="small"
         @click="
-          router.push({ name: 'Secretary.Animals.Detail', params: { id: meeting.animal.id } })
+          router.push({
+            name: `${user?.role.toUpperCase()}.Animals.Detail`,
+            params: { id: meeting.animal.id },
+          })
         "
       >
         Voir la fiche <el-icon><ArrowRight /></el-icon>
@@ -40,7 +45,7 @@ const petAge = computed(() => {
     </div>
   </div>
 
-  <div class="pet-card">
+  <div class="pet-card" v-if="user?.role !== 'CLIENT'">
     <div class="pet-avatar">
       {{ meeting.animal?.client?.firstname?.charAt(0) ?? '?' }}
     </div>
@@ -53,7 +58,10 @@ const petAge = computed(() => {
       text
       size="small"
       @click="
-        router.push({ name: 'Secretary.Users.Detail', params: { id: meeting.animal.clientId } })
+        router.push({
+          name: `${user?.role.toUpperCase()}.Clients.Detail`,
+          params: { id: meeting.animal.clientId },
+        })
       "
     >
       Voir la fiche <el-icon><ArrowRight /></el-icon>
@@ -87,8 +95,8 @@ const petAge = computed(() => {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--el-color-success-light-7);
-  color: var(--el-color-success);
+  background: var(--el-color-primary-light-7);
+  color: var(--el-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;

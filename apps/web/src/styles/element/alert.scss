@@ -1,0 +1,135 @@
+@use 'sass:map';
+@use './custom-colors.scss' as *;
+
+.el-alert {
+  border-radius: var(--radius-full) !important;
+  padding: var(--spacing-sm) var(--spacing-md) !important;
+  align-items: center !important;
+  gap: var(--spacing-sm);
+  box-shadow: none !important;
+
+  .el-alert__icon {
+    font-size: 20px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .el-alert__content {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .el-alert__title {
+    font-family: 'Nunito', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: var(--fw-bold) !important;
+
+    &.is-bold {
+      font-weight: var(--fw-bold) !important;
+    }
+  }
+
+  .el-alert__description {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: var(--fw-regular) !important;
+    margin: 2px 0 0 !important;
+  }
+
+  .el-alert__close-btn {
+    top: var(--spacing-md) !important;
+    right: var(--spacing-md) !important;
+    font-size: 14px !important;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // ── Types natifs ──────────────────────────────────────────────────────────
+  &.el-alert--info {
+    background: var(--el-fill-color-light) !important;
+    border-color: var(--el-border-color) !important;
+    color: var(--el-text-color-secondary) !important;
+
+    .el-alert__icon {
+      color: var(--el-text-color-secondary) !important;
+    }
+  }
+
+  &.el-alert--success {
+    background: var(--el-color-success-light-9) !important;
+    border-color: var(--el-color-success-light-7) !important;
+    color: var(--el-color-success-dark-2) !important;
+
+    .el-alert__icon {
+      color: var(--el-color-success) !important;
+    }
+  }
+
+  &.el-alert--warning {
+    background: var(--el-color-warning-light-9) !important;
+    border-color: var(--el-color-warning-light-7) !important;
+    color: var(--el-color-warning-dark-2) !important;
+
+    .el-alert__icon {
+      color: var(--el-color-warning) !important;
+    }
+  }
+
+  &.el-alert--error {
+    background: var(--el-color-danger-light-9) !important;
+    border-color: var(--el-color-danger-light-7) !important;
+    color: var(--el-color-danger-dark-2) !important;
+
+    .el-alert__icon {
+      color: var(--el-color-danger) !important;
+    }
+  }
+
+  // ── Variante "outline" au choix : bandeau plein sans fond clair ────────────
+  &.el-alert--filled {
+    &.el-alert--success {
+      background: var(--el-color-success) !important;
+      color: white !important;
+      border-color: var(--el-color-success) !important;
+
+      .el-alert__icon,
+      .el-alert__title,
+      .el-alert__description {
+        color: white !important;
+      }
+    }
+
+    &.el-alert--error {
+      background: var(--el-color-danger) !important;
+      color: white !important;
+      border-color: var(--el-color-danger) !important;
+
+      .el-alert__icon,
+      .el-alert__title,
+      .el-alert__description {
+        color: white !important;
+      }
+    }
+  }
+
+  // ── Couleurs custom (purple / pink / teal / yellow) ─────────────────────────
+  @each $name in map.keys($custom-colors) {
+    &.el-alert--#{$name} {
+      background: var(--el-color-#{$name}-light-9) !important;
+      border-color: var(--el-color-#{$name}-light-7) !important;
+      color: var(--el-color-#{$name}-dark-2) !important;
+
+      .el-alert__icon {
+        color: var(--el-color-#{$name}) !important;
+      }
+    }
+  }
+}

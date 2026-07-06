@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { type Calendar, type UserId } from '@armali/schemas'
+import { type Calendar, type UserId, type MeetingKind } from '@armali/schemas'
 import FullCalendar from '@fullcalendar/vue3'
 
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { ref } from 'vue'
-import { calendarApi } from '../../api/calendar.api'
+import { meetingApi } from '../../api/meeting.api.ts'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
-import { availabilitiesToBusinessHours, toCalendarEvent } from '../utils'
+import { availabilitiesToBackgroundEvents, toCalendarEvent } from '../utils'
 import EventCard from './EventCalendar.vue'
 import type {
   CalendarOptions,
@@ -24,12 +24,18 @@ const { date, userId } = defineProps<{
   date: Date
   userId?: UserId
 }>()
-const emit = defineEmits<{ close: []; newEvent: [date: Date] }>()
+const emit = defineEmits<{
+  close: []
+  newEvent: [date: Date]
+  onClickEvent: [id: string, date: string, kind: MeetingKind]
+}>()
 
 const calendar = ref<Calendar | null>(null)
 const formatted = dayjs(date).format('YYYY-MM-DD')
 
-calendarApi.getCalendar(formatted, formatted, userId).then((data) => (calendar.value = data))
+meetingApi
+  .getCalendar({ start: formatted, end: formatted, userId })
+  .then((data) => (calendar.value = data))
 
 const formattedDate = dayjs(date).format('YYYY-MM-DD')
 
@@ -49,15 +55,20 @@ const calendarOptions = ref<CalendarOptions>({
     `kind-${arg.event.extendedProps.kind}`,
     `status-${arg.event.extendedProps.status}`,
   ],
-  eventClick: (info: EventClickArg) => console.log('RDV cliqué', info.event.title),
+  eventClick: (info: EventClickArg) => {
+    const [id] = info.event.id.split('_')
+    if (!id) return
+    emit('onClickEvent', id, info.event.extendedProps.date, info.event.extendedProps.kind)
+    emit('close')
+  },
   dateClick: (info: DateClickArg) => {
     emit('newEvent', info.date)
   },
   datesSet: async () => {
-    const data = await calendarApi.getCalendar(formatted, formatted, userId)
+    const data = await meetingApi.getCalendar({ start: formatted, end: formatted, userId })
     calendar.value = data
     calendarOptions.value.events = data.meetings.map(toCalendarEvent)
-    calendarOptions.value.businessHours = availabilitiesToBusinessHours({ calendar: data })
+    calendarOptions.value.businessHours = availabilitiesToBackgroundEvents({ calendar: data })
   },
 })
 </script>
@@ -109,7 +120,6 @@ const calendarOptions = ref<CalendarOptions>({
 }
 
 .drawer-date {
-  font-family: 'Nunito', sans-serif;
   font-weight: var(--fw-bold);
   font-size: 16px;
   color: var(--el-text-color-primary);

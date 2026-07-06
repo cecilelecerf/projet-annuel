@@ -1,0 +1,67 @@
+// styles/element/inputs.scss
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+.el-input__wrapper {
+  border-radius: var(--radius-full) !important;
+}
+
+// Input avec préfixe/suffixe (groupe)
+.el-input-group__prepend {
+  border-radius: var(--radius-full) 0 0 var(--radius-full) !important;
+}
+
+.el-input-group__append {
+  border-radius: 0 var(--radius-full) var(--radius-full) 0 !important;
+}
+
+// ── Textarea — pill sur un textarea ça fait bizarre, juste arrondi md ─────────
+.el-textarea__inner {
+  border-radius: var(--radius-lg) !important;
+}
+
+// ── Select ────────────────────────────────────────────────────────────────────
+.el-select__wrapper {
+  border-radius: var(--radius-full) !important;
+}
+
+// Dropdown du select
+.el-select-dropdown {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+}
+
+.el-select-dropdown__item {
+  border-radius: var(--radius-md) !important;
+  margin: 2px var(--spacing-xs);
+
+  &.is-selected {
+    border-radius: var(--radius-md) !important;
+  }
+}
+
+// ── Date picker ───────────────────────────────────────────────────────────────
+.el-date-editor.el-input__wrapper {
+  border-radius: var(--radius-full) !important;
+}
+
+.el-picker__popper {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+}
+
+// ── Time picker / Time select ─────────────────────────────────────────────────
+.el-time-select.el-select__wrapper,
+.el-time-picker.el-input__wrapper {
+  border-radius: var(--radius-full) !important;
+}
+
+.el-time-select-dropdown,
+.el-time-picker__panel {
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
+}
+
+// ── Input number ──────────────────────────────────────────────────────────────
+.el-input-number .el-input__wrapper {
+  border-radius: var(--radius-full) !important;
+}

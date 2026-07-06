@@ -6,18 +6,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import type { AnimalId } from '@armali/schemas'
 import { animalApi } from '../../api'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
-import { actTypeLabel } from '@/features/acts/utils'
-import WeightChart from './WeightChart.vue'
+import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
+import { actTypeLabel } from '@/features/medicalHistories/utils.ts'
+import { useAuthStore } from '@/stores/authStore.ts'
+import WeightChart from '../../components/WeightChart.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
+const router = useRouter()
+const { user } = useAuthStore()
 const pet = await animalApi.get(route.params.id as AnimalId)
 const [meetings, vaccinesStatus] = await Promise.all([
-  calendarApi.animal.getAllByAnimal(pet.id),
-  await animalApi.getVaccines(route.params.id as AnimalId),
+  meetingApi.animal.getAllByAnimal(pet.id),
+  animalApi.getVaccines(route.params.id as AnimalId),
 ])
-const router = useRouter()
 
 const age = computed(() => {
   const years = dayjs().diff(dayjs(pet.dateOfBirth), 'year')
@@ -93,7 +95,17 @@ const lastSize = computed(() => {
         <el-divider />
 
         <!-- Propriétaire -->
-        <div class="owner-row" @click="router.push(`/secretary/users/${pet.clientId}`)">
+
+        <div
+          v-if="user?.role !== 'CLIENT'"
+          class="owner-row"
+          @click="
+            router.push({
+              name: `${user?.role.toUpperCase()}.Clients.Detail`,
+              params: { id: pet.clientId },
+            })
+          "
+        >
           <div class="owner-avatar">
             {{ pet.client?.user.firstname?.charAt(0) }}{{ pet.client?.user.lastname?.charAt(0) }}
           </div>
@@ -196,7 +208,7 @@ const lastSize = computed(() => {
             <span class="vaccine-name">{{ v.vaccine?.act?.name }}</span>
             <span class="vaccine-date">
               {{
-                v.medicalHistory.performedAt
+                v.medicalHistory?.performedAt
                   ? dayjs(v.medicalHistory.performedAt).format('D MMM YYYY')
                   : '—'
               }}
@@ -251,7 +263,7 @@ const lastSize = computed(() => {
             class="meeting-row"
             @click="
               router.push({
-                name: 'Secretary.Calendar.Meeting.Detail',
+                name: `${user?.role.toUpperCase()}.Meetings.Detail`,
                 params: { id: meeting.meeting.id },
               })
             "
@@ -640,13 +652,6 @@ const lastSize = computed(() => {
 }
 
 // ── Description ───────────────────────────────────────────────────────────────
-
-.description-text {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
 
 .empty-text {
   font-size: 13px;

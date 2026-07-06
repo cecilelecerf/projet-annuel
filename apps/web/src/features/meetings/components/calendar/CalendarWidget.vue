@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import FullCalendar from '@fullcalendar/vue3'
 import DateDrawer from './DateDrawer.vue'
-import NewEvent from '../NewEventDrawer/index.vue'
 import { useCalendar } from '../../composables/useCalendar'
 import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
 import type { UserId } from '@armali/schemas'
+import BaseComponent from '../NewEventDrawer/BaseComponent.vue'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
-const { calendarOptions, dateSelect, openNewEvent, selectedMeeting } = useCalendar(userId)
+const {
+  calendarOptions,
+  dateSelect,
+  openNewEvent,
+  selectedMeeting,
+  availableClinics,
+  selectedClinicIds,
+} = useCalendar(userId)
 const newEventDate = ref<Date | null>(null)
 
 const isDateDrawerOpen = computed({
@@ -27,6 +34,18 @@ const onNewEventDrawerClose = () => {
 
 <template>
   <div class="calendar-container">
+    <div v-if="availableClinics.length > 1" class="clinic-filter">
+      <el-select
+        v-model="selectedClinicIds"
+        multiple
+        collapse-tags
+        placeholder="Toutes les cliniques"
+        clearable
+        style="width: 280px"
+      >
+        <el-option v-for="c in availableClinics" :key="c.id" :label="c.name" :value="c.id" />
+      </el-select>
+    </div>
     <FullCalendar :options="calendarOptions"> </FullCalendar>
   </div>
 
@@ -42,6 +61,12 @@ const onNewEventDrawerClose = () => {
           openNewEvent = true
         }
       "
+      @on-click-event="
+        (id, date, kind) => {
+          if (kind === 'AVAILABILITY') return
+          selectedMeeting = { id, date: new Date(date), kind }
+        }
+      "
     />
   </el-drawer>
 
@@ -49,10 +74,10 @@ const onNewEventDrawerClose = () => {
     v-model="openNewEvent"
     direction="rtl"
     :with-header="false"
-    size="420px"
+    size="520px"
     @close="onNewEventDrawerClose"
   >
-    <NewEvent
+    <BaseComponent
       :key="newEventDate?.toISOString()"
       @close="onNewEventDrawerClose"
       :initial-date="newEventDate"
@@ -63,11 +88,10 @@ const onNewEventDrawerClose = () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
-    @delete="selectedMeeting = null"
   />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .calendar-container {
   flex: 1;
   min-height: 0;
@@ -98,7 +122,6 @@ const onNewEventDrawerClose = () => {
   border: 1px solid var(--el-border-color) !important;
   color: var(--el-text-color-regular) !important;
   border-radius: var(--radius-md) !important;
-  font-family: 'DM Sans', sans-serif !important;
   font-size: 13px !important;
   padding: 4px 10px !important;
   box-shadow: none !important;
@@ -187,25 +210,25 @@ const onNewEventDrawerClose = () => {
   padding: var(--spacing-xs);
 }
 :deep(.kind-ANIMAL) {
-  background: color-mix(in srgb, var(--el-color-teal-light) 25%, transparent) !important;
+  background: var(--el-color-#{meeting-color('animal')}-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
     border: 0.5px solid var(--el-color-teal) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-teal-dark);
+    color: var(--el-color-#{meeting-color('animal')}-dark-5);
   }
 }
 :deep(.kind-INTERNAL) {
-  background: color-mix(in srgb, var(--el-color-purple-light) 25%, transparent) !important;
+  background: var(--el-color-#{meeting-color('internal')}-light-5) !important;
   backdrop-filter: blur(1px);
   &.status-PENDING {
     background: color-mix(in srgb, white 50%, transparent) !important;
-    border: 0.5px solid var(--el-color-purple) !important;
+    border: 0.5px solid var(--el-color-#{meeting-color('internal')}) !important;
   }
   & .fc-event-title {
-    color: var(--el-color-purple-dark);
+    color: var(--el-color-#{meeting-color('internal')}-dark-5);
   }
 }
 

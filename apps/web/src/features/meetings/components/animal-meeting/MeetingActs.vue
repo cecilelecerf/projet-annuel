@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import MeetingActCard from '@/features/acts/components/MeetingActCard.vue'
-import type { AnimalMeetingAct, MeetingId } from '@armali/schemas'
+import MeetingActCard from '@/features/medicalHistories/components/MeetingActCard.vue'
+import MeetingActForm from '@/features/medicalHistories/components/MeetingActForm.vue'
+import { MEETING_COLORS } from '@/utils/meetingColor'
+import type { ClinicId, MedicalHistory, MeetingId } from '@armali/schemas'
 import { Plus } from '@element-plus/icons-vue'
 import { ref } from 'vue'
-defineProps<{ acts: AnimalMeetingAct[]; meetingId: MeetingId }>()
+const { meetingId } = defineProps<{
+  acts: MedicalHistory[]
+  meetingId: MeetingId
+  clinicId?: ClinicId
+}>()
 const showActForm = ref(false)
-const editingAct = ref<AnimalMeetingAct | null>(null)
-
+const editingAct = ref<MedicalHistory | null>(null)
 const openAddAct = () => {
   editingAct.value = null
   showActForm.value = true
 }
 
-const openEditAct = (act: AnimalMeetingAct) => {
+const openEditAct = (act: MedicalHistory) => {
   editingAct.value = act
   showActForm.value = true
 }
@@ -30,7 +35,7 @@ const onSavedAct = () => {
         Actes réalisés
         <span class="count-badge">{{ acts?.length ?? 0 }}</span>
       </h3>
-      <el-button size="small" color="var(--el-color-teal)" plain @click="openAddAct" :icon="Plus">
+      <el-button size="small" :type="MEETING_COLORS.ANIMAL" plain @click="openAddAct" :icon="Plus">
         Ajouter
       </el-button>
     </div>
@@ -43,6 +48,7 @@ const onSavedAct = () => {
     <MeetingActForm
       v-model="showActForm"
       :meeting-id="meetingId"
+      :clinic-id="clinicId"
       :act="editingAct"
       @saved="onSavedAct"
     />

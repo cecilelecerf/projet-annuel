@@ -1,88 +1,35 @@
-import { prisma } from "@api/lib/prisma";
+import { User } from "../../prisma/generated/prisma/client";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { userWithProfileAndClinicIdInclude } from "./user.types";
+import { PrismaClient } from "@prisma/client/extension";
 
 export class UserRepository {
-  async getClinicIdByUserId({
-    id,
-    role,
-  }: {
-    id: string;
-    role: UserRole;
-  }): Promise<string | null> {
-    switch (role) {
-      case "VETERINARIAN": {
-        const profile = await prisma.veterinarianClinic.findFirst({
-          where: { veterinarianId: id },
-        });
-        return profile?.clinicId ?? null;
-      }
-      case "SECRETARY": {
-        const profile = await prisma.secretaryProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ?? null;
-      }
-      case "DIRECTOR": {
-        const profile = await prisma.directorClinicProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ?? null;
-      }
-      case "REFERANT": {
-        const profile = await prisma.referentClinicProfile.findUnique({
-          where: { id },
-        });
-        return profile?.clinicId ?? null;
-      }
-      default:
-        return null;
-    }
-  }
+  constructor(private prisma: PrismaClient) {}
 
-  async getUsersByClinic({ clinicId }: { clinicId: string }) {
-    return prisma.user.findMany({
+  async getUsersByClinic({
+    clinicIds,
+  }: {
+    clinicIds: string[];
+  }): Promise<Omit<User, "password">[]> {
+    return this.prisma.user.findMany({
       where: {
         OR: [
-          { secretaryProfile: { clinicId } },
-          { directorClinicProfile: { clinicId } },
-          { referentClinicProfile: { clinicId } },
+          { secretaryProfile: { clinicId: { in: clinicIds } } },
+          { directorClinicProfile: { clinicId: { in: clinicIds } } },
+          { referentClinicProfile: { clinicId: { in: clinicIds } } },
           {
-            veterinarianProfile: { veterinarianClinic: { some: { clinicId } } },
+            veterinarianProfile: {
+              veterinarianClinics: { some: { clinicId: { in: clinicIds } } },
+            },
           },
         ],
       },
       omit: { password: true },
-    });
-  }
-
-  async getUsersByRoleAndClinic({
-    clinicId,
-    roles,
-  }: {
-    clinicId: string;
-    roles: UserRole[];
-  }) {
-    return prisma.user.findMany({
-      where: {
-        role: { in: roles },
-        OR: [
-          { secretaryProfile: { clinicId } },
-          { directorClinicProfile: { clinicId } },
-          { referentClinicProfile: { clinicId } },
-          {
-            veterinarianProfile: { veterinarianClinic: { some: { clinicId } } },
-          },
-        ],
-      },
-      omit: { password: true },
-
-      include: userWithProfileAndClinicIdInclude,
     });
   }
 
   async getUserById({ id }: { id: string }) {
-    return prisma.user.findUnique({
+    return this.prisma.user.findFirst({
       where: { id },
       omit: { password: true },
       include: {
@@ -96,7 +43,7 @@ export class UserRepository {
   }
 
   async getAllUsers() {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       include: {
         veterinarianProfile: true,
         clientProfile: true,
@@ -109,7 +56,7 @@ export class UserRepository {
     });
   }
   async getAllUsersByRole({ roles }: { roles: UserRole[] }) {
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: { role: { in: roles } },
       omit: { password: true },
       include: userWithProfileAndClinicIdInclude,

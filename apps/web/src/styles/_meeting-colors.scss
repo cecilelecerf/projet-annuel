@@ -1,0 +1,11 @@
+@use 'sass:map';
+
+$meeting-colors: (
+  'animal': 'pink',
+  'internal': 'purple',
+  'availability': 'info',
+);
+
+@function meeting-color($kind) {
+  @return map.get($meeting-colors, $kind);
+}

@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'Veto.Home',
+    index: 'VETERINARIAN.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Veto.Calendar',
+    index: 'VETERINARIAN.Calendar',
     label: 'Agenda',
     icon: Calendar,
   },
@@ -20,17 +20,22 @@ const menuItems: MenuItem[] = [
     label: 'Animaux',
     icon: '🐻',
     children: [
-      { index: 'Veto.Animaux.MesAnimaux', label: 'Mes animaux' },
-      { index: 'Veto.Animaux.Derniers', label: 'Derniers traités' },
+      { index: 'VETERINARIAN.Animaux.MesAnimaux', label: 'Mes animaux' },
+      { index: 'VETERINARIAN.Animaux.Derniers', label: 'Derniers traités' },
     ],
   },
   {
-    index: 'Veto.Messagerie',
+    index: 'VETERINARIAN.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Veto.Profil',
+    index: 'VETERINARIAN.Availability',
+    label: 'Disponibilité',
+    icon: SetUp,
+  },
+  {
+    index: 'VETERINARIAN.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -41,25 +46,12 @@ const menuItems: MenuItem[] = [
   <div class="layout">
     <FormError />
     <Navbar :menu-items="menuItems" />
-    <Suspense>
-      <main class="main">
+    <main class="main">
+      <Suspense>
         <router-view />
-      </main>
-    </Suspense>
+      </Suspense>
+    </main>
   </div>
 </template>
 
-<style scoped>
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #f8f9fa;
-}
-.main {
-  width: 100%;
-  max-width: 1200px;
-  margin-inline: auto;
-  padding: 32px 24px;
-}
-</style>
+<style scoped></style>

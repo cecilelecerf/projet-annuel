@@ -14,7 +14,7 @@ export class ReferentService {
     });
     if (!profile)
       throw new BadRequestError(
-        "Aucune clinique associée à ce compte référent"
+        "Aucune clinique associée à ce compte référent",
       );
     return profile.clinicId;
   }
@@ -25,35 +25,71 @@ export class ReferentService {
     const [directorProfile, referents, vets, secretaries] = await Promise.all([
       prisma.directorClinicProfile.findFirst({
         where: { clinicId },
-        include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+        include: {
+          user: {
+            select: { id: true, firstname: true, lastname: true, email: true },
+          },
+        },
       }),
       prisma.referentClinicProfile.findMany({
         where: { clinicId },
-        include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+        include: {
+          user: {
+            select: { id: true, firstname: true, lastname: true, email: true },
+          },
+        },
       }),
       prisma.veterinarianClinic.findMany({
         where: { clinicId },
         include: {
           veterinarian: {
-            include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstname: true,
+                  lastname: true,
+                  email: true,
+                },
+              },
+            },
           },
         },
       }),
       prisma.secretaryProfile.findMany({
         where: { clinicId },
-        include: { user: { select: { id: true, firstname: true, lastname: true, email: true } } },
+        include: {
+          user: {
+            select: { id: true, firstname: true, lastname: true, email: true },
+          },
+        },
       }),
     ]);
 
     return {
-      director: directorProfile ? { ...directorProfile.user, role: "DIRECTOR" as const } : null,
-      referents: referents.map((r) => ({ ...r.user, role: "REFERANT" as const })),
-      veterinarians: vets.map((v) => ({ ...v.veterinarian.user, role: "VETERINARIAN" as const, licenseNumber: v.veterinarian.licenseNumber })),
-      secretaries: secretaries.map((s) => ({ ...s.user, role: "SECRETARY" as const })),
+      director: directorProfile
+        ? { ...directorProfile.user, role: "DIRECTOR" as const }
+        : null,
+      referents: referents.map((r) => ({
+        ...r.user,
+        role: "REFERANT" as const,
+      })),
+      veterinarians: vets.map((v) => ({
+        ...v.veterinarian.user,
+        role: "VETERINARIAN" as const,
+        licenseNumber: v.veterinarian.licenseNumber,
+      })),
+      secretaries: secretaries.map((s) => ({
+        ...s.user,
+        role: "SECRETARY" as const,
+      })),
     };
   }
 
-  async createVeterinarian(referentUserId: string, data: CreateVeterinarianStaff) {
+  async createVeterinarian(
+    referentUserId: string,
+    data: CreateVeterinarianStaff,
+  ) {
     const clinicId = await this.getClinicId(referentUserId);
     const hashedPassword = await hash(data.password, 10);
 
@@ -68,7 +104,7 @@ export class ReferentService {
           create: {
             licenseNumber: data.licenseNumber,
             bio: data.bio,
-            veterinarianClinic: {
+            veterinarianClinics: {
               create: { clinicId },
             },
           },

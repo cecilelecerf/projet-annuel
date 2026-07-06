@@ -9,34 +9,39 @@ export const secretaryRouter: RouteRecordRaw[] = [
     children: [
       {
         path: '',
-        name: 'Secretary.Home',
+        name: 'SECRETARY.Home',
         component: () => import('@/features/users/views/secretary/SecretaryHomeView.vue'),
         // Widget : Prévision du nb de visites
       },
       // ── Calendar ───────────────────────────────────────────────
       {
         path: 'calendar',
-        name: 'Secretary.Calendar',
+        name: 'SECRETARY.Calendar',
         component: () => import('@/features/meetings/views/MeCalendarView.vue'),
       },
       {
         path: 'profil',
-        name: 'Secretary.Profil',
-        component: () => import('@/features/users/views/secretary/Profil.vue'),
+        name: 'SECRETARY.Avaibality',
+        component: () => import('@/features/availabilities/view/AvaibalitiesView.vue'),
+      },
+      {
+        path: 'profil',
+        name: 'SECRETARY.Profil',
+        component: () => import('@/features/users/views/secretary/ProfilView.vue'),
       },
       {
         path: 'veterinarian',
-        name: 'Secretary.Veto.List',
-        component: () => import('@/features/users/views/secretary/UserListView.vue'),
+        name: 'SECRETARY.Veto.List',
+        component: () => import('@/features/users/views/UserListView.vue'),
       },
       {
         path: 'veterinarian/calendar/:id',
-        name: 'Secretary.Veto.Calendar',
+        name: 'SECRETARY.Veto.Calendar',
         component: () => import('@/features/meetings/views/UserCalendarView.vue'),
       },
       {
         path: 'meetings/:id',
-        name: 'Secretary.Calendar.Meeting.Detail',
+        name: 'SECRETARY.Meetings.Detail',
         component: () => import('@/features/meetings/views/MeetingView.vue'),
         // Horaires, Infos résumé de l'animal (Nom, Type),
         // Type de RDV (chirurgies, castration…)
@@ -45,24 +50,24 @@ export const secretaryRouter: RouteRecordRaw[] = [
 
       {
         path: 'users/:id',
-        name: 'Secretary.Users.Detail',
-        component: () => import('@/features/users/views/UserView.vue'),
+        name: 'SECRETARY.Clients.Detail',
+        component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
         path: 'animals/:id',
-        name: 'Secretary.Animals.Detail',
+        name: 'SECRETARY.Animals.Detail',
         component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
       },
 
       // // ── Boutique ─────────────────────────────────────────────
       // {
       //   path: 'boutique',
-      //   name: 'Secretary.Boutique',
+      //   name: 'SECRETARY.Boutique',
       //   //        component: () => import('@/views/secretary/boutique/Boutique.vue'),
       //   children: [
       //     {
       //       path: 'vente',
-      //       name: 'Secretary.Boutique.Vente',
+      //       name: 'SECRETARY.Boutique.Vente',
       //       //            component: () => import('@/views/secretary/boutique/VenteProduit.vue'),
       //       // Scan QR Code de la facture pour indiquer la récupération des produits
       //     },
@@ -71,33 +76,33 @@ export const secretaryRouter: RouteRecordRaw[] = [
       // ── Animaux ──────────────────────────────────────────────
       // {
       //   path: 'animals',
-      //   name: 'Secretary.Animaux',
+      //   name: 'SECRETARY.Animaux',
       //          component: () => import('@/views/secretary/animaux/Animaux.vue'),
       //   children: [
       //     {
       //       path: '',
-      //       name: 'Secretary.Animaux.Tous',
+      //       name: 'SECRETARY.Animaux.Tous',
       //       //            component: () => import('@/views/secretary/animaux/Tous.vue'),
       //       // Infos : Nom, Photos, Taille, Poids
       //       // Recherche par nom | Filtrage par type animaux…
       //     },
       //     {
       //       path: ':id',
-      //       name: 'Secretary.Animal.Fiche',
+      //       name: 'SECRETARY.Animal.Fiche',
       //       //            component: () => import('@/views/secretary/animaux/FicheAnimal.vue'),
       //       // Propilo, Nom, Poids, Taille, Nourriture
       //       // Action : Modification infos
       //     },
       //     {
       //       path: ':id/rdv',
-      //       name: 'Secretary.Animal.RDV',
+      //       name: 'SECRETARY.Animal.RDV',
       //       //            component: () => import('@/views/secretary/animaux/RDVAnimal.vue'),
       //       // Liste de tous les RDV avec infos sur véto, actions réalisées,
       //       // médicaments données, etc.
       //     },
       //     {
       //       path: ':id/carnet-sante',
-      //       name: 'Secretary.Animal.CarnetSante',
+      //       name: 'SECRETARY.Animal.CarnetSante',
       //       //            component: () => import('@/views/secretary/animaux/CarnetSante.vue'),
       //       // Graphique poids/taille, Vaccins (date), Chirurgie, actions lourdes
       //       // Action : Transfert vers une autre clinique
@@ -107,30 +112,30 @@ export const secretaryRouter: RouteRecordRaw[] = [
       // // ── Messagerie ────────────────────────────────────────────
       // {
       //   path: 'messagerie',
-      //   name: 'Secretary.Messagerie',
+      //   name: 'SECRETARY.Messagerie',
       //   //        component: () => import('@/views/secretary/messagerie/Messagerie.vue'),
       //   children: [
       //     {
       //       path: 'default-group',
-      //       name: 'Secretary.Messagerie.DefaultGroup',
+      //       name: 'SECRETARY.Messagerie.DefaultGroup',
       //       //            component: () => import('@/views/secretary/messagerie/DefaultGroup.vue'),
       //       // Groupe par défaut avec tous le personnel de la clinique (sauf directeur)
       //     },
       //     {
       //       path: 'groupe',
-      //       name: 'Secretary.Messagerie.Groupe',
+      //       name: 'SECRETARY.Messagerie.Groupe',
       //       //            component: () => import('@/views/secretary/messagerie/Groupe.vue'),
       //       // Création de nouveaux groupes
       //     },
       //     {
       //       path: 'privees',
-      //       name: 'Secretary.Messagerie.Privees',
+      //       name: 'SECRETARY.Messagerie.Privees',
       //       //            component: () => import('@/views/secretary/messagerie/Privees.vue'),
       //       // Envois de messages privées (à 1 seule personne)
       //     },
       //     {
       //       path: 'privees/:id',
-      //       name: 'Secretary.Messagerie.Conversation',
+      //       name: 'SECRETARY.Messagerie.Conversation',
       //       //            component: () => import('@/views/secretary/messagerie/Conversation.vue'),
       //     },
       //   ],
@@ -138,19 +143,19 @@ export const secretaryRouter: RouteRecordRaw[] = [
       // // ── Profil ───────────────────────────────────────────────
       // {
       //   path: 'profil',
-      //   name: 'Secretary.Profil',
+      //   name: 'SECRETARY.Profil',
       //   //        component: () => import('@/views/secretary/profil/Profil.vue'),
       //   children: [
       //     {
       //       path: 'parametres',
-      //       name: 'Secretary.Profil.Parametres',
+      //       name: 'SECRETARY.Profil.Parametres',
       //       //            component: () => import('@/views/secretary/profil/Parametres.vue'),
       //       // Informations personnelles, Modification des infos,
       //       // Suppression du compte, Déconnexion
       //     },
       //     {
       //       path: 'rgpd',
-      //       name: 'Secretary.Profil.RGPD',
+      //       name: 'SECRETARY.Profil.RGPD',
       //       //            component: () => import('@/views/secretary/profil/RGPD.vue'),
       //       // Utilisation des données perso, Suppressions des données perso
       //     },

@@ -5,14 +5,16 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import type { Client } from '@armali/schemas'
 import { animalApi } from '@/features/animals/api'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { meetingApi } from '@/features/meetings/api/meeting.api'
+import { useAuthStore } from '@/stores/authStore'
 
 const { client } = defineProps<{ client: Client }>()
 dayjs.locale('fr')
 const router = useRouter()
+const { user } = useAuthStore()
 const [animals, meetings] = await Promise.all([
   animalApi.getAllByUser(client.id),
-  calendarApi.animal.getAllByClientId(client.id),
+  meetingApi.animal.getAllByClientId(client.id),
 ])
 const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 </script>
@@ -71,7 +73,12 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
             v-for="pet in animals"
             :key="pet.id"
             class="pet-card"
-            @click="router.push({ name: 'Secretary.Animals.Detail', params: { id: pet.id } })"
+            @click="
+              router.push({
+                name: `${user?.role.toUpperCase()}.Animals.Detail`,
+                params: { id: pet.id },
+              })
+            "
           >
             <div class="pet-avatar">{{ pet.name.charAt(0) }}</div>
             <div class="pet-info">
@@ -98,7 +105,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
             class="meeting-row"
             @click="
               router.push({
-                name: 'Secretary.Calendar.Meeting.Detail',
+                name: `${user?.role.toUpperCase()}.Meetings.Detail`,
                 params: { id: meeting.meeting.id },
               })
             "

@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import { handleStripeWebhook } from "./orders/order-webhook.controller";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
 import clinicRouter from "./clinics/clinic.router";
@@ -24,6 +25,8 @@ import bookingRouter from "./bookings/booking.router";
 import veterinarianRouter from "./users/veterinarian.router";
 import staffRouter from "./staffs/staff.router";
 import productRequestRouter from "./product-requests/product-request.router";
+import clientShopRouter from "./shop/shop.router";
+import orderRouter from "./orders/order.router";
 
 collectDefaultMetrics();
 
@@ -45,6 +48,13 @@ app.use(
     credentials: true,
   }),
 );
+
+app.post(
+  "/api/orders/webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook,
+);
+
 app.use(express.json());
 
 app.get("/api/test", async (req, res) => {
@@ -77,4 +87,6 @@ app.use("/api/specialities", specialityRouter);
 app.use("/api/veterinarians", veterinarianRouter);
 app.use("/api/staffs", staffRouter);
 app.use("/api/product-requests", productRequestRouter);
+app.use("/api/shop", clientShopRouter);
+app.use("/api/orders", orderRouter);
 app.use(errorHandler);

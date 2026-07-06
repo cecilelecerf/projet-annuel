@@ -12,6 +12,7 @@ import { useNotify } from '@/composables/useNotify'
 import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
 import { http } from '@/lib/api'
 import { productsApi } from '@/features/products/api/products.api'
+import { useCartStore } from '@/features/shop/stores/cartStore'
 
 const notify = useNotify()
 
@@ -21,6 +22,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 const messagingStore = useMessagingStore()
+const cartStore = useCartStore()
+
+function goToCart() {
+  router.push({ name: 'CLIENT.Cart' })
+}
 
 const unreadConversations = computed(() =>
   messagingStore.sortedConversations.filter((c) => (c.unreadCount ?? 0) > 0).slice(0, 5),
@@ -39,7 +45,6 @@ function goToConversation(conversationId: ConversationId) {
 }
 
 // ── Alertes de stock bas (référent / directeur uniquement) ────────────────
-
 const lowStockProducts = ref<ProductClinicWithProduct[]>([])
 const readStockIds = ref<Set<string>>(new Set())
 
@@ -53,6 +58,7 @@ async function loadStockAlerts() {
     if (!clinic) return
     lowStockProducts.value = await productsApi.getLowStock(clinic.id)
   } catch {
+    /* silencieux : une alerte de stock qui échoue ne doit pas bloquer la navbar */
   }
 }
 
@@ -114,6 +120,17 @@ const handleLogout = async () => {
       <h1 class="navbar__title">Espace {{ user && getStringRole(user.role) }}</h1>
     </div>
     <div class="navbar__right">
+      <el-badge
+        v-if="user?.role === 'CLIENT'"
+        :value="cartStore.totalItems"
+        :hidden="cartStore.totalItems === 0"
+        class="navbar__badge"
+      >
+        <el-button circle plain @click="goToCart">
+          <el-icon><ShoppingCart /></el-icon>
+        </el-button>
+      </el-badge>
+
       <el-dropdown trigger="click" placement="bottom-end">
         <el-badge
           :value="totalNotifications"
@@ -131,6 +148,8 @@ const handleLogout = async () => {
               Aucune nouvelle notification
             </el-dropdown-item>
 
+            <!-- Boucle unique sur toutes les notifications (messages + stock),
+                 chacune rendue par le composant correspondant à son type -->
             <template v-for="item in notificationItems" :key="item.key">
               <el-dropdown-item
                 v-if="item.kind === 'message'"

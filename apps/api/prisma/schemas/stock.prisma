@@ -113,6 +113,8 @@ model Order {
   updatedAt DateTime    @default(now()) @updatedAt
   status    OrderStatus @default(PENDING)
   pickupAt  DateTime?
+  stripeSessionId String?
+  pickupCode      String?
 
   clientId String
   client   ClientProfile @relation(fields: [clientId], references: [id])

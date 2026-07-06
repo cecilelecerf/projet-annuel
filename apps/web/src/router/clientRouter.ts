@@ -117,46 +117,33 @@ export const clientRouter: RouteRecordRaw[] = [
       // },
 
       // // ── Boutique ─────────────────────────────────────────────
-      // {
-      //   path: 'boutique',
-      //   name: 'CLIENT.Boutique',
-      //   //        component: () => import('@/views/client/boutique/Boutique.vue'),
-      //   children: [
-      //     {
-      //       path: '',
-      //       name: 'CLIENT.Boutique.Produits',
-      //       //            component: () => import('@/views/client/boutique/TousLesProduits.vue'),
-      //       // Vue de tous les produits, Filtre : marque, type animal, prix…
-      //       // + Recherche d'un produit
-      //     },
-      //     {
-      //       path: 'produits/:id',
-      //       name: 'CLIENT.Boutique.Produit.Detail',
-      //       //            component: () => import('@/views/client/boutique/FicheProduit.vue'),
-      //       // Contient : Image, Description, Notes et avis d'autres clients, Prix
-      //       // Action : Ajout au panier
-      //     },
-      //   ],
-      // },
+      {
+        path: 'shop',
+        name: 'CLIENT.Shop',
+        component: () => import('@/features/shop/views/ShopListView.vue'),
+      },
+      {
+        path: 'shop/:id',
+        name: 'CLIENT.Shop.Detail',
+        component: () => import('@/features/shop/views/ShopDetailView.vue'),
+      },
 
       // // ── Panier ───────────────────────────────────────────────
-      // {
-      //   path: 'panier',
-      //   name: 'CLIENT.Panier',
-      //   //        component: () => import('@/views/client/panier/Panier.vue'),
-      //   children: [
-      //     {
-      //       path: '',
-      //       name: 'CLIENT.Panier.Recap',
-      //       //            component: () => import('@/views/client/panier/RecapProduits.vue'),
-      //     },
-      //     {
-      //       path: 'paiement',
-      //       name: 'CLIENT.Panier.Paiement',
-      //       //            component: () => import('@/views/client/panier/Paiement.vue'),
-      //     },
-      //   ],
-      // },
+      {
+        path: 'cart',
+        name: 'CLIENT.Cart',
+        component: () => import('@/features/shop/views/CartView.vue'),
+      },
+      {
+        path: 'checkout',
+        name: 'CLIENT.Checkout',
+        component: () => import('@/features/shop/views/CheckoutView.vue'),
+      },
+      {
+        path: 'orders',
+        name: 'CLIENT.Orders',
+        component: () => import('@/features/shop/views/OrdersListView.vue'),
+      },
 
       // // ── Profil ───────────────────────────────────────────────
 

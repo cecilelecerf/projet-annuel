@@ -13,10 +13,11 @@ projet-annuel/
 │   ├── web/          # Frontend — Vue.js
 │   └── mobile/       # Application mobile
 ├── packages/
-│   └── schemas/      # Schemas Zod partagés
+│   └── schemas/      # Schemas Zod partagés (@armali/schemas)
 ├── nginx/            # Configuration nginx
-├── compose.yaml      # Docker Compose développement
+├── compose.dev.yaml  # Docker Compose développement
 ├── compose.prod.yaml # Docker Compose production
+├── .env.dev          # Variables d'environnement (dev, à la racine)
 ├── package.json      # Workspace racine
 └── README.md
 ```
@@ -26,7 +27,7 @@ projet-annuel/
 ## 🚀 Prérequis
 
 - [Node.js](https://nodejs.org/) **v22.12+**
-- [pnpm](https://pnpm.io/) **v8+**
+- [pnpm](https://pnpm.io/) (géré via `corepack`, voir `packageManager` dans `package.json`)
 - [Docker](https://www.docker.com/) & Docker Compose
 
 ---
@@ -39,83 +40,181 @@ cd projet-annuel
 pnpm install
 ```
 
+`pnpm install` reste nécessaire sur l'host même si le développement se fait via Docker : c'est ce qui génère/mets à jour le `pnpm-lock.yaml` (voir section [Ajouter une dépendance](#-ajouter-une-dépendance)).
+
 ---
 
 ## 🔧 Configuration
 
 ### Développement
 
-Crée `apps/api/.env.dev` (copie depuis `apps/api/.env.dev.sample`) :
+Crée `.env.dev` à la **racine du projet** (copie depuis `.env.dev.sample`) :
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
-JWT_ACCESS_SECRET="changeme"
-JWT_REFRESH_SECRET="changeme"
-```
-
-### Production -> plus d'actualité -> maintenant secret docker obligatoire pour docker config
-
-Crée `.env.prod` à la racine (copie depuis `.env.prod.sample`) :
-
-```env
+# Base de données
 DB_USER=user
 DB_PASSWORD=password
 DB_NAME=mydb
-JWT_ACCESS_SECRET=changeme
-JWT_REFRESH_SECRET=changeme
+
+# JWT
+JWT_ACCESS_SECRET=changeme_access_secret
+JWT_REFRESH_SECRET=changeme_refresh_secret
+
+# API
+CORS_ORIGIN=http://localhost:5173
+
+# Email (ENABLE_EMAIL=false pour log console sans envoyer)
+ENABLE_EMAIL=true
+MAIL_USER=...
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_PASS=...
+
+# Web / Vite (préfixe VITE_ obligatoire pour être exposé au navigateur)
+VITE_API_URL=http://localhost:3001/api
 ```
+
+> ⚠️ Ce fichier contient des secrets (mot de passe email, JWT). Il doit être dans `.gitignore` et ne jamais être commité.
 
 ---
 
-<!-- TODO AJOUTER LE UP DU DOCKER -->
+## 🐳 Développement (Docker)
+
+Le développement se fait via Docker Compose — chaque service (`api`, `web`) tourne dans son propre conteneur avec hot-reload (bind mount du code source), et un service `devcontainer` sert d'environnement d'édition pour VSCode (voir [Devcontainer](#-devcontainer-édition)).
+
+### Lancer la stack
+
+```bash
+pnpm docker:dev:up
+```
+
+Démarre en arrière-plan : `postgres`, `api` (http://localhost:3001), `web` (http://localhost:5173), `mailhog` (UI http://localhost:8025), et `devcontainer`.
+
+### Autres commandes utiles
+
+| Commande                | Description                                               |
+| ----------------------- | --------------------------------------------------------- |
+| `pnpm docker:dev:build` | Build les images sans démarrer les conteneurs             |
+| `pnpm docker:dev:up`    | Démarre la stack en arrière-plan (avec rebuild)           |
+| `pnpm docker:dev:down`  | Arrête et supprime les conteneurs                         |
+| `pnpm docker:dev:reset` | Arrête tout, supprime les volumes `node_modules`, relance |
+| `pnpm docker:dev:ps`    | Statut des conteneurs                                     |
+| `pnpm log:api`          | Logs du service `api` en continu                          |
+| `pnpm log:web`          | Logs du service `web` en continu                          |
+
+> Utilise `pnpm docker:dev:reset` après tout changement de dépendances (ajout/suppression de package) — les `node_modules` vivent dans des volumes Docker nommés, isolés du code source, et ne se resynchronisent jamais automatiquement avec l'image.
+
+### Hot-reload
+
+- **Code source** (`.ts`, `.vue`, etc.) : pris en compte immédiatement, aucune action requise (bind mount + `tsx watch` côté API, HMR Vite côté web).
+- **Dépendances** (`package.json` modifié) : nécessite `pnpm docker:dev:reset` (voir ci-dessus).
+
+---
+
+## 🧩 Devcontainer (édition)
+
+Le service `devcontainer` n'exécute aucun code applicatif (`command: sleep infinity`) — il sert uniquement d'environnement d'édition cohérent avec le runtime Docker (même OS/arch Linux, même `node_modules`, même accès réseau à `postgres`/`mailhog`).
+
+**Usage avec VSCode :**
+
+1. Lance `pnpm docker:dev:up`
+2. `Cmd/Ctrl+Shift+P` → **"Dev Containers: Attach to Running Container"**
+3. Sélectionne `armali-dev-devcontainer-1`
+
+Utile aussi pour lancer des commandes ponctuelles dans le même environnement que l'API (ex: `pnpm --filter api exec prisma studio` dans le contexte réseau Docker).
+
+---
+
+## 📦 Ajouter une dépendance
+
+```bash
+# Dépendance de prod
+pnpm add:api <package>      # apps/api
+pnpm add:web <package>      # apps/web
+pnpm add:schemas <package>  # packages/schemas
+
+# Dépendance de dev
+pnpm add:api:dev <package>
+pnpm add:web:dev <package>
+pnpm add:schemas:dev <package>
+```
+
+Puis synchronise le conteneur concerné avant de continuer à dev :
+
+```bash
+pnpm sync:api   # ou sync:web
+```
+
+> ⚠️ `@armali/schemas` doit rester en `dependencies` (pas `devDependencies`) dans `api`/`web` : il est importé à l'exécution, et le build de prod fait `pnpm install --prod` qui exclut les `devDependencies`.
+
+---
 
 ## 🗄️ Base de données
 
 ```bash
-# Appliquer les migrations
-pnpm --filter api run migrate
+# Formater le schéma Prisma
+pnpm --filter api exec prisma format
+
+# Générer le client Prisma
+pnpm --filter api prisma:generate
+
+# Créer/appliquer une migration
+pnpm --filter api prisma:migrate
 
 # Peupler la base avec les données de test
-pnpm --filter api run seed
+pnpm db:seed
 
 # Voir la base dans Prisma Studio
-pnpm --filter api run studio
+pnpm db:view
+
+# Tout initialiser en une fois (generate + migrate + seed)
+pnpm db:init
 ```
 
 ---
 
-## 💻 Développement
+## 💻 Développement hors Docker (alias de convenance)
+
+Si tu préfères lancer un service directement sur l'host (nécessite `pnpm install` fait localement, et une base Postgres accessible) :
 
 ```bash
-# Lancer l'API (http://localhost:3000)
-pnpm --filter api dev
-
-# Lancer le web (http://localhost:5173)
-pnpm --filter web dev
+pnpm dev:api      # API en mode watch
+pnpm dev:web      # Frontend Vue
+pnpm dev:schemas  # Watch build du package schemas
 ```
+
+> Le flux recommandé reste Docker (`pnpm docker:dev:up`) pour garantir la cohérence de l'environnement entre les développeurs.
 
 ---
 
-## 📜 Scripts disponibles
+## 📜 Scripts disponibles (racine)
 
-| Commande                        | Description                       |
-| ------------------------------- | --------------------------------- |
-| `pnpm --filter api dev`         | Lance l'API en mode développement |
-| `pnpm --filter web dev`         | Lance le frontend Vue             |
-| `pnpm --filter api run studio`  | Ouvre Prisma Studio               |
-| `pnpm --filter api run migrate` | Applique les migrations           |
-| `pnpm --filter api run seed`    | Peuple la base de données         |
+| Commande                | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| `docker:dev:build`      | Build les images Docker                            |
+| `docker:dev:up`         | Démarre la stack Docker (détaché, avec build)      |
+| `docker:dev:down`       | Arrête la stack Docker                             |
+| `docker:dev:reset`      | Reset complet (volumes node_modules + rebuild)     |
+| `docker:dev:ps`         | Statut des conteneurs                              |
+| `docker:dev:logs`       | Logs génériques (`pnpm docker:dev:logs <service>`) |
+| `log:api` / `log:web`   | Logs ciblés `api` / `web`                          |
+| `dev:api/web/schemas`   | Lancement direct hors Docker (alias)               |
+| `add:*` / `add:*:dev`   | Ajout de dépendance par workspace                  |
+| `sync:api` / `sync:web` | Réinstalle dans le conteneur après un `add:*`      |
+| `db:init/seed/view`     | Commandes base de données                          |
+| `build`                 | Build tous les workspaces (ordre topologique)      |
 
 ---
 
 ## 🛠️ Stack technique
 
-| Couche       | Technologie                    |
-| ------------ | ------------------------------ |
-| **API**      | Node.js, Express 5, TypeScript |
-| **ORM**      | Prisma 7 + PostgreSQL          |
-| **Frontend** | Vue.js + Element Plus          |
-| **Monorepo** | pnpm workspaces                |
+| Couche       | Technologie                               |
+| ------------ | ----------------------------------------- |
+| **API**      | Node.js, Express 5, TypeScript            |
+| **ORM**      | Prisma 7 + PostgreSQL                     |
+| **Frontend** | Vue.js + Element Plus                     |
+| **Monorepo** | pnpm workspaces                           |
+| **Dev**      | Docker Compose (hot-reload, devcontainer) |
 
 ---
 
@@ -141,7 +240,6 @@ apps/api/
 │   ├── migrations/           # Migrations générées
 │   └── seed.ts               # Données de test
 ├── prisma.config.ts          # Configuration Prisma
-├── .env.dev                  # Variables d'environnement (dev)
 └── package.json
 ```
 
@@ -153,37 +251,24 @@ apps/api/
 apps/web/
 ├── src/
 │   ├── main.ts               # Point d'entrée Vue
-│   ├── router/               # Vue Router
-│   ├── stores/               # Pinia stores
-│   ├── views/                # Pages
-│   ├── layouts/              # Layouts par rôle
-│   └── components/           # Composants réutilisables
-│   └──features/               # Vue Router
-│       ├── api.ts                # Call api
-│       ├── utils.ts              # Function utilitaire
-│       ├── views/                # Pages
-│       └── components/           # Composants
-│       └── composables/          # Composants
-├── nginx.conf                # Config nginx (prod)
+│   ├── router/                # Vue Router
+│   ├── stores/                # Pinia stores
+│   ├── views/                 # Pages
+│   ├── layouts/               # Layouts par rôle
+│   ├── components/            # Composants réutilisables
+│   └── features/
+│       ├── api.ts             # Call api
+│       ├── utils.ts           # Fonctions utilitaires
+│       ├── views/              # Pages
+│       ├── components/         # Composants
+│       └── composables/        # Composables
+├── nginx.conf                 # Config nginx (prod)
 └── package.json
 ```
 
 ---
 
-## 📂 Commandes Prisma
-
-```bash
-# Formater les schemas
-pnpm --filter api exec prisma format
-
-# Créer une nouvelle migration
-pnpm --filter api exec prisma migrate dev --name <nom>
-
-```
-
----
-
-## 🐳 Production (Docker)
+## 🐳 Production (Docker Swarm)
 
 Ce projet démontre la mise en place d'une infrastructure hautement disponible, résiliente et sécurisée pour une application web (Front, Back, BDD) en utilisant Docker Swarm.
 
@@ -197,23 +282,23 @@ L'infrastructure repose sur un cluster Swarm composé de **3 nœuds** (1 Manager
 
 #### Services déployés :
 
-- **Traefik (Reverse Proxy) :** Exposition HTTPS (Let's Encrypt), redirection 80 -> 443.
+- **Traefik (Reverse Proxy) :** Exposition HTTPS (Let's Encrypt), redirection 80 → 443.
 - **Nginx (Load Balancer Front) :** Répartit la charge vers le frontend (3 réplicas).
 - **Web (Frontend SPA) :** Interface utilisateur (3 réplicas).
 - **API (Backend Node.js) :** Logique métier (2 réplicas isolés des workers locaux).
-- **PostgreSQL (Base de données) :** Isolée sur le Manager, avec volume persistant. (1 réplicas).
-- **Prometheus :** Collecte des métriques (1 réplicas).
-- **Grafana :** Visualisation des métriques (1 réplicas).
+- **PostgreSQL (Base de données) :** Isolée sur le Manager, avec volume persistant (1 réplica).
+- **Prometheus :** Collecte des métriques (1 réplica).
+- **Grafana :** Visualisation des métriques (1 réplica).
 
 ---
 
 ### 2. Guide de Déploiement
 
-### Étape 2.1 : Initialisation du Cluster
+#### Étape 2.1 : Initialisation du Cluster
 
 Sur la machine Manager (`vps-738d9dba`) :
 
-```
+```bash
 docker swarm init
 ```
 
@@ -221,7 +306,7 @@ Sur les deux nœuds Workers, exécutez la commande `docker swarm join <TOKEN>` f
 
 Vérification :
 
-```
+```bash
 docker node ls
 ```
 
@@ -229,7 +314,7 @@ docker node ls
 
 Création des secrets requis par la stack :
 
-```
+```bash
 echo "postgres" | docker secret create db_user -
 echo "VOTRE_MOT_DE_PASSE" | docker secret create db_password -
 echo "mydb" | docker secret create db_name -
@@ -238,7 +323,7 @@ echo "SECRET_JWT_REFRESH" | docker secret create jwt_refresh_secret -
 echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create grafana_admin_password -
 ```
 
-### Étape 2.3 : Docker Configs (Configurations Swarm)
+#### Étape 2.3 : Docker Configs (Configurations Swarm)
 
 En Docker Swarm, les fichiers de configuration ne peuvent pas être montés via des chemins relatifs car les containers peuvent tourner sur n'importe quel nœud. Les **Docker configs** permettent de stocker ces fichiers directement dans le cluster et de les injecter automatiquement au démarrage.
 
@@ -260,13 +345,13 @@ docker config create grafana_dashboard_express /app/monitoring/grafana/dashboard
 
 Sur le Manager, dans le répertoire contenant le `compose.prod.yaml` :
 
-```
+```bash
 DOCKER_HUB_USERNAME=cecilelecerf docker stack deploy -c compose.prod.yaml cecoule --with-registry-auth
 ```
 
 Vérification du démarrage :
 
-```
+```bash
 docker service ls
 ```
 
@@ -280,9 +365,7 @@ Le cluster est configuré pour résister aux défaillances matérielles et logic
 
 Si un conteneur crash, l'orchestrateur en redémarre instantanément un nouveau pour maintenir le nombre de réplicas défini.
 
-_Commande de test :_
-
-```
+```bash
 docker kill <CONTAINER_ID>
 docker service ps <SERVICE_NAME>
 ```
@@ -291,9 +374,7 @@ docker service ps <SERVICE_NAME>
 
 La montée ou baisse en charge s'effectue sans interruption de service.
 
-_Commande de test :_
-
-```
+```bash
 docker service scale <SERVICE_NAME>=6
 docker service ls
 ```
@@ -387,7 +468,7 @@ DOCKER_HUB_USERNAME=cecilelecerf docker stack deploy \
 
 Pour effectuer une sauvegarde manuelle de la base de données et des certificats HTTPS, exécutez le script dédié sur le Manager :
 
-```
+```bash
 chmod +x backup.sh
 ./backup.sh
 ```
@@ -396,10 +477,16 @@ Les archives `.tar.gz` seront générées dans le dossier `/app/backups`.
 
 ---
 
-## 🐳 Test (vitest)
+## 🧪 Tests (Vitest)
 
-### Api
+### API
 
-Des tests de services et des tests de route.
-Les test de route ne doivent pas mocké de la donné. Au lancement il génère les migrations et applique les fixtures.
-Les tests de service peuvent mocker de la data
+Deux types de tests :
+
+- **Tests de service** (`*.service.test.ts`) — unitaires, le repository est mocké (`vi.mock` + `vi.hoisted`). Peuvent mocker de la donnée.
+- **Tests de route** (`*.router.test.ts`) — intégration via `supertest` + vraie app Express + vraie base de données (Testcontainers). Ne doivent pas mocker de donnée : au lancement, les migrations sont générées et les fixtures appliquées.
+
+```bash
+pnpm --filter api test              # tous les tests
+pnpm --filter api test:coverage     # avec couverture
+```

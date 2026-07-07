@@ -9,6 +9,7 @@ import type {
 import { isStaff } from "@api/utils";
 import dayjs from "dayjs";
 import { VaccineRepository } from "@api/vaccines/vaccine.repository";
+import { withUserAvatar } from "@api/users/user.utils";
 
 export class AnimalService {
   constructor(
@@ -72,7 +73,7 @@ export class AnimalService {
     const pet = await this.repository.findById(id);
     if (!pet) throw new NotFoundError("Animal");
     if (!isStaff(role) && pet.clientId !== userId) throw new ForbiddenError();
-    return pet;
+    return { ...pet, client: withUserAvatar(pet.client) };
   }
 
   async create({

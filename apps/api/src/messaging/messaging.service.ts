@@ -8,11 +8,7 @@ import type {
 import { ConversationRepository } from "./conversation.repository";
 import { MessageRepository } from "./message.repository";
 import { ContactsRepository } from "./contacts.repository";
-import {
-  withAvatarUrl,
-  withUserAvatar,
-  withUsersAvatar,
-} from "@api/users/user.utils";
+import { withAvatarUrl, withUsersAvatar } from "@api/users/user.utils";
 
 export class MessagingService {
   constructor(

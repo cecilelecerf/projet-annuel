@@ -100,11 +100,12 @@ export class StaffService {
       throw new ConflictError("Multiple clinics associated with the user");
 
     const hashedPassword = await hash(data.password, 10);
-    return this.repository.createVeterinarian({
+    const veterinarian = await this.repository.createVeterinarian({
       clinicId: clinics[0].id,
       data,
       hashedPassword,
     });
+    return withAvatarUrl(veterinarian);
   }
 
   // ── Création d'une secrétaire ─────────────────────────────────────────────
@@ -121,11 +122,13 @@ export class StaffService {
       throw new ConflictError("Multiple clinics associated with the user");
 
     const hashedPassword = await hash(data.password, 10);
-    return this.repository.createSecretary({
-      clinicId: clinics[0].id,
-      data,
-      hashedPassword,
-    });
+    return withAvatarUrl(
+      await this.repository.createSecretary({
+        clinicId: clinics[0].id,
+        data,
+        hashedPassword,
+      }),
+    );
   }
 
   async createReferent({
@@ -141,11 +144,13 @@ export class StaffService {
       throw new ConflictError("Multiple clinics associated with the user");
 
     const hashedPassword = await hash(data.password, 10);
-    return this.repository.createReferent({
-      clinicId: clinics[0].id as ClinicId,
-      data,
-      hashedPassword,
-    });
+    return withAvatarUrl(
+      await this.repository.createReferent({
+        clinicId: clinics[0].id as ClinicId,
+        data,
+        hashedPassword,
+      }),
+    );
   }
 
   async getStaffIdsByUser({

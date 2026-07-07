@@ -188,6 +188,7 @@ export class StaffRepository {
         },
       },
       include: {
+        avatar: true,
         veterinarianProfile: {
           include: {
             veterinarianIdentity: true,
@@ -228,7 +229,10 @@ export class StaffRepository {
           },
         },
       },
-      include: { secretaryProfile: { include: { bankingInfo: true } } },
+      include: {
+        avatar: true,
+        secretaryProfile: { include: { bankingInfo: true } },
+      },
     });
 
     const { password: _, ...userWithoutPassword } = user;
@@ -255,7 +259,7 @@ export class StaffRepository {
           create: { clinicId },
         },
       },
-      include: { referentClinicProfile: true },
+      include: { avatar: true, referentClinicProfile: true },
     });
 
     const { password: _, ...userWithoutPassword } = user;

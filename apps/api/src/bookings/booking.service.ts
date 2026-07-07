@@ -13,6 +13,7 @@ import {
   VeterinarianClinic,
   VeterinarianProfile,
 } from "../../prisma/generated/prisma/client";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 export class BookingService {
   constructor(
@@ -116,6 +117,7 @@ export class BookingService {
         firstname: vc.veterinarian.user.firstname,
         lastname: vc.veterinarian.user.lastname,
         picture: vc.veterinarian.user.picture ?? null,
+        avatarUrl: withAvatarUrl(vc.veterinarian.user).avatarUrl,
       },
       specialities: vc.veterinarian.specialities.map((s) => ({
         id: s.id,

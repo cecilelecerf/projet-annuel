@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, beforeAll } from "vitest";
 import { randomUUID } from "crypto";
 import request from "supertest";
 import { app } from "@api/app";
@@ -110,13 +110,26 @@ describe("GET /api/booking/clinics/:clinicId/vets", () => {
 // ── POST /api/booking ─────────────────────────────────────────────────────────
 
 describe("POST /api/booking", () => {
+  const BOOKING_DATE = "2027-03-02";
   const meetingIds: string[] = [];
+
+  beforeAll(async () => {
+    // Nettoyage défensif : un run précédent en échec a pu laisser des
+    // rendez-vous sur cette date sans passer par l'afterAll (ex: assertion
+    // qui a coupé le test avant le push dans meetingIds).
+    await getPrisma().meetingBase.deleteMany({
+      where: { date: new Date(BOOKING_DATE) },
+    });
+  });
+
   afterAll(async () => {
-    if (meetingIds.length > 0)
+    if (meetingIds.length > 0) {
       await getPrisma().meetingBase.deleteMany({
         where: { id: { in: meetingIds } },
       });
+    }
   });
+
   it("401 — sans token", async () => {
     const res = await request(app).post("/api/booking").send({});
     expect(res.status).toBe(401);
@@ -175,13 +188,15 @@ describe("POST /api/booking", () => {
       .send({
         animalId: animal!.id,
         veterinarianId: vetClinic!.veterinarianId,
-        date: "2027-08-30",
-        startTime: "2027-03-02T11:45:00.000Z",
-        endTime: "2027-03-02T11:46:00.000Z",
+        date: BOOKING_DATE,
+        startTime: `${BOOKING_DATE}T11:45:00.000Z`,
+        endTime: `${BOOKING_DATE}T11:46:00.000Z`,
         description: "Consultation de routine",
       });
-    meetingIds.push(res.body.meetingId);
+
     expect(res.status).toBe(201);
+    if (res.body.meetingId) meetingIds.push(res.body.meetingId);
+
     expect(res.body).toHaveProperty("meetingId");
     expect(res.body.animal.id).toBe(animal!.id);
   });
@@ -192,9 +207,9 @@ describe("POST /api/booking", () => {
     const payload = {
       animalId: animal!.id,
       veterinarianId: vetClinic!.veterinarianId,
-      date: "2027-08-30",
-      startTime: "2027-03-02T11:47:00.000Z",
-      endTime: "2027-03-02T11:48:00.000Z",
+      date: BOOKING_DATE,
+      startTime: `${BOOKING_DATE}T11:47:00.000Z`,
+      endTime: `${BOOKING_DATE}T11:48:00.000Z`,
     };
 
     const token = await loginAs("client@gmail.com");
@@ -203,8 +218,9 @@ describe("POST /api/booking", () => {
       .post("/api/booking")
       .set("Authorization", `Bearer ${token}`)
       .send(payload);
+
     expect(first.status).toBe(201);
-    meetingIds.push(first.body.meetingId);
+    if (first.body.meetingId) meetingIds.push(first.body.meetingId);
 
     const second = await request(app)
       .post("/api/booking")

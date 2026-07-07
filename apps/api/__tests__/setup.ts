@@ -31,10 +31,14 @@ export const getPrisma = (): PrismaClient => {
   }
   return globalThis.__PRISMA_TEST_CLIENT__;
 };
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 vi.mock("@api/lib/mailer", () => ({
   default: {
     sendMail: vi.fn().mockResolvedValue({ messageId: "test-message-id" }),
   },
 }));
+beforeEach(() => {
+  vi.clearAllMocks();
+  process.env.ASSETS_BASE_URL = "http://localhost:9000/test-bucket"; // 👈 ajouté
+});

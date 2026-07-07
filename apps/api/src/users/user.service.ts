@@ -99,7 +99,7 @@ export class UserService {
         throw new NotFoundError("Utilisateur");
     }
 
-    // CLIENT → accessible par tout staff
+    // TODO CLIENT → accessible par tout staff
     return user;
   }
 

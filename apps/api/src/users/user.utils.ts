@@ -39,7 +39,6 @@ export const flatClinicId = (user: UserWithProfileAndClinicId) => {
   return { ...u, clinicIds: [clinicIds] };
 };
 
-// user.utils.ts
 import type { File } from "../../prisma/generated/prisma/client";
 import { withFileUrl } from "@api/files/utils";
 

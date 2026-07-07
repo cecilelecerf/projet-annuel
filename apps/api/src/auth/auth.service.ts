@@ -67,8 +67,10 @@ export class AuthService {
 
     const user = await prisma.user.create({
       data: { ...data, password: hashedPassword },
+      include: { avatar: true },
     });
-    const parsedUser = baseUserSchema.parse(user);
+    const validUser = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(validUser);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);
 
@@ -120,6 +122,7 @@ export class AuthService {
           role: "DIRECTOR",
           directorClinicProfile: { create: {} },
         },
+        include: { avatar: true },
       });
 
       await tx.clinicRequest.create({
@@ -137,7 +140,8 @@ export class AuthService {
       return createdUser;
     });
 
-    const parsedUser = baseUserSchema.parse(user);
+    const validUser = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(validUser);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);
 

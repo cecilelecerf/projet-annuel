@@ -18,7 +18,7 @@ import { Clinic } from "../../prisma/generated/prisma/client";
 export class ClinicService {
   constructor(private repository: ClinicRepository) {}
 
-  async getClinicByUser(userId: string): Promise<Clinic[]> {
+  async getClinicsByUser(userId: string): Promise<Clinic[]> {
     const clinics = await this.repository.findClinicByUserId(userId);
     if (!clinics) throw new NotFoundError("Clinique");
     if (clinics.some((clinic) => !clinic)) throw new NotFoundError("Clinique");
@@ -36,7 +36,7 @@ export class ClinicService {
   }) {
     if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
 
-    const clinics = await this.getClinicByUser(authorId);
+    const clinics = await this.getClinicsByUser(authorId);
     if (!clinics.some(({ id }) => id === clinicId)) {
       throw new ForbiddenError();
     }
@@ -55,6 +55,25 @@ export class ClinicService {
     });
     if (!clinicIds) throw new ForbiddenError();
     return clinicIdSchema.array().parse(clinicIds);
+  }
+
+  async getClinicIdByUserId({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<ClinicId> {
+    if (role !== "DIRECTOR" && role !== "REFERENT" && role !== "SECRETARY")
+      throw new ForbiddenError();
+    const clinicIds = await this.repository.findClinicIdByUser({
+      userId,
+      role,
+    });
+    if (!clinicIds) throw new ForbiddenError();
+    if (clinicIds.length !== 1)
+      throw new ConflictError("Number of clinicId is not valid");
+    return clinicIdSchema.parse(clinicIds[0]);
   }
   async updateClinic({
     userId,

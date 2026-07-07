@@ -22,8 +22,14 @@ reviewRouter.post(
 
 reviewRouter.get(
   "/",
-  roleMiddleware(["CLIENT"]),
+  roleMiddleware(["CLIENT", "DIRECTOR", "REFERENT", "VETERINARIAN", "ADMIN"]),
   controller.getReviews.bind(controller) as RequestHandler,
+);
+
+reviewRouter.get(
+  "/stats",
+  roleMiddleware(["CLIENT", "DIRECTOR", "REFERENT", "VETERINARIAN", "ADMIN"]),
+  controller.getStats.bind(controller) as RequestHandler,
 );
 
 export default reviewRouter;

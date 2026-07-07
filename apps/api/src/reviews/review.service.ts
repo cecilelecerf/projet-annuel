@@ -1,49 +1,35 @@
 import type {
   ClientId,
   CreateReview,
+  ReviewId,
+  ReviewMeta,
   UserId,
   UserRole,
   VeterinarianClinicId,
+  VeterinarianId,
 } from "@armali/schemas";
-import { ReviewRepository } from "./review.repository";
-import { UserRepository } from "@api/users/user.repository";
-import { VeterinarianClinicService } from "@api/veterinarian-clinics/veterinarian-clinic.service";
-import { Review } from "../../prisma/generated/prisma/client";
-import { UserService } from "@api/users/user.service";
+import {
+  ReviewRepository,
+  ReviewWithRelationsInclude,
+} from "./review.repository";
+import { ClinicService } from "@api/clinics/clinic.service";
+import { match } from "ts-pattern";
+import { ForbiddenError } from "@api/errors";
 
 export class ReviewService {
   constructor(
     private repository: ReviewRepository,
-    private userService: UserService,
-    private veterinarianClinicService: VeterinarianClinicService,
+    private clinicService: ClinicService,
   ) {}
 
-  async listVeterinarians() {
-    const vets = await this.repository.findAllVeterinariansWithReviews();
-    return vets.map((v) => {
-      const reviewsLength = v.veterinarianClinics.reduce(
-        (acc, vc) => {
-          if (vc.reviews.length !== 0) return acc;
-          acc.div += vc.reviews.length;
-          acc.sum = vc.reviews.reduce((sum, r) => sum + r.rating, 0);
-          return acc;
-        },
-        { sum: 0, div: 0 },
-      );
-
-      return {
-        id: v.id,
-        firstname: v.user.firstname,
-        lastname: v.user.lastname,
-        bio: v.bio,
-        clinics: v.veterinarianClinics.map((vc) => vc.clinic.name),
-        averageRating:
-          reviewsLength.div !== 0
-            ? Math.round((reviewsLength.sum / reviewsLength.div) * 10) / 10
-            : null,
-        reviewCount: reviewsLength.div,
-      };
-    });
+  private formatMetaReview(review: ReviewWithRelationsInclude) {
+    return {
+      ...review,
+      id: review.id as ReviewId,
+      veterinarian: review.veterinarianClinic.veterinarian.user,
+      client: review.client.user,
+      clinic: review.veterinarianClinic.clinic,
+    };
   }
 
   async upsertReview(clientId: string, data: CreateReview) {
@@ -55,11 +41,45 @@ export class ReviewService {
     });
   }
 
-  async getReviewsByRole({ userId, role }: { userId: UserId; role: UserRole }) {
-    if (role === "ADMIN") return this.repository.findAll();
-    if (role === "CLIENT") return this.repository.findReviewsByClient(userId);
-    return [];
-    // TODO m'occupere les autres rôles
+  async getReviewsByRole({
+    userId,
+    role,
+    targetVeterinarianId,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    targetVeterinarianId?: VeterinarianId;
+  }) {
+    const reviews = await match(role)
+      .with("ADMIN", async () => await this.repository.findAll())
+      .with(
+        "CLIENT",
+        async () => await this.repository.findReviewsByClient(userId),
+      )
+      .with(
+        "VETERINARIAN",
+        async () => await this.repository.findReviewsByVeterinarian(userId),
+      )
+      .when(
+        (r) => r === "DIRECTOR" || r === "REFERENT",
+        async () => {
+          const clinicId = await this.clinicService.getClinicIdByUserId({
+            userId,
+            role,
+          });
+          if (targetVeterinarianId) {
+            return await this.repository.findReviewsByVeterinarian(
+              targetVeterinarianId,
+              clinicId,
+            );
+          }
+          return await this.repository.findReviewsByClinic({ clinicId });
+        },
+      )
+      .otherwise(() => {
+        throw new ForbiddenError();
+      });
+    return reviews.map(this.formatMetaReview);
   }
 
   async getByKeys({
@@ -69,10 +89,72 @@ export class ReviewService {
     clientId: ClientId;
     veterinarianClinicId: VeterinarianClinicId;
   }) {
-    return this.repository.findKeys({ clientId, veterinarianClinicId });
+    const review = await this.repository.findKeys({
+      clientId,
+      veterinarianClinicId,
+    });
+    if (review) return this.formatMetaReview(review);
+    return review;
   }
 
-  async getVetReviews(veterinarianId: string) {
-    return this.repository.findReviewsByVeterinarian(veterinarianId);
+  async getStats({
+    userId,
+    role,
+    veterinarianId,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    veterinarianId?: VeterinarianId;
+  }) {
+    const roundAverage = (value: number | null) =>
+      value !== null ? Math.round(value * 10) / 10 : null;
+
+    const toResult = (stats: { average: number | null; count: number }) => ({
+      average: roundAverage(stats.average),
+      count: stats.count,
+    });
+
+    // ADMIN et REFERENT peuvent consulter les stats d'un vétérinaire précis
+    if (veterinarianId && (role === "ADMIN" || role === "REFERENT")) {
+      const clinicId = await this.clinicService.getClinicIdByUserId({
+        userId,
+        role,
+      });
+      console.log(
+        toResult(
+          await this.repository.getStatsByVeterinarian(
+            veterinarianId,
+            clinicId,
+          ),
+        ),
+      );
+      return toResult(
+        await this.repository.getStatsByVeterinarian(veterinarianId, clinicId),
+      );
+    }
+
+    switch (role) {
+      case "ADMIN":
+        return toResult(await this.repository.getGlobalStats());
+
+      case "VETERINARIAN":
+        // PK partagée : VeterinarianProfile.id === User.id
+        return toResult(await this.repository.getStatsByVeterinarian(userId));
+
+      case "DIRECTOR":
+      case "REFERENT": {
+        const clinicId = await this.clinicService.getClinicIdByUserId({
+          userId,
+          role: "REFERENT",
+        });
+        return toResult(await this.repository.getStatsByClinic(clinicId));
+      }
+
+      case "CLIENT":
+        return toResult(await this.repository.getStatsByClient(userId));
+
+      default:
+        return { average: null, count: 0 };
+    }
   }
 }

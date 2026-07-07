@@ -58,7 +58,7 @@ describe("ClinicService.getClinicByUser", () => {
   it("retourne les cliniques de l'utilisateur", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue([makeClinic()]);
 
-    const result = await clinicService.getClinicByUser(AUTHOR_ID);
+    const result = await clinicService.getClinicsByUser(AUTHOR_ID);
 
     expect(result).toHaveLength(1);
     expect(mockClinicRepository.findClinicByUserId).toHaveBeenCalledWith(
@@ -69,7 +69,7 @@ describe("ClinicService.getClinicByUser", () => {
   it("aucune clinique trouvée — NotFoundError", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue(null);
 
-    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+    await expect(clinicService.getClinicsByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
     );
   });
@@ -77,7 +77,7 @@ describe("ClinicService.getClinicByUser", () => {
   it("aucune clinique trouvée (undefined) — NotFoundError", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue(undefined);
 
-    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+    await expect(clinicService.getClinicsByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
     );
   });
@@ -87,7 +87,7 @@ describe("ClinicService.getClinicByUser", () => {
     // sans clinique renvoie [null] plutôt qu'un tableau vide.
     mockClinicRepository.findClinicByUserId.mockResolvedValue([null]);
 
-    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+    await expect(clinicService.getClinicsByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
     );
   });

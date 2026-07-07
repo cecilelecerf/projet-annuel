@@ -10,7 +10,7 @@ import ProfileActions from '../components/ProfileActions.vue'
 import ClinicInfoCard from '../components/ClinicInfoCard.vue'
 import { useProfileClinicData } from '../composables/useProfileClinicData'
 import StaffList from '@/features/staffs/components/StaffList.vue'
-import ReviewsSlider from '@/features/reviews/components/ReviewsSlider.vue'
+import ReviewComponent from '@/features/reviews/components/ReviewComponent.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -79,7 +79,7 @@ async function handleLogout() {
       @delete="deleteDialog?.open()"
     />
   </div>
-  <ReviewsSlider v-if="user?.role === 'CLIENT'" />
+  <ReviewComponent v-if="user?.role === 'CLIENT'" />
   <template v-if="showClinicSections">
     <template v-for="clinic in clinics" :key="clinic.id">
       <ClinicInfoCard :clinic="clinic" />

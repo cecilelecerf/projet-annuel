@@ -1,23 +1,30 @@
 <script setup lang="ts">
 import { reviewApi } from '@/features/reviews/review.api'
 import { useAuthStore } from '@/stores/authStore'
-import type { BaseUser, Clinic, VeterinarianClinicId } from '@armali/schemas'
+import type { ReviewMeta } from '@armali/schemas'
 import { StarFilled } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
+import dayjs from 'dayjs'
+import 'dayjs/locale/fr'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
-const { veterinarianClinicId, veterinarian } = defineProps<{
-  veterinarianClinicId: VeterinarianClinicId
-  client: BaseUser
-  veterinarian: BaseUser
-  clinic: Clinic
+dayjs.extend(relativeTime)
+dayjs.locale('fr')
+
+const { review } = defineProps<{
+  review: ReviewMeta
 }>()
 const { user } = storeToRefs(useAuthStore())
-const review = await reviewApi.getByVetoAndClient({ veterinarianClinicId })
-const initials = computed(() => `${veterinarian.firstname[0]}${veterinarian.lastname[0]}`)
+const initials = computed(
+  () => `${review.veterinarian.firstname[0]}${review.veterinarian.lastname[0]}`,
+)
 
 const isClient = computed(() => user.value?.role === 'CLIENT')
-
+const formattedDate = computed(() => {
+  if (!localCreatedAt.value) return ''
+  return dayjs(localCreatedAt.value).format('D MMM YYYY')
+})
 const localRating = ref(review?.rating ?? 0)
 const localComment = ref(review?.comment ?? '')
 const localCreatedAt = ref(review?.createdAt)
@@ -26,7 +33,7 @@ const onVote = async (value: number) => {
   localRating.value = value
   const updated = await reviewApi.upsert({
     payload: {
-      veterinarianClinicId,
+      veterinarianClinicId: review.veterinarianClinicId,
       rating: value,
       comment: localComment.value || undefined,
     },
@@ -37,7 +44,7 @@ const onVote = async (value: number) => {
 const onCommentChange = async () => {
   const updated = await reviewApi.upsert({
     payload: {
-      veterinarianClinicId,
+      veterinarianClinicId: review.veterinarianClinicId,
       rating: localRating.value,
       comment: localComment.value || undefined,
     },
@@ -63,40 +70,40 @@ const onCommentChange = async () => {
 
       <div class="vet-review-identity">
         <span class="vet-review-name"
-          >{{ veterinarian.lastname }} {{ veterinarian.firstname }}</span
+          >{{ review.veterinarian.lastname }} {{ review.veterinarian.firstname }}</span
         >
-        <span class="vet-review-clinic">{{ clinic.name }}</span>
+        <span class="vet-review-clinic">{{ review.clinic.name }}</span>
       </div>
     </div>
-    <div class="vet-review-score">
-      <el-rate
-        v-model="localRating"
-        :disabled="!isClient"
-        allow-half
-        @change="onVote"
-        :icons="[StarFilled, StarFilled, StarFilled]"
-        void-icon-class="el-icon-star-void"
-        class="vet-review-stars"
-      />
-      <span class="vet-review-score-value" v-if="localRating">{{ localRating.toFixed(1) }}</span>
-    </div>
+    <el-row class="score-row">
+      <div class="vet-review-score">
+        <el-rate
+          v-model="localRating"
+          :disabled="!isClient"
+          allow-half
+          @change="onVote"
+          :icons="[StarFilled, StarFilled, StarFilled]"
+          void-icon-class="el-icon-star-void"
+          class="vet-review-stars"
+        />
+        <span class="vet-review-score-value" v-if="localRating">{{ localRating.toFixed(1) }}</span>
+      </div>
+      <p class="vet-review-date">{{ formattedDate }}</p>
+    </el-row>
 
     <div class="vet-review-body">
       <el-input
         v-if="isClient"
         v-model="localComment"
         type="textarea"
-        :rows="2"
         placeholder="Laisser un commentaire sur ce vétérinaire..."
         maxlength="500"
         show-word-limit
+        class="vet-review-input"
         @change="onCommentChange"
       />
       <p class="vet-review-comment" v-else-if="localComment">{{ localComment }}</p>
-    </div>
-
-    <div class="vet-review-footer" v-if="localCreatedAt">
-      <span class="vet-review-date">{{ localCreatedAt }}</span>
+      <p class="vet-review-comment" v-else>Pas de commentaire</p>
     </div>
   </div>
 </template>
@@ -105,14 +112,21 @@ const onCommentChange = async () => {
 .vet-review-card {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
   transition: all 0.15s;
   flex: 1;
   width: 100%;
+  height: 100%;
+  box-shadow: var(--shadow-xs);
+  transition: all 0.25s;
+  justify-content: space-between;
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+  }
   @include below('sm') {
     max-width: 360px;
     margin: 0 auto;
@@ -121,7 +135,10 @@ const onCommentChange = async () => {
     min-width: 175px;
   }
 }
-
+.score-row {
+  justify-content: space-between;
+  align-items: center;
+}
 .vet-review-header {
   display: flex;
   align-items: center;
@@ -175,34 +192,33 @@ const onCommentChange = async () => {
   font-weight: 600;
   color: var(--el-text-color-primary);
 }
-
+.vet-review-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
 .vet-review-comment {
   font-size: 13px;
-  line-height: 1.6;
   color: var(--el-text-color-primary);
   margin: 0;
-}
-
-.vet-review-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: var(--spacing-sm);
-  border-top: 1px solid var(--el-border-color-lighter);
-}
-
-.vet-review-meta {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-
-  strong {
-    color: var(--el-text-color-primary);
-    font-weight: 600;
-  }
+  height: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
 }
 
 .vet-review-date {
   font-size: 11px;
   color: var(--el-text-color-placeholder);
+}
+
+.vet-review-input {
+  height: 100%;
+
+  :deep(.el-textarea__inner) {
+    height: 100%;
+    resize: none; // évite que l'utilisateur agrandisse manuellement et casse le layout
+  }
 }
 </style>

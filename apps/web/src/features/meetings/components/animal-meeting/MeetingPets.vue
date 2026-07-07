@@ -3,11 +3,14 @@ import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/stores/authStore'
 import type { AnimalMeetingMeta } from '@armali/schemas'
-import ContactCard from './ContactCard.vue'
-import ReviewCard from '../../../reviews/components/ReviewCard.vue'
+import VetoCard from './VetoCard.vue'
+import ContactCard from '@/components/ContactCard.vue'
+import { useBelowBreakpoint as useBreakpoint } from '@/composables/useBreakpoint.ts'
 
 const props = defineProps<{ meeting: AnimalMeetingMeta }>()
 const { user } = useAuthStore()
+const isBelowSm = useBreakpoint('lg')
+
 const petAge = computed(() => {
   const years = dayjs().diff(dayjs(props.meeting.animal.dateOfBirth), 'year')
   const months = dayjs().diff(dayjs(props.meeting.animal.dateOfBirth), 'month') % 12
@@ -15,6 +18,7 @@ const petAge = computed(() => {
   if (months === 0) return `${years} an${years > 1 ? 's' : ''}`
   return `${years} an${years > 1 ? 's' : ''} et ${months} mois`
 })
+const cardDirection = computed(() => (isBelowSm.isAbove.value ? 'row' : 'column'))
 </script>
 
 <template>
@@ -30,6 +34,7 @@ const petAge = computed(() => {
         `${meeting.animal.race.pet.name} ${meeting.animal.race.name}`,
         petAge && `${petAge}`,
       ]"
+      :direction="cardDirection"
     />
     <ContactCard
       v-if="user?.role !== 'CLIENT'"
@@ -39,13 +44,11 @@ const petAge = computed(() => {
         name: `${user?.role.toUpperCase()}.Clients.Detail`,
         params: { id: meeting.animal.clientId },
       }"
+      :direction="cardDirection"
     />
-    <ReviewCard
-      v-if="meeting.veterinarianClinic && meeting.veterinarianClinicId"
+    <VetoCard
+      v-if="meeting.veterinarianClinicId"
       :veterinarian-clinic-id="meeting.veterinarianClinicId"
-      :client="meeting.animal.client"
-      :veterinarian="meeting.veterinarianClinic?.veterinarian.user"
-      :clinic="meeting.veterinarianClinic?.clinic"
     />
   </div>
 </template>
@@ -60,10 +63,12 @@ const petAge = computed(() => {
 
   gap: var(--spacing-md);
   width: 100%;
+  // height: 200px;
 
   @include above('lg') {
     flex-direction: column;
     width: 300px;
+    height: 100%;
   }
 }
 </style>

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { reviewApi } from '../review.api'
 import ReviewCard from './ReviewCard.vue'
 
 const track = ref<HTMLElement | null>(null)
 const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
+const isLoading = ref(true)
+const hasError = ref(false)
 
-const reviews = await reviewApi.getAll()
+const reviews = ref<Awaited<ReturnType<typeof reviewApi.getAll>>>([])
+
+const hasOverflow = computed(() => canScrollLeft.value || canScrollRight.value)
 
 const updateArrows = () => {
   const el = track.value
@@ -16,7 +20,7 @@ const updateArrows = () => {
   canScrollLeft.value = el.scrollLeft > 4
   canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
 }
-const title = undefined
+
 const scrollBy = (direction: 1 | -1) => {
   const el = track.value
   if (!el) return
@@ -28,6 +32,15 @@ const scrollBy = (direction: 1 | -1) => {
 let resizeObserver: ResizeObserver | undefined
 
 onMounted(async () => {
+  try {
+    reviews.value = await reviewApi.getAll()
+  } catch (error) {
+    console.error('Erreur lors du chargement des avis', error)
+    hasError.value = true
+  } finally {
+    isLoading.value = false
+  }
+
   await nextTick()
   updateArrows()
   if (track.value) {
@@ -43,9 +56,18 @@ onUnmounted(() => {
 
 <template>
   <div class="reviews-slider">
-    <div class="reviews-slider-header" v-if="title || reviews.length > 0">
-      <span class="reviews-slider-title">Mes avis clients</span>
-      <div class="reviews-slider-nav">
+    <div v-if="isLoading" class="reviews-slider-empty">Chargement des avis…</div>
+
+    <div v-else-if="hasError" class="reviews-slider-empty">
+      Impossible de charger les avis pour le moment.
+    </div>
+
+    <div v-else-if="reviews.length === 0" class="reviews-slider-empty">
+      Aucun avis pour le moment.
+    </div>
+
+    <template v-else>
+      <div v-if="hasOverflow" class="reviews-slider-nav">
         <button
           class="reviews-slider-arrow"
           :disabled="!canScrollLeft"
@@ -63,20 +85,13 @@ onUnmounted(() => {
           <el-icon><ArrowRight /></el-icon>
         </button>
       </div>
-    </div>
 
-    <div v-if="reviews.length === 0" class="reviews-slider-empty">Aucun avis pour le moment.</div>
-
-    <div v-else ref="track" class="reviews-slider-track" @scroll="updateArrows">
-      <div v-for="review in reviews" :key="review.id" class="review-slide">
-        <ReviewCard
-          :veterinarian="review.veterinarian"
-          :client="review.client"
-          :veterinarian-clinic-id="review.veterinarianClinicId"
-          :clinic="review.clinic"
-        />
+      <div ref="track" class="reviews-slider-track" @scroll="updateArrows">
+        <div v-for="review in reviews" :key="review.id" class="review-slide">
+          <ReviewCard :review="review" />
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -85,28 +100,12 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  width: 100%;
-  box-shadow: var(--shadow-md);
-  background: var(--el-bg-color);
-}
-
-.reviews-slider-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.reviews-slider-title {
-  font-family: 'Nunito', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--el-text-color-primary);
+  height: 400px;
 }
 
 .reviews-slider-nav {
   display: flex;
+  justify-content: flex-end;
   gap: var(--spacing-xs);
 }
 
@@ -151,7 +150,6 @@ onUnmounted(() => {
   scroll-behavior: smooth;
   padding-bottom: var(--spacing-xs);
 
-  // Masque la scrollbar tout en gardant le scroll fonctionnel
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
@@ -162,5 +160,6 @@ onUnmounted(() => {
   scroll-snap-align: start;
   flex: 0 0 auto;
   width: 280px;
+  height: 100%;
 }
 </style>

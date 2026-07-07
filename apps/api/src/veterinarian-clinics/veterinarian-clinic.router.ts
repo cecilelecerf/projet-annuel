@@ -12,6 +12,11 @@ veterinarianClinicRouter.get(
   `/:id/review/me`,
   reviewController.getMyVetReview.bind(reviewController) as RequestHandler,
 );
+
+veterinarianClinicRouter.get(
+  `/:id/review`,
+  reviewController.getReviews.bind(reviewController) as RequestHandler,
+);
 veterinarianClinicRouter.get(
   "",
   controller.createVeterinarian.bind(controller) as RequestHandler,

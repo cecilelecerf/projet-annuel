@@ -1,4 +1,10 @@
-import { ClientId, ClinicId, VeterinarianClinicId } from "@armali/schemas";
+import {
+  ClientId,
+  ClinicId,
+  UserId,
+  VeterinarianClinicId,
+  VeterinarianId,
+} from "@armali/schemas";
 import type {
   Prisma,
   PrismaClient,
@@ -11,19 +17,11 @@ const reviewWithRelationsInclude = {
   client: { include: { user: true } },
 } satisfies Prisma.ReviewInclude;
 
+export type ReviewWithRelationsInclude = Prisma.ReviewGetPayload<{
+  include: typeof reviewWithRelationsInclude;
+}>;
 export class ReviewRepository {
   constructor(private prisma: PrismaClient) {}
-
-  async findAllVeterinariansWithReviews() {
-    return this.prisma.veterinarianProfile.findMany({
-      include: {
-        user: { select: { id: true, firstname: true, lastname: true } },
-        veterinarianClinics: {
-          include: { clinic: { select: { name: true } }, reviews: true },
-        },
-      },
-    });
-  }
 
   async upsertReview({
     clientId,
@@ -68,6 +66,17 @@ export class ReviewRepository {
     });
   }
 
+  async findReviewsByVeterinarian(
+    veterinarianId: VeterinarianId,
+    clinicId?: ClinicId,
+  ) {
+    return this.prisma.review.findMany({
+      where: { veterinarianClinic: { veterinarianId, clinicId } },
+      include: reviewWithRelationsInclude,
+      orderBy: { updatedAt: "desc" },
+    });
+  }
+
   async findKeys({
     clientId,
     veterinarianClinicId,
@@ -79,24 +88,42 @@ export class ReviewRepository {
       where: {
         clientId_veterinarianClinicId: { veterinarianClinicId, clientId },
       },
-      include: {
-        client: { select: { user: true } },
-        veterinarianClinic: {
-          select: { veterinarian: { select: { user: true } }, clinic: true },
-        },
-      },
+      include: reviewWithRelationsInclude,
     });
   }
 
-  async findReviewsByVeterinarian(veterinarianId: string) {
-    return this.prisma.review.findMany({
-      where: { veterinarianClinic: { veterinarianId } },
-      include: {
-        client: {
-          select: { user: { select: { firstname: true, lastname: true } } },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
+  async getGlobalStats() {
+    const result = await this.prisma.review.aggregate({
+      _avg: { rating: true },
+      _count: { _all: true },
     });
+    return { average: result._avg.rating, count: result._count._all };
+  }
+
+  async getStatsByVeterinarian(veterinarianId: UserId, clinicId?: ClinicId) {
+    const result = await this.prisma.review.aggregate({
+      where: { veterinarianClinic: { veterinarianId, clinicId } },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    return { average: result._avg.rating, count: result._count._all };
+  }
+
+  async getStatsByClinic(clinicId: ClinicId) {
+    const result = await this.prisma.review.aggregate({
+      where: { veterinarianClinic: { clinicId } },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    return { average: result._avg.rating, count: result._count._all };
+  }
+
+  async getStatsByClient(clientId: UserId) {
+    const result = await this.prisma.review.aggregate({
+      where: { clientId },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    return { average: result._avg.rating, count: result._count._all };
   }
 }

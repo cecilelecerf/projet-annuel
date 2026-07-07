@@ -1,25 +1,16 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
 import { ReviewService } from "./review.service";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
-  ReviewMeta,
   reviewMetaSchema,
   reviewSchema,
+  reviewStatSchema,
   VeterinarianClinicId,
   VeterinarianId,
 } from "@armali/schemas";
 
 export class ReviewController {
   constructor(private service: ReviewService) {}
-
-  async listVeterinarians(req: Request, res: Response, next: NextFunction) {
-    try {
-      const vets = await this.service.listVeterinarians();
-      res.status(200).json(vets);
-    } catch (err) {
-      next(err);
-    }
-  }
 
   async upsertReview(
     req: AuthenticatedRequest,
@@ -35,7 +26,7 @@ export class ReviewController {
   }
 
   async getReviews(
-    req: AuthenticatedRequest,
+    req: RequestWithParams<{ id?: VeterinarianId }>,
     res: Response,
     next: NextFunction,
   ) {
@@ -43,19 +34,15 @@ export class ReviewController {
       const reviews = await this.service.getReviewsByRole({
         userId: req.user.id,
         role: req.user.role,
+        targetVeterinarianId: req.params.id,
       });
-      const parse = reviews?.map((review) => ({
-        ...review,
-        id: review.id,
-        veterinarian: review.veterinarianClinic.veterinarian.user,
-        client: review.client.user,
-        clinic: review.veterinarianClinic.clinic,
-      }));
-      res.status(200).json(reviewMetaSchema.array().parse(parse));
+
+      res.status(200).json(reviewMetaSchema.array().parse(reviews));
     } catch (err) {
       next(err);
     }
   }
+
   async getMyVetReview(
     req: RequestWithParams<{ id: VeterinarianClinicId }>,
     res: Response,
@@ -66,19 +53,24 @@ export class ReviewController {
         clientId: req.user.id,
         veterinarianClinicId: req.params.id,
       });
-      res.status(200).json(reviewSchema.nullable().parse(review));
+      res.status(200).json(reviewMetaSchema.nullable().parse(review));
     } catch (err) {
       next(err);
     }
   }
-  async getVetReviews(
-    req: RequestWithParams<{ id: VeterinarianId }>,
+
+  async getStats(
+    req: RequestWithParams<{ id?: VeterinarianId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const reviews = await this.service.getVetReviews(req.params.id);
-      res.status(200).json(reviews);
+      const stats = await this.service.getStats({
+        userId: req.user.id,
+        role: req.user.role,
+        veterinarianId: req.params.id,
+      });
+      res.status(200).json(reviewStatSchema.parse(stats));
     } catch (err) {
       next(err);
     }

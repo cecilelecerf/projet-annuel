@@ -5,6 +5,7 @@ import { useNotify } from '@/composables/useNotify'
 import { staffApi } from '@/features/staffs/staff.api'
 import type { StaffMemberDetail, StaffRole } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
+import ReviewComponent from '@/features/reviews/components/ReviewComponent.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -270,6 +271,7 @@ function formatLongDate(value?: string | null) {
           </template>
         </div>
       </div>
+      <review-component />
     </template>
   </div>
 </template>

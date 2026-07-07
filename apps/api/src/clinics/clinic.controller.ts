@@ -40,7 +40,7 @@ export class ClinicController {
     next: NextFunction,
   ) {
     try {
-      const clinics = await this.service.getClinicByUser(req.user.id);
+      const clinics = await this.service.getClinicsByUser(req.user.id);
       res.status(200).json(clinicSchema.array().parse(clinics));
     } catch (err) {
       next(err);

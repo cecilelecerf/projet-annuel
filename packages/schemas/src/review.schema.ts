@@ -4,7 +4,7 @@ import {
   reviewIdSchema,
   veterinarianClinicIdSchema,
 } from "./ids";
-import { baseUserSchema } from "./users";
+import { baseUserSchema } from "./users/base-user.schema";
 import { clinicSchema } from "./clinic.schema";
 
 export const reviewSchema = z.object({
@@ -20,12 +20,21 @@ export const reviewSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
+
 export const reviewMetaSchema = reviewSchema.extend({
   client: baseUserSchema,
   clinic: clinicSchema,
   veterinarian: baseUserSchema,
 });
 export type ReviewMeta = z.infer<typeof reviewMetaSchema>;
+
+export const reviewStatSchema = z.object({
+  average: z.number().nonnegative().nullable(),
+  count: z.number().int().nonnegative(),
+});
+export type ReviewStat = z.infer<typeof reviewStatSchema>;
+
+// EDITON
 export const createReviewSchema = reviewSchema.pick({
   rating: true,
   veterinarianClinicId: true,

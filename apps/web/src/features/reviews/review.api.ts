@@ -2,6 +2,7 @@ import { http } from '@/lib/api'
 import {
   reviewMetaSchema,
   reviewSchema,
+  reviewStatSchema,
   type CreateReview,
   type VeterinarianClinicId,
 } from '@armali/schemas'
@@ -14,7 +15,7 @@ export const reviewApi = {
   }) => {
     return http
       .get(`/veterinarian-clinics/${veterinarianClinicId}/review/me`)
-      .then((data) => reviewSchema.nullable().parse(data))
+      .then((data) => reviewMetaSchema.nullable().parse(data))
   },
 
   upsert: async ({ payload }: { payload: CreateReview }) => {
@@ -24,15 +25,13 @@ export const reviewApi = {
   getAll: async () => {
     return http.get(`/reviews`).then((data) => reviewMetaSchema.array().parse(data))
   },
-  // TODO A faire + ajouter le slider dans la vue veterinarian
-  // TODO Wrapper le composant slider dans un composant container avec en + le nombre de vote donnée et la moyenne
-  // getByVeto: async ({
-  //   veterinarianClinicId,
-  // }: {
-  //   veterinarianClinicId: VeterinarianClinicId
-  // }) => {
-  //   return http
-  //     .get(`/veterinarian-clinics/${veterinarianClinicId}/review/me`)
-  //     .then((data) => reviewSchema.nullable().parse(data))
-  // },
+  getStat: async () => {
+    return http.get(`/reviews/stats`).then((data) => reviewStatSchema.parse(data))
+  },
+
+  getByVeto: async ({ veterinarianClinicId }: { veterinarianClinicId: VeterinarianClinicId }) => {
+    return http
+      .get(`/veterinarian-clinics/${veterinarianClinicId}/review`)
+      .then((data) => reviewSchema.nullable().parse(data))
+  },
 }

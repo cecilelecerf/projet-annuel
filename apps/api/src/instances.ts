@@ -172,11 +172,11 @@ const veterinarianClinicService = new VeterinarianClinicService(
 );
 const prescriptionService = new PrescriptionService(prescriptionRepository);
 
-const referentService = new ReferentService(reviewRepository);
-const reviewService = new ReviewService(
-  reviewRepository,
+const reviewService = new ReviewService(reviewRepository, clinicService);
+const referentService = new ReferentService(
+  reviewService,
+  staffService,
   userService,
-  veterinarianClinicService,
 );
 
 const recurringService = new RecurringService(

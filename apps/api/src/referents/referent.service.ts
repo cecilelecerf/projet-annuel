@@ -3,16 +3,25 @@ import { BadRequestError, NotFoundError } from "@api/errors";
 import { ReviewRepository } from "@api/reviews/review.repository";
 import {
   ClinicId,
+  ReferentClinicId,
   ReviewMeta,
   reviewMetaSchema,
+  UserId,
   VeterinarianId,
 } from "@armali/schemas";
+import { ReviewService } from "@api/reviews/review.service";
+import { StaffService } from "@api/staffs/staff.service";
+import { UserService } from "@api/users";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
 
 export class ReferentService {
-  constructor(private reviewRepository: ReviewRepository) {}
+  constructor(
+    private reviewService: ReviewService,
+    private staffService: StaffService,
+    private userService: UserService,
+  ) {}
   private async getClinicId(referentUserId: string): Promise<string> {
     const profile = await prisma.referentClinicProfile.findUnique({
       where: { id: referentUserId },
@@ -26,93 +35,74 @@ export class ReferentService {
 
   // ── Dashboard (page d'accueil référent) ───────────────────────────────────
 
-  async getDashboard(referentUserId: string) {
+  async getDashboard(referentUserId: ReferentClinicId) {
     const clinicId: ClinicId = (await this.getClinicId(
       referentUserId,
     )) as ClinicId;
 
-    const [clinic, reviews, staffCounts, clinicProducts, orders] =
-      await Promise.all([
-        prisma.clinic.findUnique({
-          where: { id: clinicId },
-          select: { name: true },
-        }),
-        this.reviewRepository.findReviewsByClinic({ clinicId }),
-        // prisma.veterinarianClinic.findMany({
-        Promise.all([
-          prisma.veterinarianClinic.count({ where: { clinicId } }),
-          prisma.secretaryProfile.count({ where: { clinicId } }),
-        ]),
+    const [
+      clinic,
+      reviewStat,
+      vetoCounts,
+      secretaryCounts,
+      vetoIds,
+      clinicProducts,
+      orders,
+    ] = await Promise.all([
+      prisma.clinic.findUnique({
+        where: { id: clinicId },
+        select: { name: true },
+      }),
+      this.reviewService.getStats({
+        userId: referentUserId,
+        role: "REFERENT",
+      }),
+      this.staffService.getStaffCountByUser({
+        authorId: referentUserId,
+        authorRole: "REFERENT",
+        targetRole: ["VETERINARIAN"],
+      }),
+      this.staffService.getStaffCountByUser({
+        authorId: referentUserId,
+        authorRole: "REFERENT",
+        targetRole: ["SECRETARY"],
+      }),
+      this.staffService.getStaffIdsByUser({
+        authorId: referentUserId,
+        authorRole: "REFERENT",
+        targetRole: ["VETERINARIAN"],
+      }),
 
-        prisma.clinicProduct.findMany({
-          where: { clinicId },
-          select: { stock: true, minimumRequired: true },
-        }),
+      prisma.clinicProduct.findMany({
+        where: { clinicId },
+        select: { stock: true, minimumRequired: true },
+      }),
 
-        prisma.order.findMany({
-          where: { clinicId },
-          select: {
-            status: true,
-            createdAt: true,
-            orderItems: { select: { quantity: true, unitPrice: true } },
-          },
-        }),
-      ]);
+      prisma.order.findMany({
+        where: { clinicId },
+        select: {
+          status: true,
+          createdAt: true,
+          orderItems: { select: { quantity: true, unitPrice: true } },
+        },
+      }),
+    ]);
 
     if (!clinic) throw new NotFoundError("Clinique");
-
-    // ── Stats vétérinaires ──────────────────────────────────────────────
-    const reviewsGroupByVeterinarian: Record<VeterinarianId, ReviewMeta[]> =
-      reviews.reduce(
-        (acc, review) => {
-          console.log(review);
-          const formatReview = {
-            ...review,
-            client: review.client.user,
-            clinic: review.veterinarianClinic.clinic,
-            veterinarian: review.veterinarianClinic.veterinarian.user,
-          };
-          const r = reviewMetaSchema.parse(formatReview);
-          const id = r.veterinarian.id;
-          acc[id] = [...(acc[id] ?? []), r];
-          return acc;
-        },
-        {} as Record<VeterinarianId, ReviewMeta[]>,
-      );
-
-    const veterinarianStats = (
-      Object.entries(reviewsGroupByVeterinarian) as [
-        VeterinarianId,
-        ReviewMeta[],
-      ][]
-    )
-      .map(([vetoId, reviews]) => {
-        const sumRating = reviews.reduce((acc, review) => {
-          acc += review.rating;
-          return acc;
-        }, 0);
-        return {
-          id: vetoId,
-          firstname: reviews[0].veterinarian.firstname,
-          lastname: reviews[0].veterinarian.lastname,
-          reviewCount: reviews.length,
-          averageRating: reviews.length
-            ? Math.round((sumRating / reviews.length) * 10) / 10
-            : null,
-        };
-      })
-      .filter((stat) => stat.averageRating !== null);
-
-    const allRatings = Object.keys(reviewsGroupByVeterinarian).length;
-    const clinicAverageRating =
-      reviews.length > 0
-        ? Math.round(
-            (veterinarianStats.reduce((s, r) => s + r.averageRating!, 0) /
-              reviews.length) *
-              10,
-          ) / 10
-        : null;
-
+    const reviews = await Promise.all(
+      vetoIds.map(async (id) => ({
+        veterinarian: await this.userService.getUserById({
+          requesterId: referentUserId,
+          requesterRole: "REFERENT",
+          targetId: id,
+        }),
+        stat: await this.reviewService.getStats({
+          veterinarianId: id,
+          userId: referentUserId,
+          role: "REFERENT",
+        }),
+      })),
+    );
     // ── Stats stock ─────────────────────────────────────────────────────
     const lowStockCount = clinicProducts.filter(
       (p) => p.stock <= p.minimumRequired,
@@ -141,13 +131,13 @@ export class ReferentService {
     return {
       clinic: {
         name: clinic.name,
-        veterinarianCount: staffCounts[0],
-        secretaryCount: staffCounts[1],
+        veterinarianCount: vetoCounts,
+        secretaryCount: secretaryCounts,
       },
       reviews: {
-        clinicAverageRating,
-        totalReviews: allRatings,
-        veterinarianStats,
+        average: reviewStat.average,
+        count: reviewStat.count,
+        veterinarians: reviews,
       },
       sales: {
         totalRevenue: Math.round(totalRevenue * 100) / 100,

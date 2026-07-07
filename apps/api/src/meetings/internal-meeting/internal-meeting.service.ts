@@ -15,7 +15,7 @@ import {
 } from "@armali/schemas";
 import { InternalMeetingRepository } from "./internal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
-import { flatClinicId, withAvatarUrl } from "@api/users/user.utils";
+import { withAvatarUrl } from "@api/users/user.utils";
 import { RecurringService } from "../recurring-meeting/recurring-meeting.service";
 
 export class InternalMeetingService {

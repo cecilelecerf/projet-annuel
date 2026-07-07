@@ -4,7 +4,7 @@ export default defineConfig([
   {
     entry: ["src/index.ts"],
     format: ["esm"],
-    target: "node22",
+    target: "node24",
     outDir: "dist",
     clean: true,
     sourcemap: true,
@@ -12,14 +12,14 @@ export default defineConfig([
   {
     entry: ["prisma.config.ts"],
     format: ["esm"],
-    target: "node22",
+    target: "node24",
     outDir: "dist",
     clean: false,
   },
   {
     entry: { seeds: "prisma/seeds/index.ts" },
     format: ["esm"],
-    target: "node22",
+    target: "node24",
     outDir: "dist",
     clean: false,
   },

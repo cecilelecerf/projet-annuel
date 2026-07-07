@@ -90,9 +90,9 @@ export class UserController {
     next: NextFunction,
   ) {
     try {
-      const { mimeType, size } = req.body;
+      const { mimeType } = req.body;
       const result = await this.service.fileUpload({
-        authorId: req.user.id, // jamais req.body.userId
+        authorId: req.user.id,
         mimeType,
       });
       res.json(uploadResponseSchema.parse(result));
@@ -106,7 +106,7 @@ export class UserController {
     next: NextFunction,
   ) {
     try {
-      const { fileId } = z.object({ fileId: fileIdSchema }).parse(req.body); // valide via zod idéalement (fileId: z.string())
+      const { fileId } = z.object({ fileId: fileIdSchema }).parse(req.body);
       const user = await this.service.confirmAvatarUpload({
         userId: req.user.id,
         fileId,

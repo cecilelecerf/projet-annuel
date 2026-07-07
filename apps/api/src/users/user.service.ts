@@ -1,5 +1,5 @@
 import { UserRepository } from "@api/users/user.repository";
-import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
+import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId, withAvatarUrl } from "./user.utils";

@@ -8,7 +8,7 @@ import type {
 } from "@armali/schemas";
 import { AnimalMeetingRepository } from "@api/meetings/animal-meeting/animal-meeting.repository";
 import { VeterinarianClinicRepository } from "@api/veterinarian-clinics/veterinarian-clinic.repository";
-import { ClinicActRepository } from "@api/acts/clinic-act.repository";
+import { ClinicActRepository } from "@api/acts/clinic-acts/clinic-act.repository";
 import { AnimalRepository } from "@api/animals/animal.repository";
 import { isStaff } from "@api/utils";
 import { Decimal } from "../../prisma/generated/prisma/internal/prismaNamespace";

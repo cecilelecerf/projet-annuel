@@ -6,7 +6,7 @@ import { prisma } from "@api/lib/prisma";
 
 // ── Acts ──────────────────────────────────────────────────────
 import { ActRepository } from "./acts/act.repository";
-import { ClinicActRepository } from "./acts/clinic-act.repository";
+import { ClinicActRepository } from "./clinic-acts/clinic-act.repository";
 
 // ── Animals ───────────────────────────────────────────────────
 import { AnimalRepository } from "./animals/animal.repository";
@@ -105,6 +105,8 @@ import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
 import { StaffController } from "./staffs/staff.controller";
 import { ClinicRequestController } from "./clinics/requests/request.controller";
+import { ClinicActService } from "./clinic-acts/clinic-act.service";
+import { ClinicActController } from "./clinic-acts/clinic-act.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -153,8 +155,11 @@ const userService = new UserService(
 );
 
 const authService = new AuthService();
-
-const actService = new ActService(actRepository, clinicActRepository);
+const clinicActService = new ClinicActService(
+  clinicActRepository,
+  clinicService,
+);
+const actService = new ActService(actRepository);
 
 const animalService = new AnimalService(animalRepository, vaccineRepository);
 
@@ -238,6 +243,7 @@ export const meetingController = new MeetingController(
   availabilityService,
   internalMeetingService,
 );
+export const clinicActController = new ClinicActController(clinicActService);
 export const animalMeetingController = new AnimalMeetingController(
   animalMeetingService,
 );

@@ -146,7 +146,6 @@ export class UserService {
       userId,
       avatarId: confirmedFile.id,
     });
-    console.log(updatedUser);
     // Nettoyage de l'ancien avatar, best-effort après le succès du swap
     if (previousAvatarId) {
       await this.fileService.deleteFile(previousAvatarId).catch(() => {

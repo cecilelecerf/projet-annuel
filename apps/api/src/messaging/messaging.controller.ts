@@ -1,12 +1,15 @@
 import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
-import type {
-  AddConversationMembers,
-  CreateConversation,
-  RenameConversation,
-  SendMessage,
-  UpdateConversationMemberRole,
+import {
+  addConversationMembersSchema,
+  conversationDetailSchema,
+  conversationSchema,
+  type AddConversationMembers,
+  type CreateConversation,
+  type RenameConversation,
+  type SendMessage,
+  type UpdateConversationMemberRole,
 } from "@armali/schemas";
 import { MessagingService } from "./messaging.service";
 import {
@@ -34,7 +37,7 @@ export class MessagingController {
   async list(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const conversations = await this.service.listConversations(req.user.id);
-      res.status(200).json(conversations);
+      res.status(200).json(conversationSchema.array().parse(conversations));
     } catch (err) {
       next(err);
     }
@@ -76,7 +79,7 @@ export class MessagingController {
         req.user.id,
         { before, limit },
       );
-      res.status(200).json(detail);
+      res.status(200).json(conversationDetailSchema.parse(detail));
     } catch (err) {
       next(err);
     }
@@ -106,13 +109,14 @@ export class MessagingController {
     next: NextFunction,
   ) {
     try {
+      const payload = addConversationMembersSchema.parse(req.body);
       const conversation = await this.service.addMembers(
         req.params.id,
         req.user.id,
         req.body.memberIds,
       );
       if (!conversation) throw new BadRequestError("Conversation introuvable");
-      req.body.memberIds.forEach((userId) => {
+      payload.memberIds.forEach((userId) => {
         joinConversationRoom(userId, req.params.id);
         emitToUser(userId, "conversation:new", conversation);
       });

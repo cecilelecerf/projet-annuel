@@ -115,19 +115,11 @@ export class ReviewService {
     });
 
     // ADMIN et REFERENT peuvent consulter les stats d'un vétérinaire précis
-    if (veterinarianId && (role === "ADMIN" || role === "REFERENT")) {
+    if (veterinarianId && (role === "DIRECTOR" || role === "REFERENT")) {
       const clinicId = await this.clinicService.getClinicIdByUserId({
         userId,
         role,
       });
-      console.log(
-        toResult(
-          await this.repository.getStatsByVeterinarian(
-            veterinarianId,
-            clinicId,
-          ),
-        ),
-      );
       return toResult(
         await this.repository.getStatsByVeterinarian(veterinarianId, clinicId),
       );

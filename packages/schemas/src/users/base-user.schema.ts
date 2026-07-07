@@ -18,10 +18,9 @@ export const baseUserSchema = z.object({
   email: z.email("Email invalide").max(255),
   lastname: z.string().min(1).max(255),
   firstname: z.string().min(1).max(255),
-  picture: z.url().max(255).nullable().optional(),
   role: userRoleSchema,
   avatarId: fileIdSchema.nullable(),
-  avatarUrl: z.url().nullable(),
+  avatarUrl: z.url().max(255).nullable(),
 });
 
 export type BaseUser = z.infer<typeof baseUserSchema>;

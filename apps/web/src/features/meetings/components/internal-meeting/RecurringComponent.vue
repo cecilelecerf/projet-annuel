@@ -196,8 +196,8 @@ async function save() {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
+  box-shadow: var(--shadow-xs);
 }
 
 .card-header {

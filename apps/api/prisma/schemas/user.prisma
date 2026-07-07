@@ -16,8 +16,7 @@ model User {
   firstname String
   lastname  String
   password  String
-  picture   String?
-
+ 
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
   secretaryProfile      SecretaryProfile?

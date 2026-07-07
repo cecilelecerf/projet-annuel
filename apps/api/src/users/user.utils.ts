@@ -35,38 +35,38 @@ export const flatClinicId = (user: UserWithProfileAndClinicId) => {
         ) ?? null;
       break;
   }
-
-  return { ...rest, clinicIds: [clinicIds] };
-};
-export type UserForAvatar = Omit<PrismaUser, "password"> & {
-  avatar: File | null;
+  const u = withAvatarUrl(rest);
+  return { ...u, clinicIds: [clinicIds] };
 };
 
-export const flatUser = <T extends { user: UserForAvatar }>(profile: T) => {
-  const { user, ...rest } = profile;
-  const withAvatar = withAvatarUrl(user);
-  return { ...withAvatar, ...rest };
-};
-
-export const flatUsers = <T extends { user: UserForAvatar }>(profiles: T[]) =>
-  profiles.map(flatUser);
-
-import type {
-  User as PrismaUser,
-  File,
-} from "../../prisma/generated/prisma/client";
+// user.utils.ts
+import type { File } from "../../prisma/generated/prisma/client";
 import { withFileUrl } from "@api/files/utils";
 
-export function withAvatarUrl(user: UserForAvatar) {
+// Plus besoin d'un type nommé strict — la contrainte se fait directement en générique
+export function withAvatarUrl<T extends { avatar: File | null }>(user: T) {
   return withFileUrl(user, "avatar", "avatarUrl");
 }
-export const withUserAvatar = <T extends { user: UserForAvatar }>(
+
+export const flatUser = <T extends { user: { avatar: File | null } }>(
+  profile: T,
+) => {
+  const { user, ...rest } = profile;
+  const withAvatar = withAvatarUrl(user);
+  return { ...rest, ...withAvatar };
+};
+
+export const flatUsers = <T extends { user: { avatar: File | null } }>(
+  profiles: T[],
+) => profiles.map(flatUser);
+
+export const withUserAvatar = <T extends { user: { avatar: File | null } }>(
   profile: T,
 ) => {
   const { user, ...rest } = profile;
   return { ...rest, user: withAvatarUrl(user) };
 };
 
-export const withUsersAvatar = <T extends { user: UserForAvatar }>(
+export const withUsersAvatar = <T extends { user: { avatar: File | null } }>(
   profiles: T[],
 ) => profiles.map(withUserAvatar);

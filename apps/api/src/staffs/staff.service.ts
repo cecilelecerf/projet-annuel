@@ -10,6 +10,7 @@ import { StaffRepository } from "./staff.repository";
 import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { UserRole } from "../../prisma/generated/prisma/enums";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 export class StaffService {
   constructor(
@@ -54,7 +55,7 @@ export class StaffService {
       ...(wantsRole("VETERINARIAN") ? clinicStaff.veterinarians : []),
     ];
 
-    return staffs;
+    return staffs.map(withAvatarUrl);
   }
 
   // ── Détail d'un membre du staff ──────────────────────────────────────────
@@ -81,9 +82,8 @@ export class StaffService {
       user.directorClinicProfile?.clinic?.id === clinicId ||
       user.referentClinicProfile?.clinicId === clinicId;
     if (!belongsToClinic) throw new ForbiddenError();
-
     const { password: _password, ...safeUser } = user;
-    return safeUser;
+    return withAvatarUrl(safeUser);
   }
 
   // ── Création d'un vétérinaire ─────────────────────────────────────────────

@@ -27,7 +27,13 @@ export const conversationMemberSchema = z.object({
   joinedAt: z.coerce.date(),
   lastReadAt: z.coerce.date().nullable(),
   user: baseUserSchema
-    .pick({ id: true, firstname: true, lastname: true, picture: true, role: true })
+    .pick({
+      id: true,
+      firstname: true,
+      lastname: true,
+      avatarUrl: true,
+      role: true,
+    })
     .optional(),
 });
 export type ConversationMember = z.infer<typeof conversationMemberSchema>;
@@ -39,7 +45,7 @@ export const messageSchema = z.object({
   content: z.string().min(1),
   createdAt: z.coerce.date(),
   sender: baseUserSchema
-    .pick({ id: true, firstname: true, lastname: true, picture: true })
+    .pick({ id: true, firstname: true, lastname: true, avatarUrl: true })
     .optional(),
 });
 export type Message = z.infer<typeof messageSchema>;
@@ -120,7 +126,7 @@ export const conversationContactSchema = baseUserSchema.pick({
   id: true,
   firstname: true,
   lastname: true,
-  picture: true,
+  avatarUrl: true,
   role: true,
 });
 export type ConversationContact = z.infer<typeof conversationContactSchema>;

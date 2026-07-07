@@ -1,5 +1,6 @@
 import { http } from '@/lib/api'
 import {
+  baseUserSchema,
   confirmUploadSchema,
   initiateImageUploadSchema,
   uploadResponseSchema,
@@ -42,10 +43,11 @@ export const usersApi = {
       return { fileId }
     },
 
-    confirm: async ({ fileId }: { fileId: string }): Promise<User> => {
+    confirm: async ({ fileId }: { fileId: string }) => {
       const body = confirmUploadSchema.parse({ fileId })
       const data = await http.patch('/users/me/avatar/confirm', body)
-      return userSchema.parse(data)
+      console.log(data)
+      return baseUserSchema.parse(data)
     },
   },
 }

@@ -66,7 +66,9 @@ async function onFileChange(event: Event) {
     ElMessage.success('Photo de profil mise à jour.')
   } catch (e) {
     // Rollback en cas d'échec
+    console.error('Erreur upload avatar:', e)
     previewUrl.value = null
+
     ElMessage.error("Échec de l'envoi de la photo. Réessaie.")
   } finally {
     isUploading.value = false

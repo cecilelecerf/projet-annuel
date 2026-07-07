@@ -19,7 +19,12 @@ const { user } = useAuthStore()
       })
     "
   >
-    <span class="vet-name">{{ veterinarian.firstname }} {{ veterinarian.lastname }}</span>
+    <div class="vet-identity">
+      <el-avatar :size="32" class="vet-avatar" :src="veterinarian.avatarUrl ?? undefined">
+        <template v-if="!veterinarian.avatarUrl">{{ veterinarian.firstname?.charAt(0) }}</template>
+      </el-avatar>
+      <span class="vet-name">{{ veterinarian.firstname }} {{ veterinarian.lastname }}</span>
+    </div>
     <div class="vet-rating">
       <template v-if="stat.count !== 0 && stat.average">
         <el-rate :model-value="stat.average" disabled allow-half />
@@ -48,15 +53,32 @@ const { user } = useAuthStore()
 .vet-stat-item:last-child {
   border-bottom: none;
 }
+.vet-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+.vet-avatar {
+  background: var(--el-color-primary-light-7);
+  color: var(--el-color-primary);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  flex-shrink: 0;
+}
 .vet-name {
   font-size: 14px;
   font-weight: var(--fw-semibold);
   color: var(--el-text-color-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .vet-rating {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-shrink: 0;
 }
 .rating-value {
   font-size: 13px;

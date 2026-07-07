@@ -21,6 +21,7 @@ import {
 } from "@api/errors";
 import { EmailService } from "@api/emails/email.service";
 import type { RegisterDirector } from "@api/types/auth.types";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 const emailService = new EmailService();
 
@@ -177,9 +178,8 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
     const clinicId = this.getClinicId(user);
-    const parsedUser = baseUserSchema
-      .omit({ avatarId: true, avatarUrl: true })
-      .parse(user);
+    const withAvatar = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(withAvatar);
     const accessToken = generateAccessToken({
       ...parsedUser,
       clinicId: clinicId ?? undefined,
@@ -213,12 +213,15 @@ export class AuthService {
     const payload = verifyRefreshToken(refreshToken);
     if (!payload) throw new UnauthorizedError("Refresh token invalide");
 
-    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      include: { avatar: true },
+    });
     if (!user) throw new NotFoundError("Utilisateur");
 
     await prisma.refreshToken.delete({ where: { token: refreshToken } });
-
-    const parsedUser = baseUserSchema.parse(user);
+    const validUser = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(validUser);
     const newAccessToken = generateAccessToken(parsedUser);
     const newRefreshToken = generateRefreshToken(parsedUser);
 

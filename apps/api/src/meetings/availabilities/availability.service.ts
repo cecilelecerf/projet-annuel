@@ -71,21 +71,21 @@ export class AvailabilityService {
     const existing = await this.getById({ id, role, userId });
     if (!existing) throw new NotFoundError("Disponibilité");
     if (existing.userId !== userId) throw new ForbiddenError();
-    match(data)
-      .with({ type: "PUNCTUAL" }, (d) => {
+    await match(data)
+      .with({ type: "PUNCTUAL" }, async (d) => {
         if (!existing.meetingId)
           throw new ConflictError("MeetingId doesn't exist");
         const { ...rest } = d;
-        return this.repository.updatePunctual({
+        return await this.repository.updatePunctual({
           id: existing.meetingId,
           data: rest,
         });
       })
-      .with({ type: "RECURRING" }, (d) => {
+      .with({ type: "RECURRING" }, async (d) => {
         if (!existing.recurringId)
           throw new ConflictError("RecurringId doesn't exist");
         const { recurringId: _, type: __, ...rest } = d;
-        return this.reccuringService.update({
+        return await this.reccuringService.update({
           id: existing.recurringId as MeetingRecurringId,
           data: rest,
         });

@@ -12,11 +12,9 @@ export const clinicActSchema = z.object({
   act: actSchema.optional(),
 });
 
-export const createClinicActSchema = clinicActSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  act: true,
+export const createClinicActSchema = clinicActSchema.pick({
+  price: true,
+  actId: true,
 });
 export const updateClinicActSchema = createClinicActSchema.partial();
 

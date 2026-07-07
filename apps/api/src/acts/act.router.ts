@@ -14,7 +14,7 @@ actRouter.use(requireApprovedClinic);
 
 actRouter.get(
   "/",
-  roleMiddleware(STAFF_ROLES),
+  roleMiddleware(["ADMIN", "REFERENT", "DIRECTOR"]),
   controller.getAll.bind(controller) as RequestHandler,
 );
 
@@ -40,37 +40,6 @@ actRouter.delete(
   "/:id",
   roleMiddleware(["ADMIN"]),
   controller.delete.bind(controller) as RequestHandler,
-);
-// ── ClinicActs ────────────────────────────────────────────────────────────────
-
-actRouter.get(
-  "/clinic-acts/:clinicId",
-  roleMiddleware(STAFF_ROLES),
-  controller.getClinicActs.bind(controller) as RequestHandler,
-);
-
-actRouter.get(
-  "/clinic-acts/:id",
-  roleMiddleware(STAFF_ROLES),
-  controller.getClinicActById.bind(controller) as RequestHandler,
-);
-
-actRouter.post(
-  "/clinic-acts",
-  roleMiddleware(["ADMIN", "DIRECTOR"]),
-  controller.createClinicAct.bind(controller) as RequestHandler,
-);
-
-actRouter.patch(
-  "/clinic-acts/:id",
-  roleMiddleware(["ADMIN", "DIRECTOR"]),
-  controller.updateClinicAct.bind(controller) as RequestHandler,
-);
-
-actRouter.delete(
-  "/clinic-acts/:id",
-  roleMiddleware(["ADMIN", "DIRECTOR"]),
-  controller.deleteClinicAct.bind(controller) as RequestHandler,
 );
 
 export default actRouter;

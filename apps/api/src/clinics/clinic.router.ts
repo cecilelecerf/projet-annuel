@@ -8,6 +8,7 @@ import {
   updateClinicSpecialitiesSchema,
 } from "@armali/schemas";
 import {
+  clinicActController,
   clinicController,
   medicalHistoryController,
   specialityController,
@@ -19,6 +20,7 @@ import clinicRequestRouter from "./requests/request.router";
 
 const clinicRouter: RouterType = Router();
 const controller = clinicController;
+
 clinicRouter.use(authMiddleware);
 
 clinicRouter.use("/requests", clinicRequestRouter);
@@ -41,6 +43,12 @@ clinicRouter.get(
   medicalHistoryController.getByClinic.bind(
     medicalHistoryController,
   ) as RequestHandler,
+);
+clinicRouter.get(
+  "/:id/clinic-acts",
+  requireApprovedClinic,
+  roleMiddleware(CLINIC_STAFF_ROLES),
+  clinicActController.getClinicActs.bind(clinicActController) as RequestHandler,
 );
 
 clinicRouter.get(

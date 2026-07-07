@@ -7,13 +7,7 @@ import type {
   UserRole,
 } from "@armali/schemas";
 
-const ALLOWED_ROLES: UserRole[] = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "DIRECTOR",
-  "REFERENT",
-  "ADMIN",
-];
+const ALLOWED_ROLES: UserRole[] = ["VETERINARIAN"];
 
 export class PrescriptionService {
   constructor(private repository: PrescriptionRepository) {}

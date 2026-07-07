@@ -4,12 +4,8 @@ import { BadRequestError } from "@api/errors";
 import {
   createActSchema,
   updateActSchema,
-  createClinicActSchema,
-  updateClinicActSchema,
   type CreateAct,
   type UpdateAct,
-  type CreateClinicAct,
-  type UpdateClinicAct,
 } from "@armali/schemas";
 import { ActService } from "./act.service";
 
@@ -81,95 +77,6 @@ export class ActController {
   ) {
     try {
       await this.service.delete(req.params.id, req.user.role);
-      res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
-  }
-  async getByMeeting(
-    req: RequestWithParams<{ meetingId: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const acts = await this.service.getByMeeting(req.params.meetingId);
-      res.status(200).json(acts);
-    } catch (err) {
-      next(err);
-    }
-  }
-  // ── ClinicActs ────────────────────────────────────────────────────────────
-
-  async getClinicActs(
-    req: RequestWithParams<{ clinicId: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const acts = await this.service.getClinicActs(req.params.clinicId);
-      res.status(200).json(acts);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async getClinicActById(
-    req: RequestWithParams<{ id: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const act = await this.service.getClinicActById(req.params.id);
-      res.status(200).json(act);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async createClinicAct(
-    req: AuthenticatedRequest & { body: CreateClinicAct },
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const result = createClinicActSchema.safeParse(req.body);
-      if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await this.service.createClinicAct(
-        result.data,
-        req.user.role,
-      );
-      res.status(201).json(act);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async updateClinicAct(
-    req: RequestWithParams<{ id: string }> & { body: UpdateClinicAct },
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const result = updateClinicActSchema.safeParse(req.body);
-      if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await this.service.updateClinicAct(
-        req.params.id,
-        result.data,
-        req.user.role,
-      );
-      res.status(200).json(act);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async deleteClinicAct(
-    req: RequestWithParams<{ id: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      await this.service.deleteClinicAct(req.params.id, req.user.role);
       res.status(204).send();
     } catch (err) {
       next(err);

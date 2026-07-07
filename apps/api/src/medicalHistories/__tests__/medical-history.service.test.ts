@@ -44,7 +44,7 @@ vi.mock("@api/meetings/animal-meeting/animal-meeting.repository", () => ({
   }),
 }));
 
-vi.mock("@api/acts/clinic-act.repository", () => ({
+vi.mock("@api/clinic-acts/clinic-act.repository", () => ({
   ClinicActRepository: vi.fn(function () {
     return mockClinicActRepository;
   }),
@@ -79,7 +79,8 @@ const { AnimalRepository } = await import("@api/animals/animal.repository");
 const { VaccineRepository } = await import("@api/vaccines/vaccine.repository");
 const { VeterinarianClinicRepository } =
   await import("@api/veterinarian-clinics/veterinarian-clinic.repository");
-const { ClinicActRepository } = await import("@api/acts/clinic-act.repository");
+const { ClinicActRepository } =
+  await import("@api/clinic-acts/clinic-act.repository");
 
 const service = new AnimalMedicalHistoryService(
   new AnimalMedicalHistoryRepository({} as any),

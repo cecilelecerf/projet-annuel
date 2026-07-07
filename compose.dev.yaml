@@ -20,24 +20,19 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - backend
+      - db
 
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
-      target: deps
+      dockerfile: apps/api/Dockerfile.dev
+      target: dev
     working_dir: /app
     command: >
       sh -c "
         cd /app &&
-        pnpm --filter schemas build &&
-        cd /app/apps/api &&
-        pnpm exec prisma generate &&
-        pnpm exec prisma migrate deploy &&
-        pnpm --filter api seed &&
-        cd /app &&
-        pnpm --filter api dev
+        pnpm dev:schemas &
+        pnpm db:init && pnpm dev:api
       "
     volumes:
       - .:/app
@@ -58,21 +53,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
     networks:
       - backend
+      - db
 
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
-      target: deps
+      dockerfile: apps/web/Dockerfile.dev
+      target: dev
     working_dir: /app
     command: >
       sh -c "
         cd /app &&
-        pnpm --filter schemas build &&
-        cd /app/apps/web &&
-        pnpm run dev
+        pnpm dev:schemas & pnpm dev:web
       "
     volumes:
       - .:/app
@@ -84,10 +79,11 @@ services:
     environment:
       CI: "true"
       PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
+    restart: unless-stopped
     ports:
       - "5173:5173"
     networks:
-      - backend
+      - frontend
 
   mailhog:
     image: mailhog/mailhog:latest
@@ -95,6 +91,35 @@ services:
     ports:
       - "1025:1025" # Port SMTP
       - "8025:8025" # Interface web
+    networks:
+      - backend
+
+  devcontainer:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile.dev
+      target: deps
+    working_dir: /app
+    command: sleep infinity
+    volumes:
+      - .:/app
+      - api_node_modules:/app/node_modules
+      - api_workspace_modules:/app/apps/api/node_modules
+      - web_workspace_modules:/app/apps/web/node_modules
+      - schemas_node_modules:/app/packages/schemas/node_modules
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend
+      - frontend
+      - db
 
 volumes:
   postgres_data:
@@ -106,4 +131,8 @@ volumes:
 
 networks:
   backend:
+    driver: bridge
+  frontend:
+    driver: bridge
+  db:
     driver: bridge

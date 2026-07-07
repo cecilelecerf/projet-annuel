@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@armali/schemas": "workspace:*",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
     "bcryptjs": "^3.0.3",
@@ -36,7 +37,6 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@armali/schemas": "workspace:*",
     "@testcontainers/postgresql": "^11.14.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.19",

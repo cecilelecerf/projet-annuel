@@ -1,0 +1,21 @@
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+# ---- Dépendances (cache layer) ----
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY packages/schemas/package.json ./packages/schemas/
+COPY apps/api/package.json ./apps/api/
+
+RUN pnpm install --frozen-lockfile
+
+# ---- Dev ----
+FROM deps AS dev
+ENV NODE_ENV=development
+
+# Le code source arrive via bind mount (docker-compose), pas besoin de COPY ici.
+# node_modules (racine + workspaces) est écrasé par des volumes nommés dans compose,
+# donc l'install faite ci-dessus dans `deps` sert de contenu initial pour ces volumes.
+
+EXPOSE 3001

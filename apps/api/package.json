@@ -62,5 +62,8 @@
     "typescript-eslint": "8.61.0",
     "vitest": "4.0.17",
     "vitest-mock-extended": "4.0.0"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

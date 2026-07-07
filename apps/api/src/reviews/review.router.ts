@@ -12,23 +12,18 @@ const controller = reviewController;
 
 reviewRouter.use(authMiddleware);
 reviewRouter.use(requireApprovedClinic);
-reviewRouter.get(
-  "/vets",
-  roleMiddleware(["CLIENT"]),
-  controller.listVeterinarians.bind(controller),
-);
 
 reviewRouter.post(
   "/",
   roleMiddleware(["CLIENT"]),
   validate(createReviewSchema),
-  controller.upsertReview.bind(controller),
+  controller.upsertReview.bind(controller) as RequestHandler,
 );
 
 reviewRouter.get(
-  "/mine",
+  "/",
   roleMiddleware(["CLIENT"]),
-  controller.getMyReviews.bind(controller),
+  controller.getReviews.bind(controller) as RequestHandler,
 );
 
 export default reviewRouter;

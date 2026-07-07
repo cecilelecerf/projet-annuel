@@ -1,5 +1,5 @@
 import { Prisma } from "../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 // ═══════════════════════════════════════════════════════════════
 // Include — partagé par les deux méthodes

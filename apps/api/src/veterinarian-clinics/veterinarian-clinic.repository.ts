@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export const veterinarianClinicInclude = {
   veterinarian: {

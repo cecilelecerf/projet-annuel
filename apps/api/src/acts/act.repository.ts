@@ -1,6 +1,6 @@
 import { prisma } from "@api/lib/prisma";
 import type { CreateAct, UpdateAct } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class ActRepository {
   constructor(private prisma: PrismaClient) {}

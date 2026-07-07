@@ -1,10 +1,18 @@
 import { prisma } from "@api/lib/prisma";
 import { BadRequestError, NotFoundError } from "@api/errors";
+import { ReviewRepository } from "@api/reviews/review.repository";
+import {
+  ClinicId,
+  ReviewMeta,
+  reviewMetaSchema,
+  VeterinarianId,
+} from "@armali/schemas";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
 
 export class ReferentService {
+  constructor(private reviewRepository: ReviewRepository) {}
   private async getClinicId(referentUserId: string): Promise<string> {
     const profile = await prisma.referentClinicProfile.findUnique({
       where: { id: referentUserId },
@@ -19,26 +27,18 @@ export class ReferentService {
   // ── Dashboard (page d'accueil référent) ───────────────────────────────────
 
   async getDashboard(referentUserId: string) {
-    const clinicId = await this.getClinicId(referentUserId);
+    const clinicId: ClinicId = (await this.getClinicId(
+      referentUserId,
+    )) as ClinicId;
 
-    const [clinic, vetClinics, staffCounts, clinicProducts, orders] =
+    const [clinic, reviews, staffCounts, clinicProducts, orders] =
       await Promise.all([
         prisma.clinic.findUnique({
           where: { id: clinicId },
           select: { name: true },
         }),
-        // Vétérinaires de la clinique + leurs avis
-        prisma.veterinarianClinic.findMany({
-          where: { clinicId },
-          include: {
-            veterinarian: {
-              include: {
-                user: { select: { firstname: true, lastname: true } },
-                reviews: { select: { rating: true } },
-              },
-            },
-          },
-        }),
+        this.reviewRepository.findReviewsByClinic({ clinicId }),
+        // prisma.veterinarianClinic.findMany({
         Promise.all([
           prisma.veterinarianClinic.count({ where: { clinicId } }),
           prisma.secretaryProfile.count({ where: { clinicId } }),
@@ -62,28 +62,54 @@ export class ReferentService {
     if (!clinic) throw new NotFoundError("Clinique");
 
     // ── Stats vétérinaires ──────────────────────────────────────────────
-    const veterinarianStats = vetClinics.map((vc) => {
-      const reviews = vc.veterinarian.reviews;
-      const avg =
-        reviews.length > 0
-          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-          : null;
-      return {
-        id: vc.veterinarianId,
-        firstname: vc.veterinarian.user.firstname,
-        lastname: vc.veterinarian.user.lastname,
-        averageRating: avg ? Math.round(avg * 10) / 10 : null,
-        reviewCount: reviews.length,
-      };
-    });
+    const reviewsGroupByVeterinarian: Record<VeterinarianId, ReviewMeta[]> =
+      reviews.reduce(
+        (acc, review) => {
+          console.log(review);
+          const formatReview = {
+            ...review,
+            client: review.client.user,
+            clinic: review.veterinarianClinic.clinic,
+            veterinarian: review.veterinarianClinic.veterinarian.user,
+          };
+          const r = reviewMetaSchema.parse(formatReview);
+          const id = r.veterinarian.id;
+          acc[id] = [...(acc[id] ?? []), r];
+          return acc;
+        },
+        {} as Record<VeterinarianId, ReviewMeta[]>,
+      );
 
-    const allRatings = vetClinics.flatMap((vc) =>
-      vc.veterinarian.reviews.map((r) => r.rating),
-    );
+    const veterinarianStats = (
+      Object.entries(reviewsGroupByVeterinarian) as [
+        VeterinarianId,
+        ReviewMeta[],
+      ][]
+    )
+      .map(([vetoId, reviews]) => {
+        const sumRating = reviews.reduce((acc, review) => {
+          acc += review.rating;
+          return acc;
+        }, 0);
+        return {
+          id: vetoId,
+          firstname: reviews[0].veterinarian.firstname,
+          lastname: reviews[0].veterinarian.lastname,
+          reviewCount: reviews.length,
+          averageRating: reviews.length
+            ? Math.round((sumRating / reviews.length) * 10) / 10
+            : null,
+        };
+      })
+      .filter((stat) => stat.averageRating !== null);
+
+    const allRatings = Object.keys(reviewsGroupByVeterinarian).length;
     const clinicAverageRating =
-      allRatings.length > 0
+      reviews.length > 0
         ? Math.round(
-            (allRatings.reduce((s, r) => s + r, 0) / allRatings.length) * 10,
+            (veterinarianStats.reduce((s, r) => s + r.averageRating!, 0) /
+              reviews.length) *
+              10,
           ) / 10
         : null;
 
@@ -120,7 +146,7 @@ export class ReferentService {
       },
       reviews: {
         clinicAverageRating,
-        totalReviews: allRatings.length,
+        totalReviews: allRatings,
         veterinarianStats,
       },
       sales: {

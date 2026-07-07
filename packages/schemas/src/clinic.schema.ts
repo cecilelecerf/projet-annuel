@@ -6,6 +6,8 @@ import {
   specialityIdSchema,
   directorClinicIdSchema,
 } from "./ids";
+import { baseUserSchema } from "./users/base-user.schema";
+import { veterinarianProfileSchema } from "./users/veterinarian.schema";
 
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
@@ -47,22 +49,6 @@ export type CreateClinic = z.infer<typeof createClinicSchema>;
 export type UpdateClinic = z.infer<typeof updateClinicSchema>;
 export type UpdateClinicReferent = z.infer<typeof updateClinicReferentSchema>;
 export type CreateClinicRequest = z.infer<typeof createClinicRequestSchema>;
-
-// ── VeterinarianClinic (junction) ─────────────────────────────────────────────
-export const veterinarianClinicSchema = z.object({
-  id: veterinarianClinicIdSchema,
-  veterinarianId: veterinarianIdSchema,
-  clinicId: clinicIdSchema,
-});
-
-export const createVeterinarianClinicSchema = veterinarianClinicSchema.omit({
-  id: true,
-});
-
-export type VeterinarianClinic = z.infer<typeof veterinarianClinicSchema>;
-export type CreateVeterinarianClinic = z.infer<
-  typeof createVeterinarianClinicSchema
->;
 
 export const clinicStatusSchema = z.enum([
   "NONE",

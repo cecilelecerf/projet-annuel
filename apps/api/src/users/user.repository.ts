@@ -1,7 +1,6 @@
-import { User } from "../../prisma/generated/prisma/client";
+import { PrismaClient, User } from "../../prisma/generated/prisma/client";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { userWithProfileAndClinicIdInclude } from "./user.types";
-import { PrismaClient } from "@prisma/client/extension";
 
 export class UserRepository {
   constructor(private prisma: PrismaClient) {}

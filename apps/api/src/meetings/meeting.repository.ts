@@ -1,6 +1,6 @@
 import { MeetingKind } from "../../prisma/generated/prisma/enums";
 import { Prisma } from "../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 const recurringFilter = (start: Date, end: Date) => ({
   dateStart: { lte: end },

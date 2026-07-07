@@ -20,6 +20,7 @@ import { seedPrescriptions } from "./prescriptions";
 import { cleanup } from "./cleanup";
 import { seedClinicRequests } from "./clinic-requests";
 import { seedDirectors } from "./directors";
+import { seedReviews } from "./reviews";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -86,7 +87,7 @@ async function main() {
   await seedPrescriptions(prisma, { meetings, products, users });
   await seedOrders(prisma, { users, clinics });
   await seedMessaging(prisma, { users, clinics, directors });
-
+  await seedReviews(prisma, { users, veterinarianClinics: vetoClinic });
   console.log("✅ Seed terminé avec succès !");
   console.log("\n📋 Comptes créés :");
   console.log("  Admin      : admin@gmail.com / Password123!");

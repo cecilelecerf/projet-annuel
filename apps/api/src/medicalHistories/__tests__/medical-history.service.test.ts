@@ -80,7 +80,7 @@ const { AnimalMeetingRepository } =
 const { AnimalRepository } = await import("@api/animals/animal.repository");
 const { VaccineRepository } = await import("@api/vaccines/vaccine.repository");
 const { VeterinarianClinicRepository } =
-  await import("@api/clinics/veterinarian-clinics/veterinarian-clinic.repository");
+  await import("@api/veterinarian-clinics/veterinarian-clinic.repository");
 const { ClinicActRepository } = await import("@api/acts/clinic-act.repository");
 
 const service = new AnimalMedicalHistoryService(

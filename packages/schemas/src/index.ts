@@ -18,3 +18,4 @@ export * from "./animals/meta.schema";
 export * from "./referent/dashboard.schema";
 export * from "./staffs";
 export * from "./specilities.schema";
+export * from "./veterinarian-clinic.schema";

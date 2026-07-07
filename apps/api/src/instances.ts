@@ -32,7 +32,7 @@ import { UserRepository } from "./users/user.repository";
 import { VaccineRepository } from "./vaccines/vaccine.repository";
 
 // ── Veterinarian-clinics ──────────────────────────────────────
-import { VeterinarianClinicRepository } from "./clinics/veterinarian-clinics/veterinarian-clinic.repository";
+import { VeterinarianClinicRepository } from "./veterinarian-clinics/veterinarian-clinic.repository";
 
 // ── Product ──────────────────────────────────────
 import { ProductRepository } from "./products/product.repository";
@@ -105,6 +105,7 @@ import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
 import { StaffController } from "./staffs/staff.controller";
 import { ClinicRequestController } from "./clinics/requests/request.controller";
+import { VeterinarianClinicService } from "./veterinarian-clinics/veterinarian-clinic.service";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -166,11 +167,17 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
   veterinarianClinicRepository,
   clinicActRepository,
 );
-
+const veterinarianClinicService = new VeterinarianClinicService(
+  veterinarianClinicRepository,
+);
 const prescriptionService = new PrescriptionService(prescriptionRepository);
 
-const referentService = new ReferentService();
-const reviewService = new ReviewService(reviewRepository);
+const referentService = new ReferentService(reviewRepository);
+const reviewService = new ReviewService(
+  reviewRepository,
+  userService,
+  veterinarianClinicService,
+);
 
 const recurringService = new RecurringService(
   recurringRepository,

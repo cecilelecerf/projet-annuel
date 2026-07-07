@@ -1,5 +1,5 @@
 import type { CreateClinicAct, UpdateClinicAct } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class ClinicActRepository {
   constructor(private prisma: PrismaClient) {}

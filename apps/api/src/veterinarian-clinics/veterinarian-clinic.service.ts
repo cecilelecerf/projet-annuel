@@ -10,7 +10,7 @@ export class VeterinarianClinicService {
     return this.repository.findAll();
   }
 
-  async getById(id: string) {
+  async getById({ id }: { id: string }) {
     const vc = await this.repository.findById(id);
     if (!vc) throw new NotFoundError("Association vétérinaire-clinique");
     return vc;

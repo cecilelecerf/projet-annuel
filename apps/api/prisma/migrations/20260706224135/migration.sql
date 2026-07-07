@@ -499,7 +499,7 @@ CREATE TABLE "veterinarian_reviews" (
     "rating" INTEGER NOT NULL,
     "comment" TEXT,
     "clientId" TEXT NOT NULL,
-    "veterinarianId" TEXT NOT NULL,
+    "veterinarianClinicId" TEXT NOT NULL,
 
     CONSTRAINT "veterinarian_reviews_pkey" PRIMARY KEY ("id")
 );
@@ -824,7 +824,7 @@ CREATE UNIQUE INDEX "animal_meetings_meetingId_key" ON "animal_meetings"("meetin
 CREATE UNIQUE INDEX "vaccine_country_rules_vaccineId_country_type_key" ON "vaccine_country_rules"("vaccineId", "country", "type");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "veterinarian_reviews_clientId_veterinarianId_key" ON "veterinarian_reviews"("clientId", "veterinarianId");
+CREATE UNIQUE INDEX "veterinarian_reviews_clientId_veterinarianClinicId_key" ON "veterinarian_reviews"("clientId", "veterinarianClinicId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "foods_productId_key" ON "foods"("productId");
@@ -1058,10 +1058,10 @@ ALTER TABLE "vaccine_country_rules" ADD CONSTRAINT "vaccine_country_rules_vaccin
 ALTER TABLE "vaccines" ADD CONSTRAINT "vaccines_petId_fkey" FOREIGN KEY ("petId") REFERENCES "pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "veterinarian_reviews" ADD CONSTRAINT "veterinarian_reviews_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "veterinarian_reviews" ADD CONSTRAINT "veterinarian_reviews_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "client_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "veterinarian_reviews" ADD CONSTRAINT "veterinarian_reviews_veterinarianId_fkey" FOREIGN KEY ("veterinarianId") REFERENCES "veterinarian_profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "veterinarian_reviews" ADD CONSTRAINT "veterinarian_reviews_veterinarianClinicId_fkey" FOREIGN KEY ("veterinarianClinicId") REFERENCES "veterinarian_clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

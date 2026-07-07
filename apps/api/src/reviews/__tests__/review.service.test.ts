@@ -154,7 +154,7 @@ describe("ReviewService.getMyReviews", () => {
       { id: "review-1" },
     ]);
 
-    const result = await reviewService.getMyReviews("client-1");
+    const result = await reviewService.getReviewsByRole("client-1");
 
     expect(mockReviewRepository.findReviewsByClient).toHaveBeenCalledWith(
       "client-1",

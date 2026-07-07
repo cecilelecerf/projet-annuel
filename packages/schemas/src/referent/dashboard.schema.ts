@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { veterinarianIdSchema } from "../ids";
+import { reviewStatSchema } from "../review.schema";
+import { baseUserSchema } from "../users";
 
 export const veterinarianStatSchema = z.object({
   id: veterinarianIdSchema,
@@ -15,10 +17,10 @@ export const referentDashboardSchema = z.object({
     veterinarianCount: z.number().int().nonnegative(),
     secretaryCount: z.number().int().nonnegative(),
   }),
-  reviews: z.object({
-    clinicAverageRating: z.number().nullable(),
-    totalReviews: z.number().int().nonnegative(),
-    veterinarianStats: z.array(veterinarianStatSchema),
+  reviews: reviewStatSchema.extend({
+    veterinarians: z
+      .object({ veterinarian: baseUserSchema, stat: reviewStatSchema })
+      .array(),
   }),
   sales: z.object({
     totalRevenue: z.number().nonnegative(),

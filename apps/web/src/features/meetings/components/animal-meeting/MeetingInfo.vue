@@ -188,22 +188,22 @@ const lockedReason = computed(() => {
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-md);
-  background: var(--el-color-#{meeting-color('animal')}-light-9);
+  background: var(--el-color-#{meeting-color('animal')}-dark-0_5);
+  color: white;
   border-radius: var(--radius-md);
   text-align: center;
 }
 
 .measure-label {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: white;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .measure-value {
   font-size: 22px;
   font-weight: var(--fw-bold);
-  color: var(--el-text-color-primary);
+  color: white;
 }
 
 .measure-edit {

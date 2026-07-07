@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import type { CreateProduct, UpdateProduct } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class ProductRepository {
   constructor(private prisma: PrismaClient) {}

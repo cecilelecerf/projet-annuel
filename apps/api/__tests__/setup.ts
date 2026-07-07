@@ -3,7 +3,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../prisma/generated/prisma/client";
 
 declare global {
-   
   var __PRISMA_TEST_CLIENT__: PrismaClient | undefined;
 }
 
@@ -32,3 +31,10 @@ export const getPrisma = (): PrismaClient => {
   }
   return globalThis.__PRISMA_TEST_CLIENT__;
 };
+import { vi } from "vitest";
+
+vi.mock("@api/lib/mailer", () => ({
+  default: {
+    sendMail: vi.fn().mockResolvedValue({ messageId: "test-message-id" }),
+  },
+}));

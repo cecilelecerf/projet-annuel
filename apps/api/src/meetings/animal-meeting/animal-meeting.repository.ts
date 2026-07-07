@@ -7,8 +7,8 @@ import {
   User,
   VeterinarianClinic,
   Prisma,
+  PrismaClient,
 } from "../../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours
@@ -23,7 +23,9 @@ const findByIdInclude = {
     },
   },
   speciality: true,
-  veterinarianClinic: { include: { veterinarian: true, clinic: true } },
+  veterinarianClinic: {
+    include: { veterinarian: { include: { user: true } }, clinic: true },
+  },
 } satisfies Prisma.AnimalMeetingInclude;
 
 const createInclude = {

@@ -24,7 +24,6 @@ model User {
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
-  vetReviews                  VetReview[]                  @relation("ClientReviews")
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]
   animalConditionHealths      AnimalHealthCondition[]
@@ -54,6 +53,7 @@ model ClientProfile {
   animal         Animal[]
   clinicProducts ClinicProduct[]
   order          Order[]
+  reviews        Review[]
 
   @@map("client_profiles")
 }
@@ -73,7 +73,6 @@ model VeterinarianProfile {
   prescriptions          Prescription[]
   veterinarianIdentity   VeterinarianIdentity?
   bankingInfo            BankingInfo?
-  reviews                VetReview[]
 
   @@map("veterinarian_profiles")
 }

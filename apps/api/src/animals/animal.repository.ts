@@ -1,6 +1,6 @@
 import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours

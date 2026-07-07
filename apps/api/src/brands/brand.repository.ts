@@ -1,6 +1,6 @@
 import { prisma } from "@api/lib/prisma";
 import type { CreateBrand, UpdateBrand } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class BrandRepository {
   constructor(private prisma: PrismaClient) {}

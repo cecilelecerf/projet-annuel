@@ -38,7 +38,6 @@ clinicRouter.get(
 clinicRouter.get(
   "/:id/medical-histories",
   requireApprovedClinic,
-  roleMiddleware(CLINIC_STAFF_ROLES),
   medicalHistoryController.getByClinic.bind(
     medicalHistoryController,
   ) as RequestHandler,

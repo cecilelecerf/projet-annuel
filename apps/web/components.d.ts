@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
+    ContactCard: typeof import('./src/components/ContactCard.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
     EditAccountDialog: typeof import('./src/components/profile/EditAccountDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']

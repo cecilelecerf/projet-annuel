@@ -89,6 +89,13 @@ services:
     networks:
       - backend
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: armali-mailhog
+    ports:
+      - "1025:1025" # Port SMTP
+      - "8025:8025" # Interface web
+
 volumes:
   postgres_data:
   api_node_modules:

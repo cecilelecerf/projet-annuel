@@ -9,11 +9,13 @@ if (isEmailEnabled) {
     host: process.env.MAIL_HOST,
     port: Number(process.env.MAIL_PORT),
     secure: false,
-    requireTLS: true,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
+    requireTLS: process.env.MAIL_REQUIRE_TLS !== "false",
+    auth: process.env.MAIL_USER
+      ? {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        }
+      : undefined,
   });
 } else {
   transporter = {

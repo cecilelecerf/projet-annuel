@@ -8,7 +8,6 @@ export class ReferentController {
   async getDashboard(req: Request, res: Response, next: NextFunction) {
     try {
       const dashboard = await this.service.getDashboard(req.user!.id);
-      console.log(dashboard);
       res.status(200).json(referentDashboardSchema.parse(dashboard));
     } catch (err) {
       next(err);

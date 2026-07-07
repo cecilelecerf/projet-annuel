@@ -10,10 +10,13 @@ const mockStaffRepository = vi.hoisted(() => ({
   createVeterinarian: vi.fn(),
   createSecretary: vi.fn(),
   createReferent: vi.fn(),
+  findStaffIds: vi.fn(),
+  countStaff: vi.fn(),
 }));
 
 const mockClinicService = vi.hoisted(() => ({
-  getClinicByUser: vi.fn(),
+  getClinicsByUser: vi.fn(),
+  getClinicIdByUserId: vi.fn(),
 }));
 
 vi.mock("../staff.repository", () => ({
@@ -80,7 +83,7 @@ describe("StaffService.getStaffByClinicRole", () => {
   });
 
   it("l'acteur n'a pas accès à cette clinique — ForbiddenError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([
+    mockClinicService.getClinicsByUser.mockResolvedValue([
       { id: OTHER_CLINIC_ID },
     ]);
 
@@ -96,7 +99,7 @@ describe("StaffService.getStaffByClinicRole", () => {
   });
 
   it("clinique introuvable — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findStaff.mockResolvedValue(null);
 
     await expect(
@@ -109,7 +112,7 @@ describe("StaffService.getStaffByClinicRole", () => {
   });
 
   it("clinique sans directeur — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findStaff.mockResolvedValue(
       makeClinicStaff({ director: null }),
     );
@@ -124,7 +127,7 @@ describe("StaffService.getStaffByClinicRole", () => {
   });
 
   it("sans targetRoles — retourne tout le staff", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findStaff.mockResolvedValue(
       makeClinicStaff({
         referents: [{ ...makeUser({ id: "ref-1" }), role: "REFERENT" }],
@@ -143,7 +146,7 @@ describe("StaffService.getStaffByClinicRole", () => {
   });
 
   it("avec targetRoles — ne retourne que les rôles demandés", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findStaff.mockResolvedValue(
       makeClinicStaff({
         veterinarians: [{ ...makeUser({ id: "vet-1" }), role: "VETERINARIAN" }],
@@ -167,7 +170,7 @@ describe("StaffService.getStaffByClinicRole", () => {
 
 describe("StaffService.getStaffMemberDetail", () => {
   it("aucune clinique associée — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue(null);
+    mockClinicService.getClinicsByUser.mockResolvedValue(null);
 
     await expect(
       staffService.getStaffMemberDetail({
@@ -178,7 +181,7 @@ describe("StaffService.getStaffMemberDetail", () => {
   });
 
   it("plusieurs cliniques associées — ConflictError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([
+    mockClinicService.getClinicsByUser.mockResolvedValue([
       { id: CLINIC_ID },
       { id: OTHER_CLINIC_ID },
     ]);
@@ -192,7 +195,7 @@ describe("StaffService.getStaffMemberDetail", () => {
   });
 
   it("membre introuvable — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findMemberDetailById.mockResolvedValue(null);
 
     await expect(
@@ -204,7 +207,7 @@ describe("StaffService.getStaffMemberDetail", () => {
   });
 
   it("membre d'une autre clinique — ForbiddenError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findMemberDetailById.mockResolvedValue({
       ...makeUser(),
       password: "secret",
@@ -223,7 +226,7 @@ describe("StaffService.getStaffMemberDetail", () => {
   });
 
   it("retourne le membre sans le mot de passe", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findMemberDetailById.mockResolvedValue({
       ...makeUser(),
       password: "secret",
@@ -243,7 +246,7 @@ describe("StaffService.getStaffMemberDetail", () => {
   });
 
   it("véto multi-cliniques appartenant à la clinique — accès autorisé", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.findMemberDetailById.mockResolvedValue({
       ...makeUser(),
       password: "secret",
@@ -256,6 +259,44 @@ describe("StaffService.getStaffMemberDetail", () => {
       secretaryProfile: null,
       directorClinicProfile: null,
       referentClinicProfile: null,
+    });
+
+    const result = await staffService.getStaffMemberDetail({
+      authorId: AUTHOR_ID,
+      memberId: MEMBER_ID,
+    });
+
+    expect(result).not.toHaveProperty("password");
+  });
+
+  it("directeur appartenant à la clinique — accès autorisé", async () => {
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockStaffRepository.findMemberDetailById.mockResolvedValue({
+      ...makeUser(),
+      password: "secret",
+      veterinarianProfile: null,
+      secretaryProfile: null,
+      directorClinicProfile: { clinic: { id: CLINIC_ID } },
+      referentClinicProfile: null,
+    });
+
+    const result = await staffService.getStaffMemberDetail({
+      authorId: AUTHOR_ID,
+      memberId: MEMBER_ID,
+    });
+
+    expect(result).not.toHaveProperty("password");
+  });
+
+  it("référent appartenant à la clinique — accès autorisé", async () => {
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockStaffRepository.findMemberDetailById.mockResolvedValue({
+      ...makeUser(),
+      password: "secret",
+      veterinarianProfile: null,
+      secretaryProfile: null,
+      directorClinicProfile: null,
+      referentClinicProfile: { clinicId: CLINIC_ID },
     });
 
     const result = await staffService.getStaffMemberDetail({
@@ -279,7 +320,7 @@ describe("StaffService.createVeterinarian", () => {
   };
 
   it("aucune clinique associée — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue(null);
+    mockClinicService.getClinicsByUser.mockResolvedValue(null);
 
     await expect(
       staffService.createVeterinarian({
@@ -290,7 +331,7 @@ describe("StaffService.createVeterinarian", () => {
   });
 
   it("plusieurs cliniques associées — ConflictError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([
+    mockClinicService.getClinicsByUser.mockResolvedValue([
       { id: CLINIC_ID },
       { id: OTHER_CLINIC_ID },
     ]);
@@ -306,7 +347,7 @@ describe("StaffService.createVeterinarian", () => {
   });
 
   it("crée le vétérinaire avec le clinicId résolu et le mot de passe hashé", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.createVeterinarian.mockResolvedValue({
       id: "new-vet",
       ...baseData,
@@ -336,7 +377,7 @@ describe("StaffService.createSecretary", () => {
   };
 
   it("aucune clinique associée — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue(null);
+    mockClinicService.getClinicsByUser.mockResolvedValue(null);
 
     await expect(
       staffService.createSecretary({
@@ -347,7 +388,7 @@ describe("StaffService.createSecretary", () => {
   });
 
   it("plusieurs cliniques associées — ConflictError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([
+    mockClinicService.getClinicsByUser.mockResolvedValue([
       { id: CLINIC_ID },
       { id: OTHER_CLINIC_ID },
     ]);
@@ -363,7 +404,7 @@ describe("StaffService.createSecretary", () => {
   });
 
   it("crée la secrétaire avec le clinicId résolu et le mot de passe hashé", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.createSecretary.mockResolvedValue({
       id: "new-sec",
       ...baseData,
@@ -393,7 +434,7 @@ describe("StaffService.createReferent", () => {
   };
 
   it("aucune clinique associée — NotFoundError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue(null);
+    mockClinicService.getClinicsByUser.mockResolvedValue(null);
 
     await expect(
       staffService.createReferent({
@@ -404,7 +445,7 @@ describe("StaffService.createReferent", () => {
   });
 
   it("plusieurs cliniques associées — ConflictError", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([
+    mockClinicService.getClinicsByUser.mockResolvedValue([
       { id: CLINIC_ID },
       { id: OTHER_CLINIC_ID },
     ]);
@@ -420,7 +461,7 @@ describe("StaffService.createReferent", () => {
   });
 
   it("crée le référent avec le clinicId résolu et le mot de passe hashé", async () => {
-    mockClinicService.getClinicByUser.mockResolvedValue([{ id: CLINIC_ID }]);
+    mockClinicService.getClinicsByUser.mockResolvedValue([{ id: CLINIC_ID }]);
     mockStaffRepository.createReferent.mockResolvedValue({
       id: "new-ref",
       ...baseData,
@@ -432,9 +473,113 @@ describe("StaffService.createReferent", () => {
     });
 
     expect(mockStaffRepository.createReferent).toHaveBeenCalledWith({
-      clinicId: CLINIC_ID,
+      clinicId: CLINIC_ID as ClinicId,
       data: baseData,
       hashedPassword: "hashed_password",
     });
+  });
+});
+
+// ── getStaffIdsByUser ─────────────────────────────────────────────────────
+
+describe("StaffService.getStaffIdsByUser", () => {
+  it("rôle non-staff — ForbiddenError, aucune requête déclenchée", async () => {
+    await expect(
+      staffService.getStaffIdsByUser({
+        authorId: AUTHOR_ID,
+        authorRole: "CLIENT",
+      }),
+    ).rejects.toThrow(ForbiddenError);
+
+    expect(mockClinicService.getClinicIdByUserId).not.toHaveBeenCalled();
+    expect(mockStaffRepository.findStaffIds).not.toHaveBeenCalled();
+  });
+
+  it("rôle staff sans targetRole — résout le clinicId et retourne tous les ids", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue(CLINIC_ID);
+    mockStaffRepository.findStaffIds.mockResolvedValue(["id-1", "id-2"]);
+
+    const result = await staffService.getStaffIdsByUser({
+      authorId: AUTHOR_ID,
+      authorRole: "DIRECTOR",
+    });
+
+    expect(mockClinicService.getClinicIdByUserId).toHaveBeenCalledWith({
+      userId: AUTHOR_ID,
+      role: "DIRECTOR",
+    });
+    expect(mockStaffRepository.findStaffIds).toHaveBeenCalledWith(
+      CLINIC_ID,
+      undefined,
+    );
+    expect(result).toEqual(["id-1", "id-2"]);
+  });
+
+  it("rôle staff avec targetRole — transmet le filtre au repository", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue(CLINIC_ID);
+    mockStaffRepository.findStaffIds.mockResolvedValue(["vet-1"]);
+
+    const result = await staffService.getStaffIdsByUser({
+      authorId: AUTHOR_ID,
+      authorRole: "REFERENT",
+      targetRole: ["VETERINARIAN"],
+    });
+
+    expect(mockStaffRepository.findStaffIds).toHaveBeenCalledWith(CLINIC_ID, [
+      "VETERINARIAN",
+    ]);
+    expect(result).toEqual(["vet-1"]);
+  });
+});
+
+// ── getStaffCountByUser ───────────────────────────────────────────────────
+
+describe("StaffService.getStaffCountByUser", () => {
+  it("rôle non-staff — ForbiddenError, aucune requête déclenchée", async () => {
+    await expect(
+      staffService.getStaffCountByUser({
+        authorId: AUTHOR_ID,
+        authorRole: "CLIENT",
+      }),
+    ).rejects.toThrow(ForbiddenError);
+
+    expect(mockClinicService.getClinicIdByUserId).not.toHaveBeenCalled();
+    expect(mockStaffRepository.countStaff).not.toHaveBeenCalled();
+  });
+
+  it("rôle staff — résout le clinicId et retourne le compte", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue(CLINIC_ID);
+    mockStaffRepository.countStaff.mockResolvedValue(7);
+
+    const result = await staffService.getStaffCountByUser({
+      authorId: AUTHOR_ID,
+      authorRole: "DIRECTOR",
+    });
+
+    expect(mockClinicService.getClinicIdByUserId).toHaveBeenCalledWith({
+      userId: AUTHOR_ID,
+      role: "DIRECTOR",
+    });
+    expect(mockStaffRepository.countStaff).toHaveBeenCalledWith(
+      CLINIC_ID,
+      undefined,
+    );
+    expect(result).toBe(7);
+  });
+
+  it("rôle staff avec targetRole — transmet le filtre au repository", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue(CLINIC_ID);
+    mockStaffRepository.countStaff.mockResolvedValue(2);
+
+    const result = await staffService.getStaffCountByUser({
+      authorId: AUTHOR_ID,
+      authorRole: "DIRECTOR",
+      targetRole: ["SECRETARY"],
+    });
+
+    expect(mockStaffRepository.countStaff).toHaveBeenCalledWith(CLINIC_ID, [
+      "SECRETARY",
+    ]);
+    expect(result).toBe(2);
   });
 });

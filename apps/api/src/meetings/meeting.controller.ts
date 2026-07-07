@@ -174,7 +174,6 @@ export class MeetingController {
             userId: req.user.id,
             role: req.user.role,
           });
-          console.log(meeting);
           if (recurringBase)
             throw new ConflictError("Animal meeting nor recurrent");
           const data = { ...meeting, ...meeting.meeting };

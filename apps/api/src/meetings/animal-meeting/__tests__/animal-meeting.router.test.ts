@@ -4,8 +4,6 @@ import { app } from "@api/app";
 import { getPrisma } from "../../../../__tests__/setup";
 import { MeetingBase } from "../../../../prisma/generated/prisma/client";
 
-const validQuery = "startDate=2026-01-01&endDate=2026-12-31";
-
 const loginAs = async (email: string, password = "Password123!") => {
   const res = await request(app)
     .post("/api/auth/login")
@@ -147,65 +145,65 @@ describe("DELETE /api/meetings/animals/:id", () => {
     expect(res.status).toBe(204);
   });
   // ── POST /api/meetings/animals ─────────────────────────────────────────────────
+});
 
-  describe("POST /api/meetings/animals", () => {
-    let meetingId: string;
-    afterAll(async () => {
-      if (meetingId)
-        await getPrisma().meetingBase.deleteMany({ where: { id: meetingId } });
+describe("POST /api/meetings/animals", () => {
+  let meetingId: string;
+  afterAll(async () => {
+    if (meetingId)
+      await getPrisma().meetingBase.deleteMany({ where: { id: meetingId } });
+  });
+
+  beforeAll(async () => {
+    await getPrisma().meetingBase.deleteMany({
+      where: { kind: "ANIMAL", date: new Date("2026-08-30T00:00:00.000Z") },
+    });
+  });
+  it("401 — sans token", async () => {
+    const res = await request(app).post("/api/meetings/animals");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — rôle DIRECTOR non autorisé", async () => {
+    const token = await loginAs("directeur@gmail.com");
+    const res = await request(app)
+      .post("/api/meetings/animals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(res.status).toBe(403);
+  });
+
+  it("400 — body invalide", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const res = await request(app)
+      .post("/api/meetings/animals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it("201 — SECRETARY crée un rendez-vous animal", async () => {
+    const token = await loginAs("secretaire@gmail.com");
+    const animal = await getPrisma().animal.findFirst();
+    const speciality = await getPrisma().speciality.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
+      where: { veterinarian: { user: { email: "veto@gmail.com" } } },
     });
 
-    beforeAll(async () => {
-      await getPrisma().meetingBase.deleteMany({
-        where: { kind: "ANIMAL", date: new Date("2026-04-02T00:00:00.000Z") },
+    const res = await request(app)
+      .post("/api/meetings/animals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        date: "2026-08-30",
+        startTime: "1970-01-01T07:01:00.000Z",
+        endTime: "1970-01-01T07:02:00.000Z",
+        animalId: animal!.id,
+        veterinarianId: vetoClinic?.veterinarianId,
+        specialityId: speciality!.id,
+        clinicId: vetoClinic?.clinicId,
       });
-    });
-    it("401 — sans token", async () => {
-      const res = await request(app).post("/api/meetings/animals");
-      expect(res.status).toBe(401);
-    });
-
-    it("403 — rôle DIRECTOR non autorisé", async () => {
-      const token = await loginAs("directeur@gmail.com");
-      const res = await request(app)
-        .post("/api/meetings/animals")
-        .set("Authorization", `Bearer ${token}`)
-        .send({});
-      expect(res.status).toBe(403);
-    });
-
-    it("400 — body invalide", async () => {
-      const token = await loginAs("veto@gmail.com");
-      const res = await request(app)
-        .post("/api/meetings/animals")
-        .set("Authorization", `Bearer ${token}`)
-        .send({});
-      expect(res.status).toBe(400);
-    });
-
-    it("201 — SECRETARY crée un rendez-vous animal", async () => {
-      const token = await loginAs("secretaire@gmail.com");
-      const animal = await getPrisma().animal.findFirst();
-      const speciality = await getPrisma().speciality.findFirst();
-      const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
-        where: { veterinarian: { user: { email: "veto@gmail.com" } } },
-      });
-
-      const res = await request(app)
-        .post("/api/meetings/animals")
-        .set("Authorization", `Bearer ${token}`)
-        .send({
-          date: "2026-08-30",
-          startTime: "1970-01-01T09:50:00.000Z",
-          endTime: "1970-01-01T09:55:00.000Z",
-          animalId: animal!.id,
-          veterinarianId: vetoClinic?.veterinarianId,
-          specialityId: speciality!.id,
-          clinicId: vetoClinic?.clinicId,
-        });
-      meetingId = res.body.id;
-      expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty("id");
-    });
+    meetingId = res.body.id;
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty("id");
   });
 });

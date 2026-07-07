@@ -43,7 +43,6 @@ export const flatUser = <T extends { user: Record<string, unknown> }>(
   profile: T,
 ) => {
   const { user, ...rest } = profile;
-  console.log({ ...user, ...rest });
   return { ...user, ...rest };
 };
 

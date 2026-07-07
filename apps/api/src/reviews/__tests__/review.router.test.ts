@@ -6,47 +6,16 @@ import { getPrisma } from "../../../__tests__/setup";
 
 describe("Review router", () => {
   let clientToken: string;
-  let vetId: string;
+  let vetClinicId: string;
 
   beforeAll(async () => {
     clientToken = await loginAs("client@gmail.com");
 
     const prisma = getPrisma();
-    const vet = await prisma.veterinarianProfile.findFirst();
-    if (!vet) throw new Error("Aucun véto seedé pour les tests");
-    vetId = vet.id;
-  });
-
-  // ── GET /vets ─────────────────────────────────────────────────────────────
-
-  describe("GET /api/reviews/vets", () => {
-    it("200 — CLIENT reçoit la liste des vétérinaires avec leurs notes", async () => {
-      const res = await request(app)
-        .get("/api/reviews/vets")
-        .set("Authorization", `Bearer ${clientToken}`);
-
-      expect(res.status).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      if (res.body.length > 0) {
-        expect(res.body[0]).toHaveProperty("averageRating");
-        expect(res.body[0]).toHaveProperty("reviewCount");
-        expect(res.body[0]).toHaveProperty("clinics");
-      }
-    });
-
-    it("401 — sans token", async () => {
-      const res = await request(app).get("/api/reviews/vets");
-      expect(res.status).toBe(401);
-    });
-
-    it("403 — un rôle autre que CLIENT ne peut pas accéder", async () => {
-      const vetToken = await loginAs("veto@gmail.com");
-      const res = await request(app)
-        .get("/api/reviews/vets")
-        .set("Authorization", `Bearer ${vetToken}`);
-
-      expect(res.status).toBe(403);
-    });
+    const vetClinic = await prisma.veterinarianClinic.findFirst();
+    if (!vetClinic)
+      throw new Error("Aucune association véto/clinique seedée pour les tests");
+    vetClinicId = vetClinic.id;
   });
 
   // ── POST / ────────────────────────────────────────────────────────────────
@@ -57,7 +26,7 @@ describe("Review router", () => {
         .post("/api/reviews")
         .set("Authorization", `Bearer ${clientToken}`)
         .send({
-          veterinarianId: vetId,
+          veterinarianClinicId: vetClinicId,
           rating: 5,
           comment: "Très bon suivi",
         });
@@ -71,20 +40,28 @@ describe("Review router", () => {
       await request(app)
         .post("/api/reviews")
         .set("Authorization", `Bearer ${clientToken}`)
-        .send({ veterinarianId: vetId, rating: 3, comment: "Moyen" });
+        .send({
+          veterinarianClinicId: vetClinicId,
+          rating: 3,
+          comment: "Moyen",
+        });
 
       const res = await request(app)
         .post("/api/reviews")
         .set("Authorization", `Bearer ${clientToken}`)
-        .send({ veterinarianId: vetId, rating: 4, comment: "Finalement bien" });
+        .send({
+          veterinarianClinicId: vetClinicId,
+          rating: 4,
+          comment: "Finalement bien",
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.rating).toBe(4);
       expect(res.body.comment).toBe("Finalement bien");
 
       const prisma = getPrisma();
-      const reviews = await prisma.vetReview.findMany({
-        where: { veterinarianId: vetId },
+      const reviews = await prisma.review.findMany({
+        where: { veterinarianClinicId: vetClinicId },
       });
       const clientReviews = reviews.filter(
         (r) => r.rating === 4 && r.comment === "Finalement bien",
@@ -96,9 +73,17 @@ describe("Review router", () => {
       const res = await request(app)
         .post("/api/reviews")
         .set("Authorization", `Bearer ${clientToken}`)
-        .send({ veterinarianId: vetId, rating: 10 });
+        .send({ veterinarianClinicId: vetClinicId, rating: 10 });
 
       expect(res.status).toBe(400);
+    });
+
+    it("401 — sans token", async () => {
+      const res = await request(app)
+        .post("/api/reviews")
+        .send({ veterinarianClinicId: vetClinicId, rating: 5 });
+
+      expect(res.status).toBe(401);
     });
 
     it("403 — un rôle autre que CLIENT ne peut pas créer d'avis", async () => {
@@ -106,32 +91,66 @@ describe("Review router", () => {
       const res = await request(app)
         .post("/api/reviews")
         .set("Authorization", `Bearer ${vetToken}`)
-        .send({ veterinarianId: vetId, rating: 5 });
+        .send({ veterinarianClinicId: vetClinicId, rating: 5 });
 
       expect(res.status).toBe(403);
     });
   });
 
-  // ── GET /mine ─────────────────────────────────────────────────────────────
+  // ── GET / ─────────────────────────────────────────────────────────────────
 
-  describe("GET /api/reviews/mine", () => {
-    it("200 — CLIENT reçoit ses propres avis", async () => {
-      await request(app)
-        .post("/api/reviews")
-        .set("Authorization", `Bearer ${clientToken}`)
-        .send({ veterinarianId: vetId, rating: 5, comment: "Top" });
-
+  describe("GET /api/reviews", () => {
+    it("200 — CLIENT reçoit la liste de ses avis", async () => {
       const res = await request(app)
-        .get("/api/reviews/mine")
+        .get("/api/reviews")
         .set("Authorization", `Bearer ${clientToken}`);
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.some((r: any) => r.veterinarianId === vetId)).toBe(true);
+    });
+
+    it("200 — ADMIN reçoit tous les avis", async () => {
+      const adminToken = await loginAs("admin@gmail.com");
+      const res = await request(app)
+        .get("/api/reviews")
+        .set("Authorization", `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
     });
 
     it("401 — sans token", async () => {
-      const res = await request(app).get("/api/reviews/mine");
+      const res = await request(app).get("/api/reviews");
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ── GET /stats ────────────────────────────────────────────────────────────
+
+  describe("GET /api/reviews/stats", () => {
+    it("200 — CLIENT reçoit ses propres stats", async () => {
+      const res = await request(app)
+        .get("/api/reviews/stats")
+        .set("Authorization", `Bearer ${clientToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("average");
+      expect(res.body).toHaveProperty("count");
+    });
+
+    it("200 — ADMIN reçoit les stats globales", async () => {
+      const adminToken = await loginAs("admin@gmail.com");
+      const res = await request(app)
+        .get("/api/reviews/stats")
+        .set("Authorization", `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("average");
+      expect(res.body).toHaveProperty("count");
+    });
+
+    it("401 — sans token", async () => {
+      const res = await request(app).get("/api/reviews/stats");
       expect(res.status).toBe(401);
     });
   });

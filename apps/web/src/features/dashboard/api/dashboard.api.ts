@@ -1,5 +1,5 @@
 import { http } from '@/lib/api'
-import { referentDashboardSchema, type ReferentDashboard } from '@armali/schemas'
+import { referentDashboardSchema } from '@armali/schemas'
 
 export const dashboardApi = {
   get: async () => {

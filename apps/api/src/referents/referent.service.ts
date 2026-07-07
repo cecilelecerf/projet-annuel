@@ -1,14 +1,6 @@
 import { prisma } from "@api/lib/prisma";
 import { BadRequestError, NotFoundError } from "@api/errors";
-import { ReviewRepository } from "@api/reviews/review.repository";
-import {
-  ClinicId,
-  ReferentClinicId,
-  ReviewMeta,
-  reviewMetaSchema,
-  UserId,
-  VeterinarianId,
-} from "@armali/schemas";
+import { ClinicId, ReferentClinicId } from "@armali/schemas";
 import { ReviewService } from "@api/reviews/review.service";
 import { StaffService } from "@api/staffs/staff.service";
 import { UserService } from "@api/users";

@@ -14,7 +14,7 @@ export class AvailabilityController {
   async getAllByUser(
     req: RequestWithParams<{ date?: string }>,
     res: Response,
-    next: NextFunction,
+    _next: NextFunction,
   ) {
     const availabilities = await this.service.getAll({
       userId: req.user.id,

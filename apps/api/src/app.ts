@@ -22,7 +22,7 @@ import bookingRouter from "./bookings/booking.router";
 import veterinarianRouter from "./users/veterinarian.router";
 import staffRouter from "./staffs/staff.router";
 import veterinarianClinicRouter from "./veterinarian-clinics/veterinarian-clinic.router";
-// import fileRouter from "./files/file.route";
+import clinicActRouter from "./clinic-acts/clinic-act.router";
 
 collectDefaultMetrics();
 
@@ -75,4 +75,5 @@ app.use("/api/specialities", specialityRouter);
 app.use("/api/veterinarians", veterinarianRouter);
 app.use("/api/staffs", staffRouter);
 app.use("/api/veterinarian-clinics", veterinarianClinicRouter);
+app.use("/api/clinic-acts", clinicActRouter);
 app.use(errorHandler);

@@ -1,4 +1,3 @@
-import { prisma } from "@api/lib/prisma";
 import type { CreateAct, UpdateAct } from "@armali/schemas";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
@@ -6,21 +5,21 @@ export class ActRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findAll() {
-    return prisma.act.findMany({
+    return this.prisma.act.findMany({
       include: { clinicActs: true },
       orderBy: { name: "asc" },
     });
   }
 
   async findById(id: string) {
-    return prisma.act.findUnique({
+    return this.prisma.act.findUnique({
       where: { id },
       include: { clinicActs: true },
     });
   }
 
   async create(data: CreateAct) {
-    return prisma.act.create({
+    return this.prisma.act.create({
       data: {
         name: data.name,
         description: data.description,
@@ -31,7 +30,7 @@ export class ActRepository {
   }
 
   async update(id: string, data: UpdateAct) {
-    return prisma.act.update({
+    return this.prisma.act.update({
       where: { id },
       data: {
         name: data.name,
@@ -43,6 +42,6 @@ export class ActRepository {
   }
 
   async delete(id: string) {
-    return prisma.act.delete({ where: { id } });
+    return this.prisma.act.delete({ where: { id } });
   }
 }

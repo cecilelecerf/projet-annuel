@@ -1,4 +1,9 @@
-import type { CreateClinicAct, UpdateClinicAct } from "@armali/schemas";
+import type {
+  ActId,
+  ClinicId,
+  CreateClinicAct,
+  UpdateClinicAct,
+} from "@armali/schemas";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class ClinicActRepository {
@@ -11,7 +16,12 @@ export class ClinicActRepository {
       orderBy: { act: { name: "asc" } },
     });
   }
-
+  async findByKeys(clinicId: ClinicId, actId: ActId) {
+    return this.prisma.clinicAct.findUnique({
+      where: { actId_clinicId: { clinicId, actId } },
+      include: { act: true },
+    });
+  }
   async findById(id: string) {
     return this.prisma.clinicAct.findUnique({
       where: { id },
@@ -19,12 +29,12 @@ export class ClinicActRepository {
     });
   }
 
-  async create(data: CreateClinicAct) {
+  async create(clinicId: ClinicId, data: CreateClinicAct) {
     return this.prisma.clinicAct.create({
       data: {
         price: data.price,
         actId: data.actId,
-        clinicId: data.clinicId,
+        clinicId: clinicId,
       },
       include: { act: true },
     });
@@ -39,6 +49,7 @@ export class ClinicActRepository {
   }
 
   async delete(id: string) {
+    console.log(id);
     return this.prisma.clinicAct.delete({ where: { id } });
   }
 }

@@ -29,7 +29,7 @@ const findByIdInclude = {
   animalConditionHealths: {
     include: { healthCondition: true },
   },
-  attendingVeterinarian: { include: { user: true } },
+  attendingVeterinarian: { include: { user: { include: { avatar: true } } } },
   animalVaccine: true,
 } satisfies Prisma.AnimalInclude;
 

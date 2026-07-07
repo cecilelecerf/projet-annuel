@@ -49,7 +49,6 @@ export class ClinicActRepository {
   }
 
   async delete(id: string) {
-    console.log(id);
     return this.prisma.clinicAct.delete({ where: { id } });
   }
 }

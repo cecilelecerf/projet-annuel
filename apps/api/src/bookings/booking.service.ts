@@ -182,7 +182,12 @@ export class BookingService {
               include: {
                 clinic: true,
                 veterinarian: {
-                  include: { user: { omit: { password: true } } },
+                  include: {
+                    user: {
+                      omit: { password: true },
+                      include: { avatar: true },
+                    },
+                  },
                 },
               },
             },
@@ -207,6 +212,9 @@ export class BookingService {
         user: {
           firstname: am.veterinarianClinic?.veterinarian.user.firstname,
           lastname: am.veterinarianClinic?.veterinarian.user.lastname,
+          avatarUrl: am.veterinarianClinic
+            ? withAvatarUrl(am.veterinarianClinic?.veterinarian.user).avatarUrl
+            : null,
         },
       },
       animal: {

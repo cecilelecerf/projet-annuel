@@ -51,9 +51,16 @@ vi.mock("@armali/schemas", async (importOriginal) => {
   };
 });
 
-vi.mock("@api/users/user.utils", () => ({
-  flatClinicId: vi.fn((user) => ({ ...user, flattened: true })),
-}));
+// On garde les vraies implémentations (withAvatarUrl, flatUser, ...) et on
+// ne mocke que flatClinicId, seule fonction dont ce fichier a besoin de
+// contrôler la sortie.
+vi.mock("@api/users/user.utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@api/users/user.utils")>();
+  return {
+    ...actual,
+    flatClinicId: vi.fn((user) => ({ ...user, flattened: true })),
+  };
+});
 
 const { InternalMeetingRepository } =
   await import("../internal-meeting.repository");
@@ -66,7 +73,12 @@ const service = new InternalMeetingService(
   new RecurringService({} as any, {} as any),
 );
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  // withAvatarUrl (réel depuis importOriginal) en a besoin dès qu'un test
+  // passe par getById.
+  process.env.ASSETS_BASE_URL = "http://localhost:9000/test-bucket";
+});
 
 const USER_ID = "user-1";
 const OTHER_USER_ID = "user-2";
@@ -616,11 +628,16 @@ describe("InternalMeetingService.getById", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("applique flatClinicId à chaque participant", async () => {
+  it("applique withAvatarUrl et clinicId à chaque participant", async () => {
     mockRepository.findById.mockResolvedValue(
       makeInternalMeeting({
+        clinicId: CLINIC_ID,
         participants: [
-          { userId: USER_ID, status: "PENDING", user: { id: USER_ID } },
+          {
+            userId: USER_ID,
+            status: "PENDING",
+            user: { id: USER_ID, avatar: null },
+          },
         ],
       }),
     );
@@ -632,7 +649,8 @@ describe("InternalMeetingService.getById", () => {
 
     expect(result.participants[0].user).toEqual({
       id: USER_ID,
-      flattened: true,
+      avatarUrl: null,
+      clinicId: CLINIC_ID,
     });
   });
 });

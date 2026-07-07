@@ -26,13 +26,13 @@ import { staffApi } from '@/features/staffs/staff.api'
 
 export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'close') => void) {
   const route = useRoute()
-  const id = route.params.id as string
+  const id = route.params.id as UserId | undefined
   const formErrorStore = useFormErrorStore()
   const { user } = useAuthStore()
   const role = user?.role
 
-  const veterinarianPromise = () => {
-    if (id) return usersApi.get(id)
+  const veterinarianPromise = async () => {
+    if (id) return usersApi.get({ id })
     if (role === 'VETERINARIAN')
       return http.get('/auth/me').then((data) => baseUserSchema.parse(data))
     return Promise.resolve(null)

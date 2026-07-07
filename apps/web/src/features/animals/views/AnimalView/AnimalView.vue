@@ -10,6 +10,7 @@ import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
 import { actTypeLabel } from '@/features/medicalHistories/utils.ts'
 import { useAuthStore } from '@/stores/authStore.ts'
 import WeightChart from '../../components/WeightChart.vue'
+import ContactCard from '@/components/ContactCard.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
@@ -91,44 +92,21 @@ const lastSize = computed(() => {
             <el-rate :model-value="pet.activity / 2" disabled :max="5" />
           </div>
         </div>
-
-        <el-divider />
-
-        <!-- Propriétaire -->
-
-        <div
-          v-if="user?.role !== 'CLIENT'"
-          class="owner-row"
-          @click="
-            router.push({
-              name: `${user?.role.toUpperCase()}.Clients.Detail`,
-              params: { id: pet.clientId },
-            })
-          "
-        >
-          <div class="owner-avatar">
-            {{ pet.client?.user.firstname?.charAt(0) }}{{ pet.client?.user.lastname?.charAt(0) }}
-          </div>
-          <div class="owner-info">
-            <span class="owner-name">
-              {{ pet.client?.user.firstname }} {{ pet.client?.user.lastname }}
-            </span>
-            <span class="owner-label">Propriétaire</span>
-          </div>
-          <el-icon><ArrowRight /></el-icon>
-        </div>
-
-        <!-- Vétérinaire référent -->
-        <div v-if="pet.attendingVeterinarian" class="owner-row">
-          <div class="owner-avatar vet">
-            {{ pet.attendingVeterinarian?.user?.firstname?.charAt(0) }}
-          </div>
-          <div class="owner-info">
-            <span class="owner-name"> Dr. {{ pet.attendingVeterinarian?.user?.lastname }} </span>
-            <span class="owner-label">Vétérinaire référent</span>
-          </div>
-        </div>
       </div>
+      <ContactCard
+        v-if="user?.role !== 'CLIENT'"
+        :route="{
+          name: `${user?.role.toUpperCase()}.Clients.Detail`,
+          params: { id: pet.clientId },
+        }"
+        :name="`${pet.client?.user.firstname} ${pet.client?.user.lastname}`"
+        :metas="['Propriétaire']"
+      />
+      <ContactCard
+        v-if="pet.attendingVeterinarian"
+        :name="`Dr. ${pet.attendingVeterinarian?.user?.lastname}`"
+        :metas="['Vétérinaire référent']"
+      />
     </div>
 
     <!-- Main -->
@@ -315,7 +293,9 @@ const lastSize = computed(() => {
 
 .animal-left {
   width: 100%;
-
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
   @include above('lg') {
     width: 280px;
     flex-shrink: 0;

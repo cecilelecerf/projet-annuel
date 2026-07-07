@@ -50,7 +50,7 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
 <template>
   <div
     class="contact-card"
-    :class="`contact-card--${direction}`"
+    :class="`contact-card--${direction} contact-card-selectable-${!!route}`"
     role="button"
     tabindex="0"
     @click="route && router.push(route)"
@@ -101,27 +101,29 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
   background: var(--el-bg-color);
   width: 100%;
   box-sizing: border-box;
-  cursor: pointer;
   transition: all 0.2s ease;
   overflow: hidden;
   padding: var(--spacing-xs);
+  &.contact-card-selectable-true {
+    cursor: pointer;
 
-  &:hover,
-  &:focus-visible {
-    border-color: var(--el-border-color);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
-  }
+    &:hover,
+    &:focus-visible {
+      border-color: var(--el-border-color);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
+    }
 
-  &:hover .contact-action-icon,
-  &:focus-visible .contact-action-icon {
-    transform: translateX(3px);
-    color: var(--el-color-primary);
-  }
+    &:hover .contact-action-icon,
+    &:focus-visible .contact-action-icon {
+      transform: translateX(3px);
+      color: var(--el-color-primary);
+    }
 
-  &:focus-visible {
-    outline: 2px solid var(--el-color-primary-light-5);
-    outline-offset: 2px;
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary-light-5);
+      outline-offset: 2px;
+    }
   }
 }
 

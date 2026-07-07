@@ -3,7 +3,6 @@ import { ReviewService } from "./review.service";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   reviewMetaSchema,
-  reviewSchema,
   reviewStatSchema,
   VeterinarianClinicId,
   VeterinarianId,

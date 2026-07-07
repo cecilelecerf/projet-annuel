@@ -105,7 +105,6 @@ import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
 import { StaffController } from "./staffs/staff.controller";
 import { ClinicRequestController } from "./clinics/requests/request.controller";
-import { VeterinarianClinicService } from "./veterinarian-clinics/veterinarian-clinic.service";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -167,9 +166,7 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
   veterinarianClinicRepository,
   clinicActRepository,
 );
-const veterinarianClinicService = new VeterinarianClinicService(
-  veterinarianClinicRepository,
-);
+
 const prescriptionService = new PrescriptionService(prescriptionRepository);
 
 const reviewService = new ReviewService(reviewRepository, clinicService);

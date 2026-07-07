@@ -54,7 +54,7 @@ export class SpecialityService {
   }
 
   async linkWithClinic({
-    userId,
+    userId: _,
     data,
     clinicId,
   }: {

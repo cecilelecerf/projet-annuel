@@ -84,7 +84,7 @@ export class AvailabilityService {
       .with({ type: "RECURRING" }, (d) => {
         if (!existing.recurringId)
           throw new ConflictError("RecurringId doesn't exist");
-        const { recurringId, type, ...rest } = d;
+        const { recurringId: _, type: __, ...rest } = d;
         return this.reccuringService.update({
           id: existing.recurringId as MeetingRecurringId,
           data: rest,

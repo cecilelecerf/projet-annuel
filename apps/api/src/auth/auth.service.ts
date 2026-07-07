@@ -158,6 +158,7 @@ export class AuthService {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
       include: {
+        avatar: true,
         secretaryProfile: true,
         directorClinicProfile: {
           select: { clinic: { select: { id: true } } },
@@ -176,7 +177,9 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
     const clinicId = this.getClinicId(user);
-    const parsedUser = baseUserSchema.parse(user);
+    const parsedUser = baseUserSchema
+      .omit({ avatarId: true, avatarUrl: true })
+      .parse(user);
     const accessToken = generateAccessToken({
       ...parsedUser,
       clinicId: clinicId ?? undefined,
@@ -261,6 +264,7 @@ export class AuthService {
             veterinarianClinics: true,
           },
         },
+        avatar: true,
       },
       omit: { password: true },
     });

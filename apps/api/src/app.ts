@@ -22,6 +22,7 @@ import bookingRouter from "./bookings/booking.router";
 import veterinarianRouter from "./users/veterinarian.router";
 import staffRouter from "./staffs/staff.router";
 import veterinarianClinicRouter from "./veterinarian-clinics/veterinarian-clinic.router";
+// import fileRouter from "./files/file.route";
 
 collectDefaultMetrics();
 
@@ -56,6 +57,7 @@ app.get("/api/test", async (req, res) => {
   res.json(users);
 });
 app.use("/api/auth", authRouter);
+// app.use("/api/files", fileRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/clinics", clinicRouter);

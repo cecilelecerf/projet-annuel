@@ -24,6 +24,9 @@ model User {
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
+  avatarId String? @unique
+  avatar   File?   @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]
   animalConditionHealths      AnimalHealthCondition[]

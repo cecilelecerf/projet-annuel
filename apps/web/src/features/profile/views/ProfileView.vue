@@ -62,8 +62,14 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="profil-card">
-    <ProfileHeader :firstname="user?.firstname" :lastname="user?.lastname" :role="user!.role" />
+  <div class="profil-card" v-if="user">
+    <ProfileHeader
+      :firstname="user.firstname"
+      :lastname="user.lastname"
+      :role="user.role"
+      :user-id="user.id"
+      :avatar-url="user.avatarUrl"
+    />
 
     <el-divider />
 

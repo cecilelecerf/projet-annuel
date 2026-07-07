@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRoute } from 'vue-router'
-import { usersApi } from '../../api/user.api.ts'
+import { usersApi } from '../../user.api.ts'
 import ClientComponent from '../../components/ClientComponent.vue'
 import type { UserId } from '@armali/schemas'
 const route = useRoute()

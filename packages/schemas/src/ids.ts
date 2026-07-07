@@ -55,6 +55,7 @@ export const analysisIdSchema = z.uuid().brand("AnalysisId");
 export const surgeryIdSchema = z.uuid().brand("SurgeryId");
 export const clinicProductIdSchema = z.uuid().brand("ClinicProductId");
 export const clinicRequestIdSchema = z.uuid().brand("ClinicRequestId");
+export const fileIdSchema = z.uuid().brand("FileId");
 
 export type UserId = z.infer<typeof userIdSchema>;
 export type ClientId = z.infer<typeof clientIdSchema>;

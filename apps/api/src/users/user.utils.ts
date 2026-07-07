@@ -38,14 +38,35 @@ export const flatClinicId = (user: UserWithProfileAndClinicId) => {
 
   return { ...rest, clinicIds: [clinicIds] };
 };
+export type UserForAvatar = Omit<PrismaUser, "password"> & {
+  avatar: File | null;
+};
 
-export const flatUser = <T extends { user: Record<string, unknown> }>(
+export const flatUser = <T extends { user: UserForAvatar }>(profile: T) => {
+  const { user, ...rest } = profile;
+  const withAvatar = withAvatarUrl(user);
+  return { ...withAvatar, ...rest };
+};
+
+export const flatUsers = <T extends { user: UserForAvatar }>(profiles: T[]) =>
+  profiles.map(flatUser);
+
+import type {
+  User as PrismaUser,
+  File,
+} from "../../prisma/generated/prisma/client";
+import { withFileUrl } from "@api/files/utils";
+
+export function withAvatarUrl(user: UserForAvatar) {
+  return withFileUrl(user, "avatar", "avatarUrl");
+}
+export const withUserAvatar = <T extends { user: UserForAvatar }>(
   profile: T,
 ) => {
   const { user, ...rest } = profile;
-  return { ...user, ...rest };
+  return { ...rest, user: withAvatarUrl(user) };
 };
 
-export const flatUsers = <T extends { user: Record<string, unknown> }>(
+export const withUsersAvatar = <T extends { user: UserForAvatar }>(
   profiles: T[],
-) => profiles.map(flatUser);
+) => profiles.map(withUserAvatar);

@@ -65,13 +65,13 @@ model ClinicProduct {
   price           Decimal @default(0) @db.Decimal(10, 2)
 
   clinicId String
-  clinic   Clinic @relation(fields: [clinicId], references: [id])
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
   productId         String
   product           Product            @relation(fields: [productId], references: [id])
   orderItems        OrderItem[]
-  clientProfile     ClientProfile?     @relation(fields: [clientProfileId], references: [id])
   clientProfileId   String?
+  clientProfile     ClientProfile?     @relation(fields: [clientProfileId], references: [id])
   prescriptionItems PrescriptionItem[]
 
   @@map("clinic_products")
@@ -91,8 +91,8 @@ model FoodPet {
   foodId String
   food   Food   @relation(fields: [foodId], references: [id])
 
-  ownedPetId String
-  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
+  animalId String
+  animal   Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
 
   @@map("food_pets")
 }

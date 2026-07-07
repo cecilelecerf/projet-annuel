@@ -1,4 +1,4 @@
-model OwnedPet {
+model Animal {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
@@ -6,6 +6,9 @@ model OwnedPet {
   dateOfBirth DateTime
   description String?
   activity    Int?
+
+  outdoorAccess Boolean @default(false)
+  animalContact Boolean @default(false)
 
   attendingVeterinarianId String?
   attendingVeterinarian   VeterinarianProfile? @relation(fields: [attendingVeterinarianId], references: [id])
@@ -16,12 +19,13 @@ model OwnedPet {
   raceId String
   race   Race   @relation(fields: [raceId], references: [id])
 
-  ownedPetVaccine          OwnedPetVaccine[]
-  animalMeeting            AnimalMetting[]
-  foodPets                 FoodPet[]
-  ownedPetConditionHealths OwnedPetHealthCondition[]
+  animalVaccine          AnimalVaccine[]
+  animalMeeting          AnimalMeeting[]
+  foodPets               FoodPet[]
+  animalConditionHealths AnimalHealthCondition[]
+  animalMedicalHistories AnimalMedicalHistory[]
 
-  @@map("owned_pets")
+  @@map("animals")
 }
 
 model Pet {
@@ -47,44 +51,44 @@ model Race {
   name      String
   picture   String?
 
-  petId    String
-  pet      Pet        @relation(fields: [petId], references: [id])
-  ownedPet OwnedPet[]
+  petId  String
+  pet    Pet      @relation(fields: [petId], references: [id])
+  animal Animal[]
 
   @@map("races")
 }
 
-model Vaccine {
-  id                 String   @id @default(uuid())
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @default(now()) @updatedAt
-  name               String
-  description        String?
-  recommendedAge     Int
-  boosterInterval    Int
-  mandatoryCountry   Json?
-  recommendedCountry Json?
-
-  petId           String
-  pet             Pet               @relation(fields: [petId], references: [id])
-  ownedPetVaccine OwnedPetVaccine[]
-
-  @@map("vaccines")
+enum VaccineRuleType {
+  MANDATORY
+  RECOMMENDED
 }
 
-model OwnedPetVaccine {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  ownedPetId String
-  ownedPet   OwnedPet @relation(fields: [ownedPetId], references: [id])
+model VaccineCountryRule {
+  id      String          @id @default(uuid())
+  country String
+  minAge  Int
+  type    VaccineRuleType
 
   vaccineId String
-  vaccine   Vaccine @relation(fields: [vaccineId], references: [id])
+  vaccine   Vaccine @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
 
-  meetingId     String?
-  animalMeeting AnimalMetting? @relation(fields: [meetingId], references: [id])
+  @@unique([vaccineId, country, type])
+  @@map("vaccine_country_rules")
+}
 
-  @@map("owned_pet_vaccines")
+model Vaccine {
+  id              String               @id @default(uuid())
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @default(now()) @updatedAt
+  recommendedAge  Int
+  boosterInterval Int
+  countryRules    VaccineCountryRule[]
+
+  petId          String
+  pet            Pet             @relation(fields: [petId], references: [id])
+  animalVaccines AnimalVaccine[]
+
+  act Act?
+
+  @@map("vaccines")
 }

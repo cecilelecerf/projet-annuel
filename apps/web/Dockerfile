@@ -1,7 +1,7 @@
 # apps/web/Dockerfile
 
 # ─── Dépendances ───────────────────────────────────────────────────────────────
-FROM node:22-alpine AS deps
+FROM node:24-alpine AS deps
 RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
@@ -16,6 +16,9 @@ FROM deps AS build
 COPY packages/schemas ./packages/schemas
 COPY apps/web ./apps/web
 COPY tsconfig.base.json ./
+
+ARG VITE_API_URL=/api
+RUN echo "VITE_API_URL=${VITE_API_URL}" > /app/.env.prod
 
 WORKDIR /app/packages/schemas
 RUN pnpm build

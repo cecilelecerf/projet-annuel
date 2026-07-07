@@ -10,6 +10,18 @@ import { resolve } from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  envDir: resolve(__dirname, '../..'),
+  server: {
+    host: '0.0.0.0',
+    port: 5173,
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
+    hmr: {
+      clientPort: 5173,
+    },
+  },
   plugins: [
     vue(),
     vueDevTools(),
@@ -23,7 +35,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@use "@/styles/element/index.scss" as *; @use "@/styles/mixins.scss" as *;`,
+        additionalData: `@use "@/styles/element/token.scss" as *; @use "@/styles/element/index.scss" as *; @use "@/styles/mixins.scss" as *; @use "@/styles/_meeting-colors.scss" as *;`,
       },
     },
   },

@@ -1,35 +1,44 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
+import FormError from '@/components/ui/FormError.vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import {
+  House,
+  User,
+  UserFilled,
+  OfficeBuilding,
+  Calendar,
+  ChatDotRound,
+} from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'agenda',
+    index: 'DIRECTOR.Home',
+    label: 'Accueil',
+    icon: House,
+  },
+  {
+    index: 'DIRECTOR.Calendar',
     label: 'Agenda',
     icon: Calendar,
-    children: [
-      { index: 'Veto.Agenda.Journalier', label: 'Vue journalière' },
-      { index: 'Veto.Agenda.Hebdomadaire', label: 'Vue hebdomadaire' },
-      { index: 'Veto.Agenda.Mensuel', label: 'Vue mensuelle' },
-    ],
   },
   {
-    index: 'animaux',
-    label: 'Animaux',
-    icon: '🐻',
-    children: [
-      { index: 'Veto.Animaux.MesAnimaux', label: 'Mes animaux' },
-      { index: 'Veto.Animaux.Derniers', label: 'Derniers traités' },
-    ],
+    index: 'DIRECTOR.Staff',
+    label: 'Personnel',
+    icon: UserFilled,
   },
   {
-    index: 'Veto.Messagerie',
+    index: 'DIRECTOR.Clinic',
+    label: 'Clinique',
+    icon: OfficeBuilding,
+  },
+  {
+    index: 'DIRECTOR.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Veto.Profil',
+    index: 'DIRECTOR.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -37,8 +46,30 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
-  <main>
+  <div class="layout">
+    <FormError />
     <Navbar :menu-items="menuItems" />
-    <router-view />
-  </main>
+    <main class="main">
+      <Suspense>
+        <router-view />
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
+    </main>
+  </div>
 </template>
+<style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
+}
+</style>

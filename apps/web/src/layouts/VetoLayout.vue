@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { Calendar, ChatDotRound, Menu, User } from '@element-plus/icons-vue'
+import FormError from '@/components/ui/FormError.vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'Veto.Calendar',
+    index: 'VETERINARIAN.Home',
+    label: 'Accueil',
+    icon: House,
+  },
+  {
+    index: 'VETERINARIAN.Calendar',
     label: 'Agenda',
     icon: Calendar,
   },
@@ -14,17 +20,22 @@ const menuItems: MenuItem[] = [
     label: 'Animaux',
     icon: '🐻',
     children: [
-      { index: 'Veto.Animaux.MesAnimaux', label: 'Mes animaux' },
-      { index: 'Veto.Animaux.Derniers', label: 'Derniers traités' },
+      { index: 'VETERINARIAN.Animaux.MesAnimaux', label: 'Mes animaux' },
+      { index: 'VETERINARIAN.Animaux.Derniers', label: 'Derniers traités' },
     ],
   },
   {
-    index: 'Veto.Messagerie',
+    index: 'VETERINARIAN.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Veto.Profil',
+    index: 'VETERINARIAN.Availability',
+    label: 'Disponibilité',
+    icon: SetUp,
+  },
+  {
+    index: 'VETERINARIAN.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -32,10 +43,15 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
-  <main>
+  <div class="layout">
+    <FormError />
     <Navbar :menu-items="menuItems" />
-    <router-view />
-  </main>
+    <main class="main">
+      <Suspense>
+        <router-view />
+      </Suspense>
+    </main>
+  </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped></style>

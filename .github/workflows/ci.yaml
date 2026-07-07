@@ -6,9 +6,13 @@ on:
       - main
       - dev
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  test-unit:
-    name: Test Unitaire & Implémentation
+  linter:
+    name: Linter
     runs-on: ubuntu-latest
 
     steps:
@@ -16,14 +20,46 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v6
         with:
-          version: latest
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 25
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build schemas
+        run: pnpm --filter schemas build
+
+      - name: Lint API
+        run: pnpm --filter api lint
+
+      - name: Lint Web
+        run: pnpm --filter web lint
+
+  test-unit:
+    name: Test Unitaire & Implémentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
           cache: "pnpm"
 
       - name: Install dependencies
@@ -37,13 +73,23 @@ jobs:
 
       - name: Run tests
         run: pnpm --filter api test
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          JWT_ACCESS_SECRET: "test-access-secret"
+          JWT_REFRESH_SECRET: "test-refresh-secret"
+          ENABLE_EMAIL: "false"
 
       - name: Verify coverage (main only)
         if: github.base_ref == 'main'
         run: pnpm --filter api test:coverage
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          JWT_ACCESS_SECRET: "test-access-secret"
+          JWT_REFRESH_SECRET: "test-refresh-secret"
+          ENABLE_EMAIL: "false"
 
   build:
-    name: Build & Type Check
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -51,14 +97,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v6
         with:
-          version: latest
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 25
+          node-version: 24
           cache: "pnpm"
 
       - name: Install dependencies

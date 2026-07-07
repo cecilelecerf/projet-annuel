@@ -3,21 +3,24 @@ import { PrismaClient } from "../generated/prisma/client";
 import { config } from "dotenv";
 import { resolve } from "path";
 
-import { cleanup } from "./cleanup";
 import { seedClinics } from "./clinics";
 import { seedUsers } from "./users";
 import { seedPets } from "./pets";
 import { seedSpecialities } from "./specialities";
 import { seedVeterinarianClinics } from "./veterinarian-clinics";
-import { seedMettings } from "./mettings";
 import { seedHealthConditions } from "./health-conditions";
-import { seedVaccines } from "./vaccines";
 import { seedProducts } from "./products";
 import { seedOrders } from "./orders";
 import { seedMessaging } from "./messagging";
 import { seedActs } from "./acts";
 import { seedBankingInfo } from "./banking-info";
 import { seedMedicalVisits } from "./medical-visit";
+import { seedMeetings } from "./meetings";
+import { seedPrescriptions } from "./prescriptions";
+import { cleanup } from "./cleanup";
+import { seedClinicRequests } from "./clinic-requests";
+import { seedDirectors } from "./directors";
+import { seedReviews } from "./reviews";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -25,39 +28,66 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 export const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  await cleanup(prisma);
+  // const existingUser = await prisma.user.findUnique({
+  //   where: { email: "admin@gmail.com" },
+  // });
+
+  // if (existingUser) {
+  //   console.log("⏭️  Base de données déjà peuplée, seed ignoré.");
+  //   return;
+  // }
+
   console.log("🌱 Seeding database...");
 
-  await cleanup(prisma);
-
-  const { clinic1, clinic2 } = await seedClinics(prisma);
-  const users = await seedUsers(prisma, [clinic1, clinic2]);
-  const medicalVisit = await seedMedicalVisits(prisma, { users });
-  const bankingInfo = await seedBankingInfo(prisma, { users });
-  const pets = await seedPets(prisma);
   const specialities = await seedSpecialities(prisma);
-  const vaccines = await seedVaccines(prisma, pets);
+  const pets = await seedPets(prisma);
+  const directors = await seedDirectors(prisma);
+
+  await seedClinicRequests(prisma, { directors });
+
+  const clinics = await seedClinics(prisma, {
+    specialities,
+    pets,
+    directors,
+  });
+  const users = await seedUsers(prisma, {
+    clinics,
+    specialities,
+    pets,
+  });
+  await seedMedicalVisits(prisma, { users });
+  await seedBankingInfo(prisma, { users });
   const vetoClinic = await seedVeterinarianClinics(prisma, {
     users,
-    clinic1,
-    clinic2,
+    clinics,
   });
   const healthConditions = await seedHealthConditions(prisma, {
     petDog: pets.petDog,
   });
-  const mettings = await seedMettings(prisma, {
+  const meetings = await seedMeetings(prisma, {
     users,
-    clinic1,
+    clinics,
     veterinarianClinics: vetoClinic,
     specialities,
     healthConditions,
-    vaccines,
     pets,
+    directors,
   });
-  const acts = await seedActs(prisma, { clinic1, clinic2, mettings });
-  await seedProducts(prisma, { clinic1, clinic2, healthConditions });
-  await seedOrders(prisma, { users, clinic1 });
-  await seedMessaging(prisma, { users });
-
+  await seedActs(prisma, {
+    petCat: pets.petCat,
+    petDog: pets.petDog,
+    clinics,
+    meetings,
+  });
+  const products = await seedProducts(prisma, {
+    clinics,
+    healthConditions,
+  });
+  await seedPrescriptions(prisma, { meetings, products, users });
+  await seedOrders(prisma, { users, clinics });
+  await seedMessaging(prisma, { users, clinics, directors });
+  await seedReviews(prisma, { users, veterinarianClinics: vetoClinic });
   console.log("✅ Seed terminé avec succès !");
   console.log("\n📋 Comptes créés :");
   console.log("  Admin      : admin@gmail.com / Password123!");

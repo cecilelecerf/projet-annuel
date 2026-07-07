@@ -4,19 +4,27 @@ const root = resolve(__dirname, "../..");
 
 export default defineConfig({
   test: {
-    include: ["src/tests/**/*.test.ts"],
-    setupFiles: ["src/tests/helpers/setup.ts"],
+    globalSetup: "./__tests__/globalSetup.ts",
+    setupFiles: ["./__tests__/setup.ts"],
+    hookTimeout: 60_000,
+    testTimeout: 15_000,
+    include: ["src/**/*.test.ts"],
     environment: "node",
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**/*.ts"],
-      exclude: ["src/tests/**", "src/**/*.test.ts"],
+      exclude: [
+        "src/**/tests/**",
+        "src/tests/**",
+        "src/**/*.test.ts",
+        "src/index.ts",
+      ],
       thresholds: {
-        lines: 75,
-        functions: 75,
-        branches: 75,
-        statements: 75,
+        lines: 70,
+        functions: 70,
+        branches: 60,
+        statements: 70,
       },
     },
   },

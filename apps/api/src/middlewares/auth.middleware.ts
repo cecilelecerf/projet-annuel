@@ -3,14 +3,6 @@ import { verifyAccessToken } from "../utils/jwt";
 import type { JwtPayload } from "../utils/jwt";
 export type AuthenticatedRequest = Request & { user: JwtPayload };
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
-  }
-}
-
 export const authMiddleware = (
   req: Request,
   res: Response,
@@ -29,7 +21,6 @@ export const authMiddleware = (
     res.status(401).json({ message: "Token invalide ou expiré" });
     return;
   }
-
   req.user = payload;
   next();
 };

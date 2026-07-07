@@ -1,26 +1,37 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
+import FormError from '@/components/ui/FormError.vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
-    index: 'Secretary.Calendar',
+    index: 'SECRETARY.Home',
+    label: 'Accueil',
+    icon: House,
+  },
+  {
+    index: 'SECRETARY.Calendar',
     label: 'Agenda',
     icon: Calendar,
   },
   {
-    index: 'Secretary.Veto.List',
+    index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
     icon: Calendar,
   },
   {
-    index: 'Secretary.Messagerie',
+    index: 'SECRETARY.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Secretary.Profil',
+    index: 'SECRETARY.Avaibality',
+    label: 'Dispobilité',
+    icon: SetUp,
+  },
+  {
+    index: 'SECRETARY.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -28,8 +39,32 @@ const menuItems: MenuItem[] = [
 </script>
 
 <template>
-  <main>
+  <div class="layout">
+    <FormError />
     <Navbar :menu-items="menuItems" />
-    <router-view />
-  </main>
+    <main class="main">
+      <Suspense>
+        <router-view />
+
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
+    </main>
+  </div>
 </template>
+
+<style scoped>
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+.main {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
+}
+</style>

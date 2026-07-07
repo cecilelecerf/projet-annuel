@@ -1,26 +1,57 @@
 model Clinic {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
-  name        String
-  address     String
-  siret       String   @unique
-  phone       String
-  description String?
-  website     String
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  name         String
+  address      String
+  siret        String   @unique
+  phone        String
+  description  String?
+  website      String
+  openingHours String?
+  lat          Float
+  lng          Float
 
-  speciality             Speciality[]
-  veterinarianClinic     VeterinarianClinic[]
+  directorId String                @unique
+  director   DirectorClinicProfile @relation(fields: [directorId], references: [id])
+
+  specialities           Speciality[]
   clinicPet              Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
+  veterinarianClinics    VeterinarianClinic[]
   secretaryProfile       SecretaryProfile[]
-  directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]
-  internalMettings       InternalMetting[]
+  internalMeetings       InternalMeeting[]
   clinicActs             ClinicAct[]
+  availabilities         Availability[]
+  conversations          Conversation[]
 
   @@map("clinics")
+}
+
+enum ClinicRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ClinicRequest {
+  id          String              @id @default(uuid())
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @default(now()) @updatedAt
+  status      ClinicRequestStatus @default(PENDING)
+  name        String
+  address     String
+  siret       String
+  phone       String
+  website     String
+  description String?
+
+  directorId String
+  director   DirectorClinicProfile @relation(fields: [directorId], references: [id], onDelete: Cascade)
+
+  @@map("clinic_requests")
 }
 
 model Speciality {
@@ -30,9 +61,9 @@ model Speciality {
   name        String   @unique
   description String
 
-  veterinarianSpeciality VeterinarianProfile[]
-  clinicSpeciality       Clinic[]
-  meetings               AnimalMetting[]
+  veterinarians VeterinarianProfile[]
+  clinics       Clinic[]
+  meetings      AnimalMeeting[]
 
   @@map("specialities")
 }
@@ -47,7 +78,11 @@ model VeterinarianClinic {
   clinicId       String
   clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
-  availabilities Availability[]
+  animalMedicalHistoryId String?
+  animalMedicalHistory   AnimalMedicalHistory? @relation(fields: [animalMedicalHistoryId], references: [id])
+
+  reviews        Review[]
+  animalMeetings AnimalMeeting[]
 
   @@map("veterinarian_clinics")
 }

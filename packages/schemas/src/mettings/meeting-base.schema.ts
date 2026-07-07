@@ -1,0 +1,43 @@
+import { z } from "zod";
+import { meetingIdSchema, meetingRecurringIdSchema } from "../ids";
+
+export const scheduleTypeSchema = z.enum([
+  "RECURRING",
+  "SPECIFIED",
+  "EXCEPTION",
+]);
+export const meetingKindSchema = z.enum(["AVAILABILITY", "INTERNAL", "ANIMAL"]);
+export const meetingParticipantStatusSchema = z.enum([
+  "PENDING",
+  "ACCEPTED",
+  "DECLINED",
+]);
+
+export const meetingBaseSchema = z.object({
+  id: meetingIdSchema,
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  type: scheduleTypeSchema,
+  kind: meetingKindSchema,
+  date: z.coerce.date(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  parentId: meetingRecurringIdSchema.nullable(),
+});
+
+export const createMeetingBaseSchema = meetingBaseSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateMeetingBaseSchema = createMeetingBaseSchema.partial();
+
+export type ScheduleType = z.infer<typeof scheduleTypeSchema>;
+export type MeetingKind = z.infer<typeof meetingKindSchema>;
+export type MeetingParticipantStatus = z.infer<
+  typeof meetingParticipantStatusSchema
+>;
+export type MeetingBase = z.infer<typeof meetingBaseSchema>;
+export type CreateMeetingBase = z.infer<typeof createMeetingBaseSchema>;
+export type UpdateMeetingBase = z.infer<typeof updateMeetingBaseSchema>;

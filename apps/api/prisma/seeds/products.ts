@@ -1,12 +1,22 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedProducts(
   prisma: PrismaClient,
   {
-    clinic1,
-    clinic2,
+    clinics,
     healthConditions,
-  }: { clinic1: Clinic; clinic2: Clinic; healthConditions: any },
+  }: {
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+    healthConditions: ReturnType<
+      typeof import("./health-conditions").seedHealthConditions
+    > extends Promise<infer T>
+      ? T
+      : never;
+  },
 ) {
   const { conditionCardio, conditionRenal } = healthConditions;
 
@@ -106,7 +116,7 @@ export async function seedProducts(
       stock: 50,
       minimumRequired: 10,
       price: 65.9,
-      clinicId: clinic1.id,
+      clinicId: clinics.clinic1.id,
       productId: productKibble1.id,
     },
   });
@@ -115,7 +125,7 @@ export async function seedProducts(
       stock: 30,
       minimumRequired: 5,
       price: 58.5,
-      clinicId: clinic1.id,
+      clinicId: clinics.clinic1.id,
       productId: productKibble2.id,
     },
   });
@@ -124,7 +134,7 @@ export async function seedProducts(
       stock: 3,
       minimumRequired: 10,
       price: 45.0,
-      clinicId: clinic2.id,
+      clinicId: clinics.clinic2.id,
       productId: productKibble3.id,
     },
   });

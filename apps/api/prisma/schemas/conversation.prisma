@@ -1,13 +1,33 @@
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+enum ConversationScope {
+  CLINIC
+  DIRECTOR_NETWORK
+}
+
 model Conversation {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  name String
+  type          ConversationType
+  scope         ConversationScope
+  name          String?
+  lastMessageAt DateTime?
+
+  createdById String
+  createdBy   User   @relation("CreatedConversations", fields: [createdById], references: [id])
+
+  clinicId String?
+  clinic   Clinic? @relation(fields: [clinicId], references: [id])
 
   messages            Message[]
   conversationMembers ConversationMember[]
 
+  @@index([lastMessageAt])
   @@map("conversations")
 }
 
@@ -21,16 +41,17 @@ model ConversationMember {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  role     ConversationMemberRole
-  joinedAt DateTime               @default(now())
+  role       ConversationMemberRole
+  joinedAt   DateTime               @default(now())
+  lastReadAt DateTime?
 
   userId         String
-  user           User         @relation(fields: [userId], references: [id])
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  messageReads MessageRead[]
-
+  @@unique([conversationId, userId])
+  @@index([userId])
   @@map("conversation_members")
 }
 
@@ -41,25 +62,12 @@ model Message {
 
   content String @db.Text
 
+  senderId String
+  sender   User   @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  messageReads MessageRead[]
-
+  @@index([conversationId, createdAt])
   @@map("messages")
-}
-
-model MessageRead {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  readAt DateTime
-
-  messageId String
-  message   Message            @relation(fields: [messageId], references: [id])
-  readById  String
-  readBy    ConversationMember @relation(fields: [readById], references: [id])
-
-  @@map("message_reads")
 }

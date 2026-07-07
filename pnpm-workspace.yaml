@@ -1,12 +1,29 @@
 packages:
   - "packages/*"
   - "apps/*"
+
 allowBuilds:
-  '@firebase/util': true
-  '@parcel/watcher': true
-  '@prisma/engines': true
+  "@firebase/util": true
+  "@parcel/watcher": true
+  "@prisma/engines": true
   contextify: false
+  cpu-features: true
   esbuild: true
   prisma: true
   protobufjs: true
+  ssh2: true
   unrs-resolver: true
+  vue-demi: true
+
+overrides:
+  "@protobufjs/utf8": 1.1.1
+  "@typescript-eslint/eslint-plugin": 8.62.0
+  "@typescript-eslint/parser": 8.62.0
+  "@typescript-eslint/project-service": 8.62.0
+  "@typescript-eslint/scope-manager": 8.62.0
+  "@typescript-eslint/types": 8.62.0
+  "@typescript-eslint/typescript-estree": 8.62.0
+  "@typescript-eslint/utils": 8.62.0
+  "@typescript-eslint/visitor-keys": 8.62.0
+  browserslist: 4.28.4
+  caniuse-lite: 1.0.30001799

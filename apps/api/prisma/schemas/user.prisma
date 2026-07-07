@@ -3,7 +3,7 @@ enum UserRole {
   SECRETARY
   VETERINARIAN
   DIRECTOR
-  REFERANT
+  REFERENT
   ADMIN
 }
 
@@ -25,11 +25,15 @@ model User {
   referentClinicProfile ReferentClinicProfile?
 
   refreshTokens               RefreshToken[]
-  ownedPetConditionHealths    OwnedPetHealthCondition[]
+  otpCodes                    OtpCode[]
+  animalConditionHealths      AnimalHealthCondition[]
   conversationMembers         ConversationMember[]
-  internalMettingParticipants InternalMettingParticipant[]
-  availabilities              Availability[]
+  createdConversations        Conversation[]               @relation("CreatedConversations")
+  sentMessages                Message[]                    @relation("SentMessages")
+  internalMeetingParticipants InternalMeetingParticipant[]
   meticalVisites              MedicalVisit[]
+  availabilities              Availability[]
+  adminInternalMeetings       InternalMeeting[]
 
   @@index([email])
   @@index([role])
@@ -42,13 +46,14 @@ model ClientProfile {
   address     String?
   phone       String?
 
+  country String @default("FR")
+
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  // appointments  Appointment[]
-  ownedPet           OwnedPet[]
-  clinicProducts     ClinicProduct[]
-  order              Order[]
-  secretaryProfileId String?
+  animal         Animal[]
+  clinicProducts ClinicProduct[]
+  order          Order[]
+  reviews        Review[]
 
   @@map("client_profiles")
 }
@@ -60,16 +65,14 @@ model VeterinarianProfile {
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  ownedPet                   OwnedPet[]
-  animalMeeting              AnimalMetting[]
-  speciality                 Speciality[]
-  veterinarianClinic         VeterinarianClinic[]
-  pet                        Pet[]
-  animalMettingActPerformers AnimalMettingActPerformer[]
-  hospitalizationReports     HospitalizationReport[]
-  prescriptions              Prescription[]
-  veterinarianIdentity       VeterinarianIdentity?
-  bankingInfo                BankingInfo?
+  animals                Animal[]
+  specialities           Speciality[]
+  veterinarianClinics    VeterinarianClinic[]
+  pets                   Pet[]
+  hospitalizationReports HospitalizationReport[]
+  prescriptions          Prescription[]
+  veterinarianIdentity   VeterinarianIdentity?
+  bankingInfo            BankingInfo?
 
   @@map("veterinarian_profiles")
 }
@@ -115,8 +118,8 @@ model BankingInfo {
   veterinarian   VeterinarianProfile?   @relation(fields: [veterinarianId], references: [id])
   secretaryId    String?                @unique
   secretary      SecretaryProfile?      @relation(fields: [secretaryId], references: [id])
-  referantId     String?                @unique
-  referant       ReferentClinicProfile? @relation(fields: [referantId], references: [id])
+  referentId     String?                @unique
+  referent       ReferentClinicProfile? @relation(fields: [referentId], references: [id])
 
   @@map("banking_infos")
 }
@@ -136,9 +139,11 @@ model SecretaryProfile {
 model DirectorClinicProfile {
   id String @id @default(uuid())
 
-  user     User   @relation(fields: [id], references: [id], onDelete: Cascade)
-  clinicId String
-  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  clinic Clinic?
+
+  clinicRequests ClinicRequest[]
 
   @@map("director_clinic_profiles")
 }
@@ -166,6 +171,20 @@ model RefreshToken {
   @@index([userId])
   @@index([token])
   @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  code      String
+  action    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("otp_codes")
 }
 
 enum MedicalVisitType {

@@ -1,15 +1,35 @@
 import { hash } from "bcryptjs";
-import type { Clinic, PrismaClient } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
-export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
-  const [clinic1, clinic2] = clinics;
+export async function seedUsers(
+  prisma: PrismaClient,
+  {
+    clinics,
+    specialities,
+    pets,
+  }: {
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+    specialities: ReturnType<
+      typeof import("./specialities").seedSpecialities
+    > extends Promise<infer T>
+      ? T
+      : never;
+    pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
+      ? T
+      : never;
+  },
+) {
+  const { clinic1 } = clinics;
+
   const password = await hash("Password123!", 10);
 
   // ── Users ────────────────────────────────────────────────────────────────────
   const [
     adminUser,
-    directorUser1,
-    directorUser2,
     referentUser1,
     vetoUser1,
     vetoUser2,
@@ -29,29 +49,11 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
     }),
     prisma.user.create({
       data: {
-        email: "directeur@gmail.com",
-        firstname: "Jean",
-        lastname: "Martin",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "directeur@vetsaintmichel.fr",
-        firstname: "Marie",
-        lastname: "Dupont",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
         email: "referent@gmail.com",
         firstname: "Sophie",
         lastname: "Bernard",
         password,
-        role: "REFERANT",
+        role: "REFERENT",
       },
     }),
     prisma.user.create({
@@ -110,21 +112,14 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
     }),
   ]);
 
-  // ── Profiles clinic ───────────────────────────────────────────────────────────
-  await Promise.all([
-    prisma.directorClinicProfile.createMany({
-      data: [
-        { id: directorUser1.id, clinicId: clinic1.id },
-        { id: directorUser2.id, clinicId: clinic2.id },
-      ],
-    }),
-    prisma.referentClinicProfile.create({
-      data: { id: referentUser1.id, clinicId: clinic1.id },
-    }),
-    prisma.secretaryProfile.create({
-      data: { id: secretaryUser1.id, clinicId: clinic1.id },
-    }),
-  ]);
+  await prisma.referentClinicProfile.create({
+    data: { id: referentUser1.id, clinicId: clinic1.id },
+  });
+
+  const secretaryProfile = await prisma.secretaryProfile.create({
+    data: { id: secretaryUser1.id, clinicId: clinic1.id },
+    include: { user: true },
+  });
 
   // ── Veterinarian profiles ─────────────────────────────────────────────────────
   const [vetProfile1, vetProfile2, vetProfile3] = await Promise.all([
@@ -133,6 +128,20 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
         id: vetoUser1.id,
         licenseNumber: "VET-001",
         bio: "Spécialiste en cardiologie animale",
+        pets: {
+          connect: [
+            { id: pets.petCat.id },
+            { id: pets.petRabbit.id },
+            { id: pets.petDog.id },
+          ],
+        },
+
+        specialities: {
+          connect: [
+            { id: specialities.cardiologie.id },
+            { id: specialities.dermatologie.id },
+          ],
+        },
       },
     }),
     prisma.veterinarianProfile.create({
@@ -140,10 +149,26 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
         id: vetoUser2.id,
         licenseNumber: "VET-002",
         bio: "Généraliste avec expertise en dermatologie",
+        pets: { connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }] },
+
+        specialities: {
+          connect: [
+            { id: specialities.dermatologie.id },
+            { id: specialities.chirurgie.id },
+          ],
+        },
       },
     }),
     prisma.veterinarianProfile.create({
-      data: { id: vetoUser3.id, licenseNumber: "VET-003", bio: "Généraliste" },
+      data: {
+        id: vetoUser3.id,
+        licenseNumber: "VET-003",
+        bio: "Généraliste",
+        pets: { connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }] },
+        specialities: {
+          connect: [{ id: specialities.medecineGenerale.id }],
+        },
+      },
     }),
   ]);
 
@@ -169,8 +194,6 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
 
   return {
     adminUser,
-    directorUser1,
-    directorUser2,
     referentUser1,
     vetoUser1,
     vetoUser2,
@@ -179,6 +202,7 @@ export async function seedUsers(prisma: PrismaClient, clinics: Clinic[]) {
     vetProfile2,
     vetProfile3,
     secretaryUser1,
+    secretaryProfile,
     clientUser1,
     clientUser2,
     clientProfile1,

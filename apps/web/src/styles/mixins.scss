@@ -1,6 +1,7 @@
 @use 'sass:map';
 
 $breakpoints: (
+  'xs': 450px,
   'sm': 576px,
   'md': 768px,
   'lg': 1024px,
@@ -11,4 +12,15 @@ $breakpoints: (
   @media (max-width: map.get($breakpoints, $bp)) {
     @content;
   }
+}
+
+@mixin above($bp) {
+  @media (min-width: map.get($breakpoints, $bp)) {
+    @content;
+  }
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }

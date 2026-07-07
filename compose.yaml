@@ -1,4 +1,4 @@
-name: projet-annuel
+name: armali-before
 
 services:
   postgres:

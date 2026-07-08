@@ -8,6 +8,7 @@ export default defineConfig([
     outDir: "dist",
     clean: true,
     sourcemap: true,
+    noExternal: ["dayjs"],
   },
   {
     entry: ["prisma.config.ts"],
@@ -15,6 +16,7 @@ export default defineConfig([
     target: "node24",
     outDir: "dist",
     clean: false,
+    noExternal: ["dayjs"],
   },
   {
     entry: { seeds: "prisma/seeds/index.ts" },
@@ -22,5 +24,6 @@ export default defineConfig([
     target: "node24",
     outDir: "dist",
     clean: false,
+    noExternal: ["dayjs"],
   },
 ]);

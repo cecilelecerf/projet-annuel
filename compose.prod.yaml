@@ -294,21 +294,19 @@ services:
         - "traefik.http.routers.minio_s3.tls.certresolver=myresolver"
         - "traefik.http.services.minio_s3.loadbalancer.server.port=9000"
 
-minio-init:
-  image: minio/mc:latest
-  depends_on:
-    minio:
-      condition: service_healthy
-  secrets:
-    - minio_root_user
-    - minio_root_password
-  configs:
-    - source: minio_init_script
-      target: /init.sh
-      mode: 0755
-  entrypoint: ["/bin/sh", "/init.sh"]
-  networks:
-    - backend
+  minio-init:
+    image: minio/mc:latest
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    configs:
+      - source: minio_init_script
+        target: /init.sh
+        mode: 0755
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - backend
+
 
 volumes:
   prometheus-data:

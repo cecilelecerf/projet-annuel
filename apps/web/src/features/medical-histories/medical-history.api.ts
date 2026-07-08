@@ -1,7 +1,6 @@
 import { http } from '@/lib/api'
 import {
   clinicActSchema,
-  fileSchema,
   fileWithUrlSchema,
   initiateImageUploadSchema,
   medicalHistoryMetaSchema,
@@ -10,7 +9,6 @@ import {
   type AnimalId,
   type ClinicId,
   type CreateMedicalHistory,
-  type File as FileEntity,
   type FileWithUrl,
   type InitiateImageUploadInput,
   type MedicalHistoryId,

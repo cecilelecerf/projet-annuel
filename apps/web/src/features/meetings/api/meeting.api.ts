@@ -1,7 +1,6 @@
 import { http } from '@/lib/api'
 import {
   animalMeetigWithMeetingSchema,
-  animalMeetingFieldSchema,
   animalMeetingSchema,
   calendarSchema,
   internalMeetingSchema,
@@ -18,7 +17,6 @@ import {
   type AnimalId,
   type UpdateAnimalMeeting,
   type UserId,
-  medicalHistorySchema,
   meetingRecurringSchema,
   type MeetingRecurringId,
   type UpdateRecurring,

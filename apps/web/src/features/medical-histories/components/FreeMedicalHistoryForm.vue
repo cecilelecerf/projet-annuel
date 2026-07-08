@@ -71,7 +71,6 @@ async function onSave() {
           type: 'free',
           actId: form.value.actId!,
           performedAt: form.value.performedAt!,
-          animalVaccine: form.value.animalVaccine ?? null,
         },
       })
     }

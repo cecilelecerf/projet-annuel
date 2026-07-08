@@ -1,4 +1,4 @@
-import type { ActType, MedicalHistory } from '@armali/schemas'
+import type { ActType, MedicalHistoryMeta } from '@armali/schemas'
 
 export const actTypeIcon = (type?: ActType) => {
   const icons: Record<string, string> = {
@@ -48,6 +48,6 @@ export const analysisTypeLabel = (type?: string) =>
  * Résout le nom/type de l'acte, que l'entrée provienne du flow RDV
  * (via clinicAct.act) ou du flow libre (via act directement).
  */
-export function getActInfo(act: MedicalHistory) {
+export function getActInfo(act: MedicalHistoryMeta) {
   return act.clinicAct?.act ?? act.act
 }

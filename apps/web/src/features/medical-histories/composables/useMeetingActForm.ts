@@ -1,11 +1,8 @@
 import { ref, computed, type Ref } from 'vue'
 import type {
   ActType,
-  AnimalId,
   ClinicAct,
-  CreateMedicalHistory,
   CreateMettingMedicalHistory,
-  MedicalHistory,
   MedicalHistoryMeta,
   MeetingId,
 } from '@armali/schemas'

@@ -63,8 +63,8 @@ const weightData = computed(
         :metas="['Propriétaire']"
       />
       <ContactCard
-        v-if="animal.attendingVeterinarian"
-        :name="`Dr. ${animal.attendingVeterinarian?.user?.lastname}`"
+        v-if="animal.attendingVeterinarianClinic"
+        :name="`Dr. ${animal.attendingVeterinarianClinic?.veterinarian.user?.lastname}`"
         :metas="['Vétérinaire référent']"
       />
     </div>

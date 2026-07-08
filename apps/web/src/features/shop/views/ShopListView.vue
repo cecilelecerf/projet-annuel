@@ -25,14 +25,53 @@ async function load() {
 
 onMounted(load)
 
+// ── Cliniques distinctes + couleur d'accent par clinique ──────────────────
+const CLINIC_COLORS = ['purple', 'teal', 'pink', 'yellow'] as const
+
+const clinics = computed(() => {
+  const map = new Map<string, string>()
+  for (const p of products.value) {
+    if (!map.has(p.clinic.id)) map.set(p.clinic.id, p.clinic.name)
+  }
+  return [...map.entries()].map(([id, name], index) => ({
+    id,
+    name,
+    color: CLINIC_COLORS[index % CLINIC_COLORS.length],
+  }))
+})
+
+function clinicColor(clinicId: string) {
+  return clinics.value.find((c) => c.id === clinicId)?.color ?? 'purple'
+}
+
+const selectedClinicId = ref<string | 'all'>('all')
+
 const filteredProducts = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  if (!query) return products.value
-  return products.value.filter(
-    (p) =>
+  return products.value.filter((p) => {
+    const matchesClinic =
+      selectedClinicId.value === 'all' || p.clinic.id === selectedClinicId.value
+    const matchesQuery =
+      !query ||
       p.product.name.toLowerCase().includes(query) ||
-      p.product.brand.name.toLowerCase().includes(query),
-  )
+      p.product.brand.name.toLowerCase().includes(query)
+    return matchesClinic && matchesQuery
+  })
+})
+
+const groupedByClinic = computed(() => {
+  if (selectedClinicId.value !== 'all') {
+    return [{ clinic: clinics.value.find((c) => c.id === filteredProducts.value[0]?.clinic.id), items: filteredProducts.value }]
+  }
+  const groups = new Map<string, ProductClinicWithClinic[]>()
+  for (const item of filteredProducts.value) {
+    if (!groups.has(item.clinic.id)) groups.set(item.clinic.id, [])
+    groups.get(item.clinic.id)!.push(item)
+  }
+  return [...groups.entries()].map(([clinicId, items]) => ({
+    clinic: clinics.value.find((c) => c.id === clinicId),
+    items,
+  }))
 })
 
 function openDetail(product: ProductClinicWithClinic) {
@@ -52,8 +91,29 @@ function openDetail(product: ProductClinicWithClinic) {
     v-model="searchQuery"
     placeholder="Rechercher un produit ou une marque..."
     clearable
-    style="margin-bottom: 20px; max-width: 360px"
+    style="margin-bottom: var(--spacing-sm); max-width: 360px"
   />
+
+  <!-- Filtres par clinique -->
+  <div v-if="clinics.length > 1" class="clinic-filters">
+    <button
+      class="clinic-pill"
+      :class="{ 'clinic-pill--active': selectedClinicId === 'all' }"
+      @click="selectedClinicId = 'all'"
+    >
+      Toutes les cliniques
+    </button>
+    <button
+      v-for="clinic in clinics"
+      :key="clinic.id"
+      class="clinic-pill"
+      :class="[`clinic-pill--${clinic.color}`, { 'clinic-pill--active': selectedClinicId === clinic.id }]"
+      @click="selectedClinicId = clinic.id"
+    >
+      <span class="clinic-dot" :style="{ background: `var(--el-color-${clinic.color})` }" />
+      {{ clinic.name }}
+    </button>
+  </div>
 
   <el-skeleton v-if="loading" :rows="6" animated />
 
@@ -61,22 +121,31 @@ function openDetail(product: ProductClinicWithClinic) {
     <div v-if="filteredProducts.length === 0" class="no-data">
       Aucun produit disponible pour le moment.
     </div>
-    <div v-else class="products-grid">
-      <div
-        v-for="item in filteredProducts"
-        :key="item.id"
-        class="card product-card"
-        @click="openDetail(item)"
-      >
-        <div class="product-card__image">
-          <img v-if="item.product.picture" :src="item.product.picture" :alt="item.product.name" />
-          <el-icon v-else><Goods /></el-icon>
-        </div>
-        <div class="product-card__body">
-          <span class="product-card__brand">{{ item.product.brand.name }}</span>
-          <strong class="product-card__name">{{ item.product.name }}</strong>
-          <span class="product-card__clinic">{{ item.clinic.name }}</span>
-          <span class="product-card__price">{{ item.price }} €</span>
+
+    <div v-for="group in groupedByClinic" :key="group.clinic?.id ?? 'none'" class="clinic-section">
+      <div v-if="selectedClinicId === 'all' && group.clinic" class="clinic-section__header">
+        <span class="clinic-dot" :style="{ background: `var(--el-color-${group.clinic.color})` }" />
+        <h2>{{ group.clinic.name }}</h2>
+      </div>
+
+      <div class="products-grid">
+        <div
+          v-for="item in group.items"
+          :key="item.id"
+          class="card product-card"
+          :class="`product-card--${clinicColor(item.clinic.id)}`"
+          @click="openDetail(item)"
+        >
+          <div class="product-card__image">
+            <img v-if="item.product.picture" :src="item.product.picture" :alt="item.product.name" />
+            <el-icon v-else><Goods /></el-icon>
+          </div>
+          <div class="product-card__body">
+            <span class="product-card__brand">{{ item.product.brand.name }}</span>
+            <strong class="product-card__name">{{ item.product.name }}</strong>
+            <span class="product-card__clinic">{{ item.clinic.name }}</span>
+            <span class="product-card__price">{{ item.price }} €</span>
+          </div>
         </div>
       </div>
     </div>
@@ -85,7 +154,7 @@ function openDetail(product: ProductClinicWithClinic) {
 
 <style scoped lang="scss">
 .page-header {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-xs);
 }
 .page-header h1 {
   font-size: 24px;
@@ -98,6 +167,66 @@ function openDetail(product: ProductClinicWithClinic) {
   margin: 0;
   font-size: 14px;
 }
+
+// ── Filtres cliniques ────────────────────────────────────────────────────
+.clinic-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+.clinic-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--el-border-color);
+  background: var(--el-bg-color);
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--el-color-primary);
+  }
+}
+.clinic-pill--active {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-weight: var(--fw-semibold);
+}
+.clinic-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// ── Sections par clinique ────────────────────────────────────────────────
+.clinic-section {
+  margin-bottom: var(--spacing-md);
+}
+.clinic-section__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.clinic-section__header h2 {
+  font-size: 16px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
+  margin: 0;
+}
+.clinic-section__header .clinic-dot {
+  width: 10px;
+  height: 10px;
+}
+
 .no-data {
   text-align: center;
   color: var(--el-text-color-secondary);
@@ -113,10 +242,17 @@ function openDetail(product: ProductClinicWithClinic) {
   transition: transform 0.15s ease;
   padding: 0;
   overflow: hidden;
+  border-top: 3px solid transparent;
 }
 .product-card:hover {
   transform: translateY(-2px);
 }
+
+.product-card--purple { border-top-color: var(--el-color-purple); }
+.product-card--teal { border-top-color: var(--el-color-teal); }
+.product-card--pink { border-top-color: var(--el-color-pink); }
+.product-card--yellow { border-top-color: var(--el-color-yellow); }
+
 .product-card__image {
   height: 140px;
   background: var(--el-fill-color-light);

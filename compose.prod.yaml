@@ -77,12 +77,18 @@ services:
     environment:
       NODE_ENV: production
       CORS_ORIGIN: https://armali.online
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: armali-files
+      AWS_REGION: us-east-1
+      ASSETS_BASE_URL: https://s3.armali.online/armali-files
     secrets:
       - db_user
       - db_password
       - db_name
       - jwt_access_secret
       - jwt_refresh_secret
+      - minio_root_user
+      - minio_root_password
     networks:
       - backend
       - frontend
@@ -247,6 +253,63 @@ services:
       timeout: 10s
       retries: 3
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    networks:
+      - backend
+      - frontend
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=cecoule_frontend"
+        - "traefik.http.routers.minio_s3.rule=Host(`s3.armali.online`)"
+        - "traefik.http.routers.minio_s3.entrypoints=websecure"
+        - "traefik.http.routers.minio_s3.tls.certresolver=myresolver"
+        - "traefik.http.services.minio_s3.loadbalancer.server.port=9000"
+
+minio-init:
+  image: minio/mc:latest
+  depends_on:
+    minio:
+      condition: service_healthy
+  secrets:
+    - minio_root_user
+    - minio_root_password
+  configs:
+    - source: minio_init_script
+      target: /init.sh
+      mode: 0755
+  entrypoint: ["/bin/sh", "/init.sh"]
+  networks:
+    - backend
+
 volumes:
   prometheus-data:
     driver: local
@@ -255,6 +318,8 @@ volumes:
   postgres_data:
     driver: local
   grafana-data:
+    driver: local
+  minio_data:
     driver: local
 
 networks:
@@ -276,6 +341,10 @@ secrets:
     external: true
   grafana_admin_password:
     external: true
+  minio_root_user:
+    external: true
+  minio_root_password:
+    external: true
 
 configs:
   prometheus_config_v2:
@@ -285,4 +354,6 @@ configs:
   grafana_dashboards_provider:
     external: true
   grafana_dashboard_express:
+    external: true
+  minio_init_script:
     external: true

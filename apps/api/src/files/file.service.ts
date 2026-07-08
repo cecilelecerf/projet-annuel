@@ -32,6 +32,7 @@ export class FileService {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
       },
       forcePathStyle: true,
+      requestChecksumCalculation: "WHEN_REQUIRED",
     });
 
     this.s3Public = new S3Client({
@@ -42,6 +43,7 @@ export class FileService {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
       },
       forcePathStyle: true,
+      requestChecksumCalculation: "WHEN_REQUIRED",
     });
   }
 

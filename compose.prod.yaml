@@ -78,6 +78,7 @@ services:
       NODE_ENV: production
       CORS_ORIGIN: https://armali.online
       S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: https://s3.armali.online
       S3_BUCKET: armali-files
       AWS_REGION: us-east-1
       ASSETS_BASE_URL: https://s3.armali.online/armali-files
@@ -98,7 +99,7 @@ services:
       - aws_secret_access_key
       - assets_base_url
       - stripe_secret_key
-      - stripe_webhook_secret
+      - stripe_webhook_secret_v2
       - resend_api_key
     networks:
       - backend
@@ -270,6 +271,7 @@ services:
     environment:
       MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
       MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+      MINIO_API_CORS_ALLOW_ORIGIN: "https://armali.online"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -367,7 +369,7 @@ secrets:
     external: true
   stripe_secret_key:
     external: true
-  stripe_webhook_secret:
+  stripe_webhook_secret_v2:
     external: true
   resend_api_key:
     external: true

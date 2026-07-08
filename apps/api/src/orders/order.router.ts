@@ -27,4 +27,27 @@ orderRouter.get(
   controller.getOrderById.bind(controller) as RequestHandler,
 );
 
+// ── Côté secrétaire ──────────────────────────────────────────────────────
+
+orderRouter.get(
+  "/clinic/pending",
+  authMiddleware,
+  roleMiddleware(["SECRETARY"]),
+  controller.getClinicOrders.bind(controller) as RequestHandler,
+);
+
+orderRouter.patch(
+  "/:id/ready",
+  authMiddleware,
+  roleMiddleware(["SECRETARY"]),
+  controller.markReady.bind(controller) as RequestHandler,
+);
+
+orderRouter.post(
+  "/deliver",
+  authMiddleware,
+  roleMiddleware(["SECRETARY"]),
+  controller.deliver.bind(controller) as RequestHandler,
+);
+
 export default orderRouter;

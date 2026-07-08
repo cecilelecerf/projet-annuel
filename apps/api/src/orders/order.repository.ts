@@ -12,6 +12,24 @@ const WITH_ITEMS = {
   },
 } as const;
 
+
+const WITH_ITEMS_AND_CLIENT = {
+  ...WITH_ITEMS,
+  client: {
+    select: {
+      user: { select: { firstname: true, lastname: true, email: true } },
+    },
+  },
+} as const;
+
+function flattenClient<T extends { client: { user: unknown } }>(
+  order: T,
+): Omit<T, "client"> & { client: T["client"]["user"] } {
+  return { ...order, client: order.client.user } as Omit<T, "client"> & {
+    client: T["client"]["user"];
+  };
+}
+
 export interface OrderItemInput {
   productClinicId: string;
   quantity: number;
@@ -81,6 +99,42 @@ export class OrderRepository {
       where: { stripeSessionId },
       include: WITH_ITEMS,
     });
+  }
+
+  // ── Côté secrétaire : commandes en attente de préparation/retrait ──────────
+
+  async findPendingPickupByClinic(clinicId: string) {
+    const orders = await prisma.order.findMany({
+      where: { clinicId, status: { in: ["CONFIRMED", "READY"] } },
+      include: WITH_ITEMS_AND_CLIENT,
+      orderBy: { createdAt: "asc" },
+    });
+    return orders.map(flattenClient);
+  }
+
+  async markReady(id: string, clinicId: string) {
+    const result = await prisma.order.updateMany({
+      where: { id, clinicId, status: "CONFIRMED" },
+      data: { status: "READY" },
+    });
+    return result.count > 0;
+  }
+
+  async findByClinicAndPickupCode(clinicId: string, pickupCode: string) {
+    const order = await prisma.order.findFirst({
+      where: { clinicId, pickupCode, status: "READY" },
+      include: WITH_ITEMS_AND_CLIENT,
+    });
+    return order ? flattenClient(order) : null;
+  }
+
+  async markPickedUp(id: string) {
+    const order = await prisma.order.update({
+      where: { id },
+      data: { status: "PICKED_UP", pickupAt: new Date() },
+      include: WITH_ITEMS_AND_CLIENT,
+    });
+    return flattenClient(order);
   }
 
   async confirmPayment(id: string, pickupCode: string) {

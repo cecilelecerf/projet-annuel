@@ -83,3 +83,21 @@ export const checkoutResultSchema = z.object({
 })
 
 export type CheckoutResult = z.infer<typeof checkoutResultSchema>
+
+// ── Secrétaire ───────────
+export const orderWithClientSchema = orderWithItemsSchema.extend({
+  client: z.object({
+    firstname: z.string(),
+    lastname: z.string(),
+    email: z.string(),
+  }),
+})
+ 
+export type OrderWithClient = z.infer<typeof orderWithClientSchema>
+ 
+// Remise du colis via le code donné par le client
+export const deliverOrderSchema = z.object({
+  pickupCode: z.string().min(1, "Code requis"),
+})
+ 
+export type DeliverOrder = z.infer<typeof deliverOrderSchema>

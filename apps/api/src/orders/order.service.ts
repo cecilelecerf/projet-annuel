@@ -92,7 +92,10 @@ export class OrderService {
     } as unknown as CheckoutResult;
   }
 
-  async handlePaymentSuccess(sessionId: string) {
+  async handlePaymentSuccess(
+    sessionId: string,
+    cardInfo?: { brand: string; last4: string },
+  ) {
     const orders = await this.repository.findByStripeSession(sessionId);
     if (orders.length === 0) return;
 
@@ -115,7 +118,7 @@ export class OrderService {
           total: updated.orderItems.reduce(
             (sum, i) => sum + Number(i.unitPrice) * i.quantity,
             0,
-          ),
+          )
         });
       }
     }
@@ -134,5 +137,76 @@ export class OrderService {
 
   async handlePaymentFailureOrExpiry(sessionId: string) {
     await this.repository.cancelByStripeSession(sessionId);
+  }
+
+  // ── Côté secrétaire : préparation et remise des colis ───────────────────────
+
+  private async getSecretaryClinicId(secretaryUserId: string): Promise<string> {
+    const profile = await prisma.secretaryProfile.findUnique({
+      where: { id: secretaryUserId },
+    });
+    if (!profile) throw new BadRequestError("Aucune clinique associée à ce compte");
+    return profile.clinicId;
+  }
+
+  async getClinicPendingOrders(secretaryUserId: string) {
+    const clinicId = await this.getSecretaryClinicId(secretaryUserId);
+    return this.repository.findPendingPickupByClinic(clinicId);
+  }
+
+  async markOrderReady(secretaryUserId: string, orderId: string) {
+    const clinicId = await this.getSecretaryClinicId(secretaryUserId);
+    const success = await this.repository.markReady(orderId, clinicId);
+    if (!success) {
+      throw new BadRequestError(
+        "Cette commande n'existe pas, n'appartient pas à votre clinique, ou n'est pas en attente de préparation",
+      );
+    }
+
+    const order = await this.repository.findById(orderId);
+    if (!order || !order.pickupCode) return;
+
+    const clientProfile = await prisma.clientProfile.findUnique({
+      where: { id: order.clientId },
+      include: { user: { select: { firstname: true, email: true } } },
+    });
+    const clinic = await prisma.clinic.findUnique({ where: { id: clinicId } });
+
+    if (clientProfile?.user && clinic) {
+      await this.emailService.sendOrderReady(
+        clientProfile.user.email,
+        clientProfile.user.firstname,
+        {
+          clinicName: clinic.name,
+          clinicAddress: clinic.address,
+          clinicPhone: clinic.phone ?? undefined,
+          openingHours: clinic.openingHours ?? undefined,
+          pickupCode: order.pickupCode,
+          items: order.orderItems.map((i) => ({
+            name: i.productClinic.product.name,
+            quantity: i.quantity,
+            unitPrice: Number(i.unitPrice),
+          })),
+          total: order.orderItems.reduce(
+            (sum, i) => sum + Number(i.unitPrice) * i.quantity,
+            0,
+          ),
+        },
+      );
+    }
+  }
+
+  async deliverOrder(secretaryUserId: string, pickupCode: string) {
+    const clinicId = await this.getSecretaryClinicId(secretaryUserId);
+    const order = await this.repository.findByClinicAndPickupCode(
+      clinicId,
+      pickupCode.toUpperCase(),
+    );
+    if (!order) {
+      throw new NotFoundError(
+        "Aucune commande prête à récupérer ne correspond à ce code",
+      );
+    }
+    return this.repository.markPickedUp(order.id);
   }
 }

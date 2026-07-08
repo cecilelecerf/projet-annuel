@@ -89,6 +89,12 @@ services:
       - jwt_refresh_secret
       - minio_root_user
       - minio_root_password
+      - s3_bucket
+      - s3_endpoint
+      - aws_region
+      - aws_access_key_id
+      - aws_secret_access_key
+      - assets_base_url
     networks:
       - backend
       - frontend
@@ -307,7 +313,6 @@ services:
     networks:
       - backend
 
-
 volumes:
   prometheus-data:
     driver: local
@@ -342,6 +347,18 @@ secrets:
   minio_root_user:
     external: true
   minio_root_password:
+    external: true
+  s3_bucket:
+    external: true
+  s3_endpoint:
+    external: true
+  aws_region:
+    external: true
+  aws_access_key_id:
+    external: true
+  aws_secret_access_key:
+    external: true
+  assets_base_url:
     external: true
 
 configs:

@@ -1,12 +1,13 @@
 import { NotFoundError, ForbiddenError, BadRequestError } from "@api/errors";
 import { SpecialityRepository } from "./speciality.repository";
 import type {
+  ClinicId,
   CreateSpeciality,
+  UpdateClinicSpecialities,
   UpdateSpeciality,
+  UserId,
   UserRole,
 } from "@armali/schemas";
-
-const MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERENT"];
 
 export class SpecialityService {
   constructor(private repository: SpecialityRepository) {}
@@ -45,5 +46,25 @@ export class SpecialityService {
     const speciality = await this.repository.findById(id);
     if (!speciality) throw new NotFoundError("Spécialité");
     return this.repository.delete(id);
+  }
+
+  async getAllByClinicId({ clinicId }: { clinicId: ClinicId }) {
+    const clinic = await this.repository.findAllByClinicId({ clinicId });
+    return clinic?.specialities ?? [];
+  }
+
+  async linkWithClinic({
+    userId: _,
+    data,
+    clinicId,
+  }: {
+    userId: UserId;
+    data: UpdateClinicSpecialities;
+    clinicId: ClinicId;
+    role: UserRole;
+  }) {
+    // TODO : vérification si bien director ou referent et si l'user fait bien partie de la clinic
+    const clinic = await this.repository.linkWithClinic({ clinicId, data });
+    return clinic.specialities;
   }
 }

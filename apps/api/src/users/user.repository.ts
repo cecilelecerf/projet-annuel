@@ -1,7 +1,6 @@
-import { User } from "../../prisma/generated/prisma/client";
+import { PrismaClient, User } from "../../prisma/generated/prisma/client";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { userWithProfileAndClinicIdInclude } from "./user.types";
-import { PrismaClient } from "@prisma/client/extension";
 
 export class UserRepository {
   constructor(private prisma: PrismaClient) {}
@@ -24,6 +23,7 @@ export class UserRepository {
           },
         ],
       },
+      include: { avatar: true },
       omit: { password: true },
     });
   }
@@ -38,6 +38,7 @@ export class UserRepository {
         referentClinicProfile: true,
         veterinarianProfile: true,
         clientProfile: true,
+        avatar: true,
       },
     });
   }
@@ -50,6 +51,7 @@ export class UserRepository {
         secretaryProfile: true,
         directorClinicProfile: true,
         referentClinicProfile: true,
+        avatar: true,
       },
 
       omit: { password: true },
@@ -60,6 +62,19 @@ export class UserRepository {
       where: { role: { in: roles } },
       omit: { password: true },
       include: userWithProfileAndClinicIdInclude,
+    });
+  }
+  async updateAvatar({
+    userId,
+    avatarId,
+  }: {
+    userId: string;
+    avatarId: string;
+  }) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarId },
+      include: { avatar: true },
     });
   }
 }

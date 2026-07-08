@@ -17,17 +17,18 @@
     "db:view": "pnpm --filter api prisma:studio",
     "db:seed": "pnpm --filter api seed",
     "db:init": "pnpm --filter api prisma:generate && pnpm --filter api prisma:migrate && pnpm db:seed",
-    "build": "pnpm -r build",
     "add:api": "pnpm --filter api add",
     "sync:api": "docker compose -f compose.dev.yaml --env-file .env.dev exec api pnpm install",
     "add:web": "pnpm --filter web add",
-    "sync:web": "docker compose -f compose.dev.yaml --env-file .env.dev exec web pnpm install"
+    "sync:web": "docker compose -f compose.dev.yaml --env-file .env.dev exec web pnpm install",
+    "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view",
+    "build": "pnpm --filter schemas build && pnpm --filter api build && pnpm --filter web build"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "5.9.3"
   }
 }

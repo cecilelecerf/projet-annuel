@@ -1,5 +1,5 @@
 import type { CreatePrescription, UpdatePrescription } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 const prescriptionInclude = {
   items: {

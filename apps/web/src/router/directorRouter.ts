@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { requireRole } from './utils'
-import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
 
 export const directorRouter: RouteRecordRaw[] = [
   {
@@ -46,7 +45,7 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: 'clinique',
         name: 'DIRECTOR.Clinic',
-        component: () => import('@/features/users/views/director/ClinicView.vue'),
+        component: () => import('@/features/clinics/views/ClinicView.vue'),
       },
       {
         path: 'shop',

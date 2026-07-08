@@ -1,6 +1,7 @@
 import { ref } from 'vue'
-import type { Clinic, ClinicId, Staff } from '@armali/schemas'
+import type { Clinic, ClinicId, StaffMember } from '@armali/schemas'
 import { clinicApi } from '@/features/clinics/clinic.api'
+import { staffApi } from '@/features/staffs/staff.api'
 
 // TODO: staff est chargé un cabinet à la fois avec la même méthode utilisée
 // dans le drawer de meeting (getStaffByClinicRole) — un véto multi-cliniques
@@ -8,7 +9,7 @@ import { clinicApi } from '@/features/clinics/clinic.api'
 // qui traitait /clinics/me et /clinics/staff comme des objets uniques.
 export function useProfileClinicData() {
   const clinics = ref<Clinic[]>([])
-  const staffByClinic = ref<Record<ClinicId, Staff[]>>({})
+  const staffByClinic = ref<Record<ClinicId, StaffMember[]>>({})
   const loading = ref(false)
 
   async function load() {
@@ -17,7 +18,7 @@ export function useProfileClinicData() {
       clinics.value = await clinicApi.getMine()
       const results = await Promise.all(
         clinics.value.map((c) =>
-          clinicApi.staffByClinic({ clinicId: c.id }).then((staff) => [c.id, staff] as const),
+          staffApi.getAllByClinic({ clinicId: c.id }).then((staff) => [c.id, staff] as const),
         ),
       )
       staffByClinic.value = Object.fromEntries(results)

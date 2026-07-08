@@ -165,7 +165,7 @@ describe("POST /api/auth/register-director", () => {
 
   beforeEach(async () => {
     await getPrisma().clinicAct.deleteMany({ where: { clinic: { siret } } });
-    await getPrisma().clinicCreationRequest.deleteMany({ where: { siret } });
+    await getPrisma().clinicRequest.deleteMany({ where: { siret } });
     await getPrisma().refreshToken.deleteMany({
       where: { user: { email: directorEmail } },
     });
@@ -191,7 +191,7 @@ describe("POST /api/auth/register-director", () => {
     expect(res.body).toHaveProperty("accessToken");
     expect(res.body.user).not.toHaveProperty("password");
 
-    const request_ = await getPrisma().clinicCreationRequest.findFirst({
+    const request_ = await getPrisma().clinicRequest.findFirst({
       where: { siret },
     });
     expect(request_).not.toBeNull();

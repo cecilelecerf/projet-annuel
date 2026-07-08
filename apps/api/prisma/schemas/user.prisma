@@ -16,15 +16,16 @@ model User {
   firstname String
   lastname  String
   password  String
-  picture   String?
-
+ 
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
   secretaryProfile      SecretaryProfile?
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
-  vetReviews                  VetReview[]                  @relation("ClientReviews")
+  avatarId String? @unique
+  avatar   File?   @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]
   animalConditionHealths      AnimalHealthCondition[]
@@ -56,6 +57,7 @@ model ClientProfile {
   animal         Animal[]
   clinicProducts ClinicProduct[]
   order          Order[]
+  reviews        Review[]
 
   @@map("client_profiles")
 }
@@ -75,7 +77,6 @@ model VeterinarianProfile {
   prescriptions          Prescription[]
   veterinarianIdentity   VeterinarianIdentity?
   bankingInfo            BankingInfo?
-  reviews                VetReview[]
 
   @@map("veterinarian_profiles")
 }
@@ -146,7 +147,7 @@ model DirectorClinicProfile {
 
   clinic Clinic?
 
-  clinicCreationRequests ClinicCreationRequest[]
+  clinicRequests ClinicRequest[]
 
   @@map("director_clinic_profiles")
 }

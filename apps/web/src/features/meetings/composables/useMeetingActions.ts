@@ -50,7 +50,7 @@ export function useMeetingActions() {
           meeting: {
             startTime: timeStringToDate(startTime),
             endTime: timeStringToDate(endTime),
-            ...(internal && internal),
+            ...internal,
           },
         })
         const id = result.meeting?.id ?? result.recurring?.id
@@ -64,7 +64,7 @@ export function useMeetingActions() {
           meeting: {
             startTime: timeStringToDate(startTime),
             endTime: timeStringToDate(endTime),
-            ...(internal && internal),
+            ...internal,
           },
         })
 

@@ -7,19 +7,11 @@ import { authMiddleware } from "@api/middlewares";
 
 const prescriptionRouter: Router = Router();
 const controller = prescriptionController;
-const allowedRoles = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "DIRECTOR",
-  "REFERENT",
-  "ADMIN",
-] as const;
 
 prescriptionRouter.use(authMiddleware);
 prescriptionRouter.use(requireApprovedClinic);
 prescriptionRouter.get(
   "/:id",
-  roleMiddleware([...allowedRoles]),
   controller.getById.bind(controller) as RequestHandler,
 );
 

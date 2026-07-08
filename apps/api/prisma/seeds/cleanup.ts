@@ -27,6 +27,7 @@ export async function cleanup(prisma: PrismaClient) {
   await prisma.meetingReccuring.deleteMany();
   await prisma.meetingBase.deleteMany();
   await prisma.animal.deleteMany();
+  await prisma.review.deleteMany();
   await prisma.veterinarianClinic.deleteMany();
   await prisma.speciality.deleteMany();
   await prisma.vaccine.deleteMany();
@@ -38,7 +39,7 @@ export async function cleanup(prisma: PrismaClient) {
   await prisma.clientProfile.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.clinic.deleteMany();
-  await prisma.clinicCreationRequest.deleteMany();
+  await prisma.clinicRequest.deleteMany();
   await prisma.directorClinicProfile.deleteMany();
   await prisma.bankingInfo.deleteMany();
   await prisma.medicalVisit.deleteMany();

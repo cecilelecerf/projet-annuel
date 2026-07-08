@@ -147,13 +147,9 @@ const onPrescriptionSaved = async () => {
   display: flex;
   gap: var(--spacing-md);
   width: 100%;
-
-  @include below('sm') {
-    flex-direction: column;
-  }
+  flex-direction: column;
 
   @include above('lg') {
-    flex-direction: column;
     width: 300px;
   }
 }

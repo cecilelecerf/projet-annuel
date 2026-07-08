@@ -15,11 +15,12 @@ import {
 } from "./hospitalization.schema";
 import { createImagingSchema, imagingSchema } from "./imaging.schema";
 import { analysisSchema, createAnalysisSchema } from "./analysis.schema";
-import { baseUserSchema, veterinarianProfileSchema } from "../users";
 import {
   createAnimalVaccineSchema,
   animalVaccineSchema,
 } from "./animal-vaccination.schema";
+import { veterinarianProfileSchema } from "../users/veterinarian.schema";
+import { baseUserSchema } from "../users/base-user.schema";
 
 const performedUser = z.object({
   veterinarianId: veterinarianIdSchema,

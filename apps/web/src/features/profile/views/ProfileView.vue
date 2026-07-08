@@ -10,6 +10,7 @@ import ProfileActions from '../components/ProfileActions.vue'
 import ClinicInfoCard from '../components/ClinicInfoCard.vue'
 import { useProfileClinicData } from '../composables/useProfileClinicData'
 import StaffList from '@/features/staffs/components/StaffList.vue'
+import ReviewComponent from '@/features/reviews/components/ReviewComponent.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -61,45 +62,49 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="profil-page">
-    <div class="profil-card">
-      <ProfileHeader :firstname="user?.firstname" :lastname="user?.lastname" :role="user!.role" />
+  <div class="profil-card" v-if="user">
+    <ProfileHeader
+      :firstname="user.firstname"
+      :lastname="user.lastname"
+      :role="user.role"
+      :user-id="user.id"
+      :avatar-url="user.avatarUrl"
+    />
 
-      <el-divider />
+    <el-divider />
 
-      <ProfileInfoRows :rows="infoRows" />
+    <ProfileInfoRows :rows="infoRows" />
 
-      <el-divider />
+    <el-divider />
 
-      <ProfileActions
-        :show-edit="showEdit"
-        :loading="loggingOut"
-        @edit="editDialog?.open()"
-        @logout="handleLogout"
-        @delete="deleteDialog?.open()"
-      />
-    </div>
-
-    <template v-if="showClinicSections">
-      <template v-for="clinic in clinics" :key="clinic.id">
-        <ClinicInfoCard :clinic="clinic" />
-        <StaffList
-          v-if="staffByClinic[clinic.id]"
-          :clinic-name="clinic.name"
-          :staffs="staffByClinic[clinic.id] ?? []"
-        />
-      </template>
-    </template>
-
-    <EditAccountDialog ref="editDialog" />
-    <DeleteAccountDialog ref="deleteDialog" />
+    <ProfileActions
+      :show-edit="showEdit"
+      :loading="loggingOut"
+      @edit="editDialog?.open()"
+      @logout="handleLogout"
+      @delete="deleteDialog?.open()"
+    />
   </div>
+  <ReviewComponent v-if="user?.role === 'CLIENT'" />
+  <template v-if="showClinicSections">
+    <template v-for="clinic in clinics" :key="clinic.id">
+      <ClinicInfoCard :clinic="clinic" />
+      <StaffList
+        v-if="staffByClinic[clinic.id]"
+        :clinic-name="clinic.name"
+        :staffs="staffByClinic[clinic.id] ?? []"
+      />
+    </template>
+  </template>
+
+  <EditAccountDialog ref="editDialog" />
+  <DeleteAccountDialog ref="deleteDialog" />
 </template>
 
 <style scoped lang="scss">
 .profil-card {
   background: var(--el-bg-color);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-md);
 }

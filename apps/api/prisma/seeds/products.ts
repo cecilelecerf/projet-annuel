@@ -1,4 +1,4 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedProducts(
   prisma: PrismaClient,
@@ -11,7 +11,11 @@ export async function seedProducts(
     >
       ? T
       : never;
-    healthConditions: any;
+    healthConditions: ReturnType<
+      typeof import("./health-conditions").seedHealthConditions
+    > extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
   const { conditionCardio, conditionRenal } = healthConditions;

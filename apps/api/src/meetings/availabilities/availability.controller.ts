@@ -14,15 +14,16 @@ export class AvailabilityController {
   async getAllByUser(
     req: RequestWithParams<{ date?: string }>,
     res: Response,
-    next: NextFunction,
+    _next: NextFunction,
   ) {
+    const dateParam =
+      typeof req.query.date === "string" ? req.query.date : undefined;
+
     const availabilities = await this.service.getAll({
       userId: req.user.id,
-      date: req.params.date
-        ? dayjs(req.params.date).toDate()
-        : dayjs().toDate(),
+      date: dateParam ? dayjs(dateParam).toDate() : dayjs().toDate(),
     });
-    res.status(201).json(
+    res.status(200).json(
       availabilityResponseSchema.array().parse(
         availabilities.map((availability) => ({
           ...availability,

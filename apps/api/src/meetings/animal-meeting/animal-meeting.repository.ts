@@ -7,8 +7,8 @@ import {
   User,
   VeterinarianClinic,
   Prisma,
+  PrismaClient,
 } from "../../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours
@@ -18,12 +18,21 @@ const findByIdInclude = {
   meeting: true,
   animal: {
     include: {
-      client: { include: { user: { omit: { password: true } } } },
+      client: {
+        include: {
+          user: { omit: { password: true }, include: { avatar: true } },
+        },
+      },
       race: { include: { pet: true } },
     },
   },
   speciality: true,
-  veterinarianClinic: { include: { veterinarian: true, clinic: true } },
+  veterinarianClinic: {
+    include: {
+      veterinarian: { include: { user: { include: { avatar: true } } } },
+      clinic: true,
+    },
+  },
 } satisfies Prisma.AnimalMeetingInclude;
 
 const createInclude = {
@@ -44,14 +53,22 @@ const findByUserInclude = {
   animal: {
     include: {
       race: { include: { pet: true } },
-      client: { include: { user: { omit: { password: true } } } },
+      client: {
+        include: {
+          user: { omit: { password: true }, include: { avatar: true } },
+        },
+      },
     },
   },
   meeting: true,
   speciality: true,
   veterinarianClinic: {
     include: {
-      veterinarian: { include: { user: { omit: { password: true } } } },
+      veterinarian: {
+        include: {
+          user: { omit: { password: true }, include: { avatar: true } },
+        },
+      },
       clinic: true,
     },
   },

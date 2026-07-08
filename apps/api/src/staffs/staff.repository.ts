@@ -3,6 +3,8 @@ import type {
   CreateSecretaryStaff,
   CreateReferentStaff,
   ClinicId,
+  UserId,
+  UserRole,
 } from "@armali/schemas";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
@@ -14,23 +16,23 @@ export class StaffRepository {
     const [director, referents, vets, secretaries] = await Promise.all([
       this.prisma.directorClinicProfile.findFirst({
         where: { clinic: { id: clinicId } },
-        include: { user: true },
+        include: { user: { include: { avatar: true } } },
       }),
       this.prisma.referentClinicProfile.findMany({
         where: { clinicId },
-        include: { user: true },
+        include: { user: { include: { avatar: true } } },
       }),
       this.prisma.veterinarianClinic.findMany({
         where: { clinicId },
         include: {
           veterinarian: {
-            include: { user: true },
+            include: { user: { include: { avatar: true } } },
           },
         },
       }),
       this.prisma.secretaryProfile.findMany({
         where: { clinicId },
-        include: { user: true },
+        include: { user: { include: { avatar: true } } },
       }),
     ]);
 
@@ -53,12 +55,82 @@ export class StaffRepository {
       })),
     };
   }
+  async findStaffIds(
+    clinicId: ClinicId,
+    roles?: UserRole[],
+  ): Promise<UserId[]> {
+    const wants = (role: UserRole) => !roles || roles.includes(role);
+
+    const [director, referents, secretaries, vets] = await Promise.all([
+      wants("DIRECTOR")
+        ? this.prisma.directorClinicProfile.findFirst({
+            where: { clinic: { id: clinicId } },
+            select: { user: { select: { id: true } } },
+          })
+        : null,
+      wants("REFERENT")
+        ? this.prisma.referentClinicProfile.findMany({
+            where: { clinicId },
+            select: { user: { select: { id: true } } },
+          })
+        : [],
+      wants("SECRETARY")
+        ? this.prisma.secretaryProfile.findMany({
+            where: { clinicId },
+            select: { user: { select: { id: true } } },
+          })
+        : [],
+      wants("VETERINARIAN")
+        ? this.prisma.veterinarianClinic.findMany({
+            where: { clinicId },
+            select: {
+              veterinarian: { select: { user: { select: { id: true } } } },
+            },
+          })
+        : [],
+    ]);
+
+    return [
+      director?.user.id,
+      ...referents.map((referent) => referent.user.id),
+      ...secretaries.map((secretary) => secretary.user.id),
+      ...vets.map((vet) => vet.veterinarian.user.id),
+    ].filter((id): id is UserId => id !== null && id !== undefined);
+  }
+  async countStaff(clinicId: ClinicId, roles?: UserRole[]) {
+    const wants = (role: UserRole) => !roles || roles.includes(role);
+
+    const [director, referents, secretaries, vets] = await Promise.all([
+      wants("DIRECTOR")
+        ? this.prisma.directorClinicProfile.count({
+            where: { clinic: { id: clinicId } },
+          })
+        : 0,
+      wants("REFERENT")
+        ? this.prisma.referentClinicProfile.count({
+            where: { clinicId },
+          })
+        : 0,
+      wants("SECRETARY")
+        ? this.prisma.secretaryProfile.count({
+            where: { clinicId },
+          })
+        : 0,
+      wants("VETERINARIAN")
+        ? this.prisma.veterinarianClinic.count({
+            where: { clinicId },
+          })
+        : 0,
+    ]);
+    return director + referents + vets + secretaries;
+  }
 
   // ── Détail d'un membre du staff ──────────────────────────────────────────
   async findMemberDetailById(memberId: string) {
     return this.prisma.user.findUnique({
       where: { id: memberId },
       include: {
+        avatar: true,
         veterinarianProfile: {
           include: {
             veterinarianIdentity: true,
@@ -116,6 +188,7 @@ export class StaffRepository {
         },
       },
       include: {
+        avatar: true,
         veterinarianProfile: {
           include: {
             veterinarianIdentity: true,
@@ -156,7 +229,10 @@ export class StaffRepository {
           },
         },
       },
-      include: { secretaryProfile: { include: { bankingInfo: true } } },
+      include: {
+        avatar: true,
+        secretaryProfile: { include: { bankingInfo: true } },
+      },
     });
 
     const { password: _, ...userWithoutPassword } = user;
@@ -183,7 +259,7 @@ export class StaffRepository {
           create: { clinicId },
         },
       },
-      include: { referentClinicProfile: true },
+      include: { avatar: true, referentClinicProfile: true },
     });
 
     const { password: _, ...userWithoutPassword } = user;

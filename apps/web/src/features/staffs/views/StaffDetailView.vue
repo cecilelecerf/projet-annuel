@@ -3,8 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { staffApi } from '@/features/staffs/staff.api'
-import type { StaffMemberDetail } from '@armali/schemas'
+import type { StaffMemberDetail, StaffRole } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
+import ReviewComponent from '@/features/reviews/components/ReviewComponent.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,7 +14,7 @@ const { user } = useAuthStore()
 
 const member = ref<StaffMemberDetail | null>(null)
 const loading = ref(false)
-const roleLabel: Record<string, string> = {
+const roleLabel: Record<StaffRole, string> = {
   DIRECTOR: 'Directeur',
   REFERENT: 'Référent',
   VETERINARIAN: 'Vétérinaire',
@@ -62,7 +63,15 @@ function formatLongDate(value?: string | null) {
 
     <template v-if="member">
       <div class="profile-header">
-        <div class="avatar">{{ member.firstname[0] }}{{ member.lastname[0] }}</div>
+        <div class="avatar">
+          <img
+            v-if="member.avatarUrl"
+            :src="member.avatarUrl"
+            :alt="`${member.firstname} ${member.lastname}`"
+            class="avatar-img"
+          />
+          <template v-else>{{ member.firstname[0] }}{{ member.lastname[0] }}</template>
+        </div>
         <div>
           <h1>{{ member.firstname }} {{ member.lastname }}</h1>
           <p>{{ member.email }}</p>
@@ -90,7 +99,7 @@ function formatLongDate(value?: string | null) {
               </div>
               <div class="info-item info-item--wide">
                 <span class="label">Membre depuis</span>
-                <span class="value">{{ formatLongDate(member.createdAt) }}</span>
+                <span class="value">{{ formatLongDate(member.createdAt.toISOString()) }}</span>
               </div>
             </div>
           </div>
@@ -270,6 +279,7 @@ function formatLongDate(value?: string | null) {
           </template>
         </div>
       </div>
+      <review-component />
     </template>
   </div>
 </template>
@@ -300,6 +310,13 @@ function formatLongDate(value?: string | null) {
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   flex-shrink: 0;
+  overflow: hidden; // pour que l'image respecte le border-radius
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .profile-header h1 {
   font-size: var(--fs-2xl);

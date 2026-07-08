@@ -2,9 +2,7 @@ import type { Server as HttpServer } from "http";
 import { Server, Namespace, Socket } from "socket.io";
 import { verifyAccessToken } from "@api/utils/jwt";
 import type { JwtPayload } from "@api/utils/jwt";
-import { MessagingService } from "./messaging.service";
-
-const messagingService = new MessagingService();
+import { messagingService } from "@api/instances";
 
 let io: Server | undefined;
 const onlineCounts = new Map<string, number>();
@@ -34,7 +32,9 @@ export function initSocketGateway(httpServer: HttpServer) {
   });
 
   messagingNamespace.on("connection", (socket) => {
-    handleConnection(messagingNamespace, socket).catch(() => socket.disconnect());
+    handleConnection(messagingNamespace, socket).catch(() =>
+      socket.disconnect(),
+    );
   });
 
   return io;
@@ -74,14 +74,21 @@ async function handleConnection(namespace: Namespace, socket: Socket) {
           conversationId,
           content,
         );
-        const room = namespace.adapter.rooms.get(conversationRoom(conversationId));
+        const room = namespace.adapter.rooms.get(
+          conversationRoom(conversationId),
+        );
         console.log(
           `[ws] message:send from=${user.id} conversation=${conversationId} room-sockets=${room ? room.size : 0}`,
         );
-        namespace.to(conversationRoom(conversationId)).emit("message:new", message);
+        namespace
+          .to(conversationRoom(conversationId))
+          .emit("message:new", message);
         ack?.({ ok: true, message });
       } catch (err) {
-        console.log(`[ws] message:send FAILED from=${user.id} conversation=${conversationId}`, err);
+        console.log(
+          `[ws] message:send FAILED from=${user.id} conversation=${conversationId}`,
+          err,
+        );
         ack?.({
           ok: false,
           error: err instanceof Error ? err.message : "Erreur inconnue",
@@ -95,31 +102,42 @@ async function handleConnection(namespace: Namespace, socket: Socket) {
     async ({ conversationId }: { conversationId: string }) => {
       try {
         await messagingService.markRead(conversationId, user.id);
-        namespace.to(conversationRoom(conversationId)).emit("conversation:read", {
-          conversationId,
-          userId: user.id,
-          readAt: new Date().toISOString(),
-        });
+        namespace
+          .to(conversationRoom(conversationId))
+          .emit("conversation:read", {
+            conversationId,
+            userId: user.id,
+            readAt: new Date().toISOString(),
+          });
       } catch {
         // L'utilisateur n'est pas/plus membre de cette conversation.
       }
     },
   );
 
-  socket.on("typing:start", ({ conversationId }: { conversationId: string }) => {
-    socket
-      .to(conversationRoom(conversationId))
-      .emit("typing:update", { conversationId, userId: user.id, isTyping: true });
-  });
+  socket.on(
+    "typing:start",
+    ({ conversationId }: { conversationId: string }) => {
+      socket.to(conversationRoom(conversationId)).emit("typing:update", {
+        conversationId,
+        userId: user.id,
+        isTyping: true,
+      });
+    },
+  );
 
   socket.on("typing:stop", ({ conversationId }: { conversationId: string }) => {
-    socket
-      .to(conversationRoom(conversationId))
-      .emit("typing:update", { conversationId, userId: user.id, isTyping: false });
+    socket.to(conversationRoom(conversationId)).emit("typing:update", {
+      conversationId,
+      userId: user.id,
+      isTyping: false,
+    });
   });
 
   socket.on("disconnect", (reason) => {
-    console.log(`[ws] disconnect user=${user.id} socket=${socket.id} reason=${reason}`);
+    console.log(
+      `[ws] disconnect user=${user.id} socket=${socket.id} reason=${reason}`,
+    );
     const remaining = (onlineCounts.get(user.id) ?? 1) - 1;
     if (remaining <= 0) {
       onlineCounts.delete(user.id);
@@ -143,11 +161,15 @@ export function emitToConversation(
   event: string,
   payload: unknown,
 ) {
-  const room = io?.of("/messaging").adapter.rooms.get(conversationRoom(conversationId));
+  const room = io
+    ?.of("/messaging")
+    .adapter.rooms.get(conversationRoom(conversationId));
   console.log(
     `[ws] emitToConversation conversation=${conversationId} event=${event} room-sockets=${room ? room.size : 0}`,
   );
-  io?.of("/messaging").to(conversationRoom(conversationId)).emit(event, payload);
+  io?.of("/messaging")
+    .to(conversationRoom(conversationId))
+    .emit(event, payload);
 }
 
 export function emitToUser(userId: string, event: string, payload: unknown) {

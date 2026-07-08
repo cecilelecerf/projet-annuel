@@ -10,7 +10,7 @@ import {
   Act,
   AnimalMedicalHistory,
 } from "../../prisma/generated/prisma/client";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 const meetingActInclude = {
   clinicAct: { include: { act: true } },

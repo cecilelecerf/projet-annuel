@@ -1,6 +1,7 @@
 import { AuthService } from "@api/auth/auth.service";
 import { UnauthorizedError } from "@api/errors";
 import { AuthenticatedRequest } from "@api/middlewares";
+import { withAvatarUrl } from "@api/users/user.utils";
 import type { Request, Response, NextFunction } from "express";
 
 export class AuthController {
@@ -66,7 +67,7 @@ export class AuthController {
 
       const token = authorization.split(" ")[1];
       const user = await this.service.me(token);
-      res.status(200).json(user);
+      res.status(200).json(withAvatarUrl(user));
     } catch (err) {
       next(err);
     }

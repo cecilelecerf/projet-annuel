@@ -10,7 +10,7 @@ export class ContactsRepository {
         id: { not: excludeUserId },
         OR: [
           { secretaryProfile: { clinicId } },
-          { directorClinicProfile: { clinicId } },
+          { directorClinicProfile: { clinic: { id: clinicId } } },
           { referentClinicProfile: { clinicId } },
           {
             veterinarianProfile: {
@@ -39,7 +39,7 @@ export class ContactsRepository {
       where: { id: { in: userIds } },
       include: {
         secretaryProfile: { select: { clinicId: true } },
-        directorClinicProfile: { select: { clinicId: true } },
+        directorClinicProfile: { select: { clinic: { select: { id: true } } } },
         referentClinicProfile: { select: { clinicId: true } },
         veterinarianProfile: {
           include: { veterinarianClinics: { select: { clinicId: true } } },
@@ -56,8 +56,8 @@ export class ContactsRepository {
             : [];
           break;
         case "DIRECTOR":
-          clinicIds = user.directorClinicProfile
-            ? [user.directorClinicProfile.clinicId]
+          clinicIds = user.directorClinicProfile?.clinic
+            ? [user.directorClinicProfile.clinic?.id]
             : [];
           break;
         case "REFERENT":

@@ -23,6 +23,10 @@ const futureAvailabilityWhere = () => ({
 export class ClinicRepository {
   constructor(private prisma: PrismaClient) {}
 
+  async findAll() {
+    return this.prisma.clinic.findMany({ orderBy: { createdAt: "desc" } });
+  }
+
   async findById(clinicId: string) {
     return this.prisma.clinic.findUnique({ where: { id: clinicId } });
   }
@@ -38,7 +42,7 @@ export class ClinicRepository {
           },
         },
       },
-      include: { user: true },
+      include: { user: { include: { avatar: true } } },
     });
   }
   // ── Trouve la clinique d'un utilisateur selon son rôle ────────────────────
@@ -187,5 +191,31 @@ export class ClinicRepository {
         },
       },
     });
+  }
+
+  // ── Suppression de clinique ───────────────────────────────────────────────
+
+  findClinicById(clinicId: string) {
+    return this.prisma.clinic.findUnique({ where: { id: clinicId } });
+  }
+
+  async countClinicDependencies(clinicId: string) {
+    const [orderCount, meetingCount, appointmentCount, medicalHistoryCount] =
+      await Promise.all([
+        this.prisma.order.count({ where: { clinicId } }),
+        this.prisma.internalMeeting.count({ where: { clinicId } }),
+        this.prisma.animalMeeting.count({
+          where: { veterinarianClinic: { clinicId } },
+        }),
+        this.prisma.animalMedicalHistory.count({
+          where: { clinicAct: { clinicId } },
+        }),
+      ]);
+
+    return { orderCount, meetingCount, appointmentCount, medicalHistoryCount };
+  }
+
+  deleteClinicById(clinicId: string) {
+    return this.prisma.clinic.delete({ where: { id: clinicId } });
   }
 }

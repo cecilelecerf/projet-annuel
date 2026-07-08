@@ -3,8 +3,17 @@ import nodemailer from "nodemailer";
 const isEmailEnabled = process.env.ENABLE_EMAIL === "true";
 
 let transporter: nodemailer.Transporter;
-
+console.log(process.env.ENABLE_EMAIL);
 if (isEmailEnabled) {
+  if (
+    !process.env.MAIL_HOST ||
+    !process.env.MAIL_USER ||
+    !process.env.MAIL_PASS
+  ) {
+    throw new Error(
+      "ENABLE_EMAIL=true mais MAIL_HOST/MAIL_USER/MAIL_PASS manquent dans l'environnement",
+    );
+  }
   transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST,
     port: Number(process.env.MAIL_PORT),

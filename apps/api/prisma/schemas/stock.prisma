@@ -51,6 +51,9 @@ model Brand {
   name      String
   logo      String?
 
+  imageId String? @unique
+  image   File?   @relation("BrandImage", fields: [imageId], references: [id], onDelete: SetNull)
+
   product Product[]
   productRequests ProductRequest[]
 

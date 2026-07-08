@@ -1,7 +1,6 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { STAFF_ROLES } from "@api/utils";
 import { specialityController } from "@api/instances";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
@@ -15,7 +14,7 @@ specialityRouter.get("/", controller.getAll.bind(controller) as RequestHandler);
 
 specialityRouter.get(
   "/:id",
-  roleMiddleware(STAFF_ROLES),
+  roleMiddleware(["ADMIN"]),
   controller.getById.bind(controller) as RequestHandler,
 );
 

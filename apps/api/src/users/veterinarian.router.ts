@@ -17,9 +17,11 @@ veterinarianRouter.get(
     meetingController,
   ) as RequestHandler,
 );
+
 veterinarianRouter.get(
-  "/:id/reviews",
-  reviewController.getVetReviews.bind(reviewController) as RequestHandler,
+  "/:id/reviews/stats",
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  reviewController.getStats.bind(reviewController) as RequestHandler,
 );
 
 export default veterinarianRouter;

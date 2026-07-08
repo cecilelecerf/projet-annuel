@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { userIdSchema } from "../ids";
 import { veterinarianIdentityInputSchema } from "../users/veterinarian.schema";
-import { specialitySchema } from "../clinic.schema";
 import {
   bankingInfoInputSchema,
   baseUserSchema,
 } from "../users/base-user.schema";
+import { specialitySchema } from "../specilities.schema";
 
-const staffRoleSchema = z.enum([
+export const staffRoleSchema = z.enum([
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",
@@ -20,6 +19,7 @@ export const staffMemberSchema = baseUserSchema
     lastname: true,
     firstname: true,
     email: true,
+    avatarUrl: true,
   })
   .extend({ role: staffRoleSchema });
 
@@ -37,12 +37,7 @@ export const secretaryStaffProfileSchema = z.object({
   bankingInfo: bankingInfoInputSchema.nullable().optional(),
 });
 
-export const staffMemberDetailSchema = z.object({
-  id: userIdSchema,
-  firstname: z.string(),
-  lastname: z.string(),
-  email: z.email(),
-  role: staffRoleSchema,
+export const staffMemberDetailSchema = staffMemberSchema.extend({
   createdAt: z.coerce.date(),
   veterinarianProfile: veterinarianStaffProfileSchema.nullable().optional(),
   secretaryProfile: secretaryStaffProfileSchema.nullable().optional(),

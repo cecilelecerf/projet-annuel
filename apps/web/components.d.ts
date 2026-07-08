@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
+    ContactCard: typeof import('./src/components/ContactCard.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
     EditAccountDialog: typeof import('./src/components/profile/EditAccountDialog.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
@@ -55,6 +56,7 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     ElTimePicker: typeof import('element-plus/es')['ElTimePicker']
     ElTimeSelect: typeof import('element-plus/es')['ElTimeSelect']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     HeroComponent: typeof import('./src/components/landingPage/HeroComponent.vue')['default']
     NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']

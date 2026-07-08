@@ -15,12 +15,12 @@ export const adminRouter: RouteRecordRaw[] = [
       {
         path: 'clinic-requests',
         name: 'ADMIN.ClinicRequests',
-        component: () => import('@/features/users/views/admin/ClinicRequests.vue'),
+        component: () => import('@/features/clinics/views/ClinicRequests.vue'),
       },
       {
         path: 'clinics',
         name: 'ADMIN.Clinics',
-        component: () => import('@/features/users/views/admin/Clinics.vue'),
+        component: () => import('@/features/clinics/views/ClinicsView.vue'),
       },
       {
         path: 'products',

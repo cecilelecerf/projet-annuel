@@ -1,3 +1,5 @@
+import { FileRepository } from "@api/files/file.repository";
+import { FileService } from "@api/files/file.service";
 import { UserId } from "@armali/schemas";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -6,6 +8,7 @@ const mockUserRepository = vi.hoisted(() => ({
   getUsersByClinic: vi.fn(),
   getAllUsersByRole: vi.fn(),
   getUserById: vi.fn(),
+  updateAvatar: vi.fn(),
 }));
 
 const mockClinicRepository = vi.hoisted(() => ({
@@ -35,6 +38,24 @@ vi.mock("@api/staffs/staff.repository", () => ({
   }),
 }));
 
+const mockFileRepository = vi.hoisted(() => ({}));
+
+vi.mock("@api/files/file.repository", () => ({
+  FileRepository: vi.fn(function () {
+    return mockFileRepository;
+  }),
+}));
+const mockFileService = vi.hoisted(() => ({
+  createUpload: vi.fn(),
+  confirmUpload: vi.fn(),
+  deleteFile: vi.fn(),
+}));
+
+vi.mock("@api/files/file.service", () => ({
+  FileService: vi.fn(function () {
+    return mockFileService;
+  }),
+}));
 const CLINIC_ID = "11111111-1111-4111-8111-111111111111";
 const ADMIN_ID = "22222222-2222-4222-8222-222222222222";
 const DIRECTOR_ID = "33333333-3333-4333-8333-333333333333";
@@ -62,10 +83,12 @@ const staffService = new StaffService(
   new StaffRepository({} as any),
   clinicService,
 );
+const fileService = new FileService(new FileRepository({} as any));
 const userService = new UserService(
   new UserRepository({} as any),
   clinicService,
   staffService,
+  fileService,
 );
 
 beforeEach(() => vi.clearAllMocks());
@@ -232,5 +255,187 @@ describe("UserService.getUserById", () => {
         targetId: "user-1",
       }),
     ).rejects.toThrow(ForbiddenError);
+  });
+});
+// ── fileUpload ────────────────────────────────────────────────────────────────
+
+describe("UserService.fileUpload", () => {
+  it("lève NotFoundError si l'utilisateur n'existe pas", async () => {
+    const { NotFoundError } = await import("@api/errors");
+    mockUserRepository.getUserById.mockResolvedValue(null);
+
+    await expect(
+      userService.fileUpload({
+        authorId: "user-1" as UserId,
+        mimeType: "image/png",
+      }),
+    ).rejects.toThrow(NotFoundError);
+
+    expect(mockFileService.createUpload).not.toHaveBeenCalled();
+  });
+
+  it("délègue la création d'upload à FileService avec le bon entityType/entityId", async () => {
+    mockUserRepository.getUserById.mockResolvedValue(mockUser);
+    mockFileService.createUpload.mockResolvedValue({
+      fileId: "file-1",
+      uploadUrl: "https://signed-upload-url",
+    });
+
+    const result = await userService.fileUpload({
+      authorId: "user-1" as UserId,
+      mimeType: "image/png",
+    });
+
+    expect(mockFileService.createUpload).toHaveBeenCalledWith({
+      entityType: "USER",
+      entityId: "user-1",
+      mimeType: "image/png",
+      type: "IMAGE",
+    });
+    expect(result).toEqual({
+      fileId: "file-1",
+      uploadUrl: "https://signed-upload-url",
+    });
+  });
+});
+
+// ── confirmAvatarUpload ──────────────────────────────────────────────────────
+
+describe("UserService.confirmAvatarUpload", () => {
+  it("lève NotFoundError si l'utilisateur n'existe pas", async () => {
+    const { NotFoundError } = await import("@api/errors");
+    mockUserRepository.getUserById.mockResolvedValue(null);
+
+    await expect(
+      userService.confirmAvatarUpload({
+        userId: "user-1" as UserId,
+        fileId: "file-1",
+      }),
+    ).rejects.toThrow(NotFoundError);
+
+    expect(mockFileService.confirmUpload).not.toHaveBeenCalled();
+  });
+
+  it("confirme l'upload, met à jour l'avatar et retourne le user avec avatarUrl", async () => {
+    mockUserRepository.getUserById.mockResolvedValue({
+      ...mockUser,
+      avatarId: null,
+    });
+    mockFileService.confirmUpload.mockResolvedValue({ id: "file-1" });
+    mockUserRepository.updateAvatar.mockResolvedValue({
+      ...mockUser,
+      avatarId: "file-1",
+      avatar: {
+        id: "file-1",
+        storageKey: "users/user-1/uuid-abc",
+        mimeType: "image/png",
+        size: 2048,
+        type: "IMAGE",
+        entityType: "USER",
+        entityId: "user-1",
+      },
+    });
+
+    const result = await userService.confirmAvatarUpload({
+      userId: "user-1" as UserId,
+      fileId: "file-1",
+    });
+
+    expect(mockFileService.confirmUpload).toHaveBeenCalledWith({
+      fileId: "file-1",
+      expectedEntityType: "USER",
+      expectedEntityId: "user-1",
+    });
+    expect(mockUserRepository.updateAvatar).toHaveBeenCalledWith({
+      userId: "user-1",
+      avatarId: "file-1",
+    });
+    expect(result.avatarUrl).toContain("users/user-1/uuid-abc");
+    expect(mockFileService.deleteFile).not.toHaveBeenCalled();
+  });
+
+  it("supprime l'ancien avatar après avoir confirmé le nouveau", async () => {
+    mockUserRepository.getUserById.mockResolvedValue({
+      ...mockUser,
+      avatarId: "old-file-id",
+    });
+    mockFileService.confirmUpload.mockResolvedValue({ id: "new-file-id" });
+    mockUserRepository.updateAvatar.mockResolvedValue({
+      ...mockUser,
+      avatarId: "new-file-id",
+      avatar: {
+        id: "new-file-id",
+        storageKey: "users/user-1/uuid-new",
+        mimeType: "image/png",
+        size: 2048,
+        type: "IMAGE",
+        entityType: "USER",
+        entityId: "user-1",
+      },
+    });
+    mockFileService.deleteFile.mockResolvedValue(undefined); // 👈 ajouté
+
+    await userService.confirmAvatarUpload({
+      userId: "user-1" as UserId,
+      fileId: "new-file-id",
+    });
+
+    expect(mockFileService.deleteFile).toHaveBeenCalledWith("old-file-id");
+  });
+  it("ne bloque pas la réponse si la suppression de l'ancien avatar échoue", async () => {
+    mockUserRepository.getUserById.mockResolvedValue({
+      ...mockUser,
+      avatarId: "old-file-id",
+    });
+    mockFileService.confirmUpload.mockResolvedValue({ id: "new-file-id" });
+    mockUserRepository.updateAvatar.mockResolvedValue({
+      ...mockUser,
+      avatarId: "new-file-id",
+      avatar: {
+        id: "new-file-id",
+        storageKey: "users/user-1/uuid-new",
+        mimeType: "image/png",
+        size: 2048,
+        type: "IMAGE",
+        entityType: "USER",
+        entityId: "user-1",
+      },
+    });
+    mockFileService.deleteFile.mockRejectedValue(new Error("S3 down"));
+
+    const result = await userService.confirmAvatarUpload({
+      userId: "user-1" as UserId,
+      fileId: "new-file-id",
+    });
+
+    expect(result.avatarUrl).toContain("users/user-1/uuid-new");
+  });
+
+  it("ne tente pas de suppression si l'utilisateur n'avait pas d'ancien avatar", async () => {
+    mockUserRepository.getUserById.mockResolvedValue({
+      ...mockUser,
+      avatarId: null,
+    });
+    mockFileService.confirmUpload.mockResolvedValue({ id: "file-1" });
+    mockUserRepository.updateAvatar.mockResolvedValue({
+      ...mockUser,
+      avatarId: "file-1",
+      avatar: {
+        id: "file-1",
+        storageKey: "users/user-1/uuid-abc",
+        mimeType: "image/png",
+        size: 2048,
+        type: "IMAGE",
+        entityType: "USER",
+        entityId: "user-1",
+      },
+    });
+
+    await userService.confirmAvatarUpload({
+      userId: "user-1" as UserId,
+      fileId: "file-1",
+    });
+
+    expect(mockFileService.deleteFile).not.toHaveBeenCalled();
   });
 });

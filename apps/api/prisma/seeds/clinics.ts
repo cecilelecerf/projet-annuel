@@ -40,12 +40,10 @@ export async function seedClinics(
   },
 ) {
   const address1 = "15 Rue de la Convention, Paris 75015";
-  const address2 = "5 Rue Saint-Jacques, Paris 75005";
   const address3 = "40 Avenue du Maine, Paris 75014";
   const address4 = "18 Rue de la République, Lyon 69002";
-  const [coord1, coord2, coord3, coord4] = await Promise.all([
+  const [coord1, coord3, coord4] = await Promise.all([
     geocodeAddress(address1),
-    geocodeAddress(address2),
     geocodeAddress(address3),
     geocodeAddress(address4),
   ]);

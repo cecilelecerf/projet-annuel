@@ -18,6 +18,16 @@ userRouter.get(
   roleMiddleware(["ADMIN", "DIRECTOR", "REFERENT"]),
   controller.getUsers.bind(controller) as RequestHandler,
 );
+userRouter.post(
+  "/me/avatar/upload",
+  authMiddleware,
+  controller.uploadAvatar.bind(controller) as RequestHandler,
+);
+userRouter.patch(
+  "/me/avatar/confirm",
+  authMiddleware,
+  controller.confirmAvatar.bind(controller) as RequestHandler,
+);
 
 userRouter.get(
   "/roles/:role",
@@ -32,6 +42,7 @@ userRouter.get(
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalController.getByUser.bind(animalController) as RequestHandler,
 );
+
 userRouter.get(
   "/:id/animal-meetings",
   authMiddleware,
@@ -40,6 +51,7 @@ userRouter.get(
     animalMeetingController,
   ) as RequestHandler,
 );
+
 userRouter.get(
   "/:id",
   authMiddleware,

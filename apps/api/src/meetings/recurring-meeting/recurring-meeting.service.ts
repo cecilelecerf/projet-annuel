@@ -3,6 +3,9 @@ import { RecurringRepository } from "./recurring-meeting.repository";
 import { MeetingRecurringId, UpdateRecurring } from "@armali/schemas";
 import { InternalMeetingRepository } from "../internal-meeting";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 export class RecurringService {
   constructor(
@@ -26,7 +29,7 @@ export class RecurringService {
     // todo si dans le passé pas de modification avant la date actuelle
     const current = await this.getById(id);
 
-    const splitDate = dayjs(data.dateToStartAction).startOf("day").toDate();
+    const splitDate = dayjs.utc(data.dateToStartAction).startOf("day").toDate();
     if (current.dateStart >= splitDate) {
       if (current.internalMeeting && data.internal) {
         await this.internalMeetingRepository.update({
@@ -34,7 +37,7 @@ export class RecurringService {
           data: data.internal,
         });
       }
-      const { dateToStartAction, ...d } = data;
+      const { dateToStartAction: _, ...d } = data;
       return this.repository.update(id, d);
     }
 

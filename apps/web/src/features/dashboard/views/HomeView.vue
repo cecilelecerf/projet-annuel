@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { dashboardApi } from '@/features/dashboard/api/dashboard.api'
 import type { ReferentDashboard } from '@armali/schemas'
+import ReviewItemList from '@/features/reviews/components/ReviewItemList.vue'
 
 const router = useRouter()
 const notify = useNotify()
@@ -65,12 +66,12 @@ function formatCurrency(value: number) {
       <div class="card stat-card">
         <span class="stat-label">Note moyenne clinique</span>
         <span class="stat-value">
-          <template v-if="dashboard.reviews.clinicAverageRating">
-            {{ dashboard.reviews.clinicAverageRating }} / 5
+          <template v-if="dashboard.reviews.average">
+            {{ dashboard.reviews.average }} / 5
           </template>
           <template v-else>—</template>
         </span>
-        <span class="stat-sub">{{ dashboard.reviews.totalReviews }} avis reçus</span>
+        <span class="stat-sub">{{ dashboard.reviews.count }} avis reçus</span>
       </div>
     </div>
 
@@ -96,25 +97,16 @@ function formatCurrency(value: number) {
       <!-- Notations par vétérinaire -->
       <div class="card card--half">
         <h2>Notation des vétérinaires</h2>
-        <div v-if="dashboard.reviews.veterinarianStats.length === 0" class="no-data">
+        <div v-if="dashboard.reviews.veterinarians.length === 0" class="no-data">
           Aucun vétérinaire dans la clinique pour le moment.
         </div>
         <div v-else class="vet-stats-list">
-          <div
-            v-for="vet in dashboard.reviews.veterinarianStats"
-            :key="vet.id"
-            class="vet-stat-item"
-          >
-            <span class="vet-name">{{ vet.firstname }} {{ vet.lastname }}</span>
-            <div class="vet-rating">
-              <template v-if="vet.averageRating !== null">
-                <el-rate :model-value="vet.averageRating" disabled allow-half />
-                <span class="rating-value">{{ vet.averageRating }}</span>
-                <span class="rating-count">({{ vet.reviewCount }})</span>
-              </template>
-              <span v-else class="no-rating">Aucun avis</span>
-            </div>
-          </div>
+          <review-item-list
+            v-for="vet in dashboard.reviews.veterinarians"
+            :key="vet.veterinarian.id"
+            :veterinarian="vet.veterinarian"
+            :stat="vet.stat"
+          />
         </div>
       </div>
     </div>
@@ -216,41 +208,7 @@ function formatCurrency(value: number) {
 .vet-stats-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-}
-.vet-stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-.vet-stat-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-.vet-name {
-  font-size: 14px;
-  font-weight: var(--fw-semibold);
-  color: var(--el-text-color-primary);
-}
-.vet-rating {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-.rating-value {
-  font-size: 13px;
-  font-weight: var(--fw-semibold);
-  color: var(--el-text-color-primary);
-}
-.rating-count {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-.no-rating {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
+  /* gap: var(--spacing-sm); */
 }
 
 @media (max-width: 1024px) {

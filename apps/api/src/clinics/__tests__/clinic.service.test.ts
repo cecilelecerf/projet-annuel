@@ -1,14 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ForbiddenError, NotFoundError, ConflictError } from "@api/errors";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+  BadRequestError,
+} from "@api/errors";
 import type { UserId } from "@armali/schemas";
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const mockClinicRepository = vi.hoisted(() => ({
+  findAll: vi.fn(),
   findClinicByUserId: vi.fn(),
   findClinicIdByUser: vi.fn(),
   findClientsById: vi.fn(),
   findDirectorProfile: vi.fn(),
+  findClinicById: vi.fn(),
+  countClinicDependencies: vi.fn(),
+  deleteClinicById: vi.fn(),
   update: vi.fn(),
 }));
 
@@ -49,7 +58,7 @@ describe("ClinicService.getClinicByUser", () => {
   it("retourne les cliniques de l'utilisateur", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue([makeClinic()]);
 
-    const result = await clinicService.getClinicByUser(AUTHOR_ID);
+    const result = await clinicService.getClinicsByUser(AUTHOR_ID);
 
     expect(result).toHaveLength(1);
     expect(mockClinicRepository.findClinicByUserId).toHaveBeenCalledWith(
@@ -60,7 +69,7 @@ describe("ClinicService.getClinicByUser", () => {
   it("aucune clinique trouvée — NotFoundError", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue(null);
 
-    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+    await expect(clinicService.getClinicsByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
     );
   });
@@ -68,7 +77,7 @@ describe("ClinicService.getClinicByUser", () => {
   it("aucune clinique trouvée (undefined) — NotFoundError", async () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue(undefined);
 
-    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+    await expect(clinicService.getClinicsByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
     );
   });
@@ -78,7 +87,7 @@ describe("ClinicService.getClinicByUser", () => {
     // sans clinique renvoie [null] plutôt qu'un tableau vide.
     mockClinicRepository.findClinicByUserId.mockResolvedValue([null]);
 
-    await expect(clinicService.getClinicByUser(AUTHOR_ID)).rejects.toThrow(
+    await expect(clinicService.getClinicsByUser(AUTHOR_ID)).rejects.toThrow(
       NotFoundError,
     );
   });
@@ -119,10 +128,17 @@ describe("ClinicService.getClientsByClinic", () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue([
       makeClinic({ id: CLINIC_ID }),
     ]);
-    mockClinicRepository.findClientsById.mockResolvedValue({
-      id: CLINIC_ID,
-      veterinarianClinics: [],
-    });
+    mockClinicRepository.findClientsById.mockResolvedValue([
+      {
+        id: "user-1",
+        user: {
+          id: "user-1",
+          firstname: "Alice",
+          lastname: "Durand",
+          avatar: null,
+        },
+      },
+    ]);
 
     const result = await clinicService.getClientsByClinic({
       authorId: AUTHOR_ID,
@@ -133,7 +149,17 @@ describe("ClinicService.getClientsByClinic", () => {
     expect(mockClinicRepository.findClientsById).toHaveBeenCalledWith(
       CLINIC_ID,
     );
-    expect(result).toEqual({ id: CLINIC_ID, veterinarianClinics: [] });
+    expect(result).toEqual([
+      {
+        id: "user-1",
+        user: {
+          id: "user-1",
+          firstname: "Alice",
+          lastname: "Durand",
+          avatarUrl: null,
+        },
+      },
+    ]);
   });
 });
 
@@ -168,8 +194,6 @@ describe("ClinicService.getClinicIdsByUserId", () => {
 });
 
 // ── updateClinic ──────────────────────────────────────────────────────────────
-// Réécrit : updateClinic passe désormais par getClinicIdsByUserId
-// (donc repository.findClinicIdByUser), plus par findDirectorProfile.
 
 describe("ClinicService.updateClinic", () => {
   it("aucun clinicId trouvé pour l'utilisateur — ForbiddenError", async () => {
@@ -223,5 +247,84 @@ describe("ClinicService.updateClinic", () => {
       name: "Nouveau nom",
     });
     expect(result.name).toBe("Nouveau nom");
+  });
+});
+
+// ── getClinics ─────────────────────────────────────────────────────────────────
+
+describe("ClinicService.getClinics", () => {
+  it("retourne toutes les cliniques", async () => {
+    mockClinicRepository.findAll.mockResolvedValue([
+      makeClinic(),
+      makeClinic({ id: OTHER_CLINIC_ID }),
+    ]);
+
+    const result = await clinicService.getClinics();
+
+    expect(result).toHaveLength(2);
+    expect(mockClinicRepository.findAll).toHaveBeenCalled();
+  });
+});
+
+// ── deleteClinic ───────────────────────────────────────────────────────────────
+
+describe("ClinicService.deleteClinic", () => {
+  it("clinique introuvable — NotFoundError", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(null);
+
+    await expect(clinicService.deleteClinic(CLINIC_ID)).rejects.toThrow(
+      NotFoundError,
+    );
+    expect(mockClinicRepository.countClinicDependencies).not.toHaveBeenCalled();
+    expect(mockClinicRepository.deleteClinicById).not.toHaveBeenCalled();
+  });
+
+  it("clinique avec des commandes en cours — BadRequestError", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(makeClinic());
+    mockClinicRepository.countClinicDependencies.mockResolvedValue({
+      orderCount: 2,
+      meetingCount: 0,
+      appointmentCount: 0,
+      medicalHistoryCount: 0,
+    });
+
+    await expect(clinicService.deleteClinic(CLINIC_ID)).rejects.toThrow(
+      BadRequestError,
+    );
+    expect(mockClinicRepository.deleteClinicById).not.toHaveBeenCalled();
+  });
+
+  it("clinique avec plusieurs types de dépendances — message détaillé", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(makeClinic());
+    mockClinicRepository.countClinicDependencies.mockResolvedValue({
+      orderCount: 1,
+      meetingCount: 3,
+      appointmentCount: 0,
+      medicalHistoryCount: 2,
+    });
+
+    await expect(clinicService.deleteClinic(CLINIC_ID)).rejects.toThrow(
+      /1 commande.*3 réunions internes.*2 entrées d'historique médical/,
+    );
+    expect(mockClinicRepository.deleteClinicById).not.toHaveBeenCalled();
+  });
+
+  it("supprime la clinique sans dépendances", async () => {
+    mockClinicRepository.findClinicById.mockResolvedValue(makeClinic());
+    mockClinicRepository.countClinicDependencies.mockResolvedValue({
+      orderCount: 0,
+      meetingCount: 0,
+      appointmentCount: 0,
+      medicalHistoryCount: 0,
+    });
+    mockClinicRepository.deleteClinicById.mockResolvedValue(undefined);
+
+    const result = await clinicService.deleteClinic(CLINIC_ID);
+
+    expect(mockClinicRepository.findClinicById).toHaveBeenCalledWith(CLINIC_ID);
+    expect(mockClinicRepository.deleteClinicById).toHaveBeenCalledWith(
+      CLINIC_ID,
+    );
+    expect(result).toEqual({ message: "Clinique supprimée" });
   });
 });

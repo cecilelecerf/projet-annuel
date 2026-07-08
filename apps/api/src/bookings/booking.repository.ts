@@ -1,4 +1,3 @@
-import type { BookingSearchQuery } from "@armali/schemas";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class BookingRepository {
@@ -55,7 +54,7 @@ export class BookingRepository {
       include: {
         veterinarian: {
           include: {
-            user: { omit: { password: true } },
+            user: { omit: { password: true }, include: { avatar: true } },
             specialities: true,
           },
         },

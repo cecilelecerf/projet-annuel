@@ -11,11 +11,6 @@ const menuItems: MenuItem[] = [
     icon: House,
   },
   {
-    index: 'CLIENT.Reviews',
-    label: 'Vétérinaires',
-    icon: Star,
-  },
-  {
     index: 'CLIENT.Profil',
     label: 'Profil',
     icon: User,

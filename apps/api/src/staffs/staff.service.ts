@@ -7,9 +7,10 @@ import type {
 } from "@armali/schemas";
 import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
 import { StaffRepository } from "./staff.repository";
-import { STAFF_ROLES } from "@api/utils";
+import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { UserRole } from "../../prisma/generated/prisma/enums";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 export class StaffService {
   constructor(
@@ -19,7 +20,7 @@ export class StaffService {
 
   // Vérifie que l'acteur a bien accès à cette clinique, sinon ForbiddenError
   private async assertClinicAccess(authorId: UserId, clinicId: ClinicId) {
-    const clinics = await this.clinicService.getClinicByUser(authorId);
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
     if (!clinics.some(({ id }) => id === clinicId)) {
       throw new ForbiddenError();
     }
@@ -54,7 +55,7 @@ export class StaffService {
       ...(wantsRole("VETERINARIAN") ? clinicStaff.veterinarians : []),
     ];
 
-    return staffs;
+    return staffs.map(withAvatarUrl);
   }
 
   // ── Détail d'un membre du staff ──────────────────────────────────────────
@@ -65,7 +66,7 @@ export class StaffService {
     authorId: UserId;
     memberId: UserId;
   }) {
-    const clinics = await this.clinicService.getClinicByUser(authorId);
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
     if (!clinics) throw new NotFoundError("clinic");
     if (clinics.length !== 1)
       throw new ConflictError("Multiple clinics associated with the user");
@@ -81,9 +82,8 @@ export class StaffService {
       user.directorClinicProfile?.clinic?.id === clinicId ||
       user.referentClinicProfile?.clinicId === clinicId;
     if (!belongsToClinic) throw new ForbiddenError();
-
     const { password: _password, ...safeUser } = user;
-    return safeUser;
+    return withAvatarUrl(safeUser);
   }
 
   // ── Création d'un vétérinaire ─────────────────────────────────────────────
@@ -94,17 +94,18 @@ export class StaffService {
     authorId: UserId;
     data: CreateVeterinarianStaff;
   }) {
-    const clinics = await this.clinicService.getClinicByUser(authorId);
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
     if (!clinics) throw new NotFoundError("clinic");
     if (clinics.length !== 1)
       throw new ConflictError("Multiple clinics associated with the user");
 
     const hashedPassword = await hash(data.password, 10);
-    return this.repository.createVeterinarian({
+    const veterinarian = await this.repository.createVeterinarian({
       clinicId: clinics[0].id,
       data,
       hashedPassword,
     });
+    return withAvatarUrl(veterinarian);
   }
 
   // ── Création d'une secrétaire ─────────────────────────────────────────────
@@ -115,17 +116,19 @@ export class StaffService {
     authorId: UserId;
     data: CreateSecretaryStaff;
   }) {
-    const clinics = await this.clinicService.getClinicByUser(authorId);
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
     if (!clinics) throw new NotFoundError("clinic");
     if (clinics.length !== 1)
       throw new ConflictError("Multiple clinics associated with the user");
 
     const hashedPassword = await hash(data.password, 10);
-    return this.repository.createSecretary({
-      clinicId: clinics[0].id,
-      data,
-      hashedPassword,
-    });
+    return withAvatarUrl(
+      await this.repository.createSecretary({
+        clinicId: clinics[0].id,
+        data,
+        hashedPassword,
+      }),
+    );
   }
 
   async createReferent({
@@ -135,16 +138,52 @@ export class StaffService {
     authorId: UserId;
     data: CreateReferentStaff;
   }) {
-    const clinics = await this.clinicService.getClinicByUser(authorId);
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
     if (!clinics) throw new NotFoundError("clinic");
     if (clinics.length !== 1)
       throw new ConflictError("Multiple clinics associated with the user");
 
     const hashedPassword = await hash(data.password, 10);
-    return this.repository.createReferent({
-      clinicId: clinics[0].id as ClinicId,
-      data,
-      hashedPassword,
+    return withAvatarUrl(
+      await this.repository.createReferent({
+        clinicId: clinics[0].id as ClinicId,
+        data,
+        hashedPassword,
+      }),
+    );
+  }
+
+  async getStaffIdsByUser({
+    authorId,
+    authorRole,
+    targetRole,
+  }: {
+    authorId: UserId;
+    authorRole: UserRole;
+    targetRole?: UserRole[];
+  }) {
+    if (!CLINIC_STAFF_ROLES.includes(authorRole)) throw new ForbiddenError();
+    const clinicId = await this.clinicService.getClinicIdByUserId({
+      userId: authorId,
+      role: authorRole,
     });
+    return await this.repository.findStaffIds(clinicId, targetRole);
+  }
+
+  async getStaffCountByUser({
+    authorId,
+    authorRole,
+    targetRole,
+  }: {
+    authorId: UserId;
+    authorRole: UserRole;
+    targetRole?: UserRole[];
+  }) {
+    if (!CLINIC_STAFF_ROLES.includes(authorRole)) throw new ForbiddenError();
+    const clinicId = await this.clinicService.getClinicIdByUserId({
+      userId: authorId,
+      role: authorRole,
+    });
+    return await this.repository.countStaff(clinicId, targetRole);
   }
 }

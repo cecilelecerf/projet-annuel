@@ -177,7 +177,9 @@ const handleLogout = async () => {
 
       <el-dropdown trigger="click" placement="bottom-end">
         <div class="navbar__user">
-          <el-avatar class="navbar__avatar">{{ userInitials }}</el-avatar>
+          <el-avatar class="navbar__avatar" :src="user?.avatarUrl ?? undefined">
+            <template v-if="!user?.avatarUrl">{{ userInitials }}</template>
+          </el-avatar>
           <Transition name="fade">
             <div v-if="user" class="navbar__user-info">
               <span class="navbar__user-name">{{ user.firstname }} {{ user.lastname }}</span>

@@ -26,7 +26,7 @@ export async function seedPrescriptions(
 ) {
   const { animalMeeting1, animalMeeting2 } = meetings;
   const { cp1 } = products;
-  const { vetProfile1, vetProfile2 } = users;
+  const { vetProfile1 } = users;
 
   // ── Rex — Cardio (RDV du 10/02) ───────────────────────────────────────────
   await prisma.prescription.create({

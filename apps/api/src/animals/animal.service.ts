@@ -9,6 +9,7 @@ import type {
 import { isStaff } from "@api/utils";
 import dayjs from "dayjs";
 import { VaccineRepository } from "@api/vaccines/vaccine.repository";
+import { withAvatarUrl, withUserAvatar } from "@api/users/user.utils";
 
 export class AnimalService {
   constructor(
@@ -72,7 +73,16 @@ export class AnimalService {
     const pet = await this.repository.findById(id);
     if (!pet) throw new NotFoundError("Animal");
     if (!isStaff(role) && pet.clientId !== userId) throw new ForbiddenError();
-    return pet;
+    return {
+      ...pet,
+      attendingVeterinarian: pet.attendingVeterinarian
+        ? {
+            ...pet.attendingVeterinarian,
+            user: withAvatarUrl(pet?.attendingVeterinarian?.user),
+          }
+        : undefined,
+      client: withUserAvatar(pet.client),
+    };
   }
 
   async create({
@@ -106,15 +116,7 @@ export class AnimalService {
     return this.repository.update(pet.id, data);
   }
 
-  async delete({
-    id,
-    userId,
-    role,
-  }: {
-    id: string;
-    userId: string;
-    role: UserRole;
-  }) {
+  async delete({ id, userId }: { id: string; userId: string }) {
     await this.assertOwner({ petId: id, userId });
     return this.repository.delete(id);
   }

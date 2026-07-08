@@ -296,9 +296,6 @@ services:
 
   minio-init:
     image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
     secrets:
       - minio_root_user
       - minio_root_password
@@ -309,6 +306,7 @@ services:
     entrypoint: ["/bin/sh", "/init.sh"]
     networks:
       - backend
+
 
 volumes:
   prometheus-data:

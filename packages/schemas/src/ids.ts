@@ -102,3 +102,4 @@ export type SurgeryId = z.infer<typeof surgeryIdSchema>;
 export type ClinicProductId = z.infer<typeof clinicProductIdSchema>;
 export type MeetingRecurringId = z.infer<typeof meetingRecurringIdSchema>;
 export type ClinicRequestId = z.infer<typeof clinicRequestIdSchema>;
+export type FileId = z.infer<typeof fileIdSchema>;

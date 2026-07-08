@@ -12,6 +12,8 @@ export const fileEntityTypeSchema = z.enum([
   "CLINIC",
   "BRAND",
   "PRODUCT",
+  "IMAGING",
+  "ANALYSIS",
 ]);
 export type FileEntityType = z.infer<typeof fileEntityTypeSchema>;
 
@@ -29,3 +31,8 @@ export const fileSchema = z.object({
   entityId: z.uuid(),
 });
 export type File = z.infer<typeof fileSchema>;
+
+export const fileWithUrlSchema = fileSchema.extend({
+  url: z.string(),
+});
+export type FileWithUrl = z.infer<typeof fileWithUrlSchema>;

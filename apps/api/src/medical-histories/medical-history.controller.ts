@@ -5,6 +5,7 @@ import {
   AnimalId,
   createMedicalHistorySchema,
   createMeetingMedicalHistorySchema,
+  fileWithUrlSchema,
   medicalHistoryMetaSchema,
   medicalHistorySchema,
   MeetingId,
@@ -116,6 +117,61 @@ export class AnimalMedicalHistoryController {
     try {
       await this.service.delete(req.params.id, req.user.role, req.user.id);
       res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getFiles(
+    req: RequestWithParams<{ id: string }> & AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const files = await this.service.getFiles(
+        req.params.id,
+        req.user.role,
+        req.user.id,
+      );
+      res.status(200).json(fileWithUrlSchema.array().parse(files));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async createFileUpload(
+    req: RequestWithParams<{ id: string }> &
+      AuthenticatedRequest & { body: { mimeType: string } },
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const result = await this.service.createFileUpload(
+        req.params.id,
+        req.body.mimeType,
+        req.user.role,
+        req.user.id,
+      );
+      res.status(201).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async confirmFileUpload(
+    req: RequestWithParams<{ id: string; fileId: string }> &
+      AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const file = await this.service.confirmFileUpload(
+        req.params.id,
+        req.params.fileId,
+        req.user.role,
+        req.user.id,
+      );
+      res.status(200).json(fileWithUrlSchema.parse(file));
     } catch (err) {
       next(err);
     }

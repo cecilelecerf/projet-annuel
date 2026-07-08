@@ -105,7 +105,7 @@ export type CreateFreeMedicalHistory = z.infer<
 export type CreateMedicalHistory = z.infer<typeof createMedicalHistorySchema>;
 
 export const updateFreeMedicalHistorySchema = createFreeMedicalHistorySchema
-  .omit({ animalId: true })
+  .omit({ animalId: true, actId: true })
   .partial()
   .required({ type: true });
 

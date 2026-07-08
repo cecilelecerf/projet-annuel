@@ -89,7 +89,7 @@ const onSavedAct = () => {
   grid-template-columns: 1fr;
   gap: var(--spacing-md);
 
-  @include above('md') {
+  @include above('lg') {
     grid-template-columns: repeat(2, 1fr);
   }
 

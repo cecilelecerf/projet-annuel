@@ -146,8 +146,7 @@ model Imaging {
   imagingType ImagingType
   bodyPart    String?
   findings    String?
-  fileUrl     String? // PDF ou image
-
+ 
   @@map("imagings")
 }
 
@@ -176,8 +175,7 @@ model Analysis {
   laboratory     String? // labo externe si applicable
   sentAt         DateTime?
   receivedAt     DateTime?
-  fileUrl        String? // PDF des résultats
-  interpretation String? // interprétation du vétérinaire
+   interpretation String? // interprétation du vétérinaire
 
   @@map("analyses")
 }

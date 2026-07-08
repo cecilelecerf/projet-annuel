@@ -228,7 +228,6 @@ export async function seedActs(
           imagingType: "ULTRASOUND",
           bodyPart: "Cœur",
           findings: "Dilatation ventriculaire gauche légère, FEVG conservée",
-          fileUrl: "https://storage.vetparc.fr/echo-rex-20260210.pdf",
         },
       },
     },
@@ -250,7 +249,6 @@ export async function seedActs(
           analysisType: "BLOOD",
           status: "RECEIVED",
           receivedAt: new Date("2026-02-11T14:00:00Z"),
-          fileUrl: "https://storage.vetparc.fr/blood-rex-20260210.pdf",
           interpretation:
             "Légère élévation des troponines cardiaques. Surveillance recommandée.",
         },
@@ -294,7 +292,6 @@ export async function seedActs(
           imagingType: "XRAY",
           bodyPart: "Thorax",
           findings: "Pas d'anomalie visible",
-          fileUrl: "https://storage.vetparc.fr/xray-luna-20260305.pdf",
         },
       },
     },

@@ -2,8 +2,9 @@
 import dayjs from 'dayjs'
 import type { MedicalHistory } from '@armali/schemas'
 import { analysisTypeLabel } from '../../utils'
+import DocumentUpload from '../DocumentUpload.vue'
 
-defineProps<{ analysis: NonNullable<MedicalHistory['analysis']> }>()
+defineProps<{ analysis: NonNullable<MedicalHistory['analysis']>; medicalHistoryId: string }>()
 </script>
 
 <template>
@@ -44,6 +45,7 @@ defineProps<{ analysis: NonNullable<MedicalHistory['analysis']> }>()
       </div>
     </div>
   </div>
+  <DocumentUpload :medical-history-id="medicalHistoryId" />
 </template>
 
 <style lang="scss" scoped>

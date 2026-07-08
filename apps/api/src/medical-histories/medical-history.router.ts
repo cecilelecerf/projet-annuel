@@ -29,5 +29,20 @@ animalMedicalHistoryRouter.delete(
   roleMiddleware(["VETERINARIAN", "SECRETARY"]),
   controller.delete.bind(controller) as RequestHandler,
 );
+animalMedicalHistoryRouter.get(
+  "/:id/files",
+  authMiddleware,
+  controller.getFiles.bind(controller) as RequestHandler,
+);
 
+animalMedicalHistoryRouter.post(
+  "/:id/files/upload",
+  authMiddleware,
+  controller.createFileUpload.bind(controller) as RequestHandler,
+);
+animalMedicalHistoryRouter.patch(
+  "/:id/files/:fileId/confirm",
+  authMiddleware,
+  controller.confirmFileUpload.bind(controller) as RequestHandler,
+);
 export default animalMedicalHistoryRouter;

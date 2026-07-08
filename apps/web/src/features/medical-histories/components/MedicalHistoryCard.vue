@@ -44,8 +44,12 @@ const onDelete = async () => {
       <ActPerformerInfo v-if="act.performedBy" :performed-by="act.performedBy" />
 
       <ActSurgeryDetails v-if="act.surgery" :surgery="act.surgery" />
-      <ActImagingDetails v-if="act.imaging" :imaging="act.imaging" />
-      <ActAnalysisDetails v-if="act.analysis" :analysis="act.analysis" />
+      <ActImagingDetails v-if="act.imaging" :imaging="act.imaging" :medical-history-id="act.id" />
+      <ActAnalysisDetails
+        v-if="act.analysis"
+        :analysis="act.analysis"
+        :medical-history-id="act.id"
+      />
       <ActHospitalizationDetails
         v-if="act.hospitalization"
         :hospitalization="act.hospitalization"

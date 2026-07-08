@@ -1,11 +1,18 @@
 import { http } from '@/lib/api'
 import {
   clinicActSchema,
+  fileSchema,
+  fileWithUrlSchema,
+  initiateImageUploadSchema,
   medicalHistoryMetaSchema,
   medicalHistorySchema,
+  uploadResponseSchema,
   type AnimalId,
   type ClinicId,
   type CreateMedicalHistory,
+  type File as FileEntity,
+  type FileWithUrl,
+  type InitiateImageUploadInput,
   type MedicalHistoryId,
   type MeetingId,
   type UpdateMedicalHistory,
@@ -48,5 +55,41 @@ export const medicalHistoriesApi = {
   },
   delete: async (medicalHistoryId: MedicalHistoryId) => {
     await http.delete(`/medical-histories/${medicalHistoryId}`)
+  },
+
+  files: {
+    getByHistory: async (medicalHistoryId: string): Promise<FileWithUrl[]> => {
+      const data = await http.get(`/medical-histories/${medicalHistoryId}/files`)
+      return fileWithUrlSchema.array().parse(data)
+    },
+
+    upload: async ({ medicalHistoryId, file }: { medicalHistoryId: string; file: File }) => {
+      const payload: InitiateImageUploadInput = initiateImageUploadSchema.parse({
+        mimeType: file.type,
+        size: file.size,
+      })
+
+      // 1. Demander une URL S3
+      const { uploadUrl, fileId } = await http
+        .post(`/medical-histories/${medicalHistoryId}/files/upload`, payload)
+        .then((data) => uploadResponseSchema.parse(data))
+
+      // 2. Upload direct vers S3
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      })
+
+      return { fileId }
+    },
+
+    confirm: async ({ medicalHistoryId, fileId }: { medicalHistoryId: string; fileId: string }) => {
+      const data = await http.patch(
+        `/medical-histories/${medicalHistoryId}/files/${fileId}/confirm`,
+        {},
+      )
+      return fileWithUrlSchema.parse(data)
+    },
   },
 }

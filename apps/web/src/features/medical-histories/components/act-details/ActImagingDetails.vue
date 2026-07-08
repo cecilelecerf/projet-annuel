@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { MedicalHistory } from '@armali/schemas'
 import { imagingTypeLabel } from '../../utils'
+import DocumentUpload from '../DocumentUpload.vue'
 
-defineProps<{ imaging: NonNullable<MedicalHistory['imaging']> }>()
+defineProps<{ imaging: NonNullable<MedicalHistory['imaging']>; medicalHistoryId: string }>()
 </script>
 
 <template>
@@ -28,6 +29,7 @@ defineProps<{ imaging: NonNullable<MedicalHistory['imaging']> }>()
       </div>
     </div>
   </div>
+  <document-upload :medical-history-id="medicalHistoryId" />
 </template>
 
 <style lang="scss" scoped>

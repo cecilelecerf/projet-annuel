@@ -19,6 +19,7 @@ import { VaccineRepository } from "@api/vaccines/vaccine.repository";
 import { ClinicActRepository } from "@api/clinic-acts/clinic-act.repository";
 import { withUserAvatar } from "@api/users/user.utils";
 import { File } from "../../prisma/generated/prisma/client";
+import { FileService } from "@api/files/file.service";
 
 const ALLOWED_ROLES: UserRole[] = ["CLIENT", "VETERINARIAN", "SECRETARY"];
 
@@ -31,6 +32,7 @@ export class AnimalMedicalHistoryService {
     private vaccineRepository: VaccineRepository,
     private veterinarianClinicRepository: VeterinarianClinicRepository,
     private clinicActRepository: ClinicActRepository,
+    private fileService: FileService,
   ) {}
   private formatMedicalHistory<
     T extends {
@@ -217,19 +219,23 @@ export class AnimalMedicalHistoryService {
 
     await this.assertCanMutate(existing, role, userId);
 
-    if (data.clinicActId && data.clinicActId !== existing.clinicActId) {
-      if (!isStaff(role)) throw new ForbiddenError();
-      const clinicAct = await this.clinicActRepository.findById(
-        data.clinicActId,
+    // Le type ne peut jamais changer après création : une entrée libre reste
+    // libre, une entrée RDV reste RDV — évite toute requalification a posteriori.
+    const existingType = existing.animalMeetingId ? "meeting" : "free";
+    if (data.type !== existingType) {
+      throw new BadRequestError(
+        "Impossible de changer le type d'un acte existant",
       );
-      if (!clinicAct) throw new NotFoundError("clinic act");
-      await this.assertStaffBelongsToClinic(userId, clinicAct.clinicId);
+    }
+
+    // Seul le staff peut modifier les éléments d'une entrée liée à un RDV
+    if (data.type === "meeting" && !isStaff(role)) {
+      throw new ForbiddenError();
     }
 
     const act = await this.repository.update(id, data);
     return this.formatMedicalHistory(act);
   }
-
   async delete(id: string, role: UserRole, userId: string) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
 
@@ -337,5 +343,105 @@ export class AnimalMedicalHistoryService {
     const acts = await this.repository.findByAnimalId(animalId);
     if (!acts) throw new NotFoundError("acts historys");
     return this.formatMedicalHistories(acts);
+  }
+
+  async getFiles(id: string, role: UserRole, userId: string) {
+    const history = await this.repository.findById(id);
+    if (!history) throw new NotFoundError("Acte");
+
+    await this.assertCanView(history, role, userId); // symétrique de assertCanMutate, en lecture
+
+    const imagingOrAnalysisId = history.imaging?.id ?? history.analysis?.id;
+    if (!imagingOrAnalysisId) return [];
+
+    const entityType = history.imaging ? "IMAGING" : "ANALYSIS";
+    return this.fileService.getByEntity(entityType, imagingOrAnalysisId);
+  }
+
+  async createFileUpload(
+    id: string,
+    mimeType: string,
+    role: UserRole,
+    userId: string,
+  ) {
+    const history = await this.repository.findById(id);
+    if (!history) throw new NotFoundError("Acte");
+
+    await this.assertCanMutate(history, role, userId);
+
+    const imagingOrAnalysisId = history.imaging?.id ?? history.analysis?.id;
+    if (!imagingOrAnalysisId) {
+      throw new BadRequestError("Cet acte n'accepte pas de documents");
+    }
+
+    const entityType = history.imaging ? "IMAGING" : "ANALYSIS";
+    return this.fileService.createUpload({
+      entityType,
+      entityId: imagingOrAnalysisId,
+      mimeType,
+      type: mimeType === "application/pdf" ? "PDF" : "IMAGE",
+    });
+  }
+
+  private async assertCanView(
+    existing: { animalId: string; clinicActId?: string | null },
+    role: UserRole,
+    userId: string,
+  ) {
+    // Même logique que assertCanMutate, mais sans la restriction "clinicActId
+    // interdit au client" — un client peut VOIR un acte réalisé en clinique
+    // (juste pas le modifier)
+    if (role === "CLIENT") {
+      const animal = await this.animalRepository.findById(existing.animalId);
+      if (animal?.clientId !== userId) throw new ForbiddenError();
+      return;
+    }
+
+    if (isStaff(role)) {
+      if (existing.clinicActId) {
+        const clinicAct = await this.clinicActRepository.findById(
+          existing.clinicActId,
+        );
+        if (clinicAct) {
+          await this.assertStaffBelongsToClinic(userId, clinicAct.clinicId);
+          return;
+        }
+      }
+      const animal = await this.animalRepository.findById(existing.animalId);
+      if (animal?.attendingVeterinarianClinic) {
+        await this.assertStaffBelongsToClinic(
+          userId,
+          animal.attendingVeterinarianClinic.clinicId,
+        );
+      }
+      return;
+    }
+
+    throw new ForbiddenError();
+  }
+
+  async confirmFileUpload(
+    id: string,
+    fileId: string,
+    role: UserRole,
+    userId: string,
+  ) {
+    const history = await this.repository.findById(id);
+    if (!history) throw new NotFoundError("Acte");
+
+    await this.assertCanMutate(history, role, userId);
+
+    const imagingOrAnalysisId = history.imaging?.id ?? history.analysis?.id;
+    if (!imagingOrAnalysisId) {
+      throw new BadRequestError("Cet acte n'accepte pas de documents");
+    }
+
+    const entityType = history.imaging ? "IMAGING" : "ANALYSIS";
+
+    return this.fileService.confirmUpload({
+      fileId,
+      expectedEntityType: entityType,
+      expectedEntityId: imagingOrAnalysisId,
+    });
   }
 }

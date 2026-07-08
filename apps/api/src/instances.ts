@@ -174,6 +174,7 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
   vaccineRepository,
   veterinarianClinicRepository,
   clinicActRepository,
+  fileService,
 );
 
 const prescriptionService = new PrescriptionService(prescriptionRepository);

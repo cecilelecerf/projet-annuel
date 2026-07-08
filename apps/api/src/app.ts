@@ -27,6 +27,7 @@ import staffRouter from "./staffs/staff.router";
 import productRequestRouter from "./product-requests/product-request.router";
 import clientShopRouter from "./shop/shop.router";
 import orderRouter from "./orders/order.router";
+import salesRouter from "./sales/sales.router";
 
 collectDefaultMetrics();
 
@@ -89,4 +90,5 @@ app.use("/api/staffs", staffRouter);
 app.use("/api/product-requests", productRequestRouter);
 app.use("/api/shop", clientShopRouter);
 app.use("/api/orders", orderRouter);
+app.use("/api/sales", salesRouter);
 app.use(errorHandler);

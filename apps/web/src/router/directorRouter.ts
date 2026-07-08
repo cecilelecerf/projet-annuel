@@ -59,6 +59,11 @@ export const directorRouter: RouteRecordRaw[] = [
         name: 'DIRECTOR.Messagerie',
         component: () => import('@/features/messaging/views/MessagingView.vue'),
       },
+      {
+        path: 'sales',
+        name: 'DIRECTOR.Sales',
+        component: () => import('@/features/sales/views/SalesView.vue'),
+      },
     ],
   },
 ]

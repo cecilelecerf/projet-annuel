@@ -8,6 +8,7 @@ export * from "./messagerie.schema";
 export * from "./health.schema";
 export * from "./review.schema";
 export * from "./mettings";
+export * from "./sales.schema";
 
 export * from "./requests";
 export * from "./acts";

@@ -82,6 +82,7 @@ import { StaffService } from "./staffs/staff.service";
 import { ProductRequestService } from "./product-requests/product-request.service";
 import { ClientShopService } from "./shop/shop.service";
 import { OrderService } from "./orders/order.service";
+import { SalesService } from "./sales/sales.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -115,6 +116,7 @@ import { StaffController } from "./staffs/staff.controller";
 import { ProductRequestController } from "./product-requests/product-request.controller";
 import { ClientShopController } from "./shop/shop.controller";
 import { OrderController } from "./orders/order.controller";
+import { SalesController } from "./sales/sales.controller";
 
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
@@ -241,6 +243,7 @@ const productRequestService = new ProductRequestService(
 const clientShopService = new ClientShopService();
 
 export const orderService = new OrderService(orderRepository, emailService);
+export const salesService = new SalesService();
 
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
@@ -291,3 +294,4 @@ export const staffController = new StaffController(staffService);
 export const productRequestController = new ProductRequestController(productRequestService);
 export const clientShopController = new ClientShopController(clientShopService);
 export const orderController = new OrderController(orderService);
+export const salesController = new SalesController(salesService);

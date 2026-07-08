@@ -47,6 +47,11 @@ export const referentRouter: RouteRecordRaw[] = [
         name: 'REFERENT.Messagerie',
         component: () => import('@/features/messaging/views/MessagingView.vue'),
       },
+      {
+        path: 'sales',
+        name: 'REFERENT.Sales',
+        component: () => import('@/features/sales/views/SalesView.vue'),
+      },
     ],
   },
 ]

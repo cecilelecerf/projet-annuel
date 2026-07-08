@@ -8,6 +8,7 @@ import {
   User,
   ChatDotRound,
   ShoppingCart,
+  TrendCharts,
 } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
@@ -30,6 +31,11 @@ const menuItems: MenuItem[] = [
     index: 'REFERENT.Boutique',
     label: 'Boutique',
     icon: ShoppingCart,
+  },
+  {
+    index: 'REFERENT.Sales',
+    label: 'Ventes',
+    icon: TrendCharts,
   },
   {
     index: 'REFERENT.Messagerie',

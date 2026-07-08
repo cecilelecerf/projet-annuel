@@ -5,6 +5,10 @@ import { actApi } from '@/features/acts/act.api'
 import { useFreeMedicalHistoryForm } from '../composables/useFreeActForm.ts'
 import ActTypeAndCatalogActSelect from './act-fields/ActTypeAndCatalogActSelect.vue'
 import { medicalHistoriesApi } from '../medical-history.api.ts'
+import HospitalizationFields from './act-fields/HospitalizationFields.vue'
+import AnalysisFields from './act-fields/AnalysisFields.vue'
+import ImagingFields from './act-fields/ImagingFields.vue'
+import SurgeryFields from './act-fields/SurgeryFields.vue'
 
 const { animalId, act } = defineProps<{
   animalId: AnimalId
@@ -22,8 +26,15 @@ async function loadActs() {
   acts.value = await actApi.getAll()
 }
 
-const { form, selectedType, actsForSelectedType, reset, populateFromAct, onTypeChange } =
-  useFreeMedicalHistoryForm(animalId, acts)
+const {
+  form,
+  selectedType,
+  actsForSelectedType,
+  reset,
+  populateFromAct,
+  onTypeChange,
+  onActChange,
+} = useFreeMedicalHistoryForm(animalId, acts)
 
 const isEditing = computed(() => !!act)
 
@@ -46,10 +57,11 @@ async function onSave() {
   try {
     if (isEditing.value && act) {
       if (form.value.type !== 'free') return
-      console.log('test')
-      await medicalHistoriesApi.update(act.id, form.value)
+      await medicalHistoriesApi.update({
+        medicalHistoryId: act.id,
+        body: { ...form.value, type: 'free' },
+      })
     } else {
-      console.log('enter')
       if (!form.value.actId || !form.value.performedAt) return
       await medicalHistoriesApi.create({
         body: {
@@ -86,6 +98,7 @@ async function onSave() {
         v-model:form="form"
         :acts-for-selected-type="actsForSelectedType"
         @type-change="onTypeChange"
+        @act-change="onActChange"
       />
 
       <div class="field">
@@ -109,7 +122,24 @@ async function onSave() {
         />
       </div>
     </div>
-
+    <template v-if="form.actId">
+      <SurgeryFields
+        v-if="selectedType === 'SURGERY' && form.surgery"
+        v-model:surgery="form.surgery"
+      />
+      <ImagingFields
+        v-if="selectedType === 'IMAGING' && form.imaging"
+        v-model:imaging="form.imaging"
+      />
+      <AnalysisFields
+        v-if="selectedType === 'ANALYSIS' && form.analysis"
+        v-model:analysis="form.analysis"
+      />
+      <HospitalizationFields
+        v-if="selectedType === 'HOSPITALIZATION' && form.hospitalization"
+        v-model:hospitalization="form.hospitalization"
+      />
+    </template>
     <template #footer>
       <el-button size="large" @click="close">Annuler</el-button>
       <el-button type="primary" size="large" :loading="loading" @click="onSave">

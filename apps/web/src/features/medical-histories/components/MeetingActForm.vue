@@ -3,7 +3,7 @@ import type { ClinicAct, ClinicId, MedicalHistoryMeta, MeetingId } from '@armali
 import { ref, computed, watch } from 'vue'
 import { clinicActApi } from '@/features/clinic-acts/clinic-act.api'
 import { useMeetingActForm } from '../composables/useMeetingActForm'
-import ActTypeAndActSelect from './act-fields/ActTypeAndActSelect.vue'
+import ActTypeAndActSelect from './act-fields/CinicActTypeAndClinicActSelect.vue'
 import SurgeryFields from './act-fields/SurgeryFields.vue'
 import ImagingFields from './act-fields/ImagingFields.vue'
 import AnalysisFields from './act-fields/AnalysisFields.vue'
@@ -62,7 +62,12 @@ async function onSave() {
   loading.value = true
   try {
     if (isEditing.value && act) {
-      await medicalHistoriesApi.update(act.id, form.value)
+      if (form.value.type !== 'meeting') return
+
+      await medicalHistoriesApi.update({
+        medicalHistoryId: act.id,
+        body: { ...form.value, type: 'meeting' },
+      })
     } else {
       if (
         !form.value.animalMeetingId ||

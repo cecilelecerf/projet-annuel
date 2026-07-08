@@ -28,7 +28,13 @@ export const medicalHistoriesApi = {
     const data = await http.get(`/animals/${animalId}/medical-histories`)
     return medicalHistoryMetaSchema.array().parse(data)
   },
-  update: async (medicalHistoryId: MedicalHistoryId, body: UpdateMedicalHistory) => {
+  update: async ({
+    medicalHistoryId,
+    body,
+  }: {
+    medicalHistoryId: MedicalHistoryId
+    body: UpdateMedicalHistory
+  }) => {
     const data = await http.patch(`/medical-histories/${medicalHistoryId}`, body)
     return medicalHistorySchema.parse(data)
   },

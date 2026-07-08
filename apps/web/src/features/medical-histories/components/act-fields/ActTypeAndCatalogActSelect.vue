@@ -8,6 +8,7 @@ defineProps<{
 
 const emit = defineEmits<{
   typeChange: []
+  actChange: [id: string | undefined]
 }>()
 
 const selectedType = defineModel<ActType | null>('selectedType', { required: true })
@@ -42,6 +43,7 @@ const form = defineModel<Partial<CreateFreeMedicalHistory>>('form', { required: 
       style="width: 100%"
       filterable
       :disabled="!selectedType"
+      @change="emit('actChange', $event)"
     >
       <el-option v-for="a in actsForSelectedType" :key="a.id" :label="a.name" :value="a.id" />
     </el-select>

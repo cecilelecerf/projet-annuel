@@ -21,6 +21,11 @@ const menuItems: MenuItem[] = [
     icon: OfficeBuilding,
   },
   {
+    index: 'ADMIN.Acts',
+    label: 'Acts',
+    icon: OfficeBuilding,
+  },
+  {
     index: 'ADMIN.Profil',
     label: 'Profil',
     icon: User,

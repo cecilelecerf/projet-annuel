@@ -2,6 +2,7 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
+  actSchema,
   createActSchema,
   updateActSchema,
   type CreateAct,
@@ -17,7 +18,7 @@ export class ActController {
   async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const acts = await this.service.getAll();
-      res.status(200).json(acts);
+      res.status(200).json(actSchema.array().parse(acts));
     } catch (err) {
       next(err);
     }
@@ -30,7 +31,7 @@ export class ActController {
   ) {
     try {
       const act = await this.service.getById(req.params.id);
-      res.status(200).json(act);
+      res.status(200).json(actSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -45,7 +46,7 @@ export class ActController {
       const result = createActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
       const act = await this.service.create(result.data, req.user.role);
-      res.status(201).json(act);
+      res.status(201).json(actSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -64,7 +65,7 @@ export class ActController {
         result.data,
         req.user.role,
       );
-      res.status(200).json(act);
+      res.status(200).json(actSchema.parse(act));
     } catch (err) {
       next(err);
     }

@@ -8,6 +8,7 @@ import {
   type UpdateClinicAct,
   ClinicId,
   ClinicActId,
+  clinicActSchema,
 } from "@armali/schemas";
 import { ClinicActService } from "./clinic-act.service";
 
@@ -23,7 +24,7 @@ export class ClinicActController {
   ) {
     try {
       const acts = await this.service.getClinicActs(req.params.id);
-      res.status(200).json(acts);
+      res.status(200).json(clinicActSchema.array().parse(acts));
     } catch (err) {
       next(err);
     }
@@ -36,7 +37,7 @@ export class ClinicActController {
   ) {
     try {
       const act = await this.service.getClinicActById(req.params.id);
-      res.status(200).json(act);
+      res.status(200).json(clinicActSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -55,7 +56,7 @@ export class ClinicActController {
         req.user.role,
         req.user.id,
       );
-      res.status(201).json(act);
+      res.status(201).json(clinicActSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -74,7 +75,7 @@ export class ClinicActController {
         result.data,
         req.user.role,
       );
-      res.status(200).json(act);
+      res.status(200).json(clinicActSchema.parse(act));
     } catch (err) {
       next(err);
     }

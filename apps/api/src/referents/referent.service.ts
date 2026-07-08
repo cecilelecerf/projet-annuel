@@ -4,6 +4,7 @@ import { ClinicId, ReferentClinicId } from "@armali/schemas";
 import { ReviewService } from "@api/reviews/review.service";
 import { StaffService } from "@api/staffs/staff.service";
 import { UserService } from "@api/users";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
@@ -83,11 +84,13 @@ export class ReferentService {
     if (!clinic) throw new NotFoundError("Clinique");
     const reviews = await Promise.all(
       vetoIds.map(async (id) => ({
-        veterinarian: await this.userService.getUserById({
-          requesterId: referentUserId,
-          requesterRole: "REFERENT",
-          targetId: id,
-        }),
+        veterinarian: withAvatarUrl(
+          await this.userService.getUserById({
+            requesterId: referentUserId,
+            requesterRole: "REFERENT",
+            targetId: id,
+          }),
+        ),
         stat: await this.reviewService.getStats({
           veterinarianId: id,
           userId: referentUserId,

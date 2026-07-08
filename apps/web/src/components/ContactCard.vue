@@ -13,6 +13,7 @@ const props = withDefaults(
     direction?: 'row' | 'column'
     badge?: { label: string; color?: string }
     color?: Color
+    avatarUrl?: string | null
   }>(),
   {
     actionLabel: 'Voir plus',
@@ -67,8 +68,12 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
       {{ badge.label }}
     </span>
 
-    <div class="contact-avatar" :style="{ background: avatarColor!.bg, color: avatarColor!.fg }">
-      {{ initial }}
+    <div
+      class="contact-avatar"
+      :style="!avatarUrl ? { background: avatarColor!.bg, color: avatarColor!.fg } : {}"
+    >
+      <img v-if="avatarUrl" :src="avatarUrl" :alt="name" class="contact-avatar-img" />
+      <template v-else>{{ initial }}</template>
     </div>
     <div class="body-card">
       <div class="contact-info">
@@ -91,7 +96,6 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
     </div>
   </div>
 </template>
-
 <style lang="scss" scoped>
 .contact-card {
   display: flex;
@@ -178,8 +182,13 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
   justify-content: center;
   font-weight: var(--fw-bold);
   border-radius: var(--radius-md);
+  overflow: hidden; // nécessaire pour que l'img respecte le border-radius
 }
-
+.contact-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .contact-info {
   display: flex;
   flex-direction: column;

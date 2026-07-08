@@ -14,6 +14,7 @@ import {
 import { ClinicService } from "@api/clinics/clinic.service";
 import { match } from "ts-pattern";
 import { ForbiddenError } from "@api/errors";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 export class ReviewService {
   constructor(
@@ -25,8 +26,8 @@ export class ReviewService {
     return {
       ...review,
       id: review.id as ReviewId,
-      veterinarian: review.veterinarianClinic.veterinarian.user,
-      client: review.client.user,
+      veterinarian: withAvatarUrl(review.veterinarianClinic.veterinarian.user),
+      client: withAvatarUrl(review.client.user),
       clinic: review.veterinarianClinic.clinic,
     };
   }
@@ -114,19 +115,11 @@ export class ReviewService {
     });
 
     // ADMIN et REFERENT peuvent consulter les stats d'un vétérinaire précis
-    if (veterinarianId && (role === "ADMIN" || role === "REFERENT")) {
+    if (veterinarianId && (role === "DIRECTOR" || role === "REFERENT")) {
       const clinicId = await this.clinicService.getClinicIdByUserId({
         userId,
         role,
       });
-      console.log(
-        toResult(
-          await this.repository.getStatsByVeterinarian(
-            veterinarianId,
-            clinicId,
-          ),
-        ),
-      );
       return toResult(
         await this.repository.getStatsByVeterinarian(veterinarianId, clinicId),
       );

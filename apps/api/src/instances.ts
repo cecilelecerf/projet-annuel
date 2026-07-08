@@ -105,6 +105,8 @@ import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
 import { StaffController } from "./staffs/staff.controller";
 import { ClinicRequestController } from "./clinics/requests/request.controller";
+import { FileRepository } from "./files/file.repository";
+import { FileService } from "./files/file.service";
 import { ClinicActService } from "./clinic-acts/clinic-act.service";
 import { ClinicActController } from "./clinic-acts/clinic-act.controller";
 // ═══════════════════════════════════════════════════════════════
@@ -115,7 +117,7 @@ const actRepository = new ActRepository(prisma);
 const clinicActRepository = new ClinicActRepository(prisma);
 const animalRepository = new AnimalRepository(prisma);
 const medicalHistoryRepository = new AnimalMedicalHistoryRepository(prisma);
-
+const fileRepository = new FileRepository(prisma);
 const meetingRepository = new MeetingRepository(prisma);
 const animalMeetingRepository = new AnimalMeetingRepository(prisma);
 const availabilityRepository = new AvailabilityRepository(prisma);
@@ -147,11 +149,12 @@ const clinicRequestRepository = new ClinicRequestRepository(prisma);
 const emailService = new EmailService();
 const clinicService = new ClinicService(clinicRepository);
 const staffService = new StaffService(staffRepository, clinicService);
-
+const fileService = new FileService(fileRepository);
 const userService = new UserService(
   userRepository,
   clinicService,
   staffService,
+  fileService,
 );
 
 const authService = new AuthService();

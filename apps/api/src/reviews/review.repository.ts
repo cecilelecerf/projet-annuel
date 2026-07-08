@@ -12,9 +12,12 @@ import type {
 
 const reviewWithRelationsInclude = {
   veterinarianClinic: {
-    include: { veterinarian: { include: { user: true } }, clinic: true },
+    include: {
+      veterinarian: { include: { user: { include: { avatar: true } } } },
+      clinic: true,
+    },
   },
-  client: { include: { user: true } },
+  client: { include: { user: { include: { avatar: true } } } },
 } satisfies Prisma.ReviewInclude;
 
 export type ReviewWithRelationsInclude = Prisma.ReviewGetPayload<{

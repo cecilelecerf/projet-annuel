@@ -20,7 +20,7 @@ import { useFormErrorStore } from '@/stores/formErrorStore'
 import { toUserId } from '@/features/users/utils'
 import { clinicApi } from '@/features/clinics/clinic.api'
 import { meetingApi } from '../api/meeting.api'
-import { usersApi } from '@/features/users/api/user.api'
+import { usersApi } from '@/features/users/user.api'
 import { http } from '@/lib/api'
 import { staffApi } from '@/features/staffs/staff.api'
 

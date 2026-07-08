@@ -3,6 +3,12 @@ import { BadRequestError } from "@api/errors";
 import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest } from "@api/middlewares";
 import { UserRole } from "../../prisma/generated/prisma/enums";
+import {
+  baseUserSchema,
+  fileIdSchema,
+  uploadResponseSchema,
+} from "@armali/schemas";
+import z from "zod";
 
 const VALID_ROLES: UserRole[] = [
   "CLIENT",
@@ -76,6 +82,38 @@ export class UserController {
       res.status(200).json(user);
     } catch (err) {
       next(err);
+    }
+  }
+  async uploadAvatar(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { mimeType } = req.body;
+      const result = await this.service.fileUpload({
+        authorId: req.user.id,
+        mimeType,
+      });
+      res.json(uploadResponseSchema.parse(result));
+    } catch (error) {
+      next(error);
+    }
+  }
+  async confirmAvatar(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { fileId } = z.object({ fileId: fileIdSchema }).parse(req.body);
+      const user = await this.service.confirmAvatarUpload({
+        userId: req.user.id,
+        fileId,
+      });
+      res.json(baseUserSchema.parse(user));
+    } catch (error) {
+      next(error); // pour retomber sur ton errorHandler centralisé plutôt qu'un catch local
     }
   }
 }

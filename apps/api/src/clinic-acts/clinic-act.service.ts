@@ -39,7 +39,6 @@ export class ClinicActService {
       role,
     });
     const clinicAct = await this.repository.findByKeys(clinicId, data.actId);
-    console.log(clinicAct);
     if (clinicAct) throw new ConflictError("ClinicAct already exist");
     try {
       return await this.repository.create(clinicId, data);
@@ -64,7 +63,6 @@ export class ClinicActService {
   async deleteClinicAct(id: ClinicActId, role: UserRole) {
     if (!["DIRECTOR", "REFERENT"].includes(role)) throw new ForbiddenError();
     const act = await this.repository.findById(id);
-    console.log(act);
     if (!act) throw new NotFoundError("Acte clinique");
     return this.repository.delete(id);
   }

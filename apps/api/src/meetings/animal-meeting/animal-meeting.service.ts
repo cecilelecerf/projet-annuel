@@ -12,7 +12,7 @@ import type {
 import { AnimalMeetingRepository } from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { prisma } from "@api/lib/prisma";
-import { flatUser } from "@api/users/user.utils";
+import { flatUser, withUserAvatar } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
 import { EmailService } from "@api/emails/email.service";
 import dayjs from "dayjs";
@@ -195,6 +195,15 @@ export class AnimalMeetingService {
     const user = flatUser(meeting.animal.client);
     return {
       ...meeting,
+
+      veterinarianClinic: meeting.veterinarianClinic
+        ? {
+            ...meeting.veterinarianClinic,
+            veterinarian: withUserAvatar(
+              meeting.veterinarianClinic.veterinarian,
+            ),
+          }
+        : null,
       animal: {
         ...meeting.animal,
         client: user,

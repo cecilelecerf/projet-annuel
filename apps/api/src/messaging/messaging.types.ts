@@ -6,6 +6,7 @@ export const conversationMemberUserSelect = {
   lastname: true,
   picture: true,
   role: true,
+  avatar: true,
 } satisfies Prisma.UserSelect;
 
 export const messageInclude = {

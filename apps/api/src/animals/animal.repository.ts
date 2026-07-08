@@ -25,11 +25,11 @@ export type AnimalForClient = Prisma.AnimalGetPayload<{
 
 const findByIdInclude = {
   race: { include: { pet: true } },
-  client: { include: { user: true } },
+  client: { include: { user: { include: { avatar: true } } } },
   animalConditionHealths: {
     include: { healthCondition: true },
   },
-  attendingVeterinarian: { include: { user: true } },
+  attendingVeterinarian: { include: { user: { include: { avatar: true } } } },
   animalVaccine: true,
 } satisfies Prisma.AnimalInclude;
 

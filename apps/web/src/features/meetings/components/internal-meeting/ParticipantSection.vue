@@ -81,8 +81,8 @@ async function confirmScope(scope: 'single' | 'all') {
 
     <div class="participants-list">
       <div v-for="p in participants" :key="p.id" class="participant-row">
-        <el-avatar :size="36" class="participant-avatar">
-          {{ p.user?.firstname?.charAt(0) ?? '?' }}
+        <el-avatar :size="36" class="participant-avatar" :src="p.user?.avatarUrl ?? undefined">
+          <template v-if="!p.user?.avatarUrl">{{ p.user?.firstname?.charAt(0) ?? '?' }}</template>
         </el-avatar>
         <div class="participant-info">
           <span class="participant-name"> {{ p.user?.firstname }} {{ p.user?.lastname }} </span>
@@ -188,7 +188,7 @@ async function confirmScope(scope: 'single' | 'all') {
 .participants-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
 .participant-row {
@@ -197,9 +197,7 @@ async function confirmScope(scope: 'single' | 'all') {
   gap: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
-  border: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
-  transition: background 0.15s;
 }
 
 .participant-avatar {

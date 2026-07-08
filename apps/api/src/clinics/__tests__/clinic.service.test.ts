@@ -128,10 +128,17 @@ describe("ClinicService.getClientsByClinic", () => {
     mockClinicRepository.findClinicByUserId.mockResolvedValue([
       makeClinic({ id: CLINIC_ID }),
     ]);
-    mockClinicRepository.findClientsById.mockResolvedValue({
-      id: CLINIC_ID,
-      veterinarianClinics: [],
-    });
+    mockClinicRepository.findClientsById.mockResolvedValue([
+      {
+        id: "user-1",
+        user: {
+          id: "user-1",
+          firstname: "Alice",
+          lastname: "Durand",
+          avatar: null,
+        },
+      },
+    ]);
 
     const result = await clinicService.getClientsByClinic({
       authorId: AUTHOR_ID,
@@ -142,7 +149,17 @@ describe("ClinicService.getClientsByClinic", () => {
     expect(mockClinicRepository.findClientsById).toHaveBeenCalledWith(
       CLINIC_ID,
     );
-    expect(result).toEqual({ id: CLINIC_ID, veterinarianClinics: [] });
+    expect(result).toEqual([
+      {
+        id: "user-1",
+        user: {
+          id: "user-1",
+          firstname: "Alice",
+          lastname: "Durand",
+          avatarUrl: null,
+        },
+      },
+    ]);
   });
 });
 

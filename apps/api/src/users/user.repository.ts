@@ -23,6 +23,7 @@ export class UserRepository {
           },
         ],
       },
+      include: { avatar: true },
       omit: { password: true },
     });
   }
@@ -37,6 +38,7 @@ export class UserRepository {
         referentClinicProfile: true,
         veterinarianProfile: true,
         clientProfile: true,
+        avatar: true,
       },
     });
   }
@@ -49,6 +51,7 @@ export class UserRepository {
         secretaryProfile: true,
         directorClinicProfile: true,
         referentClinicProfile: true,
+        avatar: true,
       },
 
       omit: { password: true },
@@ -59,6 +62,19 @@ export class UserRepository {
       where: { role: { in: roles } },
       omit: { password: true },
       include: userWithProfileAndClinicIdInclude,
+    });
+  }
+  async updateAvatar({
+    userId,
+    avatarId,
+  }: {
+    userId: string;
+    avatarId: string;
+  }) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarId },
+      include: { avatar: true },
     });
   }
 }

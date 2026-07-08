@@ -19,3 +19,5 @@ export * from "./referent/dashboard.schema";
 export * from "./staffs";
 export * from "./specilities.schema";
 export * from "./veterinarian-clinic.schema";
+export * from "./file.schema";
+export * from "./upload.schema";

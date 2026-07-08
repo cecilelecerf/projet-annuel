@@ -115,11 +115,13 @@ describe("ReviewService.getReviewsByRole", () => {
       id: "vet-user-1",
       firstname: "Jean",
       lastname: "Dupont",
+      avatarUrl: null,
     });
     expect(result[0].client).toEqual({
       id: "client-user-1",
       firstname: "Marie",
       lastname: "Martin",
+      avatarUrl: null,
     });
     expect(result[0].clinic).toEqual({ id: "clinic-1", name: "Clinique A" });
   });
@@ -254,7 +256,7 @@ describe("ReviewService.getStats", () => {
     expect(result).toEqual({ average: 4.6, count: 12 });
   });
 
-  it("ADMIN avec veterinarianId reçoit les stats d'un véto précis", async () => {
+  it("DIRECTOR avec veterinarianId reçoit les stats d'un véto précis", async () => {
     mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockReviewRepository.getStatsByVeterinarian.mockResolvedValue({
       average: 3.0,
@@ -262,8 +264,8 @@ describe("ReviewService.getStats", () => {
     });
 
     const result = await reviewService.getStats({
-      userId: "admin-1" as any,
-      role: "ADMIN",
+      userId: "director-1" as any,
+      role: "DIRECTOR",
       veterinarianId: "vet-2" as any,
     });
 

@@ -16,13 +16,15 @@ model User {
   firstname String
   lastname  String
   password  String
-  picture   String?
-
+ 
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
   secretaryProfile      SecretaryProfile?
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
+
+  avatarId String? @unique
+  avatar   File?   @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
 
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]

@@ -44,10 +44,11 @@ const cardDirection = computed(() => (isBelowSm.isAbove.value ? 'row' : 'column'
         name: `${user?.role.toUpperCase()}.Clients.Detail`,
         params: { id: meeting.animal.clientId },
       }"
+      :avatar-url="meeting.animal.client.avatarUrl"
       :direction="cardDirection"
     />
     <VetoCard
-      v-if="meeting.veterinarianClinicId"
+      v-if="user?.role === 'CLIENT' && meeting.veterinarianClinicId"
       :veterinarian-clinic-id="meeting.veterinarianClinicId"
     />
   </div>

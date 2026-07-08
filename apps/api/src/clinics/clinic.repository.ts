@@ -42,7 +42,7 @@ export class ClinicRepository {
           },
         },
       },
-      include: { user: true },
+      include: { user: { include: { avatar: true } } },
     });
   }
   // ── Trouve la clinique d'un utilisateur selon son rôle ────────────────────

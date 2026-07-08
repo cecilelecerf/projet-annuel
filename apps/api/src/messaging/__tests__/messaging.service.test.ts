@@ -87,14 +87,30 @@ const makeSecretaryUser = (id: string, clinicId: string) => ({
   clinicIds: [clinicId],
 });
 
-const makeMember = (overrides = {}) => ({
-  id: "member-1",
-  role: "MEMBER" as const,
-  userId: "actor-1",
-  conversationId: "conv-1",
-  ...overrides,
-});
+type MemberOverrides = {
+  id?: string;
+  role?: "MEMBER" | "ADMIN";
+  userId?: string;
+  conversationId?: string;
+  user?: { id: string; firstname: string; lastname: string; avatar: null };
+};
 
+const makeMember = (overrides: MemberOverrides = {}) => {
+  const userId = overrides.userId ?? "actor-1";
+  return {
+    id: "member-1",
+    role: "MEMBER" as const,
+    userId,
+    conversationId: "conv-1",
+    user: {
+      id: userId,
+      firstname: "Jean",
+      lastname: "Dupont",
+      avatar: null,
+    },
+    ...overrides,
+  };
+};
 const makeConversation = (overrides = {}) => ({
   id: "conv-1",
   type: "GROUP" as const,

@@ -19,6 +19,7 @@ export default defineConfig({
         "src/tests/**",
         "src/**/*.test.ts",
         "src/index.ts",
+        ".env",
       ],
       thresholds: {
         lines: 70,

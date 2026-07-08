@@ -21,6 +21,7 @@ import {
 } from "@api/errors";
 import { EmailService } from "@api/emails/email.service";
 import type { RegisterDirector } from "@api/types/auth.types";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 const emailService = new EmailService();
 
@@ -66,8 +67,10 @@ export class AuthService {
 
     const user = await prisma.user.create({
       data: { ...data, password: hashedPassword },
+      include: { avatar: true },
     });
-    const parsedUser = baseUserSchema.parse(user);
+    const validUser = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(validUser);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);
 
@@ -119,6 +122,7 @@ export class AuthService {
           role: "DIRECTOR",
           directorClinicProfile: { create: {} },
         },
+        include: { avatar: true },
       });
 
       await tx.clinicRequest.create({
@@ -136,7 +140,8 @@ export class AuthService {
       return createdUser;
     });
 
-    const parsedUser = baseUserSchema.parse(user);
+    const validUser = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(validUser);
     const accessToken = generateAccessToken(parsedUser);
     const refreshToken = generateRefreshToken(parsedUser);
 
@@ -158,6 +163,7 @@ export class AuthService {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
       include: {
+        avatar: true,
         secretaryProfile: true,
         directorClinicProfile: {
           select: { clinic: { select: { id: true } } },
@@ -176,7 +182,8 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
     const clinicId = this.getClinicId(user);
-    const parsedUser = baseUserSchema.parse(user);
+    const withAvatar = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(withAvatar);
     const accessToken = generateAccessToken({
       ...parsedUser,
       clinicId: clinicId ?? undefined,
@@ -210,12 +217,15 @@ export class AuthService {
     const payload = verifyRefreshToken(refreshToken);
     if (!payload) throw new UnauthorizedError("Refresh token invalide");
 
-    const user = await prisma.user.findUnique({ where: { id: payload.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.id },
+      include: { avatar: true },
+    });
     if (!user) throw new NotFoundError("Utilisateur");
 
     await prisma.refreshToken.delete({ where: { token: refreshToken } });
-
-    const parsedUser = baseUserSchema.parse(user);
+    const validUser = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(validUser);
     const newAccessToken = generateAccessToken(parsedUser);
     const newRefreshToken = generateRefreshToken(parsedUser);
 
@@ -261,6 +271,7 @@ export class AuthService {
             veterinarianClinics: true,
           },
         },
+        avatar: true,
       },
       omit: { password: true },
     });

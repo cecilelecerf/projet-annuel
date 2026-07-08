@@ -63,7 +63,15 @@ function formatLongDate(value?: string | null) {
 
     <template v-if="member">
       <div class="profile-header">
-        <div class="avatar">{{ member.firstname[0] }}{{ member.lastname[0] }}</div>
+        <div class="avatar">
+          <img
+            v-if="member.avatarUrl"
+            :src="member.avatarUrl"
+            :alt="`${member.firstname} ${member.lastname}`"
+            class="avatar-img"
+          />
+          <template v-else>{{ member.firstname[0] }}{{ member.lastname[0] }}</template>
+        </div>
         <div>
           <h1>{{ member.firstname }} {{ member.lastname }}</h1>
           <p>{{ member.email }}</p>
@@ -302,6 +310,13 @@ function formatLongDate(value?: string | null) {
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   flex-shrink: 0;
+  overflow: hidden; // pour que l'image respecte le border-radius
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .profile-header h1 {
   font-size: var(--fs-2xl);

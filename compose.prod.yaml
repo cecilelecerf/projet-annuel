@@ -99,7 +99,7 @@ services:
       - aws_secret_access_key
       - assets_base_url
       - stripe_secret_key
-      - stripe_webhook_secret
+      - stripe_webhook_secret_v2
       - resend_api_key
     networks:
       - backend
@@ -369,7 +369,7 @@ secrets:
     external: true
   stripe_secret_key:
     external: true
-  stripe_webhook_secret:
+  stripe_webhook_secret_v2:
     external: true
   resend_api_key:
     external: true

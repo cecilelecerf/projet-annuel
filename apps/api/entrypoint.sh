@@ -20,7 +20,7 @@ fi
 
 if [ -f /run/secrets/stripe_secret_key ]; then
   export STRIPE_SECRET_KEY=$(cat /run/secrets/stripe_secret_key)
-  export STRIPE_WEBHOOK_SECRET=$(cat /run/secrets/stripe_webhook_secret)
+  export STRIPE_WEBHOOK_SECRET=$(cat /run/secrets/stripe_webhook_secret_v2)
 fi
 
 if [ -f /run/secrets/resend_api_key ]; then
@@ -32,7 +32,7 @@ if [ -z "$DATABASE_URL" ]; then
   echo "❌ DATABASE_URL is not set"
   exit 1
 fi
-echo "$DATABASE_URL"
+echo "✅ DATABASE_URL is set"
 echo "Waiting for database..."
 
 echo "Running migrations..."

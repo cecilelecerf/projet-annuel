@@ -70,7 +70,7 @@ export const bookingVetSchema = veterinarianProfileSchema
     user: baseUserSchema.pick({
       firstname: true,
       lastname: true,
-      picture: true,
+      avatarUrl: true,
     }),
     specialities: z.array(bookingSpecialitySchema),
     rating: z.number().min(0).max(5).nullable().optional(),

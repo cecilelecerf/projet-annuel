@@ -8,6 +8,7 @@ import type {
 import { ConversationRepository } from "./conversation.repository";
 import { MessageRepository } from "./message.repository";
 import { ContactsRepository } from "./contacts.repository";
+import { withAvatarUrl, withUsersAvatar } from "@api/users/user.utils";
 
 export class MessagingService {
   constructor(
@@ -49,7 +50,13 @@ export class MessagingService {
       (m) => m.userId === userId,
     );
     if (!member) throw new ForbiddenError();
-    return { conversation, member };
+    return {
+      conversation: {
+        ...conversation,
+        conversationMembers: withUsersAvatar(conversation.conversationMembers),
+      },
+      member: { ...member, user: withAvatarUrl(member.user) },
+    };
   }
 
   private async assertIsMember(conversationId: string, userId: string) {
@@ -88,7 +95,20 @@ export class MessagingService {
           me?.lastReadAt ?? null,
         );
         const { messages, ...rest } = conversation;
-        return { ...rest, lastMessage: messages[0] ?? null, unreadCount };
+
+        const lastMessage = messages[0] ?? null;
+        return {
+          ...rest,
+          conversationMembers: rest.conversationMembers.map((member) => ({
+            ...member,
+            user: withAvatarUrl(member.user),
+          })),
+          lastMessage: {
+            ...lastMessage,
+            sender: withAvatarUrl(lastMessage.sender),
+          },
+          unreadCount,
+        };
       }),
     );
   }
@@ -162,10 +182,14 @@ export class MessagingService {
       ...pagination,
       limit,
     });
-    const hasMore = page.length > limit;
+    const pageFormat = page.map((p) => ({
+      ...p,
+      sender: withAvatarUrl(p.sender),
+    }));
+    const hasMore = pageFormat.length > limit;
     return {
       conversation,
-      messages: hasMore ? page.slice(0, limit) : page,
+      messages: hasMore ? pageFormat.slice(0, limit) : pageFormat,
       hasMore,
     };
   }

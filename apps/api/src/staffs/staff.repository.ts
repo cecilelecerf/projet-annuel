@@ -16,23 +16,23 @@ export class StaffRepository {
     const [director, referents, vets, secretaries] = await Promise.all([
       this.prisma.directorClinicProfile.findFirst({
         where: { clinic: { id: clinicId } },
-        include: { user: true },
+        include: { user: { include: { avatar: true } } },
       }),
       this.prisma.referentClinicProfile.findMany({
         where: { clinicId },
-        include: { user: true },
+        include: { user: { include: { avatar: true } } },
       }),
       this.prisma.veterinarianClinic.findMany({
         where: { clinicId },
         include: {
           veterinarian: {
-            include: { user: true },
+            include: { user: { include: { avatar: true } } },
           },
         },
       }),
       this.prisma.secretaryProfile.findMany({
         where: { clinicId },
-        include: { user: true },
+        include: { user: { include: { avatar: true } } },
       }),
     ]);
 
@@ -130,6 +130,7 @@ export class StaffRepository {
     return this.prisma.user.findUnique({
       where: { id: memberId },
       include: {
+        avatar: true,
         veterinarianProfile: {
           include: {
             veterinarianIdentity: true,
@@ -187,6 +188,7 @@ export class StaffRepository {
         },
       },
       include: {
+        avatar: true,
         veterinarianProfile: {
           include: {
             veterinarianIdentity: true,
@@ -227,7 +229,10 @@ export class StaffRepository {
           },
         },
       },
-      include: { secretaryProfile: { include: { bankingInfo: true } } },
+      include: {
+        avatar: true,
+        secretaryProfile: { include: { bankingInfo: true } },
+      },
     });
 
     const { password: _, ...userWithoutPassword } = user;
@@ -254,7 +259,7 @@ export class StaffRepository {
           create: { clinicId },
         },
       },
-      include: { referentClinicProfile: true },
+      include: { avatar: true, referentClinicProfile: true },
     });
 
     const { password: _, ...userWithoutPassword } = user;

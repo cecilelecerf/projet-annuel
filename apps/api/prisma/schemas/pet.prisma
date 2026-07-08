@@ -19,6 +19,9 @@ model Animal {
   raceId String
   race   Race   @relation(fields: [raceId], references: [id])
 
+  photoId String? @unique
+  photo   File?   @relation("AnimalPhoto", fields: [photoId], references: [id], onDelete: SetNull)
+
   animalVaccine          AnimalVaccine[]
   animalMeeting          AnimalMeeting[]
   foodPets               FoodPet[]

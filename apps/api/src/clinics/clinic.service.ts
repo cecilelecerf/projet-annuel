@@ -14,6 +14,7 @@ import { ClinicRepository } from "./clinic.repository";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { Clinic } from "../../prisma/generated/prisma/client";
+import { withUserAvatar } from "@api/users/user.utils";
 
 export class ClinicService {
   constructor(private repository: ClinicRepository) {}
@@ -40,7 +41,9 @@ export class ClinicService {
     if (!clinics.some(({ id }) => id === clinicId)) {
       throw new ForbiddenError();
     }
-    return await this.repository.findClientsById(clinicId);
+    return (await this.repository.findClientsById(clinicId)).map(
+      withUserAvatar,
+    );
   }
   async getClinicIdsByUserId({
     userId,

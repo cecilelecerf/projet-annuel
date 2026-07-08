@@ -34,6 +34,7 @@ const roleTag: Record<StaffRole, Color> = {
         :metas="[member.email]"
         :key="member.id"
         :name="member.lastname"
+        :avatar-url="member.avatarUrl"
         :color="roleTag[member.role]"
         :badge="{ label: roleLabel[member.role], color: roleTag[member.role] }"
         :route="{ name: `${user?.role.toUpperCase()}.Staff.Detail`, params: { id: member.id } }"

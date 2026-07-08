@@ -57,6 +57,7 @@ app.get("/api/test", async (req, res) => {
   res.json(users);
 });
 app.use("/api/auth", authRouter);
+// app.use("/api/files", fileRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/clinics", clinicRouter);

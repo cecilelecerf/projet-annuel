@@ -60,11 +60,17 @@ const makeAnimal = (overrides = {}) => ({
   raceId: "race-1",
   createdAt: new Date(),
   updatedAt: new Date(),
-  client: { country: "FR" },
+  client: {
+    user: {
+      id: "client-profile-1",
+      firstname: "Alice",
+      lastname: "Durand",
+      avatarUrl: null,
+    },
+  },
   race: { petId: "pet-1" },
   ...overrides,
 });
-
 const makeVaccine = (overrides = {}) => ({
   id: "vaccine-1",
   recommendedAge: 8,
@@ -348,7 +354,7 @@ describe("AnimalService.delete", () => {
     mockAnimalRepository.findById.mockResolvedValue(null);
 
     await expect(
-      animalService.delete({ id: "unknown", userId: "user-1", role: "CLIENT" }),
+      animalService.delete({ id: "unknown", userId: "user-1" }),
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -361,7 +367,6 @@ describe("AnimalService.delete", () => {
       animalService.delete({
         id: "animal-1",
         userId: "client-profile-1",
-        role: "CLIENT",
       }),
     ).rejects.toThrow(ForbiddenError);
   });
@@ -375,7 +380,6 @@ describe("AnimalService.delete", () => {
     await animalService.delete({
       id: "animal-1",
       userId: "client-profile-1",
-      role: "CLIENT",
     });
 
     expect(mockAnimalRepository.delete).toHaveBeenCalledWith("animal-1");
@@ -390,7 +394,6 @@ describe("AnimalService.delete", () => {
       animalService.delete({
         id: "animal-1",
         userId: "user-staff",
-        role: "SECRETARY",
       }),
     ).rejects.toThrow(ForbiddenError);
 

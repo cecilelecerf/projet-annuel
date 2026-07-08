@@ -12,6 +12,7 @@ export const userWithProfileAndClinicIdInclude = {
     select: { id: true, clinic: { select: { id: true } } },
   },
   referentClinicProfile: { select: { id: true, clinicId: true } },
+  avatar: true,
 } satisfies Prisma.UserInclude;
 
 export type UserWithProfileAndClinicId = Prisma.UserGetPayload<{

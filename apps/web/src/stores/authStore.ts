@@ -2,7 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { http } from '../lib/api'
 import { type ClinicId, type User } from '@armali/schemas'
-export type UserStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'role'> & {
+export type UserStore = Pick<
+  User,
+  'id' | 'email' | 'firstname' | 'lastname' | 'role' | 'avatarUrl'
+> & {
   clinicId?: ClinicId
 }
 
@@ -30,13 +33,14 @@ export const useAuthStore = defineStore('auth', () => {
   const init = async () => {
     if (!isAuthenticated.value) return
     try {
-      const data = await http.get<UserStore>('/auth/me')
+      const data = await http.get<UserStore>('/auth/me').then()
       user.value = {
         id: data.id,
         email: data.email,
         firstname: data.firstname,
         lastname: data.lastname,
         role: data.role,
+        avatarUrl: data.avatarUrl,
         clinicId: data.clinicId,
       }
     } catch {

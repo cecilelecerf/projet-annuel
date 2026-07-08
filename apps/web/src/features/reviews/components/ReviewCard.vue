@@ -58,6 +58,7 @@ const onCommentChange = async () => {
     <div class="vet-review-header">
       <el-avatar
         :size="48"
+        :src="review.veterinarian.avatarUrl ?? undefined"
         style="
           background: var(--el-color-purple-light-7, #eeedfe);
           color: var(--el-color-purple, #9f6de0);
@@ -65,7 +66,7 @@ const onCommentChange = async () => {
           font-size: 16px;
         "
       >
-        {{ initials }}
+        <template v-if="!review.veterinarian.avatarUrl">{{ initials }}</template>
       </el-avatar>
 
       <div class="vet-review-identity">

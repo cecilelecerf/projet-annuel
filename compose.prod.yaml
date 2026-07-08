@@ -81,6 +81,8 @@ services:
       S3_BUCKET: armali-files
       AWS_REGION: us-east-1
       ASSETS_BASE_URL: https://s3.armali.online/armali-files
+      ENABLE_EMAIL: "true"
+      MAIL_FROM: "Armali <contact@armali.online>"
     secrets:
       - db_user
       - db_password
@@ -95,6 +97,9 @@ services:
       - aws_access_key_id
       - aws_secret_access_key
       - assets_base_url
+      - stripe_secret_key
+      - stripe_webhook_secret
+      - resend_api_key
     networks:
       - backend
       - frontend
@@ -359,6 +364,12 @@ secrets:
   aws_secret_access_key:
     external: true
   assets_base_url:
+    external: true
+  stripe_secret_key:
+    external: true
+  stripe_webhook_secret:
+    external: true
+  resend_api_key:
     external: true
 
 configs:

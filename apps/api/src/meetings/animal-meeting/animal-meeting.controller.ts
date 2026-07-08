@@ -94,28 +94,10 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      const meetingsWithFlatUser = meetings.map((meeting) => {
-        const client = flatUser(meeting.animal.client);
-        const veterinarian = meeting.veterinarianClinic
-          ? flatUser(meeting.veterinarianClinic?.veterinarian)
-          : undefined;
-        return {
-          ...meeting,
-          animal: {
-            ...meeting.animal,
-            client,
-          },
-          veterinarianClinic: {
-            ...meeting.veterinarianClinic,
-            veterinarian,
-          },
-        };
-      });
+
       res
         .status(200)
-        .json(
-          animalMeetigWithMeetingSchema.array().parse(meetingsWithFlatUser),
-        );
+        .json(animalMeetigWithMeetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }
@@ -132,15 +114,9 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(
-        animalMeetingFieldSchema
-          .extend({
-            meeting: meetingBaseSchema,
-            animalMedicalHistories: medicalHistorySchema.array(),
-          })
-          .array()
-          .parse(meetings),
-      );
+      res
+        .status(200)
+        .json(animalMeetigWithMeetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }

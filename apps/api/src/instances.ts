@@ -12,7 +12,7 @@ import { ClinicActRepository } from "./clinic-acts/clinic-act.repository";
 import { AnimalRepository } from "./animals/animal.repository";
 
 // ── Medical histories ─────────────────────────────────────────
-import { AnimalMedicalHistoryRepository } from "./medicalHistories/medical-history.repository";
+import { AnimalMedicalHistoryRepository } from "./medical-histories/medical-history.repository";
 
 // ── Meetings ──────────────────────────────────────────────────
 import { MeetingRepository } from "./meetings/meeting.repository";
@@ -93,8 +93,8 @@ import { PrescriptionController } from "./prescriptions/prescription.controller"
 import { ReferentController } from "./referents/referent.controller";
 import { ReviewController } from "./reviews/review.controller";
 import { UserController } from "./users/user.controller";
-import { AnimalMedicalHistoryService } from "./medicalHistories/medical-history.service";
-import { AnimalMedicalHistoryController } from "./medicalHistories/medical-history.controller";
+import { AnimalMedicalHistoryService } from "./medical-histories/medical-history.service";
+import { AnimalMedicalHistoryController } from "./medical-histories/medical-history.controller";
 import { RecurringMeetingController } from "./meetings/recurring-meeting/recurring-meeting.controller";
 import { ProductController } from "./products/product.controller";
 import { BrandController } from "./brands/brand.controller";
@@ -170,6 +170,7 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
   medicalHistoryRepository,
   animalMeetingRepository,
   animalRepository,
+  actRepository,
   vaccineRepository,
   veterinarianClinicRepository,
   clinicActRepository,

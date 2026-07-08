@@ -184,7 +184,7 @@ export class AnimalMeetingRepository {
     return this.prisma.meetingBase.delete({ where: { id } });
   }
 
-  async findByClient(userId: User["id"]): Promise<AnimalMeetingForUser[]> {
+  async findByClient(userId: User["id"]) {
     return this.prisma.animalMeeting.findMany({
       where: {
         animal: { client: { user: { id: userId } } },
@@ -193,10 +193,10 @@ export class AnimalMeetingRepository {
     });
   }
 
-  async findByAnimal(animalId: AnimalId): Promise<AnimalMeetingForAnimal[]> {
+  async findByAnimal(animalId: AnimalId): Promise<AnimalMeetingForUser[]> {
     return this.prisma.animalMeeting.findMany({
-      where: { animalId: animalId },
-      include: findByAnimalInclude,
+      where: { animalId },
+      include: findByUserInclude,
     });
   }
 }

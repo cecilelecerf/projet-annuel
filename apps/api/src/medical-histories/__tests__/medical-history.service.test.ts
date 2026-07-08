@@ -70,9 +70,9 @@ vi.mock("@api/vaccines/vaccine.repository", () => ({
 }));
 
 const { AnimalMedicalHistoryService } =
-  await import("@api/medicalHistories/medical-history.service");
+  await import("@api/medical-histories/medical-history.service");
 const { AnimalMedicalHistoryRepository } =
-  await import("@api/medicalHistories/medical-history.repository");
+  await import("@api/medical-histories/medical-history.repository");
 const { AnimalMeetingRepository } =
   await import("@api/meetings/animal-meeting/animal-meeting.repository");
 const { AnimalRepository } = await import("@api/animals/animal.repository");

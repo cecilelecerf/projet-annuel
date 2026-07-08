@@ -179,7 +179,7 @@ const lockedReason = computed(() => {
 .measures-row,
 .measures-edit-row {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-2xl);
 }
 
 .measure-card {
@@ -188,22 +188,22 @@ const lockedReason = computed(() => {
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-md);
-  background: var(--el-color-#{meeting-color('animal')}-dark-0_5);
-  color: white;
+  background: var(--el-color-#{meeting-color('animal')}-light-7);
   border-radius: var(--radius-md);
   text-align: center;
 }
 
 .measure-label {
   font-size: 12px;
-  color: white;
+  color: var(--el-color-#{meeting-color('animal')}-dark-2);
+
   text-transform: uppercase;
 }
 
 .measure-value {
   font-size: 22px;
   font-weight: var(--fw-bold);
-  color: white;
+  color: var(--el-color-#{meeting-color('animal')});
 }
 
 .measure-edit {

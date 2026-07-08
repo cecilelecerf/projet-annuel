@@ -13,7 +13,7 @@ import actRouter from "./acts/act.router";
 import { default as meetingRouter } from "./meetings/meeting.router";
 import animalRouter from "./animals/animal.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
-import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
+import animalMedicalHistoryRouter from "./medical-histories/medical-history.router";
 import productRouter from "./products/product.router";
 import brandRouter from "./brands/brand.router";
 import specialityRouter from "./specialities/speciality.router";

@@ -1,8 +1,11 @@
 import { http } from '@/lib/api'
 import {
   clinicActSchema,
+  medicalHistoryMetaSchema,
   medicalHistorySchema,
+  type AnimalId,
   type ClinicId,
+  type CreateMedicalHistory,
   type MedicalHistoryId,
   type MeetingId,
   type UpdateMedicalHistory,
@@ -19,22 +22,25 @@ export const medicalHistoriesApi = {
   },
   getByMeeting: async (meetingId: MeetingId) => {
     const data = await http.get(`/meetings/animals/${meetingId}/medical-histories`)
-    return medicalHistorySchema.array().parse(data)
+    return medicalHistoryMetaSchema.array().parse(data)
   },
-  update: async (
-    meetingId: MeetingId,
-    meetingActId: MedicalHistoryId,
-    body: UpdateMedicalHistory,
-  ) => {
-    const data = await http.patch(`/medical-histories/${meetingId}/${meetingActId}`, body)
+  getByAnimal: async (animalId: AnimalId) => {
+    const data = await http.get(`/animals/${animalId}/medical-histories`)
+    return medicalHistoryMetaSchema.array().parse(data)
+  },
+  update: async (medicalHistoryId: MedicalHistoryId, body: UpdateMedicalHistory) => {
+    const data = await http.patch(`/medical-histories/${medicalHistoryId}`, body)
     return medicalHistorySchema.parse(data)
   },
   get: async (meetingId: MeetingId, meetingActId: MedicalHistoryId) => {
     const data = await http.get(`/medical-histories/${meetingId}/${meetingActId}`)
     return medicalHistorySchema.parse(data)
   },
-  create: async (meetingId: MeetingId, body: UpdateMedicalHistory) => {
-    const data = await http.post(`/medical-histories/${meetingId}`, body)
+  create: async ({ body }: { body: CreateMedicalHistory }) => {
+    const data = await http.post(`/medical-histories`, body)
     return medicalHistorySchema.parse(data)
+  },
+  delete: async (medicalHistoryId: MedicalHistoryId) => {
+    await http.delete(`/medical-histories/${medicalHistoryId}`)
   },
 }

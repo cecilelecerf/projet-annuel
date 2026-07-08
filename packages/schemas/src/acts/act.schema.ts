@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { actIdSchema, vaccineIdSchema } from "../ids";
-import { vaccineSchema } from "./vaccine";
 import { minVaccineSchema } from "./vaccine/vaccine.schema";
 
 // ── Enums ─────────────────────────────────────────────────────────────────────

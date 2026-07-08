@@ -6,7 +6,6 @@ import {
   medicalHistoryIdSchema,
 } from "../ids";
 import { vaccineSchema as vaccineSchema } from "./vaccine";
-import { medicalHistorySchema } from "./animal-medical-history.schema";
 
 export const animalVaccineSchema = z.object({
   id: petVaccineIdSchema,

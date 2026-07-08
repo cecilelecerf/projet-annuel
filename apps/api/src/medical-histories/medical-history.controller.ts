@@ -2,10 +2,14 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
+  AnimalId,
   createMedicalHistorySchema,
+  createMeetingMedicalHistorySchema,
+  medicalHistoryMetaSchema,
+  medicalHistorySchema,
   MeetingId,
   updateMedicalHistorySchema,
-  type CreateMedicalHistory,
+  type CreateMettingMedicalHistory,
   type UpdateMedicalHistory,
 } from "@armali/schemas";
 import { AnimalMedicalHistoryService } from "./medical-history.service";
@@ -19,8 +23,30 @@ export class AnimalMedicalHistoryController {
     next: NextFunction,
   ) {
     try {
-      const acts = await this.service.getByMeeting(req.params.id);
-      res.status(200).json(acts);
+      const acts = await this.service.getByMeeting(
+        req.params.id,
+        req.user.role,
+        req.user.id,
+      );
+      res.status(200).json(medicalHistoryMetaSchema.array().parse(acts));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByAnimal(
+    req: RequestWithParams<{ id: AnimalId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const acts = await this.service.getByAnimal(
+        req.params.id,
+        req.user.role,
+        req.user.id,
+      );
+      console.log(acts);
+      res.status(200).json(medicalHistoryMetaSchema.array().parse(acts));
     } catch (err) {
       next(err);
     }
@@ -31,27 +57,19 @@ export class AnimalMedicalHistoryController {
     next: NextFunction,
   ) {
     try {
-      const acts = await this.service.getByClinic(req.params.id);
-      res.status(200).json(acts);
-    } catch (err) {
-      next(err);
-    }
-  }
-  async getById(
-    req: RequestWithParams<{ id: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const act = await this.service.getById(req.params.id);
-      res.status(200).json(act);
+      const acts = await this.service.getByClinic(
+        req.params.id,
+        req.user.role,
+        req.user.id,
+      );
+      res.status(200).json(medicalHistorySchema.array().parse(acts));
     } catch (err) {
       next(err);
     }
   }
 
   async create(
-    req: AuthenticatedRequest & { body: CreateMedicalHistory },
+    req: AuthenticatedRequest & { body: CreateMettingMedicalHistory },
     res: Response,
     next: NextFunction,
   ) {
@@ -63,7 +81,7 @@ export class AnimalMedicalHistoryController {
         req.user.role,
         req.user.id,
       );
-      res.status(201).json(act);
+      res.status(201).json(medicalHistorySchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -76,13 +94,15 @@ export class AnimalMedicalHistoryController {
   ) {
     try {
       const result = updateMedicalHistorySchema.safeParse(req.body);
+      console.log(updateMedicalHistorySchema);
       if (!result.success) throw new BadRequestError(result.error.message);
       const act = await this.service.update(
         req.params.id,
         result.data,
         req.user.role,
+        req.user.id,
       );
-      res.status(200).json(act);
+      res.status(200).json(medicalHistorySchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -94,7 +114,7 @@ export class AnimalMedicalHistoryController {
     next: NextFunction,
   ) {
     try {
-      await this.service.delete(req.params.id, req.user.role);
+      await this.service.delete(req.params.id, req.user.role, req.user.id);
       res.status(204).send();
     } catch (err) {
       next(err);

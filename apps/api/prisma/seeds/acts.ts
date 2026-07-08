@@ -195,9 +195,7 @@ export async function seedActs(
       performedAt: animalMeeting1.date,
       animalMeetingId: animalMeeting1.animalMeeting!.id!,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],
-      },
+      performedById: animalMeeting1.animalMeeting!.veterinarianClinicId,
       priceApplied: 70,
       type: "VACCINATION",
       clinicActId: caVaccClinic1.id,
@@ -224,9 +222,7 @@ export async function seedActs(
       clinicActId: caEchoClinic1.id,
       animalMeetingId: animalMeeting1.animalMeeting!.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],
-      },
+      performedById: animalMeeting1.animalMeeting!.veterinarianClinicId!,
       imaging: {
         create: {
           imagingType: "ULTRASOUND",
@@ -248,9 +244,7 @@ export async function seedActs(
       clinicActId: caBloodClinic1.id,
       animalMeetingId: animalMeeting1.animalMeeting!.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId! }],
-      },
+      performedById: animalMeeting1.animalMeeting!.veterinarianClinicId!,
       analysis: {
         create: {
           analysisType: "BLOOD",
@@ -294,9 +288,7 @@ export async function seedActs(
       clinicActId: caXrayClinic1.id,
       animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId! }],
-      },
+      performedById: animalMeeting2.animalMeeting!.veterinarianClinicId!,
       imaging: {
         create: {
           imagingType: "XRAY",
@@ -318,9 +310,7 @@ export async function seedActs(
       clinicActId: caNursingClinic1.id,
       animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId! }],
-      },
+      performedById: animalMeeting2.animalMeeting!.veterinarianClinicId!,
       notes: "Nettoyage et désinfection des plaies cutanées",
     },
   });

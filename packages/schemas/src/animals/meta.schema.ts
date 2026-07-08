@@ -7,7 +7,10 @@ import {
   veterinarianProfileSchema,
 } from "../users";
 import { healthConditionSchema, raceMetaSchema } from "../pet.schema";
-import { clientPetHealthConditionSchema } from "../health.schema";
+import {
+  clientPetHealthConditionMetaSchema,
+  clientPetHealthConditionSchema,
+} from "../health.schema";
 import { animalSchema } from "./index.schema";
 import { animalVaccineSchema } from "../acts";
 
@@ -32,10 +35,7 @@ export type AnimalWithRaceMeta = z.infer<typeof animalWithRaceMetaSchema>;
 export type AnimalWithUser = z.infer<typeof animalWithUserSchema>;
 
 export const animalDetailSchema = animalSchema.extend({
-  animalConditionHealths: clientPetHealthConditionSchema
-    .extend({ healthCondition: healthConditionSchema })
-    .omit({ addedBy: true })
-    .array(),
+  animalConditionHealths: clientPetHealthConditionMetaSchema.array(),
   client: clientProfileSchema.extend({ user: baseUserSchema }),
   race: raceMetaSchema,
   animalVaccine: animalVaccineSchema.array(),

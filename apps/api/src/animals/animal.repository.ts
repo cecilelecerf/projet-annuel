@@ -1,6 +1,7 @@
 import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { includes } from "zod";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours
@@ -29,7 +30,9 @@ const findByIdInclude = {
   animalConditionHealths: {
     include: { healthCondition: true },
   },
-  attendingVeterinarian: { include: { user: { include: { avatar: true } } } },
+  attendingVeterinarianClinic: {
+    include: { veterinarian: { select: { user: true } }, clinic: true },
+  },
   animalVaccine: true,
 } satisfies Prisma.AnimalInclude;
 

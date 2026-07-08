@@ -145,14 +145,8 @@ export const meetingApi = {
       return await http.delete(`/meetings/animals/${meetingId}`)
     },
     getAllByAnimal: async (animalId: AnimalId) => {
-      const data = await http.get(`/animals/${animalId}/meetings`)
-      return animalMeetingFieldSchema
-        .extend({
-          meeting: meetingBaseSchema,
-          animalMedicalHistories: medicalHistorySchema.array(),
-        })
-        .array()
-        .parse(data)
+      const data = await http.get(`/animals/${animalId}/animal-meetings`)
+      return animalMeetigWithMeetingSchema.array().parse(data)
     },
 
     getAllByClientId: async (clientId: ClientId) => {

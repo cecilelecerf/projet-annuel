@@ -12,12 +12,14 @@
   )
 );
 @use './custom-colors.scss';
+@use './token.scss';
 @use './button.scss';
 @use './alert.scss';
 @use './tag.scss';
 @use './dialog.scss';
 @use './input.scss';
-@use './token.scss';
+@use './tabs.scss';
+
 .card {
   background: white;
   border-radius: var(--radius-lg);

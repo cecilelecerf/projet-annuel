@@ -29,6 +29,12 @@ CREATE TYPE "ConversationScope" AS ENUM ('CLINIC', 'DIRECTOR_NETWORK');
 CREATE TYPE "ConversationMemberRole" AS ENUM ('ADMIN', 'MEMBER');
 
 -- CreateEnum
+CREATE TYPE "FileType" AS ENUM ('IMAGE', 'PDF', 'DOCUMENT');
+
+-- CreateEnum
+CREATE TYPE "FileEntityType" AS ENUM ('USER', 'ANIMAL', 'PRESCRIPTION', 'CLINIC', 'BRAND', 'PRODUCT');
+
+-- CreateEnum
 CREATE TYPE "FoodHealthConditionRecommendation" AS ENUM ('RECOMMENDED', 'AVOID');
 
 -- CreateEnum
@@ -51,6 +57,9 @@ CREATE TYPE "FoodType" AS ENUM ('KIBBLE', 'WET');
 
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CONFIRMED', 'READY', 'PICKED_UP', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "ProductRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('CLIENT', 'SECRETARY', 'VETERINARIAN', 'DIRECTOR', 'REFERENT', 'ADMIN');
@@ -307,6 +316,21 @@ CREATE TABLE "messages" (
 );
 
 -- CreateTable
+CREATE TABLE "files" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "storageKey" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "size" INTEGER,
+    "type" "FileType" NOT NULL,
+    "entityType" "FileEntityType" NOT NULL,
+    "entityId" TEXT NOT NULL,
+
+    CONSTRAINT "files_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "health_conditions" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -441,6 +465,7 @@ CREATE TABLE "animals" (
     "attendingVeterinarianId" TEXT,
     "clientId" TEXT NOT NULL,
     "raceId" TEXT NOT NULL,
+    "photoId" TEXT,
 
     CONSTRAINT "animals_pkey" PRIMARY KEY ("id")
 );
@@ -542,6 +567,7 @@ CREATE TABLE "brands" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "name" TEXT NOT NULL,
     "logo" TEXT,
+    "imageId" TEXT,
 
     CONSTRAINT "brands_pkey" PRIMARY KEY ("id")
 );
@@ -584,6 +610,8 @@ CREATE TABLE "orders" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
     "pickupAt" TIMESTAMP(3),
+    "stripeSessionId" TEXT,
+    "pickupCode" TEXT,
     "clientId" TEXT NOT NULL,
     "clinicId" TEXT NOT NULL,
 
@@ -604,6 +632,27 @@ CREATE TABLE "order_items" (
 );
 
 -- CreateTable
+CREATE TABLE "product_requests" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" "ProductRequestStatus" NOT NULL DEFAULT 'PENDING',
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "picture" TEXT,
+    "websiteUrl" TEXT,
+    "brandId" TEXT,
+    "newBrandName" TEXT,
+    "rejectionReason" TEXT,
+    "createdProductId" TEXT,
+    "requestedById" TEXT NOT NULL,
+    "clinicId" TEXT NOT NULL,
+    "reviewedById" TEXT,
+
+    CONSTRAINT "product_requests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -613,7 +662,7 @@ CREATE TABLE "users" (
     "firstname" TEXT NOT NULL,
     "lastname" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "picture" TEXT,
+    "avatarId" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -806,6 +855,9 @@ CREATE UNIQUE INDEX "conversation_members_conversationId_userId_key" ON "convers
 CREATE INDEX "messages_conversationId_createdAt_idx" ON "messages"("conversationId", "createdAt");
 
 -- CreateIndex
+CREATE INDEX "files_entityType_entityId_idx" ON "files"("entityType", "entityId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "availabilities_recurringId_key" ON "availabilities"("recurringId");
 
 -- CreateIndex
@@ -821,6 +873,9 @@ CREATE UNIQUE INDEX "internal_meetings_meetingId_key" ON "internal_meetings"("me
 CREATE UNIQUE INDEX "animal_meetings_meetingId_key" ON "animal_meetings"("meetingId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "animals_photoId_key" ON "animals"("photoId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "vaccine_country_rules_vaccineId_country_type_key" ON "vaccine_country_rules"("vaccineId", "country", "type");
 
 -- CreateIndex
@@ -830,7 +885,16 @@ CREATE UNIQUE INDEX "veterinarian_reviews_clientId_veterinarianClinicId_key" ON 
 CREATE UNIQUE INDEX "foods_productId_key" ON "foods"("productId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "brands_imageId_key" ON "brands"("imageId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "product_requests_createdProductId_key" ON "product_requests"("createdProductId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_avatarId_key" ON "users"("avatarId");
 
 -- CreateIndex
 CREATE INDEX "users_email_idx" ON "users"("email");
@@ -1049,6 +1113,9 @@ ALTER TABLE "animals" ADD CONSTRAINT "animals_clientId_fkey" FOREIGN KEY ("clien
 ALTER TABLE "animals" ADD CONSTRAINT "animals_raceId_fkey" FOREIGN KEY ("raceId") REFERENCES "races"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "animals" ADD CONSTRAINT "animals_photoId_fkey" FOREIGN KEY ("photoId") REFERENCES "files"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "races" ADD CONSTRAINT "races_petId_fkey" FOREIGN KEY ("petId") REFERENCES "pets"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1068,6 +1135,9 @@ ALTER TABLE "products" ADD CONSTRAINT "products_brandId_fkey" FOREIGN KEY ("bran
 
 -- AddForeignKey
 ALTER TABLE "foods" ADD CONSTRAINT "foods_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "brands" ADD CONSTRAINT "brands_imageId_fkey" FOREIGN KEY ("imageId") REFERENCES "files"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clinic_products" ADD CONSTRAINT "clinic_products_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1095,6 +1165,24 @@ ALTER TABLE "order_items" ADD CONSTRAINT "order_items_productClinicId_fkey" FORE
 
 -- AddForeignKey
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_requests" ADD CONSTRAINT "product_requests_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_requests" ADD CONSTRAINT "product_requests_createdProductId_fkey" FOREIGN KEY ("createdProductId") REFERENCES "products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_requests" ADD CONSTRAINT "product_requests_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_requests" ADD CONSTRAINT "product_requests_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "product_requests" ADD CONSTRAINT "product_requests_reviewedById_fkey" FOREIGN KEY ("reviewedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "users" ADD CONSTRAINT "users_avatarId_fkey" FOREIGN KEY ("avatarId") REFERENCES "files"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "client_profiles" ADD CONSTRAINT "client_profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

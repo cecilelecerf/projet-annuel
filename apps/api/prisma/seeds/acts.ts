@@ -190,7 +190,7 @@ export async function seedActs(
 
   // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
 
-  await prisma.animalMedicalHistory.create({
+  const actVaccinationRexPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting1.date,
       animalMeetingId: animalMeeting1.animalMeeting!.id!,
@@ -208,8 +208,6 @@ export async function seedActs(
       },
     },
   });
-
-  // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
 
   // Échographie cardiaque
   const actEchoPerformed = await prisma.animalMedicalHistory.create({
@@ -257,7 +255,7 @@ export async function seedActs(
   });
 
   // Vaccination Rage (historique externe — sans clinicAct, sans meeting)
-  await prisma.animalMedicalHistory.create({
+  const actRageRexPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: new Date("2025-03-15"),
       type: "VACCINATION",
@@ -276,7 +274,7 @@ export async function seedActs(
   // ── Actes réalisés sur RDV 2 (Luna — dermatologie) ─────────────────────────
 
   // Radiographie thoracique
-  await prisma.animalMedicalHistory.create({
+  const actXrayPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting2.date,
       priceApplied: 80,
@@ -298,7 +296,7 @@ export async function seedActs(
   });
 
   // Soins infirmiers
-  await prisma.animalMedicalHistory.create({
+  const actNursingPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting2.date,
       priceApplied: 28,
@@ -313,7 +311,7 @@ export async function seedActs(
   });
 
   // Vaccination Typhus (historique Luna)
-  await prisma.animalMedicalHistory.create({
+  const actTyphusLunaPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: new Date("2024-06-10"),
       type: "VACCINATION",
@@ -329,5 +327,15 @@ export async function seedActs(
     },
   });
 
-  return { actEchoPerformed, actBloodPerformed };
+  const allPerformedActs = [
+    actVaccinationRexPerformed,
+    actEchoPerformed,
+    actBloodPerformed,
+    actRageRexPerformed,
+    actXrayPerformed,
+    actNursingPerformed,
+    actTyphusLunaPerformed,
+  ];
+
+  return { actEchoPerformed, actBloodPerformed, allPerformedActs };
 }

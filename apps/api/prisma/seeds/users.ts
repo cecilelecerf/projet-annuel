@@ -1,6 +1,6 @@
 import { hash } from "bcryptjs";
 import type { PrismaClient } from "../generated/prisma/client";
-import { seedAvatar } from "./avatars";
+import { seedAvatar } from "./files";
 
 export async function seedUsers(
   prisma: PrismaClient,

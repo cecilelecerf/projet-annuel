@@ -33,14 +33,6 @@ const medicalHistoryInclude = {
 export class AnimalMedicalHistoryRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async findByClinic(clinicId: string) {
-    return this.prisma.animalMedicalHistory.findMany({
-      where: { clinicAct: { clinicId } },
-      include: medicalHistoryInclude,
-      orderBy: { performedAt: "asc" },
-    });
-  }
-
   async findByMeeting(meetingId: string) {
     return this.prisma.animalMedicalHistory.findMany({
       where: { animalMeeting: { meetingId } },
@@ -144,7 +136,6 @@ export class AnimalMedicalHistoryRepository {
       where: { id },
       data: {
         notes: data.notes,
-        priceApplied: data.priceApplied,
         performedAt: data.performedAt,
         clinicActId: overrides?.clinicActId,
         type: overrides?.type,

@@ -65,7 +65,6 @@ async function cleanupDisposable(email: string) {
     await prisma.clinic.deleteMany({ where: { directorId: user.id } });
   }
   await prisma.refreshToken.deleteMany({ where: { user: { email } } });
-  await prisma.user.deleteMany({ where: { email } });
 }
 
 // Le geocoding appelle une vraie API externe (Nominatim) : on mock fetch

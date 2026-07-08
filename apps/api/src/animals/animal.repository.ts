@@ -1,7 +1,6 @@
 import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
-import { includes } from "zod";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours
@@ -31,7 +30,10 @@ const findByIdInclude = {
     include: { healthCondition: true },
   },
   attendingVeterinarianClinic: {
-    include: { veterinarian: { select: { user: true } }, clinic: true },
+    include: {
+      veterinarian: { include: { user: { include: { avatar: true } } } },
+      clinic: true,
+    },
   },
   animalVaccine: true,
 } satisfies Prisma.AnimalInclude;
@@ -99,7 +101,7 @@ export class AnimalRepository {
         activity: data.activity,
         clientId: data.clientId,
         raceId: data.raceId,
-        attendingVeterinarianId: data.attendingVeterinarianId,
+        attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
       },
       include: createAndUpdateInclude,
     });
@@ -117,7 +119,7 @@ export class AnimalRepository {
         description: data.description,
         activity: data.activity,
         raceId: data.raceId,
-        attendingVeterinarianId: data.attendingVeterinarianId,
+        attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
       },
       include: createAndUpdateInclude,
     });

@@ -56,6 +56,7 @@ export const createMeetingMedicalHistorySchema = medicalHistorySchema
     animalId: true,
     actId: true,
     performedById: true,
+    notes: true,
   })
   .extend({
     surgery: createSurgerySchema.optional(),
@@ -65,6 +66,7 @@ export const createMeetingMedicalHistorySchema = medicalHistorySchema
     vaccination: createAnimalVaccineSchema.optional(),
     animalVaccine: animalVaccineSchema.optional(),
     priceApplied: medicalHistorySchema.shape.priceApplied.optional(),
+    notes: medicalHistorySchema.shape.notes.optional(),
 
     type: z.literal("meeting"),
   });
@@ -79,6 +81,8 @@ export const createFreeMedicalHistorySchema = medicalHistorySchema
     performedById: true,
     clinicActId: true,
     animalMeetingId: true,
+    notes: true,
+    animalVaccine: true,
   })
   .extend({
     surgery: createSurgerySchema.optional(),
@@ -86,7 +90,9 @@ export const createFreeMedicalHistorySchema = medicalHistorySchema
     imaging: createImagingSchema.optional(),
     analysis: createAnalysisSchema.optional(),
     vaccination: createAnimalVaccineSchema.optional(),
+    animalVaccine: animalVaccineSchema.optional(),
     type: z.literal("free"),
+    notes: medicalHistorySchema.shape.notes.optional(),
   });
 
 export const createMedicalHistorySchema = z.discriminatedUnion("type", [

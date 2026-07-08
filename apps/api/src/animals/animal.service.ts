@@ -73,14 +73,23 @@ export class AnimalService {
     const pet = await this.repository.findById(id);
     if (!pet) throw new NotFoundError("Animal");
     if (!isStaff(role) && pet.clientId !== userId) throw new ForbiddenError();
+
+    const validVeterinarian = pet.attendingVeterinarianClinic
+      ? {
+          ...pet.attendingVeterinarianClinic.veterinarian,
+          user: withAvatarUrl(
+            pet.attendingVeterinarianClinic.veterinarian.user,
+          ),
+        }
+      : null;
     return {
       ...pet,
-      attendingVeterinarian: pet.attendingVeterinarian
+      attendingVeterinarianClinic: pet.attendingVeterinarianClinic
         ? {
-            ...pet.attendingVeterinarian,
-            user: withAvatarUrl(pet?.attendingVeterinarian?.user),
+            ...pet.attendingVeterinarianClinic,
+            veterinarian: validVeterinarian,
           }
-        : undefined,
+        : null,
       client: withUserAvatar(pet.client),
     };
   }

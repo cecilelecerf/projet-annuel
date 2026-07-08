@@ -10,7 +10,6 @@ import {
 import {
   clinicActController,
   clinicController,
-  medicalHistoryController,
   specialityController,
   staffController,
 } from "@api/instances";
@@ -36,13 +35,6 @@ clinicRouter.get(
   "/me",
   roleMiddleware(CLINIC_STAFF_ROLES),
   controller.getMyClinic.bind(controller) as RequestHandler,
-);
-clinicRouter.get(
-  "/:id/medical-histories",
-  requireApprovedClinic,
-  medicalHistoryController.getByClinic.bind(
-    medicalHistoryController,
-  ) as RequestHandler,
 );
 clinicRouter.get(
   "/:id/clinic-acts",

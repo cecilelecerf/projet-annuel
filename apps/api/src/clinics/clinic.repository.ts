@@ -36,9 +36,7 @@ export class ClinicRepository {
       where: {
         animal: {
           some: {
-            attendingVeterinarian: {
-              veterinarianClinics: { some: { clinicId } },
-            },
+            attendingVeterinarianClinic: { clinicId },
           },
         },
       },

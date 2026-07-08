@@ -14,7 +14,7 @@ model Animal {
   attendingVeterinarianClinic   VeterinarianClinic? @relation(fields: [attendingVeterinarianClinicId], references: [id])
 
   clientId String
-  client   ClientProfile @relation(fields: [clientId], references: [id])
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   raceId String
   race   Race   @relation(fields: [raceId], references: [id])

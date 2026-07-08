@@ -315,15 +315,6 @@ export class AnimalMedicalHistoryService {
     return this.formatMedicalHistories(acts);
   }
 
-  async getByClinic(clinicId: string, role: UserRole, userId: string) {
-    if (!isStaff(role)) throw new ForbiddenError();
-    await this.assertStaffBelongsToClinic(userId, clinicId);
-
-    const acts = await this.repository.findByClinic(clinicId);
-    if (!acts) throw new NotFoundError("acts historys");
-    return this.formatMedicalHistories(acts);
-  }
-
   async getByAnimal(animalId: AnimalId, role: UserRole, userId: string) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
 

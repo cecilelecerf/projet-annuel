@@ -4,7 +4,6 @@ import { BadRequestError } from "@api/errors";
 import {
   AnimalId,
   createMedicalHistorySchema,
-  createMeetingMedicalHistorySchema,
   fileWithUrlSchema,
   medicalHistoryMetaSchema,
   medicalHistorySchema,
@@ -46,24 +45,7 @@ export class AnimalMedicalHistoryController {
         req.user.role,
         req.user.id,
       );
-      console.log(acts);
       res.status(200).json(medicalHistoryMetaSchema.array().parse(acts));
-    } catch (err) {
-      next(err);
-    }
-  }
-  async getByClinic(
-    req: RequestWithParams<{ id: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const acts = await this.service.getByClinic(
-        req.params.id,
-        req.user.role,
-        req.user.id,
-      );
-      res.status(200).json(medicalHistorySchema.array().parse(acts));
     } catch (err) {
       next(err);
     }
@@ -95,7 +77,6 @@ export class AnimalMedicalHistoryController {
   ) {
     try {
       const result = updateMedicalHistorySchema.safeParse(req.body);
-      console.log(updateMedicalHistorySchema);
       if (!result.success) throw new BadRequestError(result.error.message);
       const act = await this.service.update(
         req.params.id,

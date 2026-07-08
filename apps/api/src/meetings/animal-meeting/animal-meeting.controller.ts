@@ -2,16 +2,13 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
-  medicalHistorySchema,
   animalMeetingFieldSchema,
   ClientId,
   CreateAnimalMeeting,
-  meetingBaseSchema,
   AnimalId,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { flatUser } from "@api/users/user.utils";
 
 export class AnimalMeetingController {
   constructor(private service: AnimalMeetingService) {}

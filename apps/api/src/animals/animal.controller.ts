@@ -18,7 +18,7 @@ export class AnimalController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(pets);
+      res.status(200).json(animalWithRaceMetaSchema.array().parse(pets));
     } catch (err) {
       next(err);
     }

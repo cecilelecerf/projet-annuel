@@ -74,13 +74,6 @@ const findByUserInclude = {
   },
 } satisfies Prisma.AnimalMeetingInclude;
 
-const findByAnimalInclude = {
-  meeting: true,
-  animalMedicalHistories: {
-    include: { clinicAct: { include: { act: true } } },
-  },
-} satisfies Prisma.AnimalMeetingInclude;
-
 // ═══════════════════════════════════════════════════════════════
 // Types de sortie — dérivés des includes ci-dessus, exportables
 // ═══════════════════════════════════════════════════════════════
@@ -99,10 +92,6 @@ export type UpdatedAnimalMeeting = Prisma.AnimalMeetingGetPayload<{
 
 export type AnimalMeetingForUser = Prisma.AnimalMeetingGetPayload<{
   include: typeof findByUserInclude;
-}>;
-
-export type AnimalMeetingForAnimal = Prisma.AnimalMeetingGetPayload<{
-  include: typeof findByAnimalInclude;
 }>;
 
 // ═══════════════════════════════════════════════════════════════

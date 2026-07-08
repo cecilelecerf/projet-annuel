@@ -51,31 +51,29 @@ describe("Act router", () => {
         .set("Authorization", `Bearer ${referentToken}`);
       expect(res.status).toBe(200);
     });
-
-    it("403 — VETERINARIAN ne peut pas lister le catalogue global", async () => {
+    it("200 — CLIENT reçoit la liste des actes", async () => {
+      const res = await request(app)
+        .get("/api/acts")
+        .set("Authorization", `Bearer ${clientToken}`);
+      expect(res.status).toBe(200);
+    });
+    it("200 — VETERINARIAN reçoit la liste des actes", async () => {
       const res = await request(app)
         .get("/api/acts")
         .set("Authorization", `Bearer ${vetToken}`);
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(200);
     });
 
-    it("403 — SECRETARY ne peut pas lister le catalogue global", async () => {
+    it("200 — SECRETARY reçoit la liste des actes", async () => {
       const res = await request(app)
         .get("/api/acts")
         .set("Authorization", `Bearer ${secretaryToken}`);
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(200);
     });
 
     it("401 — sans token", async () => {
       const res = await request(app).get("/api/acts");
       expect(res.status).toBe(401);
-    });
-
-    it("403 — CLIENT n'est pas staff", async () => {
-      const res = await request(app)
-        .get("/api/acts")
-        .set("Authorization", `Bearer ${clientToken}`);
-      expect(res.status).toBe(403);
     });
   });
 

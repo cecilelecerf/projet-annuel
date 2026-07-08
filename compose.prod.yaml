@@ -95,8 +95,8 @@ services:
       - s3_bucket
       - s3_endpoint
       - aws_region
-      - aws_access_key_id
-      - aws_secret_access_key
+      - aws_access_key_id_v2
+      - aws_secret_access_key_v2
       - assets_base_url
       - stripe_secret_key
       - stripe_webhook_secret_v2
@@ -361,9 +361,9 @@ secrets:
     external: true
   aws_region:
     external: true
-  aws_access_key_id:
+  aws_access_key_id_v2:
     external: true
-  aws_secret_access_key:
+  aws_secret_access_key_v2:
     external: true
   assets_base_url:
     external: true

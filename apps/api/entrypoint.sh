@@ -10,9 +10,9 @@ if [ -f /run/secrets/db_user ]; then
   export JWT_REFRESH_SECRET=$(cat /run/secrets/jwt_refresh_secret)
 fi
 
-if [ -f /run/secrets/aws_access_key_id ]; then
-  export AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id)
-  export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key)
+if [ -f /run/secrets/aws_access_key_id_v2 ]; then
+  export AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id_v2)
+  export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key_v2)
   export S3_BUCKET=$(cat /run/secrets/s3_bucket)
   export S3_ENDPOINT=$(cat /run/secrets/s3_endpoint)
   export ASSETS_BASE_URL=$(cat /run/secrets/assets_base_url)

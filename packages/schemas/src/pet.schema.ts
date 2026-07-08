@@ -1,14 +1,9 @@
 import { z } from "zod";
 import {
   petIdSchema,
-  animalIdSchema,
   raceIdSchema,
-  clientIdSchema,
   veterinarianIdSchema,
   clinicIdSchema,
-  meetingIdSchema,
-  vaccineIdSchema,
-  petVaccineIdSchema,
   clinicPetIdSchema,
   veterinarianPetIdSchema,
   healthConditionIdSchema,

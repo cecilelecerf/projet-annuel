@@ -66,7 +66,6 @@ const mockUser = {
   firstname: "Alice",
   lastname: "Dupont",
   role: "VETERINARIAN",
-  picture: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

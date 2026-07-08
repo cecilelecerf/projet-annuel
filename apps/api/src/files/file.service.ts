@@ -15,21 +15,33 @@ const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
 export class FileService {
-  private s3: S3Client;
+  private s3Internal: S3Client;
+  private s3Public: S3Client;
+
   private bucket: string;
 
   constructor(private repository: FileRepository) {
     const bucket = process.env.S3_BUCKET;
     if (!bucket) throw new Error("S3_BUCKET is missing");
     this.bucket = bucket;
-    this.s3 = new S3Client({
-      region: process.env.AWS_REGION ?? "us-east-1",
-      endpoint: process.env.S3_ENDPOINT,
-      forcePathStyle: true, // indispensable pour MinIO
+    this.s3Internal = new S3Client({
+      endpoint: process.env.S3_ENDPOINT, // http://minio:9000
+      region: process.env.AWS_REGION,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
       },
+      forcePathStyle: true,
+    });
+
+    this.s3Public = new S3Client({
+      endpoint: process.env.S3_PUBLIC_ENDPOINT, // https://s3.armali.online
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+      forcePathStyle: true,
     });
   }
 
@@ -69,12 +81,12 @@ export class FileService {
       Key: key,
       ContentType: contentType,
     });
-    return getSignedUrl(this.s3, command, { expiresIn: 60 * 5 });
+    return getSignedUrl(this.s3Public, command, { expiresIn: 60 * 5 });
   }
 
   async createDownloadUrl(key: string) {
     const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
-    return getSignedUrl(this.s3, command, { expiresIn: 60 * 5 });
+    return getSignedUrl(this.s3Internal, command, { expiresIn: 60 * 5 });
   }
 
   /**
@@ -100,7 +112,7 @@ export class FileService {
       throw new ForbiddenError();
     }
 
-    const head = await this.s3.send(
+    const head = await this.s3Internal.send(
       new HeadObjectCommand({ Bucket: this.bucket, Key: file.storageKey }),
     );
     // HeadObjectCommand rejette (404) si l'objet n'existe pas encore sur S3
@@ -117,7 +129,7 @@ export class FileService {
   }
 
   async deleteFromStorage(key: string) {
-    await this.s3.send(
+    await this.s3Internal.send(
       new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
     );
   }

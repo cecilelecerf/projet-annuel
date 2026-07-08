@@ -82,9 +82,7 @@ services:
       AWS_REGION: us-east-1
       ASSETS_BASE_URL: https://s3.armali.online/armali-files
       ENABLE_EMAIL: "true"
-      MAIL_HOST: mailhog
-      MAIL_PORT: "1025"
-      MAIL_REQUIRE_TLS: "false"
+      MAIL_FROM: "Armali <contact@armali.online>"
     secrets:
       - db_user
       - db_password
@@ -101,6 +99,7 @@ services:
       - assets_base_url
       - stripe_secret_key
       - stripe_webhook_secret
+      - resend_api_key
     networks:
       - backend
       - frontend
@@ -369,6 +368,8 @@ secrets:
   stripe_secret_key:
     external: true
   stripe_webhook_secret:
+    external: true
+  resend_api_key:
     external: true
 
 configs:

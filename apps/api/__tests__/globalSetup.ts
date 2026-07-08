@@ -37,6 +37,12 @@ export async function setup() {
   process.env.AWS_SECRET_ACCESS_KEY = minioContainer.getPassword();
   process.env.ASSETS_BASE_URL = `${process.env.S3_ENDPOINT}/test-bucket`;
 
+  // Clé Stripe factice : aucun test n'appelle réellement l'API Stripe (le
+  // client stripe.ts lève sinon dès l'import), donc une valeur bidon suffit
+  // à débloquer le chargement du module pour tous les tests routeur.
+  process.env.STRIPE_SECRET_KEY = "sk_test_dummy_for_tests";
+  process.env.STRIPE_WEBHOOK_SECRET = "whsec_dummy_for_tests";
+
   // Créer le bucket + policy publique en lecture, équivalent au minio-init de dev
   const s3 = new S3Client({
     endpoint: process.env.S3_ENDPOINT,

@@ -25,11 +25,11 @@ export class ProductRequestService {
 
   // Un référent ou un directeur ne gère qu'une seule clinique à la fois
   private async getClinicId(userId: string): Promise<string> {
-    const [referentProfile, directorProfile] = await Promise.all([
+    const [referentProfile, directorClinic] = await Promise.all([
       prisma.referentClinicProfile.findUnique({ where: { id: userId } }),
-      prisma.directorClinicProfile.findFirst({ where: { id: userId } }),
+      prisma.clinic.findFirst({ where: { directorId: userId } }),
     ]);
-    const clinicId = referentProfile?.clinicId ?? directorProfile?.clinicId;
+    const clinicId = referentProfile?.clinicId ?? directorClinic?.id;
     if (!clinicId) {
       throw new BadRequestError("Aucune clinique associée à ce compte");
     }

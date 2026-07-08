@@ -97,7 +97,6 @@ services:
       - aws_region
       - aws_access_key_id_v2
       - aws_secret_access_key_v2
-      - assets_base_url
       - stripe_secret_key
       - stripe_webhook_secret_v2
       - resend_api_key
@@ -364,8 +363,6 @@ secrets:
   aws_access_key_id_v2:
     external: true
   aws_secret_access_key_v2:
-    external: true
-  assets_base_url:
     external: true
   stripe_secret_key:
     external: true

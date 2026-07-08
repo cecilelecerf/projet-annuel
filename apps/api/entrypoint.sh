@@ -15,8 +15,7 @@ if [ -f /run/secrets/aws_access_key_id_v2 ]; then
   export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key_v2)
   export S3_BUCKET=$(cat /run/secrets/s3_bucket)
   export S3_ENDPOINT=$(cat /run/secrets/s3_endpoint)
-  export ASSETS_BASE_URL=$(cat /run/secrets/assets_base_url)
-fi
+ fi
 
 if [ -f /run/secrets/stripe_secret_key ]; then
   export STRIPE_SECRET_KEY=$(cat /run/secrets/stripe_secret_key)

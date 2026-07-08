@@ -82,6 +82,7 @@ import { ClientShopService } from "./shop/shop.service";
 import { OrderService } from "./orders/order.service";
 import { SalesService } from "./sales/sales.service";
 import { ClinicRequestService } from "./clinics/requests/request.service";
+import { DashboardService } from "./dashboard/dashboard.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -120,6 +121,7 @@ import { FileRepository } from "./files/file.repository";
 import { FileService } from "./files/file.service";
 import { ClinicActService } from "./clinic-acts/clinic-act.service";
 import { ClinicActController } from "./clinic-acts/clinic-act.controller";
+import { DashboardController } from "./dashboard/dashboard.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -250,6 +252,15 @@ const clientShopService = new ClientShopService();
 export const orderService = new OrderService(orderRepository, emailService);
 export const salesService = new SalesService();
 
+export const dashboardService = new DashboardService(
+  reviewService,
+  staffService,
+  userService,
+  clinicService,
+  meetingService,
+  orderRepository,
+);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -302,3 +313,4 @@ export const salesController = new SalesController(salesService);
 export const clinicRequestController = new ClinicRequestController(
   clinicRequestService,
 );
+export const dashboardController = new DashboardController(dashboardService);

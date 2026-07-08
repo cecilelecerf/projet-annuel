@@ -9,6 +9,7 @@ export * from "./health.schema";
 export * from "./review.schema";
 export * from "./mettings";
 export * from "./sales.schema";
+export * from "./dashboard.schema";
 
 export * from "./requests";
 export * from "./acts";
@@ -16,7 +17,6 @@ export * from "./prescription.schema";
 export * from "./animals/index.schema";
 export * from "./animals/meta.schema";
 
-export * from "./referent/dashboard.schema";
 export * from "./staffs";
 
 export * from "./specilities.schema";

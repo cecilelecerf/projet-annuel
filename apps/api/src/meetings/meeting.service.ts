@@ -237,6 +237,23 @@ export class MeetingService {
     return this.expandAll(flat, start, end);
   }
 
+  async getAnimalMeetingsByClinic(
+    clinicId: string,
+    start: Date,
+    end: Date,
+  ): Promise<FlatMeeting[]> {
+    const meetings = await this.repository.getAnimalMeetingsByClinic(
+      clinicId,
+      start,
+      end,
+    );
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (!meeting) return [];
+      return [meeting as MeetingBaseWithSpecific];
+    });
+    return this.expandAll(flat, start, end);
+  }
+
   async getAvailabilities({
     userId,
     start,
@@ -382,6 +399,7 @@ export class MeetingService {
       this.sliceAvailabilityIntoSlots(a, occupied, slotDurationMinutes),
     );
   }
+
   async getAvailabilityTimeline({
     veterinarianId,
     clinicIds,

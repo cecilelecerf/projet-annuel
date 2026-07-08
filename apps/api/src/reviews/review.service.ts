@@ -137,7 +137,7 @@ export class ReviewService {
       case "REFERENT": {
         const clinicId = await this.clinicService.getClinicIdByUserId({
           userId,
-          role: "REFERENT",
+          role,
         });
         return toResult(await this.repository.getStatsByClinic(clinicId));
       }

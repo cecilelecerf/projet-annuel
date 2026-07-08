@@ -2,9 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
-import { dashboardApi } from '@/features/dashboard/api/dashboard.api'
+import { dashboardApi } from './../../api/dashboard.api'
 import type { ReferentDashboard } from '@armali/schemas'
-import ReviewItemList from '@/features/reviews/components/ReviewItemList.vue'
 
 const router = useRouter()
 const notify = useNotify()
@@ -15,7 +14,9 @@ const loading = ref(false)
 async function load() {
   loading.value = true
   try {
-    dashboard.value = await dashboardApi.get()
+    const data = await dashboardApi.get()
+    if (data.role !== 'REFERENT') return // garde-fou, ne devrait pas arriver (route déjà restreinte au rôle)
+    dashboard.value = data
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Impossible de charger le tableau de bord')
   } finally {
@@ -66,7 +67,7 @@ function formatCurrency(value: number) {
       <div class="card stat-card">
         <span class="stat-label">Note moyenne clinique</span>
         <span class="stat-value">
-          <template v-if="dashboard.reviews.average">
+          <template v-if="dashboard.reviews.average !== null">
             {{ dashboard.reviews.average }} / 5
           </template>
           <template v-else>—</template>
@@ -101,12 +102,23 @@ function formatCurrency(value: number) {
           Aucun vétérinaire dans la clinique pour le moment.
         </div>
         <div v-else class="vet-stats-list">
-          <review-item-list
-            v-for="vet in dashboard.reviews.veterinarians"
-            :key="vet.veterinarian.id"
-            :veterinarian="vet.veterinarian"
-            :stat="vet.stat"
-          />
+          <div
+            v-for="item in dashboard.reviews.veterinarians"
+            :key="item.veterinarian.id"
+            class="vet-stat-item"
+          >
+            <span class="vet-name">
+              {{ item.veterinarian.firstname }} {{ item.veterinarian.lastname }}
+            </span>
+            <div class="vet-rating">
+              <template v-if="item.stat.average !== null">
+                <el-rate :model-value="item.stat.average" disabled allow-half />
+                <span class="rating-value">{{ item.stat.average }}</span>
+                <span class="rating-count">({{ item.stat.count }})</span>
+              </template>
+              <span v-else class="no-rating">Aucun avis</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -115,7 +127,7 @@ function formatCurrency(value: number) {
 
 <style scoped>
 .page-header {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
 }
 .page-header h1 {
   font-size: 24px;
@@ -124,7 +136,7 @@ function formatCurrency(value: number) {
   margin: 0 0 var(--spacing-xs);
 }
 .page-header p {
-  color: var(--el-text-color-regular);
+  color: var(--el-text-color-secondary);
   margin: 0;
   font-size: 14px;
 }
@@ -133,10 +145,8 @@ function formatCurrency(value: number) {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
-
-/* Le fond, le radius et le padding viennent de la classe globale .card (index.scss) */
 .stat-card {
   display: flex;
   flex-direction: column;
@@ -170,7 +180,7 @@ function formatCurrency(value: number) {
 .cards-row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 .card h2 {
   font-size: 15px;
@@ -208,7 +218,41 @@ function formatCurrency(value: number) {
 .vet-stats-list {
   display: flex;
   flex-direction: column;
-  /* gap: var(--spacing-sm); */
+  gap: var(--spacing-md);
+}
+.vet-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.vet-stat-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.vet-name {
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
+}
+.vet-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.rating-value {
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
+}
+.rating-count {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.no-rating {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
 }
 
 @media (max-width: 1024px) {

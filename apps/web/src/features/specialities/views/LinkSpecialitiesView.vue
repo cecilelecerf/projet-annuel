@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import AcceptedSpecialitiesAccordion from '../components/AcceptedSpecialitiesAccordion.vue'
 import AddSpecialitySearch from '../components/AddSpecialitySearch.vue'
-import { useClinicSpecialities } from '../composables/useLInkSpecialities.ts'
+import { useClinicSpecialities } from '../composables/useLinkSpecialities.ts'
 
 const { user } = storeToRefs(useAuthStore())
 

@@ -1,11 +1,5 @@
 import { http } from '@/lib/api'
-import {
-  specialitySchema,
-  type ClinicId,
-  type CreateSpeciality,
-  type Speciality,
-  type SpecialityId,
-} from '@armali/schemas'
+import { specialitySchema, type CreateSpeciality, type Speciality } from '@armali/schemas'
 
 export const specialityApi = {
   getAll: async (): Promise<Speciality[]> => {

@@ -2,6 +2,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import { ClinicRepository } from "../clinic.repository";
 import type { ClinicId, SpecialityId, UserId, UserRole } from "@armali/schemas";
 import { SpecialityRepository } from "@api/specialities/speciality.repository";
+import { ClinicService } from "../clinic.service";
 
 const CLINIC_OWNER_ROLES: UserRole[] = ["DIRECTOR", "REFERENT"];
 
@@ -9,7 +10,15 @@ export class ClinicSpecialityService {
   constructor(
     private clinicRepository: ClinicRepository,
     private specialityRepository: SpecialityRepository,
+    private clinicService: ClinicService,
   ) {}
+
+  private async assertClinicAccess(userId: UserId, clinicId: ClinicId) {
+    const clinics = await this.clinicService.getClinicsByUser(userId);
+    if (!clinics.some(({ id }) => id === clinicId)) {
+      throw new ForbiddenError();
+    }
+  }
 
   async getAcceptedSpecialities(clinicId: ClinicId) {
     const specialities =
@@ -25,8 +34,7 @@ export class ClinicSpecialityService {
     userId: UserId,
   ) {
     if (!CLINIC_OWNER_ROLES.includes(role)) throw new ForbiddenError();
-    //   TODO : avec le userId verifier si appartient à la clinic
-    // if (userClinicId !== clinicId) throw new ForbiddenError();
+    await this.assertClinicAccess(userId, clinicId);
 
     if (specialityIds.length > 0) {
       const uniqueIds = new Set(specialityIds);

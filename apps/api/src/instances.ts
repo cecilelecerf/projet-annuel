@@ -174,7 +174,11 @@ const actService = new ActService(actRepository);
 
 const petService = new PetService(petRepository);
 const animalService = new AnimalService(animalRepository, vaccineRepository);
-const clinicPetService = new ClinicPetService(clinicRepository, petRepository);
+const clinicPetService = new ClinicPetService(
+  clinicRepository,
+  petRepository,
+  clinicService,
+);
 const medicalHistoryService = new AnimalMedicalHistoryService(
   medicalHistoryRepository,
   animalMeetingRepository,
@@ -240,6 +244,7 @@ const raceService = new RaceService(raceRepository, petRepository);
 const clinicSpecialityService = new ClinicSpecialityService(
   clinicRepository,
   specialityRepository,
+  clinicService,
 );
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────

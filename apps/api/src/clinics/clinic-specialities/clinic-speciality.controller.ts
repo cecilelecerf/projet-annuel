@@ -2,7 +2,6 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
-  petSchema,
   ClinicId,
   UpdateClinicSpecialities,
   updateClinicSpecialitiesSchema,

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { STAFF_ROLES } from "@api/utils";
 import {
   animalController,
   animalMeetingController,

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useNotify } from '@/composables/useNotify'
-import type { ActId, ClinicAct, ClinicActId, ClinicId, CreateClinicAct } from '@armali/schemas'
+import type { ActId, ClinicAct, ClinicId, CreateClinicAct } from '@armali/schemas'
 import { clinicActApi } from '../clinic-act.api'
 
 export function useClinicActs(clinicId: ClinicId) {

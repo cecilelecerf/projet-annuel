@@ -4,7 +4,6 @@ import {
   type StaffMemberDetail,
   type CreateVeterinarianStaff,
   type CreateSecretaryStaff,
-  type StaffMember,
   staffMemberSchema,
   type UserRole,
   type ClinicId,

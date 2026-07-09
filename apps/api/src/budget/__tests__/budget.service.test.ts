@@ -15,15 +15,23 @@ const service = new BudgetService(mockRepository as any, mockClinicService as an
 
 beforeEach(() => vi.clearAllMocks());
 
-const FORBIDDEN_ROLES: UserRole[] = [
+const VIEW_FORBIDDEN_ROLES: UserRole[] = [
   "ADMIN",
   "SECRETARY",
   "VETERINARIAN",
   "CLIENT",
 ];
+// Le référent peut CONSULTER le budget mais pas le créditer
+const CREDIT_FORBIDDEN_ROLES: UserRole[] = [
+  "ADMIN",
+  "REFERENT",
+  "SECRETARY",
+  "VETERINARIAN",
+  "CLIENT",
+];
 
-describe("BudgetService — restriction de rôle", () => {
-  it.each(FORBIDDEN_ROLES)(
+describe("BudgetService.getSummary — consultation (référent + directeur)", () => {
+  it.each(VIEW_FORBIDDEN_ROLES)(
     "%s — BadRequestError, réservé référent/directeur",
     async (role) => {
       await expect(service.getSummary("user-1" as any, role)).rejects.toThrow(
@@ -32,9 +40,7 @@ describe("BudgetService — restriction de rôle", () => {
       expect(mockClinicService.getClinicIdByUserId).not.toHaveBeenCalled();
     },
   );
-});
 
-describe("BudgetService.getSummary", () => {
   it("résout la clinique puis renvoie solde + historique", async () => {
     mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockRepository.getBalance.mockResolvedValue(312.5);
@@ -78,16 +84,30 @@ describe("BudgetService.getSummary", () => {
   });
 });
 
-describe("BudgetService.credit", () => {
-  it("crée une transaction CREDIT liée à la clinique résolue", async () => {
+describe("BudgetService.credit — directeur uniquement", () => {
+  it.each(CREDIT_FORBIDDEN_ROLES)(
+    "%s — BadRequestError, aucun crédit (référent inclus : consultation ≠ crédit)",
+    async (role) => {
+      await expect(
+        service.credit("user-1" as any, role, { amount: 100 }),
+      ).rejects.toThrow(BadRequestError);
+      expect(mockRepository.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it("DIRECTOR — crée une transaction CREDIT liée à la clinique résolue", async () => {
     mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockRepository.create.mockResolvedValue({ id: "tx-1" });
 
-    await service.credit("user-1" as any, "REFERENT", {
+    await service.credit("user-1" as any, "DIRECTOR", {
       amount: 200,
       reason: "Réappro trimestriel",
     });
 
+    expect(mockClinicService.getClinicIdByUserId).toHaveBeenCalledWith({
+      userId: "user-1",
+      role: "DIRECTOR",
+    });
     expect(mockRepository.create).toHaveBeenCalledWith({
       clinicId: "clinic-1",
       createdById: "user-1",
@@ -95,12 +115,5 @@ describe("BudgetService.credit", () => {
       amount: 200,
       reason: "Réappro trimestriel",
     });
-  });
-
-  it.each(FORBIDDEN_ROLES)("%s — BadRequestError, aucun crédit", async (role) => {
-    await expect(
-      service.credit("user-1" as any, role, { amount: 100 }),
-    ).rejects.toThrow(BadRequestError);
-    expect(mockRepository.create).not.toHaveBeenCalled();
   });
 });

@@ -85,36 +85,4 @@ export class SpecialityController {
       next(err);
     }
   }
-
-  async getAllByClinic(
-    req: RequestWithParams<{ id: ClinicId }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const specialities = await this.service.getAllByClinicId({
-        clinicId: req.params.id,
-      });
-      res.status(200).json(specialitySchema.array().parse(specialities));
-    } catch (err) {
-      next(err);
-    }
-  }
-  async linkWithClinic(
-    req: RequestWithParams<{ id: ClinicId }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const specialities = await this.service.linkWithClinic({
-        userId: req.user!.id,
-        role: req.user.role,
-        data: req.body,
-        clinicId: req.params.id,
-      });
-      res.status(200).json(specialities);
-    } catch (err) {
-      next(err);
-    }
-  }
 }

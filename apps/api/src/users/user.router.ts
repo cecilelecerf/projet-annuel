@@ -30,13 +30,6 @@ userRouter.patch(
 );
 
 userRouter.get(
-  "/roles/:role",
-  authMiddleware,
-  roleMiddleware(STAFF_ROLES),
-  controller.getUsersByRole.bind(controller) as RequestHandler,
-);
-
-userRouter.get(
   "/:id/animals",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),

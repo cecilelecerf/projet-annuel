@@ -6,7 +6,7 @@ import { prisma } from "@api/lib/prisma";
 
 // ── Acts ──────────────────────────────────────────────────────
 import { ActRepository } from "./acts/act.repository";
-import { ClinicActRepository } from "./clinic-acts/clinic-act.repository";
+import { ClinicActRepository } from "./clinics/clinic-acts/clinic-act.repository";
 
 // ── Animals ───────────────────────────────────────────────────
 import { AnimalRepository } from "./animals/animal.repository";
@@ -32,7 +32,7 @@ import { UserRepository } from "./users/user.repository";
 import { VaccineRepository } from "./vaccines/vaccine.repository";
 
 // ── Veterinarian-clinics ──────────────────────────────────────
-import { VeterinarianClinicRepository } from "./veterinarian-clinics/veterinarian-clinic.repository";
+import { VeterinarianClinicRepository } from "./clinics/veterinarian-clinics/veterinarian-clinic.repository";
 
 // ── Product ──────────────────────────────────────
 import { ProductRepository } from "./products/product.repository";
@@ -49,7 +49,7 @@ import { MessageRepository } from "./messaging/message.repository";
 import { ConversationRepository } from "./messaging/conversation.repository";
 
 // ── Staff ─────────────────────────────────────────────────────
-import { StaffRepository } from "./staffs/staff.repository";
+import { StaffRepository } from "./clinics/staffs/staff.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // Services
@@ -74,7 +74,7 @@ import { BrandService } from "./brands/brand.service";
 import { SpecialityService } from "./specialities/speciality.service";
 import { BookingService } from "./bookings/booking.service";
 import { MessagingService } from "./messaging/messaging.service";
-import { StaffService } from "./staffs/staff.service";
+import { StaffService } from "./clinics/staffs/staff.service";
 import { ClinicRequestService } from "./clinics/requests/request.service";
 
 // ═══════════════════════════════════════════════════════════════
@@ -103,12 +103,12 @@ import { SpecialityController } from "./specialities/speciality.controller";
 import { ClinicRepository } from "./clinics/clinic.repository";
 import { MessagingController } from "./messaging/messaging.controller";
 import { ReviewRepository } from "./reviews/review.repository";
-import { StaffController } from "./staffs/staff.controller";
+import { StaffController } from "./clinics/staffs/staff.controller";
 import { ClinicRequestController } from "./clinics/requests/request.controller";
 import { FileRepository } from "./files/file.repository";
 import { FileService } from "./files/file.service";
-import { ClinicActService } from "./clinic-acts/clinic-act.service";
-import { ClinicActController } from "./clinic-acts/clinic-act.controller";
+import { ClinicActService } from "./clinics/clinic-acts/clinic-act.service";
+import { ClinicActController } from "./clinics/clinic-acts/clinic-act.controller";
 import { PetRepository } from "./pets/pet.repository";
 import { PetService } from "./pets/pet.service";
 import { VaccineService } from "./vaccines/vaccine.service";
@@ -117,6 +117,10 @@ import { PetController } from "./pets/pet.controller";
 import { RaceRepository } from "./races/race.repository";
 import { RaceService } from "./races/race.service";
 import { RaceController } from "./races/rece.controller";
+import { ClinicPetService } from "./clinics/clinic-pets/clinic-pet.service";
+import { ClinicPetController } from "./clinics/clinic-pets/clinic-pet.controller";
+import { ClinicSpecialityService } from "./clinics/clinic-specialities/clinic-speciality.service";
+import { ClinicSpecialityController } from "./clinics/clinic-specialities/clinic-speciality.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -159,12 +163,7 @@ const emailService = new EmailService();
 const clinicService = new ClinicService(clinicRepository);
 const staffService = new StaffService(staffRepository, clinicService);
 const fileService = new FileService(fileRepository);
-const userService = new UserService(
-  userRepository,
-  clinicService,
-  staffService,
-  fileService,
-);
+const userService = new UserService(userRepository, clinicService, fileService);
 
 const authService = new AuthService();
 const clinicActService = new ClinicActService(
@@ -175,6 +174,7 @@ const actService = new ActService(actRepository);
 
 const petService = new PetService(petRepository);
 const animalService = new AnimalService(animalRepository, vaccineRepository);
+const clinicPetService = new ClinicPetService(clinicRepository, petRepository);
 const medicalHistoryService = new AnimalMedicalHistoryService(
   medicalHistoryRepository,
   animalMeetingRepository,
@@ -237,6 +237,10 @@ export const messagingService = new MessagingService(
 );
 const clinicRequestService = new ClinicRequestService(clinicRequestRepository);
 const raceService = new RaceService(raceRepository, petRepository);
+const clinicSpecialityService = new ClinicSpecialityService(
+  clinicRepository,
+  specialityRepository,
+);
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -288,3 +292,7 @@ export const clinicRequestController = new ClinicRequestController(
 );
 export const petController = new PetController(petService);
 export const raceController = new RaceController(raceService);
+export const clinicPetController = new ClinicPetController(clinicPetService);
+export const clinicSpecialityController = new ClinicSpecialityController(
+  clinicSpecialityService,
+);

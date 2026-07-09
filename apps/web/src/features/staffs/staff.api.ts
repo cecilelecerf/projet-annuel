@@ -11,13 +11,8 @@ import {
 } from '@armali/schemas'
 
 export const staffApi = {
-  getAll: async (): Promise<StaffMember[]> => {
-    const data = await http.get('/staffs')
-    return staffMemberSchema.array().parse(data)
-  },
-
-  getById: async (id: string): Promise<StaffMemberDetail> => {
-    const data = await http.get(`/staffs/${id}`)
+  getById: async (id: string, clinicId: ClinicId): Promise<StaffMemberDetail> => {
+    const data = await http.get(`/clinics/${clinicId}/staffs/${id}`)
     return staffMemberDetailSchema.parse(data)
   },
   getAllByClinic: async ({ roles, clinicId }: { roles?: UserRole[]; clinicId: ClinicId }) => {
@@ -29,17 +24,26 @@ export const staffApi = {
       .then((data) => staffMemberSchema.array().parse(data))
   },
 
-  createVeterinarian: async (data: CreateVeterinarianStaff): Promise<StaffMemberDetail> => {
-    const result = await http.post('/staffs/veterinarians', data)
+  createVeterinarian: async (
+    clinicId: ClinicId,
+    data: CreateVeterinarianStaff,
+  ): Promise<StaffMemberDetail> => {
+    const result = await http.post(`/clinics/${clinicId}/staffs/veterinarians`, data)
     return staffMemberDetailSchema.parse(result)
   },
 
-  createSecretary: async (data: CreateSecretaryStaff): Promise<StaffMemberDetail> => {
-    const result = await http.post('/staffs/secretaries', data)
+  createSecretary: async (
+    clinicId: ClinicId,
+    data: CreateSecretaryStaff,
+  ): Promise<StaffMemberDetail> => {
+    const result = await http.post(`/clinics/${clinicId}/staffs/secretaries`, data)
     return staffMemberDetailSchema.parse(result)
   },
-  createReferent: async (data: CreateSecretaryStaff): Promise<StaffMemberDetail> => {
-    const result = await http.post('/staffs/referents', data)
+  createReferent: async (
+    clinicId: ClinicId,
+    data: CreateSecretaryStaff,
+  ): Promise<StaffMemberDetail> => {
+    const result = await http.post(`/clinics/${clinicId}/staffs/referents`, data)
     return staffMemberDetailSchema.parse(result)
   },
 }

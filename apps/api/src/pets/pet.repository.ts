@@ -65,8 +65,8 @@ export class PetRepository {
           select: {
             races: true,
             vaccine: true,
-            clinic: true,
-            veterinarian: true,
+            clinics: true,
+            veterinarians: true,
             healthConditions: true,
           },
         },

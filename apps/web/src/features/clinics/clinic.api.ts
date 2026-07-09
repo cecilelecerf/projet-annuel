@@ -5,9 +5,12 @@ import {
   clinicGuardRequest,
   clinicSchema,
   clinicStatusSchema,
+  specialitySchema,
   type ClinicId,
   type ClinicRequestId,
   type CreateClinicRequest,
+  type Speciality,
+  type SpecialityId,
   type UpdateClinic,
 } from '@armali/schemas'
 
@@ -57,6 +60,28 @@ export const clinicApi = {
     },
     reject: async ({ id }: { id: ClinicRequestId }) => {
       return await http.get(`/clinics/requests/${id}/reject`)
+    },
+  },
+
+  specialities: {
+    getAcceptedSpecialities: async ({
+      clinicId,
+    }: {
+      clinicId: ClinicId
+    }): Promise<Speciality[]> => {
+      const data = await http.get(`/clinics/${clinicId}/specialities`)
+      return specialitySchema.array().parse(data)
+    },
+
+    setAcceptedSpecialities: async ({
+      clinicId,
+      specialityIds,
+    }: {
+      specialityIds: SpecialityId[]
+      clinicId: ClinicId
+    }): Promise<Speciality[]> => {
+      const data = await http.patch(`/clinics/${clinicId}/specialities`, { specialityIds })
+      return specialitySchema.array().parse(data)
     },
   },
 }

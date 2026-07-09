@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ClinicAct, ClinicId, MedicalHistoryMeta, MeetingId } from '@armali/schemas'
 import { ref, computed, watch } from 'vue'
-import { clinicActApi } from '@/features/clinic-acts/clinic-act.api'
+import { clinicActApi } from '@/features/clinics/clinic-acts/clinic-act.api.ts'
 import { useMeetingActForm } from '../composables/useMeetingActForm'
 import ActTypeAndActSelect from './act-fields/CinicActTypeAndClinicActSelect.vue'
 import SurgeryFields from './act-fields/SurgeryFields.vue'

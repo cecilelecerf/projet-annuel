@@ -10,7 +10,7 @@ import { raceMetaSchema } from "../pet.schema";
 import { clientPetHealthConditionMetaSchema } from "../health.schema";
 import { animalSchema } from "./index.schema";
 import { animalVaccineSchema } from "../acts";
-import { veterinarianClinicMetaSchema } from "../veterinarian-clinic.schema";
+import { veterinarianClinicMetaSchema } from "../clinics/veterinarian-clinic.schema";
 
 export const animalWithUserSchema = animalSchema.extend({
   client: userSchema,

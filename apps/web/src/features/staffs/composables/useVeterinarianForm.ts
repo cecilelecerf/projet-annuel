@@ -2,10 +2,10 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { staffApi } from '@/features/staffs/staff.api'
-import type { Speciality, SpecialityId } from '@armali/schemas'
+import type { ClinicId, Speciality, SpecialityId } from '@armali/schemas'
 import { specialityApi } from '@/features/specialities/speciality.api'
 
-export function useVeterinarianForm() {
+export function useVeterinarianForm(clinicId: ClinicId) {
   const router = useRouter()
   const notify = useNotify()
 
@@ -72,7 +72,7 @@ export function useVeterinarianForm() {
   async function submit() {
     loading.value = true
     try {
-      await staffApi.createVeterinarian({
+      await staffApi.createVeterinarian(clinicId, {
         firstname: form.firstname,
         lastname: form.lastname,
         email: form.email,

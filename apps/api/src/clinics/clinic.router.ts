@@ -8,14 +8,15 @@ import {
   updateClinicSpecialitiesSchema,
 } from "@armali/schemas";
 import {
-  clinicActController,
   clinicController,
-  specialityController,
-  staffController,
+  clinicPetController,
+  clinicSpecialityController,
 } from "@api/instances";
 import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 import clinicRequestRouter from "./requests/request.router";
+import staffRouter from "./staffs/staff.router";
+import clinicActRouter from "./clinic-acts/clinic-act.router";
 
 const clinicRouter: RouterType = Router();
 const controller = clinicController;
@@ -36,18 +37,12 @@ clinicRouter.get(
   roleMiddleware(CLINIC_STAFF_ROLES),
   controller.getMyClinic.bind(controller) as RequestHandler,
 );
-clinicRouter.get(
-  "/:id/clinic-acts",
-  requireApprovedClinic,
-  roleMiddleware(CLINIC_STAFF_ROLES),
-  clinicActController.getClinicActs.bind(clinicActController) as RequestHandler,
-);
 
 clinicRouter.get(
   "/:id/specialities",
   requireApprovedClinic,
-  specialityController.getAllByClinic.bind(
-    specialityController,
+  clinicSpecialityController.getAcceptedSpecialities.bind(
+    clinicSpecialityController,
   ) as RequestHandler,
 );
 
@@ -56,17 +51,28 @@ clinicRouter.patch(
   requireApprovedClinic,
   roleMiddleware(["REFERENT", "DIRECTOR"]),
   validate(updateClinicSpecialitiesSchema),
-  specialityController.linkWithClinic.bind(
-    specialityController,
+  clinicSpecialityController.setAcceptedSpecialities.bind(
+    clinicSpecialityController,
+  ) as RequestHandler,
+);
+clinicRouter.get(
+  "/:id/pets",
+  requireApprovedClinic,
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  clinicPetController.getAcceptedPets.bind(
+    clinicPetController,
+  ) as RequestHandler,
+);
+clinicRouter.patch(
+  "/:id/pets",
+  requireApprovedClinic,
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  validate(updateClinicSpecialitiesSchema),
+  clinicPetController.setAcceptedPets.bind(
+    clinicPetController,
   ) as RequestHandler,
 );
 
-clinicRouter.get(
-  "/:id/staffs",
-  requireApprovedClinic,
-  roleMiddleware(CLINIC_STAFF_ROLES),
-  staffController.getStaffByClinic.bind(staffController) as RequestHandler,
-);
 clinicRouter.get(
   "/:id/clients",
   requireApprovedClinic,
@@ -88,5 +94,6 @@ clinicRouter.delete(
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.deleteClinic.bind(controller) as RequestHandler,
 );
-
+clinicRouter.use("/:clinicId/staffs", staffRouter);
+clinicRouter.use("/:clinicId/acts", clinicActRouter);
 export default clinicRouter;

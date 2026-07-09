@@ -125,7 +125,6 @@ describe("petRouter", () => {
       const res = await request(app)
         .get("/api/pets/00000000-0000-0000-0000-000000000000/races")
         .set("Authorization", `Bearer ${clientToken}`);
-      console.log(res.body);
       expect(res.status).toBe(404);
     });
 

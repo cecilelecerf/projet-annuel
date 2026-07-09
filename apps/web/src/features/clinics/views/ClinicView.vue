@@ -8,7 +8,7 @@ import type { Clinic, Speciality, SpecialityId } from '@armali/schemas'
 import { specialityApi } from '@/features/specialities/speciality.api'
 import { clinicApi } from '../clinic.api'
 import { useAuthStore } from '@/stores/authStore'
-import ClinicActSection from '@/features/clinic-acts/components/ClinicActSection.vue'
+import ClinicActSection from '@/features/clinics/clinic-acts/components/ClinicActSection.vue'
 
 const notify = useNotify()
 
@@ -209,7 +209,7 @@ const specialitySaving = ref(false)
 async function loadClinicSpecialities() {
   if (!user.value?.clinicId) return
   try {
-    const current = await specialityApi.getSpecialitiesByClinic({
+    const current = await clinicApi.specialities.getAcceptedSpecialities({
       clinicId: user.value.clinicId,
     })
     selectedSpecialityIds.value = current.map((s) => s.id)
@@ -242,7 +242,7 @@ async function saveSpecialities() {
   if (!user.value?.clinicId) return
   specialitySaving.value = true
   try {
-    const updated = await specialityApi.updateClinicSpecialities({
+    const updated = await clinicApi.specialities.setAcceptedSpecialities({
       clinicId: user.value.clinicId,
       specialityIds: selectedSpecialityIds.value,
     })

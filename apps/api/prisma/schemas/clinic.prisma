@@ -16,7 +16,7 @@ model Clinic {
   director   DirectorClinicProfile @relation(fields: [directorId], references: [id])
 
   specialities           Speciality[]
-  clinicPet              Pet[]
+  pets                   Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
   veterinarianClinics    VeterinarianClinic[]
@@ -83,6 +83,7 @@ model VeterinarianClinic {
   animalMeetings         AnimalMeeting[]
   hospitalizationReports HospitalizationReport[]
   animals                Animal[]
-
+  
+  @@unique([id, clinicId])
   @@map("veterinarian_clinics")
 }

@@ -31,8 +31,23 @@ const menuItems: NavNode[] = [
   },
   {
     index: 'VETERINARIAN.Availability',
-    label: 'Disponibilité',
+    label: 'Paramètres',
     icon: SetUp,
+    children: [
+      {
+        index: 'VETERINARIAN.Availability',
+        label: 'Disponibilité',
+        icon: Calendar,
+      },
+      {
+        index: 'VETERINARIAN.Pets',
+        label: 'Pets',
+      },
+      {
+        index: 'VETERINARIAN.Specialities',
+        label: 'Specialités',
+      },
+    ],
   },
   {
     index: 'VETERINARIAN.Profil',

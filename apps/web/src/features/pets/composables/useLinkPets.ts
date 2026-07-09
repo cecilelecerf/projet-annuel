@@ -5,10 +5,13 @@ import { petApi } from '../api'
 import { clinicApi } from '@/features/clinics/clinic.api'
 import { raceApi } from '@/features/races/api'
 import { match } from 'ts-pattern'
+import type {
+  LinkClinic,
+  LinkVeterinarian,
+} from '@/features/specialities/composables/useLinkSpecialities'
+import { veterinarianApi } from '@/features/users/veterinarian.api'
 
-type VeterinarianLink = { type: 'veterinarian' }
-type ClinicLink = { type: 'clinic'; clinicId: ClinicId }
-export function useClinicPets({ data }: { data: VeterinarianLink | ClinicLink }) {
+export function useClinicPets({ data }: { data: LinkVeterinarian | LinkClinic }) {
   const notify = useNotify()
 
   const allPets = ref<Pet[]>([])
@@ -31,7 +34,7 @@ export function useClinicPets({ data }: { data: VeterinarianLink | ClinicLink })
       const accepted = await match(data)
         .with(
           { type: 'veterinarian' },
-          async () => await clinicApi.pets.getAcceptedPets('clinicId' as ClinicId),
+          async (d) => await veterinarianApi.pets.getAcceptedPets(d.veterinarianId),
         )
         .with({ type: 'clinic' }, async (d) => await clinicApi.pets.getAcceptedPets(d.clinicId))
         .exhaustive()
@@ -82,9 +85,9 @@ export function useClinicPets({ data }: { data: VeterinarianLink | ClinicLink })
       const accepted = await match(data)
         .with(
           { type: 'veterinarian' },
-          async () =>
-            await clinicApi.pets.setAcceptedPets({
-              clinicId: 'z' as ClinicId,
+          async (d) =>
+            await veterinarianApi.pets.setAcceptedPets({
+              veterinarianId: d.veterinarianId,
               petIds: selectedPetIds.value,
             }),
         )

@@ -121,6 +121,11 @@ import { ClinicPetService } from "./clinics/clinic-pets/clinic-pet.service";
 import { ClinicPetController } from "./clinics/clinic-pets/clinic-pet.controller";
 import { ClinicSpecialityService } from "./clinics/clinic-specialities/clinic-speciality.service";
 import { ClinicSpecialityController } from "./clinics/clinic-specialities/clinic-speciality.controller";
+import { VeterinarianSpecialityService } from "./veterinarians/veterinarian-specialities/veterinarian-speciality.service";
+import { VeterinarianProfileRepository } from "./veterinarians/veterinarian-profile.repository";
+import { VeterinarianPetService } from "./veterinarians/veterinarian-pets/clinic-pet.service";
+import { VeterinarianPetController } from "./veterinarians/veterinarian-pets/clinic-pet.controller";
+import { VeterinarianSpecialityController } from "./veterinarians/veterinarian-specialities/veterinarian-speciality.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -155,6 +160,8 @@ const reviewRepository = new ReviewRepository(prisma);
 const staffRepository = new StaffRepository(prisma);
 const clinicRequestRepository = new ClinicRequestRepository(prisma);
 const raceRepository = new RaceRepository(prisma);
+const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -246,6 +253,15 @@ const clinicSpecialityService = new ClinicSpecialityService(
   specialityRepository,
   clinicService,
 );
+
+const veterinarianPetService = new VeterinarianPetService(
+  veterinarianProfileRepository,
+  petRepository,
+);
+const veterinarianSpecialityService = new VeterinarianSpecialityService(
+  veterinarianProfileRepository,
+  specialityRepository,
+);
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -301,3 +317,8 @@ export const clinicPetController = new ClinicPetController(clinicPetService);
 export const clinicSpecialityController = new ClinicSpecialityController(
   clinicSpecialityService,
 );
+export const veterinarianPetController = new VeterinarianPetController(
+  veterinarianPetService,
+);
+export const veterinarianSpecialityController =
+  new VeterinarianSpecialityController(veterinarianSpecialityService);

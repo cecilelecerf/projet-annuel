@@ -5,10 +5,18 @@ import { useAuthStore } from '@/stores/authStore'
 import { useClinicPets } from '../composables/useLinkPets.ts'
 import AcceptedPetsAccordion from '../components/AcceptedPetsAccordion.vue'
 import AddPetSearch from '../components/AddPetsSearch.vue'
+import type {
+  LinkClinic,
+  LinkVeterinarian,
+} from '@/features/specialities/composables/useLinkSpecialities.ts'
 
 const { user } = storeToRefs(useAuthStore())
 
 const clinicId = user.value!.clinicId!
+const data: LinkClinic | LinkVeterinarian =
+  user?.value?.role === 'VETERINARIAN'
+    ? { type: 'veterinarian', veterinarianId: user.value.id }
+    : { type: 'clinic', clinicId }
 
 const {
   allPets,
@@ -25,7 +33,7 @@ const {
   removePet,
   addPet,
   save,
-} = useClinicPets({ data: { type: 'clinic', clinicId } })
+} = useClinicPets({ data })
 
 const activeNames = ref<string[]>([])
 

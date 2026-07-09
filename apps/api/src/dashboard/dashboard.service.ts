@@ -153,32 +153,147 @@ export class DashboardService {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [pendingOrders, todaysMeetings] = await Promise.all([
+    const [
+      pendingOrders,
+      todaysAnimalMeetings,
+      veterinarianCount,
+      secretaryCount,
+      vetIds,
+    ] = await Promise.all([
       this.orderRepository.findPendingPickupByClinic(clinicId),
       this.meetingService.getAnimalMeetingsByClinic(
         clinicId,
         startOfDay,
         endOfDay,
       ),
+      this.staffService.getStaffCountByUser({
+        authorId: userId,
+        authorRole: "SECRETARY",
+        targetRole: ["VETERINARIAN"],
+      }),
+      this.staffService.getStaffCountByUser({
+        authorId: userId,
+        authorRole: "SECRETARY",
+        targetRole: ["SECRETARY"],
+      }),
+      this.staffService.getStaffIdsByUser({
+        authorId: userId,
+        authorRole: "SECRETARY",
+        targetRole: ["VETERINARIAN"],
+      }),
     ]);
+
+    // ── Vétérinaires présents aujourd'hui (disponibilité, pas juste RDV) ─────
+    const presenceChecks = await Promise.all(
+      vetIds.map(async (vetId) => {
+        const avails = await this.meetingService.getAvailabilities({
+          userId: vetId,
+          start: startOfDay,
+          end: endOfDay,
+          clinicIds: [clinicId],
+        });
+        return avails.length > 0 ? vetId : null;
+      }),
+    );
+    const presentVetIds = presenceChecks.filter(
+      (id): id is UserId => id !== null,
+    );
+    const presentVets = presentVetIds.length
+      ? await prisma.user.findMany({
+          where: { id: { in: presentVetIds } },
+          select: { id: true, firstname: true, lastname: true },
+        })
+      : [];
+
+    const toPrepare = pendingOrders.filter((o) => o.status === "CONFIRMED");
+    const ready = pendingOrders.filter((o) => o.status === "READY");
+
+    const mapOrder = (o: (typeof pendingOrders)[number]) => ({
+      id: o.id,
+      clientName: `${o.client.firstname} ${o.client.lastname}`,
+      items: o.orderItems
+        .map((i) => `${i.quantity}× ${i.productClinic.product.name}`)
+        .join(", "),
+      total: o.orderItems.reduce(
+        (sum, i) => sum + Number(i.unitPrice) * i.quantity,
+        0,
+      ),
+    });
+
+    // ── Enrichissement des RDV du jour (animal + vétérinaire) ────────────────
+    const animalMeetings = todaysAnimalMeetings.filter(
+      (m): m is typeof m & { animalId: string } => "animalId" in m,
+    );
+    const animalIds = [...new Set(animalMeetings.map((m) => m.animalId))];
+    const vetClinicIds = [
+      ...new Set(
+        animalMeetings
+          .map((m) => (m as unknown as { veterinarianClinicId?: string })
+            .veterinarianClinicId)
+          .filter((id): id is string => !!id),
+      ),
+    ];
+
+    const [animals, vetClinics] = await Promise.all([
+      animalIds.length
+        ? prisma.animal.findMany({
+            where: { id: { in: animalIds } },
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([]),
+      vetClinicIds.length
+        ? prisma.veterinarianClinic.findMany({
+            where: { id: { in: vetClinicIds } },
+            select: {
+              id: true,
+              veterinarian: {
+                select: { user: { select: { firstname: true, lastname: true } } },
+              },
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+    const animalById = new Map(animals.map((a) => [a.id, a]));
+    const vetClinicById = new Map(vetClinics.map((v) => [v.id, v]));
+
+    const todaysMeetings = animalMeetings
+      .sort(
+        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      )
+      .map((m) => {
+        const animal = animalById.get(m.animalId);
+        const vetClinicId = (m as unknown as { veterinarianClinicId?: string })
+          .veterinarianClinicId;
+        const vc = vetClinicId ? vetClinicById.get(vetClinicId) : undefined;
+        return {
+          startTime: new Date(m.startTime).toISOString(),
+          endTime: new Date(m.endTime).toISOString(),
+          animalName: animal?.name ?? "—",
+          veterinarianName: vc
+            ? `${vc.veterinarian.user.firstname} ${vc.veterinarian.user.lastname}`
+            : "—",
+        };
+      });
 
     return {
       role: "SECRETARY" as const,
-      ordersToPrepareCount: pendingOrders.filter(
-        (o) => o.status === "CONFIRMED",
-      ).length,
-      ordersReadyForPickupCount: pendingOrders.filter(
-        (o) => o.status === "READY",
-      ).length,
+      ordersToPrepareCount: toPrepare.length,
+      ordersReadyForPickupCount: ready.length,
+      ordersToPrepare: toPrepare.map(mapOrder),
+      ordersReadyForPickup: ready.map(mapOrder),
       todaysMeetingsCount: todaysMeetings.length,
+      todaysMeetings,
+      staff: { veterinarianCount, secretaryCount },
+      presentVeterinarians: presentVets.map((v) => ({
+        id: v.id,
+        firstname: v.firstname,
+        lastname: v.lastname,
+      })),
     };
   }
 
   // ── Dashboard vétérinaire ────────────────────────────────────────────────────
-  // VeterinarianProfile.id === User.id (relation 1-1 portée par le profil),
-  // donc pas besoin de résolution supplémentaire : userId sert directement
-  // de vetProfileId.
-
+ 
   async getVeterinarianDashboard(userId: UserId) {
     const now = new Date();
     const endOfToday = new Date();

@@ -49,11 +49,39 @@ export const directorDashboardSchema = clinicManagementDashboardSchema.extend({
 
 // ── Secrétaire : commandes à préparer/récupérer + RDV du jour de la clinique ──
 
+const orderPreviewSchema = z.object({
+  id: z.string(),
+  clientName: z.string(),
+  items: z.string(),
+  total: z.number(),
+})
+
+const todaysMeetingSchema = z.object({
+  startTime: z.string(),
+  endTime: z.string(),
+  animalName: z.string(),
+  veterinarianName: z.string(),
+})
+
 export const secretaryDashboardSchema = z.object({
   role: z.literal('SECRETARY'),
   ordersToPrepareCount: z.number().int().nonnegative(),
   ordersReadyForPickupCount: z.number().int().nonnegative(),
+  ordersToPrepare: z.array(orderPreviewSchema),
+  ordersReadyForPickup: z.array(orderPreviewSchema),
   todaysMeetingsCount: z.number().int().nonnegative(),
+  todaysMeetings: z.array(todaysMeetingSchema),
+  staff: z.object({
+    veterinarianCount: z.number().int().nonnegative(),
+    secretaryCount: z.number().int().nonnegative(),
+  }),
+  presentVeterinarians: z.array(
+    z.object({
+      id: z.string(),
+      firstname: z.string(),
+      lastname: z.string(),
+    }),
+  ),
 })
 
 // ── Vétérinaire : RDV à venir + sa propre note ──────────────────────────────

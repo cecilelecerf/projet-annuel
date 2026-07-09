@@ -8,6 +8,7 @@ import type { Clinic, Speciality, SpecialityId } from '@armali/schemas'
 import { specialityApi } from '@/features/specialities/speciality.api'
 import { clinicApi } from '../clinic.api'
 import { useAuthStore } from '@/stores/authStore'
+import ClinicActSection from '@/features/clinic-acts/components/ClinicActSection.vue'
 
 const notify = useNotify()
 
@@ -552,6 +553,7 @@ onMounted(loadStatus)
       </div>
     </div>
   </div>
+  <clinic-act-section v-if="clinic" :clinic-id="clinic.id" />
 </template>
 
 <style scoped>

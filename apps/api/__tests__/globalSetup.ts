@@ -12,9 +12,7 @@ import {
 import { MinioContainer, StartedMinioContainer } from "@testcontainers/minio";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __pgContainer__: StartedPostgreSqlContainer | undefined;
-  // eslint-disable-next-line no-var
   var __minioContainer__: StartedMinioContainer | undefined;
 }
 

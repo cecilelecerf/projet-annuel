@@ -13,7 +13,7 @@ import actRouter from "./acts/act.router";
 import { default as meetingRouter } from "./meetings/meeting.router";
 import animalRouter from "./animals/animal.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
-import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
+import animalMedicalHistoryRouter from "./medical-histories/medical-history.router";
 import productRouter from "./products/product.router";
 import brandRouter from "./brands/brand.router";
 import specialityRouter from "./specialities/speciality.router";
@@ -23,6 +23,9 @@ import veterinarianRouter from "./users/veterinarian.router";
 import staffRouter from "./staffs/staff.router";
 import veterinarianClinicRouter from "./veterinarian-clinics/veterinarian-clinic.router";
 import clinicActRouter from "./clinic-acts/clinic-act.router";
+import petRouter from "./pets/pet.router";
+import vaccineRouter from "./vaccines/vaccine.router";
+import raceRouter from "./races/race.router";
 
 collectDefaultMetrics();
 
@@ -76,4 +79,7 @@ app.use("/api/veterinarians", veterinarianRouter);
 app.use("/api/staffs", staffRouter);
 app.use("/api/veterinarian-clinics", veterinarianClinicRouter);
 app.use("/api/clinic-acts", clinicActRouter);
+app.use("/api/pets", petRouter);
+app.use("/api/vaccines", vaccineRouter);
+app.use("/api/races", raceRouter);
 app.use(errorHandler);

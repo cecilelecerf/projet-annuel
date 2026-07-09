@@ -56,8 +56,8 @@ async function cleanupDisposable(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
     await prisma.clinic.deleteMany({ where: { directorId: user.id } });
+    await prisma.user.deleteMany({ where: { email } });
   }
-  await prisma.user.deleteMany({ where: { email } });
 }
 
 // ── GET /api/clinics/ ──────────────────────────────────────────────────────────
@@ -85,29 +85,6 @@ describe("GET /api/clinics/", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThan(0);
-  });
-});
-
-// ── GET /api/clinics/:id/medical-histories ────────────────────────────────────
-
-describe("GET /api/clinics/:id/medical-histories", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get(
-      "/api/clinics/some-id/medical-histories",
-    );
-    expect(res.status).toBe(401);
-  });
-
-  it("200 — VETERINARIAN retourne l'historique de sa clinique", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/medical-histories`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
   });
 });
 

@@ -6,10 +6,11 @@ import {
   userSchema,
   veterinarianProfileSchema,
 } from "../users";
-import { healthConditionSchema, raceMetaSchema } from "../pet.schema";
-import { clientPetHealthConditionSchema } from "../health.schema";
+import { raceMetaSchema } from "../pet.schema";
+import { clientPetHealthConditionMetaSchema } from "../health.schema";
 import { animalSchema } from "./index.schema";
 import { animalVaccineSchema } from "../acts";
+import { veterinarianClinicMetaSchema } from "../veterinarian-clinic.schema";
 
 export const animalWithUserSchema = animalSchema.extend({
   client: userSchema,
@@ -32,17 +33,17 @@ export type AnimalWithRaceMeta = z.infer<typeof animalWithRaceMetaSchema>;
 export type AnimalWithUser = z.infer<typeof animalWithUserSchema>;
 
 export const animalDetailSchema = animalSchema.extend({
-  animalConditionHealths: clientPetHealthConditionSchema
-    .extend({ healthCondition: healthConditionSchema })
-    .omit({ addedBy: true })
-    .array(),
+  animalConditionHealths: clientPetHealthConditionMetaSchema.array(),
   client: clientProfileSchema.extend({ user: baseUserSchema }),
   race: raceMetaSchema,
   animalVaccine: animalVaccineSchema.array(),
-  attendingVeterinarian: veterinarianProfileSchema
-    .extend({ user: baseUserSchema })
-    .nullable()
-    .optional(),
+  attendingVeterinarianClinic: veterinarianClinicMetaSchema
+    .extend({
+      veterinarian: veterinarianProfileSchema.extend({
+        user: baseUserSchema,
+      }),
+    })
+    .nullable(),
 });
 
 export type AnimalDetail = z.infer<typeof animalDetailSchema>;

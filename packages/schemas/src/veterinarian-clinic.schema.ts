@@ -16,18 +16,17 @@ export const veterinarianClinicSchema = z.object({
   clinicId: clinicIdSchema,
 });
 
-export const veterinarianClinicMetaSchema = z.object({
-  id: veterinarianClinicIdSchema,
-  veterinarianId: veterinarianIdSchema,
+export const veterinarianClinicMetaSchema = veterinarianClinicSchema.extend({
   veterinarian: veterinarianProfileSchema.extend({ user: baseUserSchema }),
   clinic: clinicSchema,
-  clinicId: clinicIdSchema,
 });
 export const createVeterinarianClinicSchema = veterinarianClinicSchema.omit({
   id: true,
 });
-
 export type VeterinarianClinic = z.infer<typeof veterinarianClinicSchema>;
+export type VeterinarianClinicMeta = z.infer<
+  typeof veterinarianClinicMetaSchema
+>;
 export type CreateVeterinarianClinic = z.infer<
   typeof createVeterinarianClinicSchema
 >;

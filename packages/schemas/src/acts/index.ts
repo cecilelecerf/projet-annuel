@@ -6,5 +6,5 @@ export * from "./hospitalization.schema";
 export * from "./imaging.schema";
 export * from "./surgery.schema";
 export * from "./animal-vaccination.schema";
-export * from "./vaccine";
 export * from "./vaccine/meta.schema";
+export * from "./vaccine/vaccine.schema";

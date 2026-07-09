@@ -1,0 +1,37 @@
+.act-details {
+  padding-block: var(--spacing-sm);
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+
+  @include above('sm') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+}
+.detail-label {
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.detail-badge {
+  width: fit-content;
+}
+.detail-value {
+  font-size: 13px;
+  color: var(--el-text-color-primary);
+  width: fit-content;
+}

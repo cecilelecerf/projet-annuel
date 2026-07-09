@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { countryFlag } from '@/utils/countryFlag'
 import type { CreateVaccineCountryRule } from '@armali/schemas'
 import { Delete, Plus } from '@element-plus/icons-vue'
 
@@ -28,7 +29,15 @@ const COUNTRY_OPTIONS = [
 
     <div v-for="(rule, index) in rules" :key="index" class="rule-row">
       <el-select v-model="rule.country" placeholder="Pays" style="width: 120px">
-        <el-option v-for="c in COUNTRY_OPTIONS" :key="c.value" :label="c.label" :value="c.value" />
+        <el-option
+          v-for="c in COUNTRY_OPTIONS"
+          :key="c.value"
+          :label="`${countryFlag(c.value)} ${c.label}`"
+          :value="c.value"
+        />
+        <template #label="{ label }">
+          <span>{{ label }}</span>
+        </template>
       </el-select>
 
       <el-input-number

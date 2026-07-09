@@ -1,8 +1,18 @@
 import { http } from '@/lib/api'
-import { actSchema, type Act, type CreateAct, type UpdateAct } from '@armali/schemas'
+import { actSchema, type Act, type ActType, type CreateAct, type UpdateAct } from '@armali/schemas'
 
 export const actApi = {
-  getAll: (): Promise<Act[]> => http.get('/acts').then((data) => actSchema.array().parse(data)),
+  getAll: async (params?: { types?: ActType[] }): Promise<Act[]> => {
+    console.log('enter')
+    console.log(params)
+    const query = new URLSearchParams()
+    params?.types?.forEach((type) => query.append('type', type))
+    const queryString = query.toString()
+
+    return http
+      .get(`/acts${queryString ? `?${queryString}` : ''}`)
+      .then((data) => actSchema.array().parse(data))
+  },
 
   getById: (id: string): Promise<Act> =>
     http.get(`/acts/${id}`).then((data) => actSchema.parse(data)),

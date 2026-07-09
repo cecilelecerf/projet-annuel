@@ -33,6 +33,10 @@ const menuItems: MenuItem[] = [
         index: 'ADMIN.Vaccines',
         label: 'Vaccine',
       },
+      {
+        index: 'ADMIN.Pets',
+        label: 'Pets',
+      },
     ],
   },
   {

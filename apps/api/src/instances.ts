@@ -114,6 +114,9 @@ import { PetService } from "./pets/pet.service";
 import { VaccineService } from "./vaccines/vaccine.service";
 import { VaccineController } from "./vaccines/vaccine.controller";
 import { PetController } from "./pets/pet.controller";
+import { RaceRepository } from "./races/race.repository";
+import { RaceService } from "./races/race.service";
+import { RaceController } from "./races/rece.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -147,6 +150,7 @@ const conversationRepository = new ConversationRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const staffRepository = new StaffRepository(prisma);
 const clinicRequestRepository = new ClinicRequestRepository(prisma);
+const raceRepository = new RaceRepository(prisma);
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -232,7 +236,7 @@ export const messagingService = new MessagingService(
   contactsRepository,
 );
 const clinicRequestService = new ClinicRequestService(clinicRequestRepository);
-
+const raceService = new RaceService(raceRepository, petRepository);
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -283,3 +287,4 @@ export const clinicRequestController = new ClinicRequestController(
   clinicRequestService,
 );
 export const petController = new PetController(petService);
+export const raceController = new RaceController(raceService);

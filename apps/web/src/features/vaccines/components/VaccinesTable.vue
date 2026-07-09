@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { countryFlag } from '@/utils/countryFlag'
 import type { Vaccine } from '@armali/schemas'
 import { Delete, Edit } from '@element-plus/icons-vue'
 
@@ -48,7 +49,7 @@ function sortByRecommendedAge(a: Vaccine, b: Vaccine) {
     <el-table-column label="Prix" width="100" sortable :sort-method="sortByPrice">
       <template #default="{ row }">{{ (row.act?.basePrice ?? 0).toFixed(2) }} €</template>
     </el-table-column>
-    <el-table-column label="Règles pays" min-width="180">
+    <el-table-column label="Règles pays" min-width="200">
       <template #default="{ row }">
         <div class="rules-tags">
           <el-tag
@@ -57,6 +58,7 @@ function sortByRecommendedAge(a: Vaccine, b: Vaccine) {
             size="small"
             :type="rule.type === 'MANDATORY' ? 'danger' : 'info'"
           >
+            <span class="flag">{{ countryFlag(rule.country) }}</span>
             {{ rule.country }} · {{ rule.type === 'MANDATORY' ? 'Obl.' : 'Rec.' }}
           </el-tag>
         </div>

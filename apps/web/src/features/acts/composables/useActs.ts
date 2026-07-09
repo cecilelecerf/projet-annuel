@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useNotify } from '@/composables/useNotify'
-import type { Act, CreateAct } from '@armali/schemas'
+import { actTypeSchema, type Act, type CreateAct } from '@armali/schemas'
 import { actApi } from '../act.api'
 
 export function useActs() {
@@ -12,7 +12,9 @@ export function useActs() {
   async function load() {
     loading.value = true
     try {
-      acts.value = await actApi.getAll()
+      acts.value = await actApi.getAll({
+        types: actTypeSchema.options.filter((option) => option !== 'VACCINATION'),
+      })
     } catch (err: unknown) {
       notify.error(err instanceof Error ? err.message : 'Erreur de chargement')
     } finally {

@@ -19,7 +19,7 @@
 @use './dialog.scss';
 @use './input.scss';
 @use './tabs.scss';
-
+@use './collapse.scss';
 .card {
   background: white;
   border-radius: var(--radius-lg);

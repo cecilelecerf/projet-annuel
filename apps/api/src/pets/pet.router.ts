@@ -1,7 +1,11 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { petController, vaccineController } from "@api/instances";
+import {
+  petController,
+  raceController,
+  vaccineController,
+} from "@api/instances";
 
 const petRouter: Router = Router();
 const controller = petController;
@@ -12,6 +16,12 @@ petRouter.get(
   "/:id/vaccines",
   vaccineController.getByPetId.bind(vaccineController) as RequestHandler,
 );
+
+petRouter.get(
+  "/:id/races",
+  raceController.getByPetId.bind(raceController) as RequestHandler,
+);
+
 petRouter.get("/:id", controller.getById.bind(controller) as RequestHandler);
 
 petRouter.post(

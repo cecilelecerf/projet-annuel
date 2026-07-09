@@ -37,6 +37,11 @@ export const adminRouter: RouteRecordRaw[] = [
         name: 'ADMIN.Vaccines',
         component: () => import('@/features/vaccines/views/VaccinesView.vue'),
       },
+      {
+        path: 'pets',
+        name: 'ADMIN.Pets',
+        component: () => import('@/features/pets/views/PetsRacesView.vue'),
+      },
     ],
   },
 ]

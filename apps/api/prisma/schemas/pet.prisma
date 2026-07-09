@@ -55,7 +55,7 @@ model Race {
   picture   String?
 
   petId  String
-  pet    Pet      @relation(fields: [petId], references: [id])
+  pet    Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   animal Animal[]
 
   @@map("races")

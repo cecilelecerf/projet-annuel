@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 
-// ⚠️ Ajustez ces imports selon votre setup réel de tests d'intégration
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
 import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
+import { createDisposableRace } from "@api/races/__tests__/race.router.test";
+
 const prisma = getPrisma();
 
 async function createDisposablePet() {
@@ -109,6 +110,47 @@ describe("petRouter", () => {
         .set("Authorization", `Bearer ${clientToken}`);
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
+    });
+  });
+
+  // ── GET /pets/:id/races ───────────────────────────────────────────────────
+
+  describe("GET /pets/:id/races", () => {
+    it("401 sans authentification", async () => {
+      const res = await request(app).get("/api/pets/some-id/races");
+      expect(res.status).toBe(401);
+    });
+
+    it("404 si l'espèce n'existe pas", async () => {
+      const res = await request(app)
+        .get("/api/pets/00000000-0000-0000-0000-000000000000/races")
+        .set("Authorization", `Bearer ${clientToken}`);
+      console.log(res.body);
+      expect(res.status).toBe(404);
+    });
+
+    it("200 — accessible à tout rôle authentifié", async () => {
+      const pet = await createDisposablePet();
+
+      const res = await request(app)
+        .get(`/api/pets/${pet.id}/races`)
+        .set("Authorization", `Bearer ${clientToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("200 — liste les races de l'espèce", async () => {
+      const pet = await createDisposablePet();
+      const race = await createDisposableRace(pet.id);
+
+      const res = await request(app)
+        .get(`/api/pets/${pet.id}/races`)
+        .set("Authorization", `Bearer ${clientToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0]).toMatchObject({ id: race.id, name: race.name });
     });
   });
 

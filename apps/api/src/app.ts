@@ -25,6 +25,7 @@ import veterinarianClinicRouter from "./veterinarian-clinics/veterinarian-clinic
 import clinicActRouter from "./clinic-acts/clinic-act.router";
 import petRouter from "./pets/pet.router";
 import vaccineRouter from "./vaccines/vaccine.router";
+import raceRouter from "./races/race.router";
 
 collectDefaultMetrics();
 
@@ -80,4 +81,5 @@ app.use("/api/veterinarian-clinics", veterinarianClinicRouter);
 app.use("/api/clinic-acts", clinicActRouter);
 app.use("/api/pets", petRouter);
 app.use("/api/vaccines", vaccineRouter);
+app.use("/api/races", raceRouter);
 app.use(errorHandler);

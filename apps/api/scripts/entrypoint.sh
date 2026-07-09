@@ -34,9 +34,9 @@ fi
 echo "✅ DATABASE_URL is set"
 echo "Waiting for database..."
 
-echo "Running migrations..."
-cd /app/apps/api
-prisma migrate deploy --config=./dist/prisma.config.js 
+# echo "Running migrations..."
+# cd /app/apps/api
+# prisma migrate deploy --config=./dist/prisma.config.js 
  
 
 echo "Starting application..."

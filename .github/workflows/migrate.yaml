@@ -1,0 +1,38 @@
+name: Run Database Migration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run migration on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+
+          script: |
+
+            export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+
+            docker service update \
+              --force \
+              --replicas 1 \
+              cecoule_migration
+
+
+            sleep 20
+
+
+            docker service logs \
+              --tail 100 \
+              cecoule_migration
+
+
+            docker service update \
+              --replicas 0 \
+              cecoule_migration

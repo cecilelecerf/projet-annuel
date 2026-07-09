@@ -71,6 +71,35 @@ services:
           memory: 256M
       restart_policy:
         condition: on-failure
+  migration:
+    image: ${DOCKER_HUB_USERNAME}/pa-api:latest
+    command:
+      - /scripts/migrate.sh
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+    networks:
+      - backend
+    deploy:
+      replicas: 0
+
+  seed:
+    image: ${DOCKER_HUB_USERNAME}/pa-api:latest
+    command:
+      - /scripts/seed.sh
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - aws_access_key_id_v2
+      - aws_secret_access_key_v2
+      - s3_bucket
+      - s3_endpoint
+    networks:
+      - backend
+    deploy:
+      replicas: 0
 
   api:
     image: ${DOCKER_HUB_USERNAME}/pa-api:latest

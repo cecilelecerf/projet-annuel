@@ -32,7 +32,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'veterinarian',
         name: 'SECRETARY.Veto.List',
-        component: () => import('@/features/users/views/UserListView.vue'),
+        component: () => import('@/features/staffs/views/StaffListView.vue'),
       },
       {
         path: 'veterinarian/calendar/:id',
@@ -60,19 +60,12 @@ export const secretaryRouter: RouteRecordRaw[] = [
       },
 
       // // ── Boutique ─────────────────────────────────────────────
-      // {
-      //   path: 'boutique',
-      //   name: 'SECRETARY.Boutique',
-      //   //        component: () => import('@/views/secretary/boutique/Boutique.vue'),
-      //   children: [
-      //     {
-      //       path: 'vente',
-      //       name: 'SECRETARY.Boutique.Vente',
-      //       //            component: () => import('@/views/secretary/boutique/VenteProduit.vue'),
-      //       // Scan QR Code de la facture pour indiquer la récupération des produits
-      //     },
-      //   ],
-      // },
+      {
+        path: 'orders',
+        name: 'SECRETARY.Orders',
+        component: () => import('@/features/shop/views/SecretaryOrdersView.vue'),
+      },
+
       // ── Animaux ──────────────────────────────────────────────
       // {
       //   path: 'animals',

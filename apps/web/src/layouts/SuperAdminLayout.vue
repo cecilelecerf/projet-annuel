@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import { House, List, OfficeBuilding, Setting, User } from '@element-plus/icons-vue'
+
+import {
+  Box,
+  DocumentChecked,
+  House,
+  List,
+  OfficeBuilding,
+  Setting,
+  User,
+  Van,
+} from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
 import type { NavNode } from '@/components/ui/nav/NaveNode'
 
@@ -10,6 +20,7 @@ const menuItems: NavNode[] = [
     label: 'Accueil',
     icon: House,
   },
+
   {
     index: 'ADMIN.ClinicRequests',
     label: 'Demandes cliniques',
@@ -19,6 +30,28 @@ const menuItems: NavNode[] = [
     index: 'ADMIN.Clinics',
     label: 'Cliniques',
     icon: OfficeBuilding,
+  },
+  {
+    index: '',
+    label: 'Produits',
+    icon: Box,
+    children: [
+      {
+        index: 'ADMIN.Products',
+        label: 'Catalogue produits',
+        icon: Box,
+      },
+      {
+        index: 'ADMIN.ProductRequests',
+        label: 'Demandes de produits',
+        icon: DocumentChecked,
+      },
+      {
+        index: 'ADMIN.Suppliers',
+        label: 'Fournisseurs',
+        icon: Van,
+      },
+    ],
   },
   {
     index: 'ADMIN.Settings',

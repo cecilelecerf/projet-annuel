@@ -8,6 +8,11 @@ export * from "./messagerie.schema";
 export * from "./health.schema";
 export * from "./review.schema";
 export * from "./mettings";
+export * from "./sales.schema";
+export * from "./dashboard.schema";
+export * from "./budget.schema";
+export * from "./supplier.schema";
+export * from "./supplier-order.schema";
 
 export * from "./requests";
 export * from "./acts";
@@ -15,8 +20,8 @@ export * from "./prescription.schema";
 export * from "./animals/index.schema";
 export * from "./animals/meta.schema";
 
-export * from "./referent/dashboard.schema";
 export * from "./staffs";
+
 export * from "./specilities.schema";
 export * from "./file.schema";
 export * from "./upload.schema";

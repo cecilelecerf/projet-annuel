@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import { House, User, Calendar } from '@element-plus/icons-vue'
+import { House, User, Calendar, ShoppingCart, Box } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
 import type { NavNode } from '@/components/ui/nav/NaveNode'
 
@@ -19,6 +19,16 @@ const menuItems: NavNode[] = [
     index: 'CLIENT.Meetings',
     label: 'Rendez-vous',
     icon: Calendar,
+  },
+  {
+    index: 'CLIENT.Shop',
+    label: 'Boutique',
+    icon: ShoppingCart,
+  },
+  {
+    index: 'CLIENT.Orders',
+    label: 'Mes commandes',
+    icon: Box,
   },
 ]
 </script>

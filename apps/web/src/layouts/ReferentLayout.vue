@@ -10,6 +10,10 @@ import {
   User,
   ChatDotRound,
   ShoppingCart,
+  TrendCharts,
+  Wallet,
+  Box,
+  List,
 } from '@element-plus/icons-vue'
 const { user } = useAuthStore()
 const clinicId = clinicIdSchema.parse(user?.clinicId)
@@ -55,6 +59,26 @@ const menuItems: NavNode[] = [
     index: 'REFERENT.Boutique',
     label: 'Boutique',
     icon: ShoppingCart,
+  },
+  {
+    index: 'REFERENT.Sales',
+    label: 'Ventes',
+    icon: TrendCharts,
+  },
+  {
+    index: 'REFERENT.Budget',
+    label: 'Budget',
+    icon: Wallet,
+  },
+  {
+    index: 'REFERENT.Suppliers',
+    label: 'Fournisseurs',
+    icon: Box,
+  },
+  {
+    index: 'REFERENT.SupplierOrders',
+    label: 'Commandes Fournisseurs',
+    icon: List,
   },
   {
     index: 'REFERENT.Messagerie',

@@ -5,5 +5,6 @@ export interface NavNode {
   label: string
   icon?: Component | string
   params?: Record<string, string>
+  query?: Record<string, string>
   children?: NavNode[]
 }

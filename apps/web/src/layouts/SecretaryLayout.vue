@@ -2,7 +2,7 @@
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { NavNode } from '@/components/ui/nav/NaveNode'
-import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
+import { House, Calendar, ChatDotRound, User, SetUp, Box } from '@element-plus/icons-vue'
 
 const menuItems: NavNode[] = [
   {
@@ -18,6 +18,7 @@ const menuItems: NavNode[] = [
   {
     index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
+    query: { role: 'VETERINARIAN' },
     icon: Calendar,
   },
   {
@@ -27,8 +28,13 @@ const menuItems: NavNode[] = [
   },
   {
     index: 'SECRETARY.Avaibality',
-    label: 'Dispobilité',
+    label: 'Disponibilité',
     icon: SetUp,
+  },
+  {
+    index: 'SECRETARY.Orders',
+    label: 'Retrait commandes',
+    icon: Box,
   },
   {
     index: 'SECRETARY.Profil',

@@ -33,5 +33,5 @@ defineProps<{ imaging: NonNullable<MedicalHistory['imaging']>; medicalHistoryId:
 </template>
 
 <style lang="scss" scoped>
-@import '../../styles/act-details';
+@use '../../styles/act-details';
 </style>

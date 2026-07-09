@@ -11,6 +11,11 @@ import {
   OfficeBuilding,
   Calendar,
   ChatDotRound,
+  ShoppingCart,
+  TrendCharts,
+  Wallet,
+  Box,
+  List,
 } from '@element-plus/icons-vue'
 
 const { user } = useAuthStore()
@@ -62,6 +67,31 @@ const menuItems: NavNode[] = [
     index: 'DIRECTOR.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
+  },
+  {
+    index: 'DIRECTOR.Boutique',
+    label: 'Boutique',
+    icon: ShoppingCart,
+  },
+  {
+    index: 'DIRECTOR.Sales',
+    label: 'Ventes',
+    icon: TrendCharts,
+  },
+  {
+    index: 'DIRECTOR.Budget',
+    label: 'Budget',
+    icon: Wallet,
+  },
+  {
+    index: 'DIRECTOR.Suppliers',
+    label: 'Fournisseurs',
+    icon: Box,
+  },
+  {
+    index: 'DIRECTOR.SupplierOrders',
+    label: 'Commandes Fournisseurs',
+    icon: List,
   },
   {
     index: 'DIRECTOR.Profil',

@@ -39,6 +39,7 @@ jobs:
             echo "Starting seed job"
 
             docker service update \
+              --detach \
               --force \
               --replicas 1 \
               cecoule_seed
@@ -59,5 +60,6 @@ jobs:
             echo "Stopping seed service"
 
             docker service update \
+              --detach \
               --replicas 0 \
               cecoule_seed

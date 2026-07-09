@@ -7,7 +7,7 @@ import {
   meetingIdSchema,
   veterinarianClinicIdSchema,
 } from "../ids";
-import { clinicActSchema } from "./clinic-act.schema";
+import { clinicActSchema } from "../clinics/clinic-act.schema";
 import { createSurgerySchema, surgerySchema } from "./surgery.schema";
 import {
   createHospitalizationSchema,
@@ -20,7 +20,7 @@ import {
   animalVaccineSchema,
 } from "./animal-vaccination.schema";
 import { actSchema } from "./act.schema";
-import { veterinarianClinicMetaSchema } from "../veterinarian-clinic.schema";
+import { veterinarianClinicMetaSchema } from "../clinics/veterinarian-clinic.schema";
 
 export const medicalHistorySchema = z.object({
   id: medicalHistoryIdSchema,

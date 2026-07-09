@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
 import { House, List, OfficeBuilding, Setting, User } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
     index: 'ADMIN.Home',
     label: 'Accueil',

@@ -62,6 +62,7 @@ declare module 'vue' {
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     HeroComponent: typeof import('./src/components/landingPage/HeroComponent.vue')['default']
     NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']
+    RecursiveSideBarItem: typeof import('./src/components/ui/nav/RecursiveSideBarItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SidebarComponent: typeof import('./src/components/ui/nav/SidebarComponent.vue')['default']

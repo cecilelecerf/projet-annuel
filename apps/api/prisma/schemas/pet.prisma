@@ -40,8 +40,8 @@ model Pet {
 
   races            Race[]
   vaccine          Vaccine[]
-  clinic           Clinic[]
-  veterinarian     VeterinarianProfile[]
+  clinics          Clinic[]
+  veterinarians    VeterinarianProfile[]
   healthConditions HealthCondition[]
 
   @@map("pets")

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
 import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
     index: 'SECRETARY.Home',
     label: 'Accueil',

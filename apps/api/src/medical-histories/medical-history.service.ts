@@ -10,13 +10,13 @@ import type {
   VeterinarianClinicId,
 } from "@armali/schemas";
 import { AnimalMeetingRepository } from "@api/meetings/animal-meeting/animal-meeting.repository";
-import { VeterinarianClinicRepository } from "@api/veterinarian-clinics/veterinarian-clinic.repository";
+import { VeterinarianClinicRepository } from "@api/clinics/veterinarian-clinics/veterinarian-clinic.repository";
 import { AnimalRepository } from "@api/animals/animal.repository";
 import { ActRepository } from "@api/acts/act.repository";
 import { isStaff } from "@api/utils";
 import { Decimal } from "../../prisma/generated/prisma/internal/prismaNamespace";
 import { VaccineRepository } from "@api/vaccines/vaccine.repository";
-import { ClinicActRepository } from "@api/clinic-acts/clinic-act.repository";
+import { ClinicActRepository } from "@api/clinics/clinic-acts/clinic-act.repository";
 import { withUserAvatar } from "@api/users/user.utils";
 import { File } from "../../prisma/generated/prisma/client";
 import { FileService } from "@api/files/file.service";

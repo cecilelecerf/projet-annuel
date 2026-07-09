@@ -1,6 +1,7 @@
 import { http } from '@/lib/api'
 import {
   clinicActSchema,
+  type ActId,
   type ClinicAct,
   type ClinicId,
   type CreateClinicAct,
@@ -9,18 +10,23 @@ import {
 
 export const clinicActApi = {
   getByClinic: (clinicId: ClinicId): Promise<ClinicAct[]> =>
+    http.get(`/clinics/${clinicId}/acts`).then((data) => clinicActSchema.array().parse(data)),
+
+  getById: (id: ActId, clinicId: ClinicId): Promise<ClinicAct> =>
+    http.get(`/clinics/${clinicId}/acts/${id}`).then((data) => clinicActSchema.parse(data)),
+
+  create: (payload: CreateClinicAct, clinicId: ClinicId): Promise<ClinicAct> =>
+    http.post(`/clinics/${clinicId}/acts`, payload).then((data) => clinicActSchema.parse(data)),
+
+  update: ({
+    id,
+    clinicId,
+    ...payload
+  }: UpdateClinicAct & { id: ActId; clinicId: ClinicId }): Promise<ClinicAct> =>
     http
-      .get(`/clinics/${clinicId}/clinic-acts`)
-      .then((data) => clinicActSchema.array().parse(data)),
+      .patch(`/clinics/${clinicId}/acts/${id}`, payload)
+      .then((data) => clinicActSchema.parse(data)),
 
-  getById: (id: string): Promise<ClinicAct> =>
-    http.get(`/clinic-acts/${id}`).then((data) => clinicActSchema.parse(data)),
-
-  create: (payload: CreateClinicAct): Promise<ClinicAct> =>
-    http.post('/clinic-acts', payload).then((data) => clinicActSchema.parse(data)),
-
-  update: ({ id, ...payload }: UpdateClinicAct & { id: string }): Promise<ClinicAct> =>
-    http.patch(`/clinic-acts/${id}`, payload).then((data) => clinicActSchema.parse(data)),
-
-  remove: ({ id }: { id: string }): Promise<void> => http.delete(`/clinic-acts/${id}`),
+  remove: ({ id, clinicId }: { id: ActId; clinicId: ClinicId }): Promise<void> =>
+    http.delete(`/clinics/${clinicId}/acts/${id}`),
 }

@@ -4,11 +4,9 @@ import { storeToRefs } from 'pinia'
 import { ElMessageBox } from 'element-plus'
 import { useNotify } from '@/composables/useNotify'
 import { http } from '@/lib/api'
-import type { Clinic, Speciality, SpecialityId } from '@armali/schemas'
-import { specialityApi } from '@/features/specialities/speciality.api'
+import type { Clinic } from '@armali/schemas'
 import { clinicApi } from '../clinic.api'
 import { useAuthStore } from '@/stores/authStore'
-import ClinicActSection from '@/features/clinic-acts/components/ClinicActSection.vue'
 
 const notify = useNotify()
 
@@ -50,7 +48,6 @@ async function loadStatus() {
       if (data.status === 'APPROVED' && data.clinic) {
         clinic.value = data.clinic
         populateFormFromClinic()
-        await loadClinicSpecialities()
         directorStatus.value = 'APPROVED'
       } else if (data.status === 'PENDING' || data.status === 'REJECTED') {
         request.value = data.request ?? null
@@ -69,7 +66,6 @@ async function loadStatus() {
       if (data[0]) {
         clinic.value = data[0]
         populateFormFromClinic()
-        await loadClinicSpecialities()
       } else {
         throw new Error('not fetch clinic')
       }
@@ -197,65 +193,6 @@ async function deleteClinic() {
     deleting.value = false
   }
 }
-
-// ── Spécialités — visuellement et fonctionnellement indépendantes ──────
-// Éditables à tout moment, sans dépendre du mode édition des infos clinique.
-
-const selectedSpecialityIds = ref<SpecialityId[]>([])
-const specialityOptions = ref<Speciality[]>([])
-const specialitySearchLoading = ref(false)
-const specialitySaving = ref(false)
-
-async function loadClinicSpecialities() {
-  if (!user.value?.clinicId) return
-  try {
-    const current = await specialityApi.getSpecialitiesByClinic({
-      clinicId: user.value.clinicId,
-    })
-    selectedSpecialityIds.value = current.map((s) => s.id)
-    // Préremplit les options avec les spécialités déjà sélectionnées pour un affichage immédiat
-    specialityOptions.value = current
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Impossible de charger les spécialités')
-  }
-}
-
-async function searchSpecialities(query: string) {
-  if (!query) return
-  specialitySearchLoading.value = true
-  try {
-    const results = await specialityApi.search(query)
-    // Fusionne avec les options déjà sélectionnées pour ne pas les perdre du select
-    const selectedNotInResults = specialityOptions.value.filter(
-      (opt) =>
-        selectedSpecialityIds.value.includes(opt.id) && !results.some((r) => r.id === opt.id),
-    )
-    specialityOptions.value = [...results, ...selectedNotInResults]
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la recherche de spécialité')
-  } finally {
-    specialitySearchLoading.value = false
-  }
-}
-
-async function saveSpecialities() {
-  if (!user.value?.clinicId) return
-  specialitySaving.value = true
-  try {
-    const updated = await specialityApi.updateClinicSpecialities({
-      clinicId: user.value.clinicId,
-      specialityIds: selectedSpecialityIds.value,
-    })
-    specialityOptions.value = updated
-    notify.success('Spécialités mises à jour')
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
-  } finally {
-    specialitySaving.value = false
-  }
-}
-
-// Création d'une nouvelle spécialité (description obligatoire → mini-dialog dédiée)
 
 onMounted(loadStatus)
 </script>
@@ -401,7 +338,6 @@ onMounted(loadStatus)
 
       <!-- Vue lecture (par défaut) -->
       <div v-if="!editMode" class="info-card">
-        <h2>Informations</h2>
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Nom</span>
@@ -507,53 +443,8 @@ onMounted(loadStatus)
           </el-button>
         </div>
       </div>
-
-      <!-- Spécialités : indépendantes du mode édition, toujours actives -->
-      <div class="form-card form-card--standalone">
-        <div class="card-header-row">
-          <h2>Spécialités proposées</h2>
-        </div>
-        <el-select
-          v-model="selectedSpecialityIds"
-          multiple
-          filterable
-          remote
-          :remote-method="searchSpecialities"
-          :loading="specialitySearchLoading"
-          placeholder="Rechercher des spécialités..."
-          style="width: 100%; margin-bottom: 16px"
-        >
-          <el-option
-            v-for="spec in specialityOptions"
-            :key="spec.id"
-            :label="spec.name"
-            :value="spec.id"
-          >
-            <div class="speciality-option">
-              <span class="speciality-option__name">{{ spec.name }}</span>
-              <span class="speciality-option__description">{{ spec.description }}</span>
-            </div>
-          </el-option>
-        </el-select>
-
-        <div v-if="selectedSpecialityIds.length > 0" class="speciality-list">
-          <div v-for="id in selectedSpecialityIds" :key="id" class="speciality-list__item">
-            <span class="speciality-list__name">{{
-              specialityOptions.find((s) => s.id === id)?.name
-            }}</span>
-            <span class="speciality-list__description">{{
-              specialityOptions.find((s) => s.id === id)?.description
-            }}</span>
-          </div>
-        </div>
-
-        <el-button type="primary" :loading="specialitySaving" @click="saveSpecialities">
-          Enregistrer les spécialités
-        </el-button>
-      </div>
     </div>
   </div>
-  <clinic-act-section v-if="clinic" :clinic-id="clinic.id" />
 </template>
 
 <style scoped>
@@ -656,71 +547,6 @@ onMounted(loadStatus)
   margin: 0 0 16px;
 }
 
-/* Section spécialités : distincte visuellement du reste (bordure + espace
-   marqué), pour bien montrer qu'elle est indépendante du mode édition. */
-.form-card--standalone {
-  margin-top: 24px;
-  border: 1px solid #e5e7eb;
-}
-
-.card-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.card-header-row h2 {
-  margin: 0;
-}
-
-.speciality-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.speciality-option {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 4px 0;
-  line-height: 1.3;
-}
-.speciality-option__name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
-}
-.speciality-option__description {
-  font-size: 12px;
-  color: #9ca3af;
-  white-space: normal;
-}
-
-.speciality-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.speciality-list__item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 14px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-.speciality-list__name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-.speciality-list__description {
-  font-size: 13px;
-  color: #6b7280;
-}
-
 .save-bar {
   display: flex;
   justify-content: flex-end;
@@ -753,11 +579,7 @@ onMounted(loadStatus)
   color: #1a1a1a;
   line-height: 1.6;
 }
-:deep(.el-select-dropdown__item) {
-  height: auto;
-  min-height: 34px;
-  padding: 6px 12px;
-}
+
 @media (max-width: 768px) {
   .cards-grid,
   .info-grid {

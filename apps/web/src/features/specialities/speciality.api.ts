@@ -1,11 +1,5 @@
 import { http } from '@/lib/api'
-import {
-  specialitySchema,
-  type ClinicId,
-  type CreateSpeciality,
-  type Speciality,
-  type SpecialityId,
-} from '@armali/schemas'
+import { specialitySchema, type CreateSpeciality, type Speciality } from '@armali/schemas'
 
 export const specialityApi = {
   getAll: async (): Promise<Speciality[]> => {
@@ -27,21 +21,5 @@ export const specialityApi = {
     const payload: CreateSpeciality = { name, description }
     const data = await http.post('/specialities', payload)
     return specialitySchema.parse(data)
-  },
-
-  getSpecialitiesByClinic: async ({ clinicId }: { clinicId: ClinicId }): Promise<Speciality[]> => {
-    const data = await http.get(`/clinics/${clinicId}/specialities`)
-    return specialitySchema.array().parse(data)
-  },
-
-  updateClinicSpecialities: async ({
-    clinicId,
-    specialityIds,
-  }: {
-    specialityIds: SpecialityId[]
-    clinicId: ClinicId
-  }): Promise<Speciality[]> => {
-    const data = await http.patch(`/clinics/${clinicId}/specialities`, { specialityIds })
-    return specialitySchema.array().parse(data)
   },
 }

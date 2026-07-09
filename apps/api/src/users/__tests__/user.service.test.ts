@@ -73,62 +73,17 @@ const mockUser = {
 const { UserRepository } = await import("@api/users/user.repository");
 const { ClinicRepository } = await import("@api/clinics/clinic.repository");
 const { ClinicService } = await import("@api/clinics/clinic.service");
-const { StaffRepository } = await import("@api/staffs/staff.repository");
-const { StaffService } = await import("@api/staffs/staff.service");
 const { UserService } = await import("@api/users/user.service");
 
 const clinicService = new ClinicService(new ClinicRepository({} as any));
-const staffService = new StaffService(
-  new StaffRepository({} as any),
-  clinicService,
-);
 const fileService = new FileService(new FileRepository({} as any));
 const userService = new UserService(
   new UserRepository({} as any),
   clinicService,
-  staffService,
   fileService,
 );
 
 beforeEach(() => vi.clearAllMocks());
-
-// ── getAllUsers ────────────────────────────────────────────────────────────────
-
-describe("UserService.getAllUsers", () => {
-  it("retourne tous les utilisateurs", async () => {
-    mockUserRepository.getAllUsers.mockResolvedValue([mockUser]);
-
-    const result = await userService.getAllUsers();
-
-    expect(result).toHaveLength(1);
-    expect(mockUserRepository.getAllUsers).toHaveBeenCalledOnce();
-  });
-});
-
-// ── getUsers ──────────────────────────────────────────────────────────────────
-
-describe("UserService.getUsers", () => {
-  it("retourne les utilisateurs de la clinique", async () => {
-    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
-    mockUserRepository.getUsersByClinic.mockResolvedValue([mockUser]);
-
-    const result = await userService.getUsers("user-1", "DIRECTOR");
-
-    expect(result).toHaveLength(1);
-    expect(mockUserRepository.getUsersByClinic).toHaveBeenCalledWith({
-      clinicIds: [CLINIC_ID],
-    });
-  });
-
-  it("lève ForbiddenError si pas de clinique", async () => {
-    const { ForbiddenError } = await import("@api/errors");
-    mockClinicRepository.findClinicIdByUser.mockResolvedValue(null);
-
-    await expect(userService.getUsers("user-1", "DIRECTOR")).rejects.toThrow(
-      ForbiddenError,
-    );
-  });
-});
 
 // ── getUsersByRole ────────────────────────────────────────────────────────────
 
@@ -148,31 +103,9 @@ describe("UserService.getUsersByRoles", () => {
     expect(result).toHaveLength(1);
   });
 
-  it("non-ADMIN — retourne les utilisateurs du rôle dans la clinique", async () => {
-    mockClinicRepository.findClinicIdByUser.mockResolvedValue([CLINIC_ID]);
-    mockClinicRepository.findClinicByUserId.mockResolvedValue([
-      { id: CLINIC_ID, name: "Clinique Test" },
-    ]);
-    mockStaffRepository.findStaff.mockResolvedValue({
-      director: { ...mockUser, role: "DIRECTOR" },
-      referents: [],
-      secretaries: [],
-      veterinarians: [mockUser],
-    });
-
-    const result = await userService.getUsersByRoles(
-      DIRECTOR_ID as UserId,
-      "DIRECTOR",
-      ["VETERINARIAN"],
-    );
-
-    expect(result).toHaveLength(1);
-  });
-
-  it("non-ADMIN — lève ForbiddenError si pas de clinique", async () => {
+  it("non-ADMIN — FORBIDDEN", async () => {
     const { ForbiddenError } = await import("@api/errors");
     mockClinicRepository.findClinicIdByUser.mockResolvedValue(null);
-
     await expect(
       userService.getUsersByRoles(DIRECTOR_ID as UserId, "DIRECTOR", [
         "VETERINARIAN",

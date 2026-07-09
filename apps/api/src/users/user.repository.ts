@@ -57,7 +57,7 @@ export class UserRepository {
       omit: { password: true },
     });
   }
-  async getAllUsersByRole({ roles }: { roles: UserRole[] }) {
+  async getAllUsersByRole({ roles }: { roles?: UserRole[] }) {
     return this.prisma.user.findMany({
       where: { role: { in: roles } },
       omit: { password: true },
@@ -75,6 +75,7 @@ export class UserRepository {
       where: { id: userId },
       data: { avatarId },
       include: { avatar: true },
+      omit: { password: true },
     });
   }
 }

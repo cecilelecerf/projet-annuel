@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import type { ClinicId } from '@armali/schemas'
 import { useSecretaryForm } from '../../composables/useSecretaryForm'
+import { useAuthStore } from '@/stores/authStore'
+const { user } = useAuthStore()
 
-const { form, loading, submit } = useSecretaryForm()
+const { form, loading, submit } = useSecretaryForm(user?.clinicId as ClinicId)
 </script>
 
 <template>

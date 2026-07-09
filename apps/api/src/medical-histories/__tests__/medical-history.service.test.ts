@@ -57,17 +57,20 @@ vi.mock("@api/meetings/animal-meeting/animal-meeting.repository", () => ({
   }),
 }));
 
-vi.mock("@api/clinic-acts/clinic-act.repository", () => ({
+vi.mock("@api/clinics/clinic-acts/clinic-act.repository", () => ({
   ClinicActRepository: vi.fn(function () {
     return mockClinicActRepository;
   }),
 }));
 
-vi.mock("@api/veterinarian-clinics/veterinarian-clinic.repository", () => ({
-  VeterinarianClinicRepository: vi.fn(function () {
-    return mockVeterinarianClinicRepository;
+vi.mock(
+  "@api/clinics/veterinarian-clinics/veterinarian-clinic.repository",
+  () => ({
+    VeterinarianClinicRepository: vi.fn(function () {
+      return mockVeterinarianClinicRepository;
+    }),
   }),
-}));
+);
 
 vi.mock("@api/animals/animal.repository", () => ({
   AnimalRepository: vi.fn(function () {
@@ -102,9 +105,9 @@ const { AnimalMeetingRepository } =
 const { AnimalRepository } = await import("@api/animals/animal.repository");
 const { VaccineRepository } = await import("@api/vaccines/vaccine.repository");
 const { VeterinarianClinicRepository } =
-  await import("@api/veterinarian-clinics/veterinarian-clinic.repository");
+  await import("@api/clinics/veterinarian-clinics/veterinarian-clinic.repository");
 const { ClinicActRepository } =
-  await import("@api/clinic-acts/clinic-act.repository");
+  await import("@api/clinics/clinic-acts/clinic-act.repository");
 const { ActRepository } = await import("@api/acts/act.repository");
 const { FileService } = await import("@api/files/file.service");
 

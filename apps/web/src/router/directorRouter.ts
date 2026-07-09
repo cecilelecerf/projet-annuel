@@ -43,9 +43,24 @@ export const directorRouter: RouteRecordRaw[] = [
         component: () => import('@/features/staffs/views/StaffDetailView.vue'),
       },
       {
-        path: 'clinique',
+        path: 'clinics',
         name: 'DIRECTOR.Clinic',
         component: () => import('@/features/clinics/views/ClinicView.vue'),
+      },
+      {
+        path: 'clinics/:id/acts',
+        name: 'DIRECTOR.Acts',
+        component: () => import('@/features/clinic-acts/view/ClinicActView.vue'),
+      },
+      {
+        path: 'clinics/:id/pets',
+        name: 'DIRECTOR.Pets',
+        component: () => import('@/features/pets/views/LinkPetsView.vue'),
+      },
+      {
+        path: 'clinics/:id/specialities',
+        name: 'DIRECTOR.Specialities',
+        component: () => import('@/features/specialities/views/LinkSpecialitiesView.vue'),
       },
       // ── Administration & Configuration ────────────────────────
       // {

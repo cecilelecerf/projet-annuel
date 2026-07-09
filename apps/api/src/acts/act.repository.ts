@@ -1,11 +1,12 @@
-import type { CreateAct, UpdateAct } from "@armali/schemas";
+import type { ActType, CreateAct, UpdateAct } from "@armali/schemas";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class ActRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async findAll() {
+  async findAll({ actType }: { actType?: ActType[] }) {
     return this.prisma.act.findMany({
+      where: { type: { in: actType } },
       include: { clinicActs: true },
       orderBy: { name: "asc" },
     });

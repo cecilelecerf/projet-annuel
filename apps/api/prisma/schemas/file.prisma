@@ -36,5 +36,5 @@ enum FileEntityType {
   BRAND
   PRODUCT
   IMAGING
-  ANALYSIS  
+  ANALYSIS
 }

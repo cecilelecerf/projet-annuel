@@ -1,6 +1,7 @@
 import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { vaccineDetailsInclude } from "@api/vaccines/vaccine.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours
@@ -52,7 +53,7 @@ export type CreatedOrUpdatedAnimal = Prisma.AnimalGetPayload<{
 
 const findVaccinesByAnimalInclude = {
   vaccine: {
-    include: { act: true },
+    include: vaccineDetailsInclude,
   },
   medicalHistory: {
     select: { performedAt: true, clinicActId: true },

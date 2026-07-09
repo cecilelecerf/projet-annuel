@@ -3,6 +3,7 @@ import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
   createVaccineSchema,
+  PetId,
   updateVaccineSchema,
   vaccineSchema,
   type CreateVaccine,
@@ -36,12 +37,12 @@ export class VaccineController {
   }
 
   async getByPetId(
-    req: RequestWithParams<{ petId: string }>,
+    req: RequestWithParams<{ id: PetId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const vaccines = await this.service.getByPetId(req.params.petId);
+      const vaccines = await this.service.getByPetId(req.params.id);
       res.status(200).json(vaccineSchema.array().parse(vaccines));
     } catch (err) {
       next(err);

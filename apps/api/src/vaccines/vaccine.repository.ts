@@ -2,7 +2,7 @@ import { CreateVaccine, UpdateVaccine } from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
-const vaccineDetailsInclude = {
+export const vaccineDetailsInclude = {
   countryRules: true,
   act: true,
 } satisfies Prisma.VaccineInclude;
@@ -40,24 +40,24 @@ export class VaccineRepository {
    * opération imbriquée, avec ses countryRules.
    */
   async create(data: CreateVaccine) {
-    return this.prisma.act.create({
+    return this.prisma.vaccine.create({
       data: {
-        name: data.name,
-        description: data.description,
-        type: "VACCINATION",
-        basePrice: data.basePrice,
-        vaccine: {
+        recommendedAge: data.recommendedAge,
+        boosterInterval: data.boosterInterval,
+        petId: data.petId,
+        countryRules: {
+          create: data.countryRules,
+        },
+        act: {
           create: {
-            recommendedAge: data.recommendedAge,
-            boosterInterval: data.boosterInterval,
-            petId: data.petId,
-            countryRules: {
-              create: data.countryRules,
-            },
+            name: data.name,
+            description: data.description,
+            type: "VACCINATION",
+            basePrice: data.basePrice,
           },
         },
       },
-      include: { vaccine: { include: vaccineDetailsInclude } },
+      include: vaccineDetailsInclude,
     });
   }
 
@@ -111,5 +111,6 @@ export class VaccineRepository {
       select: { act: { select: { id: true } } },
     });
     await this.prisma.act.delete({ where: { id: vaccine.act!.id } });
+    await this.prisma.vaccine.delete({ where: { id } });
   }
 }

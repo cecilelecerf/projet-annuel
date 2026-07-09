@@ -3,6 +3,7 @@ import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
   actSchema,
+  actTypeSchema,
   createActSchema,
   updateActSchema,
   type CreateAct,
@@ -17,7 +18,16 @@ export class ActController {
 
   async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const acts = await this.service.getAll();
+      const types = req.query.type
+        ? Array.isArray(req.query.type)
+          ? req.query.type
+          : [req.query.type]
+        : undefined;
+
+      const result = actTypeSchema.array().optional().safeParse(types);
+      if (!result.success) throw new BadRequestError("Type d'acte invalide");
+
+      const acts = await this.service.getAll({ actType: result.data });
       res.status(200).json(actSchema.array().parse(acts));
     } catch (err) {
       next(err);

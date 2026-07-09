@@ -88,7 +88,7 @@ model Vaccine {
   countryRules    VaccineCountryRule[]
 
   petId          String
-  pet            Pet             @relation(fields: [petId], references: [id])
+  pet            Pet             @relation(fields: [petId], references: [id], onDelete: Cascade)
   animalVaccines AnimalVaccine[]
 
   act Act?

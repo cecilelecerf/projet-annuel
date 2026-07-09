@@ -116,6 +116,7 @@ export class AnimalController {
   ) {
     try {
       const vaccines = await this.service.getVaccinesByAnimal(req.params.id);
+
       res.status(200).json(vaccineMetaSchema.array().parse(vaccines));
     } catch (err) {
       next(err);

@@ -8,12 +8,12 @@ const controller = petController;
 petRouter.use(authMiddleware);
 
 petRouter.get("/", controller.getAll.bind(controller) as RequestHandler);
-
-petRouter.get("/:id", controller.getById.bind(controller) as RequestHandler);
 petRouter.get(
   "/:id/vaccines",
   vaccineController.getByPetId.bind(vaccineController) as RequestHandler,
 );
+petRouter.get("/:id", controller.getById.bind(controller) as RequestHandler);
+
 petRouter.post(
   "/",
   roleMiddleware(["ADMIN"]),

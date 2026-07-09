@@ -28,15 +28,14 @@ export const adminRouter: RouteRecordRaw[] = [
         component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
-<<<<<<< Updated upstream
         path: 'acts',
         name: 'ADMIN.Acts',
         component: () => import('@/features/acts/views/ActsView.vue'),
-=======
+      },
+      {
         path: 'vaccines',
         name: 'ADMIN.Vaccines',
         component: () => import('@/features/vaccines/views/VaccinesView.vue'),
->>>>>>> Stashed changes
       },
     ],
   },

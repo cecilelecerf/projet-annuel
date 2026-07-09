@@ -1,7 +1,8 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
-import { authMiddleware, roleMiddleware } from "@api/middlewares";
+import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
 import { vaccineController } from "@api/instances";
+import { createVaccineSchema } from "@armali/schemas";
 
 const vaccineRouter: Router = Router();
 const controller = vaccineController;
@@ -27,6 +28,7 @@ vaccineRouter.get(
 vaccineRouter.post(
   "/",
   roleMiddleware(["ADMIN"]),
+  validate(createVaccineSchema),
   controller.create.bind(controller) as RequestHandler,
 );
 

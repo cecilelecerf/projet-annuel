@@ -22,7 +22,7 @@ describe("Act router", () => {
     clientToken = await loginAs("client@gmail.com");
 
     const prisma = getPrisma();
-    const act = await prisma.act.findFirst();
+    const act = await prisma.act.findFirst({ where: { type: "ANALYSIS" } });
     if (!act) throw new Error("Aucun acte seedé pour les tests");
     actId = act.id;
   });
@@ -48,6 +48,16 @@ describe("Act router", () => {
     it("200 — REFERENT reçoit la liste des actes", async () => {
       const res = await request(app)
         .get("/api/acts")
+        .query({
+          type: [
+            "SURGERY",
+            "HOSPITALIZATION",
+            "IMAGING",
+            "ANALYSIS",
+            "NURSING",
+            "CONSULTATION",
+          ],
+        })
         .set("Authorization", `Bearer ${referentToken}`);
       expect(res.status).toBe(200);
     });

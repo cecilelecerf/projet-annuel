@@ -18,7 +18,7 @@ model Act {
   basePrice   Decimal  @db.Decimal(8, 2)
 
   vaccineId String?  @unique
-  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id])
+  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
 
   clinicActs             ClinicAct[]
   animalMedicalHistories AnimalMedicalHistory[]
@@ -146,7 +146,7 @@ model Imaging {
   imagingType ImagingType
   bodyPart    String?
   findings    String?
- 
+
   @@map("imagings")
 }
 
@@ -175,7 +175,7 @@ model Analysis {
   laboratory     String? // labo externe si applicable
   sentAt         DateTime?
   receivedAt     DateTime?
-   interpretation String? // interprétation du vétérinaire
+  interpretation String? // interprétation du vétérinaire
 
   @@map("analyses")
 }

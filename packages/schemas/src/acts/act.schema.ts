@@ -1,9 +1,5 @@
 import { z } from "zod";
 import { actIdSchema, vaccineIdSchema } from "../ids";
-<<<<<<< Updated upstream
-import { minVaccineSchema } from "./vaccine/vaccine.schema";
-=======
->>>>>>> Stashed changes
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 

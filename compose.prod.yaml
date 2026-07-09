@@ -90,7 +90,7 @@ services:
         failure_action: continue
 
   seed:
-    image: ${DOCKER_HUB_USERNAME}/pa-api:latest
+    image: ${DOCKER_HUB_USERNAME}/pa-seed:latest
     entrypoint:
       - /scripts/seed.sh
     secrets:
@@ -101,6 +101,7 @@ services:
       - aws_secret_access_key_v2
       - s3_bucket
       - s3_endpoint
+      - aws_region
     networks:
       - backend
     deploy:

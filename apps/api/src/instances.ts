@@ -40,6 +40,7 @@ import { ProductClinicRepository } from "./products/product-clinic.repository";
 import { BrandRepository } from "./brands/brand.repository";
 import { ProductRequestRepository } from "./product-requests/product-request.repository";
 import { OrderRepository } from "./orders/order.repository";
+import { ShopRepository } from "./shop/shop.repository";
 
 // ── Clinic ──────────────────────────────────────
 import { SpecialityRepository } from "./specialities/speciality.repository";
@@ -173,6 +174,7 @@ const productClinicRepository = new ProductClinicRepository(prisma);
 const brandRepository = new BrandRepository(prisma);
 const productRequestRepository = new ProductRequestRepository(prisma);
 const orderRepository = new OrderRepository(prisma);
+const shopRepository = new ShopRepository(prisma);
 const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
@@ -281,9 +283,9 @@ const productRequestService = new ProductRequestService(
   brandRepository,
 );
 
-const clientShopService = new ClientShopService();
+const clientShopService = new ClientShopService(shopRepository);
 
-export const orderService = new OrderService(orderRepository, emailService);
+export const orderService = new OrderService(orderRepository, emailService, shopRepository);
 export const salesService = new SalesService();
 
 export const dashboardService = new DashboardService(

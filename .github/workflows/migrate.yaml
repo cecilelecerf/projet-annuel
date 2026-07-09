@@ -19,20 +19,35 @@ jobs:
 
             export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
 
+            echo "Pull latest API image"
+
+            docker pull $DOCKER_HUB_USERNAME/pa-api:latest
+
+
+            echo "Starting migration job"
+
             docker service update \
+              --detach \
               --force \
               --replicas 1 \
               cecoule_migration
 
 
+            echo "Waiting for migration execution"
+
             sleep 20
 
 
+            echo "Migration logs:"
+
             docker service logs \
-              --tail 100 \
+              --tail 200 \
               cecoule_migration
 
 
+            echo "Stopping migration service"
+
             docker service update \
+              --detach \
               --replicas 0 \
               cecoule_migration

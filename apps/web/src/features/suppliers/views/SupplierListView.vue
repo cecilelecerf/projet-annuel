@@ -5,7 +5,7 @@ import { useNotify } from '@/composables/useNotify'
 import { useAuthStore } from '@/stores/authStore'
 import { supplierApi } from '../api/supplier.api'
 import { productsApi } from '@/features/products/api/products.api'
-import type { SupplierWithProducts } from '@armali/schemas'
+import type { ProductId, SupplierWithProducts } from '@armali/schemas'
 
 const notify = useNotify()
 const authStore = useAuthStore()
@@ -18,7 +18,7 @@ const suppliers = ref<SupplierWithProducts[]>([])
 const loading = ref(false)
 const expandedId = ref<string | null>(null)
 
-const allProducts = ref<{ id: string; name: string; brand: { name: string } }[]>([])
+const allProducts = ref<{ id: ProductId; name: string; brand: { name: string } }[]>([])
 
 async function load() {
   loading.value = true
@@ -114,7 +114,10 @@ async function deleteSupplier(s: SupplierWithProducts) {
 
 const productDialogOpen = ref(false)
 const productDialogSupplierId = ref<string | null>(null)
-const productForm = ref({ productId: '', costPrice: 0 })
+const productForm = ref<{ productId: ProductId; costPrice: number }>({
+  productId: '' as ProductId,
+  costPrice: 0,
+})
 const submittingProduct = ref(false)
 
 const availableProductsForDialog = computed(() => {
@@ -128,13 +131,13 @@ const availableProductsForDialog = computed(() => {
     ),
   )
   return allProducts.value.filter(
-    (p: { id: string; name: string; brand: { name: string } }) => !existingIds.has(p.id),
+    (p: { id: ProductId; name: string; brand: { name: string } }) => !existingIds.has(p.id),
   )
 })
 
 function openAddProduct(supplierId: string) {
   productDialogSupplierId.value = supplierId
-  productForm.value = { productId: '', costPrice: 0 }
+  productForm.value = { productId: '' as ProductId, costPrice: 0 }
   productDialogOpen.value = true
 }
 
@@ -253,7 +256,10 @@ function formatCurrency(value: number) {
                   :precision="2"
                   :step="0.5"
                   size="small"
-                  @change="(v: number | undefined) => v !== undefined && updateProductCost(supplier.id, sp.id, v)"
+                  @change="
+                    (v: number | undefined) =>
+                      v !== undefined && updateProductCost(supplier.id, sp.id, v)
+                  "
                 />
                 <span v-else>{{ formatCurrency(sp.costPrice) }}</span>
               </td>

@@ -83,6 +83,8 @@ services:
       - backend
     deploy:
       replicas: 0
+      restart_policy:
+        condition: none
 
   seed:
     image: ${DOCKER_HUB_USERNAME}/pa-api:latest
@@ -100,6 +102,8 @@ services:
       - backend
     deploy:
       replicas: 0
+      restart_policy:
+        condition: none
 
   api:
     image: ${DOCKER_HUB_USERNAME}/pa-api:latest

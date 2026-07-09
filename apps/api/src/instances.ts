@@ -123,8 +123,8 @@ import { ClinicSpecialityService } from "./clinics/clinic-specialities/clinic-sp
 import { ClinicSpecialityController } from "./clinics/clinic-specialities/clinic-speciality.controller";
 import { VeterinarianSpecialityService } from "./veterinarians/veterinarian-specialities/veterinarian-speciality.service";
 import { VeterinarianProfileRepository } from "./veterinarians/veterinarian-profile.repository";
-import { VeterinarianPetService } from "./veterinarians/veterinarian-pets/clinic-pet.service";
-import { VeterinarianPetController } from "./veterinarians/veterinarian-pets/clinic-pet.controller";
+import { VeterinarianPetService } from "./veterinarians/veterinarian-pets/veterinarian-pet.service";
+import { VeterinarianPetController } from "./veterinarians/veterinarian-pets/veterinarian-pet.controller";
 import { VeterinarianSpecialityController } from "./veterinarians/veterinarian-specialities/veterinarian-speciality.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────

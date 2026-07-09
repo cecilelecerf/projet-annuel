@@ -2,7 +2,7 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import { petSchema, VeterinarianId } from "@armali/schemas";
-import { VeterinarianPetService } from "./clinic-pet.service";
+import { VeterinarianPetService } from "./veterinarian-pet.service";
 import {
   UpdateVeterinarianPets,
   updateVeterinarianPetsSchema,

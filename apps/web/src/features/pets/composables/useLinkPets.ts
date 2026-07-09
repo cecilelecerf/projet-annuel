@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useNotify } from '@/composables/useNotify'
-import type { ClinicId, Pet, Race } from '@armali/schemas'
+import type { Pet, Race } from '@armali/schemas'
 import { petApi } from '../api'
 import { clinicApi } from '@/features/clinics/clinic.api'
 import { raceApi } from '@/features/races/api'

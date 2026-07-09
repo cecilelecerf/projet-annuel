@@ -29,5 +29,5 @@ defineProps<{ surgery: NonNullable<MedicalHistory['surgery']> }>()
 </template>
 
 <style lang="scss" scoped>
-@import '../../styles/act-details';
+@use '../../styles/act-details';
 </style>

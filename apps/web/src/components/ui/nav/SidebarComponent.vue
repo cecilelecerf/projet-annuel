@@ -24,7 +24,7 @@ function findNode(nodes: NavNode[], index: string): NavNode | undefined {
 
 function handleMenuSelect(index: string) {
   const node = findNode(props.menuItems, index)
-  router.push({ name: index, params: node?.params })
+  router.push({ name: index, params: node?.params, query: node?.query })
 }
 </script>
 

@@ -1,15 +1,13 @@
 import { prisma } from "@api/lib/prisma";
 import { NotFoundError, ForbiddenError } from "@api/errors";
-
-export async function getClientClinicIds(clientUserId: string): Promise<string[]> {
+// TODO jade : Pas de prisma ici
+export async function getClientClinicIds(
+  clientUserId: string,
+): Promise<string[]> {
   const animals = await prisma.animal.findMany({
     where: { clientId: clientUserId },
     select: {
-      attendingVeterinarian: {
-        select: {
-          veterinarianClinics: { select: { clinicId: true } },
-        },
-      },
+      attendingVeterinarianClinic: { select: { clinicId: true } },
       animalMeeting: {
         select: {
           veterinarianClinic: { select: { clinicId: true } },
@@ -20,9 +18,9 @@ export async function getClientClinicIds(clientUserId: string): Promise<string[]
 
   const clinicIds = new Set<string>();
   for (const animal of animals) {
-    for (const vc of animal.attendingVeterinarian?.veterinarianClinics ?? []) {
-      clinicIds.add(vc.clinicId);
-    }
+    if (animal.attendingVeterinarianClinic)
+      clinicIds.add(animal.attendingVeterinarianClinic?.clinicId);
+
     for (const meeting of animal.animalMeeting) {
       if (meeting.veterinarianClinic?.clinicId) {
         clinicIds.add(meeting.veterinarianClinic.clinicId);

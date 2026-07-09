@@ -86,7 +86,7 @@ model VeterinarianClinic {
   animalMeetings         AnimalMeeting[]
   hospitalizationReports HospitalizationReport[]
   animals                Animal[]
-  
+
   @@unique([id, clinicId])
   @@map("veterinarian_clinics")
 }

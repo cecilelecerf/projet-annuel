@@ -3,12 +3,12 @@ import { NotFoundError } from "@api/errors";
 import type { ClinicId, UserId, VeterinarianId } from "@armali/schemas";
 import { ReviewService } from "@api/reviews/review.service";
 import { ReviewRepository } from "@api/reviews/review.repository";
-import { StaffService } from "@api/staffs/staff.service";
 import { UserService } from "@api/users";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { MeetingService } from "@api/meetings/meeting.service";
 import { OrderRepository } from "@api/orders/order.repository";
 import { withAvatarUrl } from "@api/users/user.utils";
+import { StaffService } from "@api/clinics/staffs/staff.service";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
@@ -228,8 +228,11 @@ export class DashboardService {
     const vetClinicIds = [
       ...new Set(
         animalMeetings
-          .map((m) => (m as unknown as { veterinarianClinicId?: string })
-            .veterinarianClinicId)
+          .map(
+            (m) =>
+              (m as unknown as { veterinarianClinicId?: string })
+                .veterinarianClinicId,
+          )
           .filter((id): id is string => !!id),
       ),
     ];
@@ -247,7 +250,9 @@ export class DashboardService {
             select: {
               id: true,
               veterinarian: {
-                select: { user: { select: { firstname: true, lastname: true } } },
+                select: {
+                  user: { select: { firstname: true, lastname: true } },
+                },
               },
             },
           })
@@ -258,7 +263,8 @@ export class DashboardService {
 
     const todaysMeetings = animalMeetings
       .sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+        (a, b) =>
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
       )
       .map((m) => {
         const animal = animalById.get(m.animalId);
@@ -293,7 +299,7 @@ export class DashboardService {
   }
 
   // ── Dashboard vétérinaire ────────────────────────────────────────────────────
- 
+
   async getVeterinarianDashboard(userId: UserId) {
     const now = new Date();
     const endOfToday = new Date();
@@ -312,7 +318,9 @@ export class DashboardService {
         this.reviewRepository.findReviewsByVeterinarian(
           userId as unknown as VeterinarianId,
         ),
-        prisma.animal.count({ where: { attendingVeterinarianId: userId } }),
+        prisma.animal.count({
+          where: { attendingVeterinarianClinic: { veterinarianId: userId } },
+        }),
       ]);
 
     const todaysMeetingsCount = weekMeetings.filter(

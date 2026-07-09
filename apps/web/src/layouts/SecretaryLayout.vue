@@ -18,6 +18,7 @@ const menuItems: NavNode[] = [
   {
     index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
+    query: { role: 'VETERINARIAN' },
     icon: Calendar,
   },
   {

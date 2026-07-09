@@ -48,7 +48,10 @@ function initials(firstname: string, lastname: string) {
     <div class="quick-links">
       <el-button @click="router.push({ name: 'SECRETARY.Orders' })">Commandes</el-button>
       <el-button @click="router.push({ name: 'SECRETARY.Calendar' })">Agenda</el-button>
-      <el-button @click="router.push({ name: 'SECRETARY.Veto.List' })">Personnel</el-button>
+      <el-button
+        @click="router.push({ name: 'SECRETARY.Veto.List', query: { role: 'VETERINARIAN' } })"
+        >Personnel</el-button
+      >
       <el-button @click="router.push({ name: 'SECRETARY.Messagerie' })">Messagerie</el-button>
     </div>
 
@@ -97,7 +100,11 @@ function initials(firstname: string, lastname: string) {
             <span>{{ vet.firstname }} {{ vet.lastname }}</span>
           </div>
         </div>
-        <el-button text class="staff-link" @click="router.push({ name: 'SECRETARY.Veto.List' })">
+        <el-button
+          text
+          class="staff-link"
+          @click="router.push({ name: 'SECRETARY.Veto.List', query: { role: 'VETERINARIAN' } })"
+        >
           Voir tout le personnel ({{ dashboard.staff.veterinarianCount }} véto ) →
         </el-button>
       </div>

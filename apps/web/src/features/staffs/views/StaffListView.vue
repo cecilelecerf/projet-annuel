@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import StaffList from '../components/StaffList.vue'
-import type { StaffMember } from '@armali/schemas'
+import { type StaffMember, type UserRole } from '@armali/schemas'
 import { staffApi } from '../staff.api.ts'
+import { getStaffPageTexts } from '../utils.ts'
+
+const ROLES: UserRole[] = ['DIRECTOR', 'REFERENT', 'SECRETARY', 'VETERINARIAN']
 
 const router = useRouter()
+const route = useRoute()
+const role = computed(() => {
+  const value = route.query.role
 
+  const r = typeof value === 'string' && ROLES.includes(value as UserRole) ? value : undefined
+  return r ? (r as UserRole) : undefined
+})
 const staffs = ref<StaffMember[]>()
 const { user } = useAuthStore()
 const loading = ref(false)
@@ -16,7 +25,10 @@ async function loadStaff() {
   loading.value = true
   if (user?.clinicId)
     try {
-      staffs.value = await staffApi.getAllByClinic({ clinicId: user.clinicId })
+      staffs.value = await staffApi.getAllByClinic({
+        clinicId: user.clinicId,
+        roles: role.value ? [role.value] : [],
+      })
     } catch {
       /* silencieux */
     } finally {
@@ -25,7 +37,7 @@ async function loadStaff() {
 }
 
 onMounted(loadStaff)
-
+const pageTexts = computed(() => getStaffPageTexts(role.value))
 function goToCreate() {
   router.push({ name: `${user?.role.toUpperCase()}.Staff.Create` })
 }
@@ -35,10 +47,15 @@ function goToCreate() {
   <div class="staff-page">
     <div class="page-header">
       <div>
-        <h1>Gestion du personnel</h1>
-        <p>Consultez et créez des comptes pour les membres de votre clinique</p>
+        <h1>{{ pageTexts.title }}</h1>
+        <p>{{ pageTexts.description }}</p>
       </div>
-      <el-button type="primary" @click="goToCreate">+ Ajouter un membre</el-button>
+      <el-button
+        type="primary"
+        @click="goToCreate"
+        v-if="user?.role === 'DIRECTOR' || user?.role === 'REFERENT'"
+        >+ Ajouter un membre</el-button
+      >
     </div>
     <!-- TODO : fetch le nom de la clinique -->
     <StaffList v-if="staffs" :staffs="staffs" clinic-name="fefe" :with-go-to-detail="true" />

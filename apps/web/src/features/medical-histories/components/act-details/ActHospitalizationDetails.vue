@@ -43,7 +43,7 @@ defineProps<{ hospitalization: NonNullable<MedicalHistory['hospitalization']> }>
 </template>
 
 <style lang="scss" scoped>
-@import '../../styles/act-details';
+@use '../../styles/act-details';
 
 .daily-reports {
   margin-top: var(--spacing-sm);

@@ -32,7 +32,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
       {
         path: 'veterinarian',
         name: 'SECRETARY.Veto.List',
-        component: () => import('@/features/users/views/UserListView.vue'),
+        component: () => import('@/features/staffs/views/StaffListView.vue'),
       },
       {
         path: 'veterinarian/calendar/:id',
@@ -58,7 +58,6 @@ export const secretaryRouter: RouteRecordRaw[] = [
         name: 'SECRETARY.Animals.Detail',
         component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
       },
-      
 
       // // ── Boutique ─────────────────────────────────────────────
       {
@@ -66,7 +65,7 @@ export const secretaryRouter: RouteRecordRaw[] = [
         name: 'SECRETARY.Orders',
         component: () => import('@/features/shop/views/SecretaryOrdersView.vue'),
       },
-      
+
       // ── Animaux ──────────────────────────────────────────────
       // {
       //   path: 'animals',

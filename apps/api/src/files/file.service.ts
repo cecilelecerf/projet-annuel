@@ -7,9 +7,9 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { FileEntityType, FileType } from "../../prisma/generated/prisma/enums";
-import { File } from "../../prisma/generated/prisma/client";
 import { FileRepository } from "./file.repository";
 import { NotFoundError, ForbiddenError, ValidationError } from "@api/errors";
+import { FileId, FileWithUrl } from "@armali/schemas";
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
@@ -103,7 +103,7 @@ export class FileService {
     fileId: string;
     expectedEntityType: FileEntityType;
     expectedEntityId: string;
-  }): Promise<File> {
+  }): Promise<FileWithUrl> {
     const file = await this.repository.findById(fileId);
     if (!file) throw new NotFoundError("Fichier");
 
@@ -125,9 +125,14 @@ export class FileService {
       throw new ValidationError("Fichier trop volumineux");
     }
 
-    return this.repository.update(file.id, {
+    const updated = await this.repository.update(file.id, {
       size: head.ContentLength ?? undefined,
     });
+    return {
+      ...updated,
+      id: updated.id as FileId,
+      url: this.publicUrl(updated.storageKey),
+    };
   }
 
   async deleteFromStorage(key: string) {
@@ -146,5 +151,10 @@ export class FileService {
   publicUrl(key: string) {
     // Option A : bucket/CloudFront public en lecture
     return `${process.env.ASSETS_BASE_URL}/${key}`;
+  }
+
+  async getByEntity(entityType: FileEntityType, entityId: string) {
+    const files = await this.repository.findByEntity({ entityType, entityId });
+    return files.map((f) => ({ ...f, url: this.publicUrl(f.storageKey) }));
   }
 }

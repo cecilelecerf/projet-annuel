@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+import { useAuthStore } from '@/stores/authStore'
+import { clinicIdSchema } from '@armali/schemas'
 import {
   House,
   User,
@@ -9,9 +11,17 @@ import {
   OfficeBuilding,
   Calendar,
   ChatDotRound,
+  ShoppingCart,
+  TrendCharts,
+  Wallet,
+  Box,
+  List,
 } from '@element-plus/icons-vue'
 
-const menuItems: MenuItem[] = [
+const { user } = useAuthStore()
+const clinicId = clinicIdSchema.parse(user?.clinicId)
+
+const menuItems: NavNode[] = [
   {
     index: 'DIRECTOR.Home',
     label: 'Accueil',
@@ -23,19 +33,65 @@ const menuItems: MenuItem[] = [
     icon: Calendar,
   },
   {
-    index: 'DIRECTOR.Staff',
-    label: 'Personnel',
-    icon: UserFilled,
-  },
-  {
     index: 'DIRECTOR.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
+    children: [
+      {
+        index: 'DIRECTOR.Clinic',
+        label: 'Général',
+      },
+      {
+        index: 'DIRECTOR.Staff',
+        label: 'Personnel',
+        icon: UserFilled,
+      },
+      {
+        index: 'DIRECTOR.Acts',
+        label: 'Acts',
+        params: { id: clinicId },
+      },
+      {
+        index: 'DIRECTOR.Pets',
+        label: 'Pets',
+        params: { id: clinicId },
+      },
+      {
+        index: 'DIRECTOR.Specialities',
+        label: 'Spécialités',
+        params: { id: clinicId },
+      },
+    ],
   },
   {
     index: 'DIRECTOR.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
+  },
+  {
+    index: 'DIRECTOR.Boutique',
+    label: 'Boutique',
+    icon: ShoppingCart,
+  },
+  {
+    index: 'DIRECTOR.Sales',
+    label: 'Ventes',
+    icon: TrendCharts,
+  },
+  {
+    index: 'DIRECTOR.Budget',
+    label: 'Budget',
+    icon: Wallet,
+  },
+  {
+    index: 'DIRECTOR.Suppliers',
+    label: 'Fournisseurs',
+    icon: Box,
+  },
+  {
+    index: 'DIRECTOR.SupplierOrders',
+    label: 'Commandes Fournisseurs',
+    icon: List,
   },
   {
     index: 'DIRECTOR.Profil',

@@ -1,6 +1,7 @@
 import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { vaccineDetailsInclude } from "@api/vaccines/vaccine.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // Includes — définis une fois, réutilisés pour typer les retours
@@ -29,7 +30,12 @@ const findByIdInclude = {
   animalConditionHealths: {
     include: { healthCondition: true },
   },
-  attendingVeterinarian: { include: { user: { include: { avatar: true } } } },
+  attendingVeterinarianClinic: {
+    include: {
+      veterinarian: { include: { user: { include: { avatar: true } } } },
+      clinic: true,
+    },
+  },
   animalVaccine: true,
 } satisfies Prisma.AnimalInclude;
 
@@ -47,7 +53,7 @@ export type CreatedOrUpdatedAnimal = Prisma.AnimalGetPayload<{
 
 const findVaccinesByAnimalInclude = {
   vaccine: {
-    include: { act: true },
+    include: vaccineDetailsInclude,
   },
   medicalHistory: {
     select: { performedAt: true, clinicActId: true },
@@ -96,7 +102,7 @@ export class AnimalRepository {
         activity: data.activity,
         clientId: data.clientId,
         raceId: data.raceId,
-        attendingVeterinarianId: data.attendingVeterinarianId,
+        attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
       },
       include: createAndUpdateInclude,
     });
@@ -114,7 +120,7 @@ export class AnimalRepository {
         description: data.description,
         activity: data.activity,
         raceId: data.raceId,
-        attendingVeterinarianId: data.attendingVeterinarianId,
+        attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
       },
       include: createAndUpdateInclude,
     });

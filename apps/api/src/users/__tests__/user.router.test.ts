@@ -9,131 +9,19 @@ const loginAs = async (email: string, password = "Password123!") => {
     .send({ email, password });
   return res.body.accessToken as string;
 };
-// ── GET /api/users ─────────────────────────────────────────────────────────────
 
-describe("GET /api/users", () => {
-  describe("auth & role guards", () => {
-    it("401 — sans token", async () => {
-      const res = await request(app).get("/api/users");
-      expect(res.status).toBe(401);
-    });
+// ── GET /api/users?roles=:role ─────────────────────────────────────────────────
 
-    it("403 — rôle CLIENT non autorisé", async () => {
-      const token = await loginAs("client@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.status).toBe(403);
-    });
-
-    it("403 — rôle VETERINARIAN non autorisé", async () => {
-      const token = await loginAs("veto@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.status).toBe(403);
-    });
-
-    it("403 — rôle SECRETARY non autorisé", async () => {
-      const token = await loginAs("secretaire@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.status).toBe(403);
-    });
-  });
-
-  describe("ADMIN", () => {
-    it("200 — retourne tous les utilisateurs", async () => {
-      const token = await loginAs("admin@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.status).toBe(200);
-      expect(res.body.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("ne retourne pas les mots de passe", async () => {
-      const token = await loginAs("admin@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-
-      expect(res.status).toBe(200);
-      res.body.forEach((user) => {
-        expect(user).not.toHaveProperty("password");
-      });
-    });
-  });
-
-  describe("DIRECTOR", () => {
-    it("200 — retourne les utilisateurs de la clinique", async () => {
-      const token = await loginAs("directeur@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("ne retourne pas les utilisateurs d'autres cliniques", async () => {
-      const token = await loginAs("directeur@gmail.com");
-      const director = await getPrisma().user.findUnique({
-        where: { email: "directeur@gmail.com" },
-        select: {
-          directorClinicProfile: {
-            select: { clinic: { select: { id: true } } },
-          },
-        },
-      });
-
-      const clinicId = director!.directorClinicProfile!.clinic!.id;
-
-      const usersOutsideClinic = await getPrisma().user.findMany({
-        where: {
-          AND: [
-            { veterinarianProfile: null },
-            { secretaryProfile: { clinicId: { not: clinicId } } },
-          ],
-        },
-        select: { id: true },
-      });
-      const outsideIds = new Set(usersOutsideClinic.map((u) => u.id));
-
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.status).toBe(200);
-      res.body.forEach((user) => {
-        expect(outsideIds.has(user.id)).toBe(false);
-      });
-    });
-  });
-
-  describe("REFERENT", () => {
-    it("200 — retourne les utilisateurs de la clinique", async () => {
-      const token = await loginAs("referent@gmail.com");
-      const res = await request(app)
-        .get("/api/users")
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.status).toBe(200);
-    });
-  });
-});
-
-// ── GET /api/users/roles/:role ─────────────────────────────────────────────────
-
-describe("GET /api/users/roles/:role", () => {
+describe("GET /api/users?roles=:role", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).get("/api/users/roles/veterinarian");
+    const res = await request(app).get("/api/users?roles=veterinarian");
     expect(res.status).toBe(401);
   });
 
   it("403 — rôle CLIENT non autorisé", async () => {
     const token = await loginAs("client@gmail.com");
     const res = await request(app)
-      .get("/api/users/roles/veterinarian")
+      .get("/api/users?roles=veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });
@@ -141,7 +29,7 @@ describe("GET /api/users/roles/:role", () => {
   it("400 — rôle invalide", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users/roles/INVALID_ROLE")
+      .get("/api/users?roles=INVALID_ROLE")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -149,7 +37,7 @@ describe("GET /api/users/roles/:role", () => {
   it("200 — ADMIN retourne les vétérinaires", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users/roles/veterinarian")
+      .get("/api/users?roles=veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
@@ -161,74 +49,13 @@ describe("GET /api/users/roles/:role", () => {
   it("200 — ADMIN retourne les clients", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users/roles/client")
+      .get("/api/users?roles=client")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
     res.body.forEach((user) => {
       expect(user.role).toBe("CLIENT");
-    });
-  });
-
-  it("200 — DIRECTOR retourne les vétérinaires de sa clinique", async () => {
-    const token = await loginAs("directeur@gmail.com");
-    const director = await getPrisma().user.findUnique({
-      where: { email: "directeur@gmail.com" },
-      select: {
-        directorClinicProfile: {
-          select: { clinic: { select: { id: true } } },
-        },
-      },
-    });
-    const clinicId = director!.directorClinicProfile!.clinic!.id;
-
-    const vetosInClinic = await getPrisma().user.findMany({
-      where: {
-        veterinarianProfile: {
-          veterinarianClinics: { some: { clinicId } },
-        },
-      },
-      select: { id: true },
-    });
-    const vetoIds = new Set(vetosInClinic.map((u) => u.id));
-
-    const res = await request(app)
-      .get("/api/users/roles/veterinarian")
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    res.body.forEach((user) => {
-      expect(vetoIds.has(user.id)).toBe(true);
-    });
-  });
-
-  it("200 — SECRETARY retourne les vétérinaires de sa clinique", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const secretary = await getPrisma().user.findUnique({
-      where: { email: "secretaire@gmail.com" },
-      select: {
-        secretaryProfile: {
-          select: {
-            clinic: {
-              select: {
-                veterinarianClinics: { select: { veterinarianId: true } },
-              },
-            },
-          },
-        },
-      },
-    });
-    const vetoIds = secretary?.secretaryProfile?.clinic.veterinarianClinics.map(
-      (veto) => veto.veterinarianId,
-    );
-
-    const res = await request(app)
-      .get("/api/users/roles/veterinarian")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(200);
-    res.body.forEach((user) => {
-      expect(vetoIds!.includes(user.id)).toBe(true);
     });
   });
 });

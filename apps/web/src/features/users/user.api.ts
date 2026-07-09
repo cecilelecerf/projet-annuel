@@ -46,7 +46,6 @@ export const usersApi = {
     confirm: async ({ fileId }: { fileId: string }) => {
       const body = confirmUploadSchema.parse({ fileId })
       const data = await http.patch('/users/me/avatar/confirm', body)
-      console.log(data)
       return baseUserSchema.parse(data)
     },
   },

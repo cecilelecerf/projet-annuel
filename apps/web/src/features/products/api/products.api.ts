@@ -34,6 +34,12 @@ export const productsApi = {
     return productClinicWithProductSchema.array().parse(data)
   },
 
+  // Produits sous leur seuil minimum, pour les notifications
+  getLowStock: async (clinicId: string): Promise<ProductClinicWithProduct[]> => {
+    const data = await http.get(`/products/clinic-products/${clinicId}/low-stock`)
+    return productClinicWithProductSchema.array().parse(data)
+  },
+
   createClinicProduct: async (
     data: CreateProductClinic,
   ): Promise<ProductClinicWithProduct> => {

@@ -37,7 +37,13 @@ const roleTag: Record<StaffRole, Color> = {
         :avatar-url="member.avatarUrl"
         :color="roleTag[member.role]"
         :badge="{ label: roleLabel[member.role], color: roleTag[member.role] }"
-        :route="{ name: `${user?.role.toUpperCase()}.Staff.Detail`, params: { id: member.id } }"
+        :route="{
+          name:
+            user?.role === 'DIRECTOR' || user?.role === 'REFERENT'
+              ? `${user?.role.toUpperCase()}.Staff.Detail`
+              : `${user?.role}.Calendar`,
+          params: { id: member.id },
+        }"
       />
     </div>
   </div>

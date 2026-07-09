@@ -55,7 +55,7 @@ const makeAnimal = (overrides = {}) => ({
   activity: null,
   outdoorAccess: false,
   animalContact: false,
-  attendingVeterinarianId: null,
+  attendingVeterinarianClinicId: null,
   clientId: "client-profile-1",
   raceId: "race-1",
   createdAt: new Date(),
@@ -69,6 +69,7 @@ const makeAnimal = (overrides = {}) => ({
     },
   },
   race: { petId: "pet-1" },
+  attendingVeterinarianClinic: null,
   ...overrides,
 });
 const makeVaccine = (overrides = {}) => ({

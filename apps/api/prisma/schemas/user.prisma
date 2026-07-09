@@ -16,7 +16,7 @@ model User {
   firstname String
   lastname  String
   password  String
- 
+
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
   secretaryProfile      SecretaryProfile?
@@ -36,6 +36,10 @@ model User {
   meticalVisites              MedicalVisit[]
   availabilities              Availability[]
   adminInternalMeetings       InternalMeeting[]
+  productRequestsMade         ProductRequest[]             @relation("ProductRequestsMade")
+  productRequestsReviewed     ProductRequest[]             @relation("ProductRequestsReviewed")
+  budgetTransactions          BudgetTransaction[]
+  supplierOrders              SupplierOrder[]
 
   @@index([email])
   @@index([role])
@@ -67,14 +71,12 @@ model VeterinarianProfile {
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  animals                Animal[]
-  specialities           Speciality[]
-  veterinarianClinics    VeterinarianClinic[]
-  pets                   Pet[]
-  hospitalizationReports HospitalizationReport[]
-  prescriptions          Prescription[]
-  veterinarianIdentity   VeterinarianIdentity?
-  bankingInfo            BankingInfo?
+  specialities         Speciality[]
+  veterinarianClinics  VeterinarianClinic[]
+  pets                 Pet[]
+  veterinarianIdentity VeterinarianIdentity?
+  bankingInfo          BankingInfo?
+  prescriptions        Prescription[]
 
   @@map("veterinarian_profiles")
 }

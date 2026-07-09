@@ -312,7 +312,7 @@ services:
       - minio_root_user
       - minio_root_password
     configs:
-      - source: minio_init_script
+      - source: minio_init_script_v2
         target: /init.sh
         mode: 0755
     entrypoint: ["/bin/sh", "/init.sh"]
@@ -380,5 +380,5 @@ configs:
     external: true
   grafana_dashboard_express:
     external: true
-  minio_init_script:
+  minio_init_script_v2:
     external: true

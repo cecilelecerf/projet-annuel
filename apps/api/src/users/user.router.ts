@@ -1,7 +1,6 @@
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { STAFF_ROLES } from "@api/utils";
 import {
   animalController,
   animalMeetingController,
@@ -27,13 +26,6 @@ userRouter.patch(
   "/me/avatar/confirm",
   authMiddleware,
   controller.confirmAvatar.bind(controller) as RequestHandler,
-);
-
-userRouter.get(
-  "/roles/:role",
-  authMiddleware,
-  roleMiddleware(STAFF_ROLES),
-  controller.getUsersByRole.bind(controller) as RequestHandler,
 );
 
 userRouter.get(

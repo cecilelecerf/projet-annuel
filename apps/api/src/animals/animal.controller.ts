@@ -18,7 +18,7 @@ export class AnimalController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(pets);
+      res.status(200).json(animalWithRaceMetaSchema.array().parse(pets));
     } catch (err) {
       next(err);
     }
@@ -116,6 +116,7 @@ export class AnimalController {
   ) {
     try {
       const vaccines = await this.service.getVaccinesByAnimal(req.params.id);
+
       res.status(200).json(vaccineMetaSchema.array().parse(vaccines));
     } catch (err) {
       next(err);

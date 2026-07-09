@@ -37,7 +37,7 @@ describe("ActService.getAll", () => {
   it("délègue directement au repository", async () => {
     mockActRepository.findAll.mockResolvedValue([makeAct()]);
 
-    const result = await service.getAll();
+    const result = await service.getAll({});
 
     expect(mockActRepository.findAll).toHaveBeenCalled();
     expect(result).toHaveLength(1);

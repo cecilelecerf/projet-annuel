@@ -7,4 +7,7 @@ mc mb --ignore-existing local/armali-files
 mc anonymous set download local/armali-files/users
 mc anonymous set download local/armali-files/animals
 mc anonymous set download local/armali-files/brands
+mc anonymous set download local/armali-files/products
+mc anonymous set download local/armali-files/imagings
+mc anonymous set download local/armali-files/analysiss
  

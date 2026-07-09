@@ -1,8 +1,8 @@
 import express, { type Express } from "express";
+import { handleStripeWebhook } from "./orders/order-webhook.controller";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
 import clinicRouter from "./clinics/clinic.router";
-import referentRouter from "./referents/referent.router";
 import reviewRouter from "./reviews/review.router";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
@@ -13,16 +13,27 @@ import actRouter from "./acts/act.router";
 import { default as meetingRouter } from "./meetings/meeting.router";
 import animalRouter from "./animals/animal.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
-import animalMedicalHistoryRouter from "./medicalHistories/medical-history.router";
+import animalMedicalHistoryRouter from "./medical-histories/medical-history.router";
 import productRouter from "./products/product.router";
 import brandRouter from "./brands/brand.router";
 import specialityRouter from "./specialities/speciality.router";
 import messagingRouter from "./messaging/messaging.router";
 import bookingRouter from "./bookings/booking.router";
-import veterinarianRouter from "./users/veterinarian.router";
-import staffRouter from "./staffs/staff.router";
-import veterinarianClinicRouter from "./veterinarian-clinics/veterinarian-clinic.router";
-import clinicActRouter from "./clinic-acts/clinic-act.router";
+import productRequestRouter from "./product-requests/product-request.router";
+import clientShopRouter from "./shop/shop.router";
+import orderRouter from "./orders/order.router";
+import salesRouter from "./sales/sales.router";
+import dashboardRouter from "./dashboard/dashboard.router";
+import budgetRouter from "./budget/budget.router";
+import supplierRouter from "./suppliers/supplier.router";
+import supplierOrderRouter from "./supplier-orders/supplier-order.router";
+
+import veterinarianRouter from "./veterinarians/veterinarian.router";
+import veterinarianClinicRouter from "./clinics/veterinarian-clinics/veterinarian-clinic.router";
+import petRouter from "./pets/pet.router";
+import vaccineRouter from "./vaccines/vaccine.router";
+import raceRouter from "./races/race.router";
+import staffRouter from "./clinics/staffs/staff.router";
 
 collectDefaultMetrics();
 
@@ -44,6 +55,13 @@ app.use(
     credentials: true,
   }),
 );
+
+app.post(
+  "/api/orders/webhook",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook,
+);
+
 app.use(express.json());
 
 app.get("/api/test", async (req, res) => {
@@ -57,11 +75,9 @@ app.get("/api/test", async (req, res) => {
   res.json(users);
 });
 app.use("/api/auth", authRouter);
-// app.use("/api/files", fileRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/clinics", clinicRouter);
-app.use("/api/referent", referentRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/animals", animalRouter);
 app.use("/api/prescriptions", prescriptionRouter);
@@ -74,6 +90,17 @@ app.use("/api/booking", bookingRouter);
 app.use("/api/specialities", specialityRouter);
 app.use("/api/veterinarians", veterinarianRouter);
 app.use("/api/staffs", staffRouter);
+
+app.use("/api/product-requests", productRequestRouter);
+app.use("/api/shop", clientShopRouter);
+app.use("/api/orders", orderRouter);
+app.use("/api/sales", salesRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/budget", budgetRouter);
+app.use("/api/suppliers", supplierRouter);
+app.use("/api/supplier-orders", supplierOrderRouter);
 app.use("/api/veterinarian-clinics", veterinarianClinicRouter);
-app.use("/api/clinic-acts", clinicActRouter);
+app.use("/api/pets", petRouter);
+app.use("/api/vaccines", vaccineRouter);
+app.use("/api/races", raceRouter);
 app.use(errorHandler);

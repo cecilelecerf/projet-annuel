@@ -1,0 +1,63 @@
+// ── Collapse — style unifié pour toute l'application ─────────────────────────
+// À importer une seule fois globalement (ex: dans main.scss / App.vue non-scoped)
+
+.el-collapse {
+  border: none;
+
+  .el-collapse-item {
+    margin-bottom: var(--spacing-sm);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &.is-active {
+      border-color: var(--el-color-primary-light-5);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  .el-collapse-item__header {
+    height: auto;
+    min-height: 56px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--el-fill-color-light);
+    border-bottom: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: var(--fw-semibold);
+    transition: background 0.15s;
+
+    &:hover {
+      background: var(--el-fill-color);
+    }
+
+    &.is-active {
+      background: var(--el-color-primary-light-9);
+      border-bottom: 1px solid var(--el-border-color-lighter);
+    }
+  }
+
+  .el-collapse-item__arrow {
+    color: var(--el-text-color-secondary);
+    margin-right: var(--spacing-sm);
+
+    &.is-active {
+      color: var(--el-color-primary);
+    }
+  }
+
+  .el-collapse-item__wrap {
+    border-bottom: none;
+    background: var(--el-bg-color);
+  }
+
+  .el-collapse-item__content {
+    padding: var(--spacing-md);
+  }
+}

@@ -1,5 +1,7 @@
 import type { Clinic } from "../../prisma/generated/prisma/client";
 import type { UserWithProfileAndClinicId } from "./user.types";
+import { withFileUrl } from "@api/files/utils";
+import { File } from "../../prisma/generated/prisma/client";
 
 export const flatClinicId = (user: UserWithProfileAndClinicId) => {
   const {
@@ -39,14 +41,24 @@ export const flatClinicId = (user: UserWithProfileAndClinicId) => {
   return { ...u, clinicIds: [clinicIds] };
 };
 
-import type { File } from "../../prisma/generated/prisma/client";
-import { withFileUrl } from "@api/files/utils";
-
-// Plus besoin d'un type nommé strict — la contrainte se fait directement en générique
+/**
+ * Ajoute `avatarUrl` (URL signée/publique calculée à partir du File Prisma)
+ * à un objet qui possède un champ `avatar: File | null`.
+ * Ex: withAvatarUrl(user) → { ...user, avatarUrl: "https://..." }
+ * Ne retire pas le champ `avatar` d'origine, l'ajoute juste en plus.
+ */
 export function withAvatarUrl<T extends { avatar: File | null }>(user: T) {
   return withFileUrl(user, "avatar", "avatarUrl");
 }
 
+/**
+ * "Aplatit" un profil imbriqué du type { user: {...}, ...autresChamps }
+ * en un seul objet plat { ...autresChamps, ...user+avatarUrl }.
+ * Utile quand le frontend attend un objet unique plutôt qu'un objet
+ * profil avec un sous-objet `user` séparé.
+ * Ex: flatUser({ id: '1', user: { firstname: 'Léa', avatar: null } })
+ *   → { id: '1', firstname: 'Léa', avatarUrl: null }
+ */
 export const flatUser = <T extends { user: { avatar: File | null } }>(
   profile: T,
 ) => {
@@ -55,10 +67,19 @@ export const flatUser = <T extends { user: { avatar: File | null } }>(
   return { ...rest, ...withAvatar };
 };
 
+/** Version tableau de flatUser, pour une liste de profils. */
 export const flatUsers = <T extends { user: { avatar: File | null } }>(
   profiles: T[],
 ) => profiles.map(flatUser);
 
+/**
+ * Contrairement à flatUser, GARDE la structure imbriquée : le sous-objet
+ * `user` reste un sous-objet, mais avec `avatarUrl` ajouté dedans.
+ * Utile quand le frontend attend explicitement `profile.user.avatarUrl`
+ * plutôt qu'un objet aplati.
+ * Ex: withUserAvatar({ id: '1', user: { firstname: 'Léa', avatar: null } })
+ *   → { id: '1', user: { firstname: 'Léa', avatar: null, avatarUrl: null } }
+ */
 export const withUserAvatar = <T extends { user: { avatar: File | null } }>(
   profile: T,
 ) => {
@@ -66,6 +87,7 @@ export const withUserAvatar = <T extends { user: { avatar: File | null } }>(
   return { ...rest, user: withAvatarUrl(user) };
 };
 
+/** Version tableau de withUserAvatar, pour une liste de profils. */
 export const withUsersAvatar = <T extends { user: { avatar: File | null } }>(
   profiles: T[],
 ) => profiles.map(withUserAvatar);

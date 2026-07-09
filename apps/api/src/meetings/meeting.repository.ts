@@ -226,4 +226,15 @@ export class MeetingRepository {
       },
     });
   }
+
+  async getAnimalMeetingsByClinic(
+    clinicId: string,
+    start: Date,
+    end: Date,
+  ): Promise<AnimalMeetingAsVet[]> {
+    return this.prisma.animalMeeting.findMany({
+      where: { veterinarianClinic: { clinicId } },
+      include: animalMeetingsAsVetInclude(start, end),
+    });
+  }
 }

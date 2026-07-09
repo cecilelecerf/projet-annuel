@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/authStore'
 import { useReferentForm } from '../../composables/useReferentForm'
-
-const { form, loading, submit } = useReferentForm()
+import type { ClinicId } from '@armali/schemas'
+const { user } = useAuthStore()
+const { form, loading, submit } = useReferentForm(user?.clinicId as ClinicId)
 </script>
 
 <template>

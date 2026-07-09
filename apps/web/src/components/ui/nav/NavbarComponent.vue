@@ -3,15 +3,16 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
-import Sidebar, { type MenuItem } from './SidebarComponent.vue'
+import Sidebar from './SidebarComponent.vue'
 import { getStringRole } from '@/utils/role.utils'
 import type { Conversation, ConversationId } from '@armali/schemas'
 import { useNotify } from '@/composables/useNotify'
 import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
+import type { NavNode } from './NaveNode.ts'
 
 const notify = useNotify()
 
-defineProps<{ menuItems: MenuItem[] }>()
+defineProps<{ menuItems: NavNode[] }>()
 
 const router = useRouter()
 const authStore = useAuthStore()

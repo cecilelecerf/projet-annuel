@@ -1,5 +1,12 @@
 import { http } from '@/lib/api'
-import { petSchema, type CreatePet, type Pet, type PetId, type UpdatePet } from '@armali/schemas'
+import {
+  petSchema,
+  type ClinicId,
+  type CreatePet,
+  type Pet,
+  type PetId,
+  type UpdatePet,
+} from '@armali/schemas'
 
 export const petApi = {
   getAll: (): Promise<Pet[]> => http.get('/pets').then((data) => petSchema.array().parse(data)),

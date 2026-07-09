@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-import type { ClinicAct, ClinicId, Act } from '@armali/schemas'
+import { type ClinicAct, type Act, clinicIdSchema } from '@armali/schemas'
 import { useClinicActs } from '../composables/useClinicActs.ts'
 import { useClinicActForm } from '../composables/useClinicActForm.ts'
 import { useClinicActFilters } from '../composables/useClinicActFilters.ts'
 import { actApi } from '@/features/acts/act.api'
 import { useNotify } from '@/composables/useNotify'
-import ClinicActFormDialog from './ClinicActFormDialog.vue'
-import ClinicActsTable from './ClinicActsTable.vue'
+import ClinicActFormDialog from '../components/ClinicActFormDialog.vue'
+import ClinicActsTable from '../components/ClinicActsTable.vue'
+import { useRoute } from 'vue-router'
 
-const props = defineProps<{ clinicId: ClinicId }>()
+const route = useRoute()
+const clinicId = clinicIdSchema.parse(route.params.id)
 
 const notify = useNotify()
 const { clinicActs, loading, load, createClinicAct, updateClinicAct, deleteClinicAct } =
-  useClinicActs(props.clinicId)
+  useClinicActs(clinicId)
 const { search, filteredClinicActs } = useClinicActFilters(clinicActs)
 const { visible, mode, editingId, form, title, submitLabel, openCreate, openEdit, close } =
   useClinicActForm()
@@ -58,7 +60,7 @@ async function handleDelete(clinicAct: ClinicAct) {
 }
 
 watch(
-  () => props.clinicId,
+  () => clinicId,
   (id) => {
     if (id) load(id)
   },

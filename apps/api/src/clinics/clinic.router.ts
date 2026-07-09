@@ -4,6 +4,7 @@ import { authMiddleware } from "@api/middlewares/auth.middleware";
 import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import {
+  updateClinicPetsSchema,
   updateClinicSchema,
   updateClinicSpecialitiesSchema,
 } from "@armali/schemas";
@@ -67,7 +68,7 @@ clinicRouter.patch(
   "/:id/pets",
   requireApprovedClinic,
   roleMiddleware(["REFERENT", "DIRECTOR"]),
-  validate(updateClinicSpecialitiesSchema),
+  validate(updateClinicPetsSchema),
   clinicPetController.setAcceptedPets.bind(
     clinicPetController,
   ) as RequestHandler,

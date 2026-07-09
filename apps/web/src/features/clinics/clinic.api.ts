@@ -5,10 +5,12 @@ import {
   clinicGuardRequest,
   clinicSchema,
   clinicStatusSchema,
+  petSchema,
   specialitySchema,
   type ClinicId,
   type ClinicRequestId,
   type CreateClinicRequest,
+  type Pet,
   type Speciality,
   type SpecialityId,
   type UpdateClinic,
@@ -83,5 +85,21 @@ export const clinicApi = {
       const data = await http.patch(`/clinics/${clinicId}/specialities`, { specialityIds })
       return specialitySchema.array().parse(data)
     },
+  },
+
+  pets: {
+    getAcceptedPets: (clinicId: ClinicId): Promise<Pet[]> =>
+      http.get(`/clinics/${clinicId}/pets`).then((data) => petSchema.array().parse(data)),
+
+    setAcceptedPets: ({
+      clinicId,
+      petIds,
+    }: {
+      clinicId: ClinicId
+      petIds: string[]
+    }): Promise<Pet[]> =>
+      http
+        .patch(`/clinics/${clinicId}/pets`, { petIds })
+        .then((data) => petSchema.array().parse(data)),
   },
 }

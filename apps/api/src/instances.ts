@@ -53,6 +53,11 @@ import { ConversationRepository } from "./messaging/conversation.repository";
 // ── Staff ─────────────────────────────────────────────────────
 import { StaffRepository } from "./staffs/staff.repository";
 
+// ── Budget ─────────────────────────────────────────────────────
+import { BudgetRepository } from "./budget/budget.repository";
+import { SupplierRepository } from "./suppliers/supplier.repository";
+import { SupplierOrderRepository } from "./supplier-orders/supplier-order.repository";
+
 // ═══════════════════════════════════════════════════════════════
 // Services
 // ═══════════════════════════════════════════════════════════════
@@ -82,6 +87,9 @@ import { OrderService } from "./orders/order.service";
 import { SalesService } from "./sales/sales.service";
 import { ClinicRequestService } from "./clinics/requests/request.service";
 import { DashboardService } from "./dashboard/dashboard.service";
+import { BudgetService } from "./budget/budget.service";
+import { SupplierService } from "./suppliers/supplier.service";
+import { SupplierOrderService } from "./supplier-orders/supplier-order.service";
 
 // ═══════════════════════════════════════════════════════════════
 // Controllers
@@ -120,6 +128,9 @@ import { FileService } from "./files/file.service";
 import { ClinicActService } from "./clinic-acts/clinic-act.service";
 import { ClinicActController } from "./clinic-acts/clinic-act.controller";
 import { DashboardController } from "./dashboard/dashboard.controller";
+import { BudgetController } from "./budget/budget.controller";
+import { SupplierController } from "./suppliers/supplier.controller";
+import { SupplierOrderController } from "./supplier-orders/supplier-order.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -155,6 +166,9 @@ const conversationRepository = new ConversationRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const staffRepository = new StaffRepository(prisma);
 const clinicRequestRepository = new ClinicRequestRepository(prisma);
+const budgetRepository = new BudgetRepository(prisma);
+const supplierRepository = new SupplierRepository(prisma);
+const supplierOrderRepository = new SupplierOrderRepository(prisma);
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -255,6 +269,15 @@ export const dashboardService = new DashboardService(
   reviewRepository,
 );
 
+export const budgetService = new BudgetService(budgetRepository, clinicService);
+export const supplierService = new SupplierService(supplierRepository);
+export const supplierOrderService = new SupplierOrderService(
+  supplierOrderRepository,
+  supplierRepository,
+  budgetRepository,
+  clinicService,
+);
+
 // ═══════════════════════════════════════════════════════════════
 // ── Controllers (instanciation) ───────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -307,3 +330,6 @@ export const clinicRequestController = new ClinicRequestController(
   clinicRequestService,
 );
 export const dashboardController = new DashboardController(dashboardService);
+export const budgetController = new BudgetController(budgetService);
+export const supplierController = new SupplierController(supplierService);
+export const supplierOrderController = new SupplierOrderController(supplierOrderService);

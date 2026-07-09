@@ -1,6 +1,12 @@
 import type { PrismaClient } from "../generated/prisma/client";
 
 export async function cleanup(prisma: PrismaClient) {
+  await prisma.supplierOrderItem.deleteMany();
+  await prisma.budgetTransaction.deleteMany();
+  await prisma.supplierOrder.deleteMany();
+  await prisma.supplierProduct.deleteMany();
+  await prisma.supplier.deleteMany();
+
   await prisma.message.deleteMany();
   await prisma.conversationMember.deleteMany();
   await prisma.conversation.deleteMany();

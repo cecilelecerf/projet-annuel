@@ -13,7 +13,9 @@ model Product {
   clinicProducts ClinicProduct[]
   productRequest ProductRequest?
 
-  Food Food?
+  Food               Food?
+  supplierProducts   SupplierProduct[]
+  supplierOrderItems SupplierOrderItem[]
 
   @@map("products")
 }
@@ -54,7 +56,7 @@ model Brand {
   imageId String? @unique
   image   File?   @relation("BrandImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  product Product[]
+  product         Product[]
   productRequests ProductRequest[]
 
   @@map("brands")
@@ -111,11 +113,11 @@ enum OrderStatus {
 }
 
 model Order {
-  id        String      @id @default(uuid())
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @default(now()) @updatedAt
-  status    OrderStatus @default(PENDING)
-  pickupAt  DateTime?
+  id              String      @id @default(uuid())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now()) @updatedAt
+  status          OrderStatus @default(PENDING)
+  pickupAt        DateTime?
   stripeSessionId String?
   pickupCode      String?
 
@@ -170,7 +172,7 @@ model ProductRequest {
   rejectionReason String?
 
   createdProductId String?  @unique
-  createdProduct    Product? @relation(fields: [createdProductId], references: [id])
+  createdProduct   Product? @relation(fields: [createdProductId], references: [id])
 
   requestedById String
   requestedBy   User   @relation("ProductRequestsMade", fields: [requestedById], references: [id], onDelete: Cascade)

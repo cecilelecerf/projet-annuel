@@ -52,6 +52,21 @@ export const referentRouter: RouteRecordRaw[] = [
         name: 'REFERENT.Sales',
         component: () => import('@/features/sales/views/SalesView.vue'),
       },
+      {
+        path: 'budget',
+        name: 'REFERENT.Budget',
+        component: () => import('@/features/budget/views/BudgetView.vue'),
+      },
+      {
+        path: 'fournisseurs',
+        name: 'REFERENT.Suppliers',
+        component: () => import('@/features/suppliers/views/SupplierListView.vue'),
+      },
+      {
+        path: 'commandes-fournisseurs',
+        name: 'REFERENT.SupplierOrders',
+        component: () => import('@/features/supplier-orders/views/SupplierOrderListView.vue'),
+      },
     ],
   },
 ]

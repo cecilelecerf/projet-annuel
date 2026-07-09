@@ -11,6 +11,9 @@ import {
   ChatDotRound,
   ShoppingCart,
   TrendCharts,
+  Wallet,
+  Box,
+  List,
 } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
@@ -48,6 +51,21 @@ const menuItems: MenuItem[] = [
     index: 'DIRECTOR.Sales',
     label: 'Ventes',
     icon: TrendCharts,
+  },
+  {
+    index: 'DIRECTOR.Budget',
+    label: 'Budget',
+    icon: Wallet,
+  },
+  {
+    index: 'DIRECTOR.Suppliers',
+    label: 'Fournisseurs',
+    icon: Box,
+  },
+  {
+    index: 'DIRECTOR.SupplierOrders',
+    label: 'Commandes Fournisseurs',
+    icon: List,
   },
   {
     index: 'DIRECTOR.Profil',

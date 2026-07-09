@@ -63,6 +63,21 @@ export const directorRouter: RouteRecordRaw[] = [
         name: 'DIRECTOR.Sales',
         component: () => import('@/features/sales/views/SalesView.vue'),
       },
+      {
+        path: 'budget',
+        name: 'DIRECTOR.Budget',
+        component: () => import('@/features/budget/views/BudgetView.vue'),
+      },
+      {
+        path: 'fournisseurs',
+        name: 'DIRECTOR.Suppliers',
+        component: () => import('@/features/suppliers/views/SupplierListView.vue'),
+      },
+      {
+        path: 'commandes-fournisseurs',
+        name: 'DIRECTOR.SupplierOrders',
+        component: () => import('@/features/supplier-orders/views/SupplierOrderListView.vue'),
+      },
     ],
   },
 ]

@@ -28,6 +28,9 @@ import salesRouter from "./sales/sales.router";
 import veterinarianClinicRouter from "./veterinarian-clinics/veterinarian-clinic.router";
 import clinicActRouter from "./clinic-acts/clinic-act.router";
 import dashboardRouter from "./dashboard/dashboard.router";
+import budgetRouter from "./budget/budget.router";
+import supplierRouter from "./suppliers/supplier.router";
+import supplierOrderRouter from "./supplier-orders/supplier-order.router";
 
 collectDefaultMetrics();
 
@@ -92,4 +95,7 @@ app.use("/api/sales", salesRouter);
 app.use("/api/veterinarian-clinics", veterinarianClinicRouter);
 app.use("/api/clinic-acts", clinicActRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/budget", budgetRouter);
+app.use("/api/suppliers", supplierRouter);
+app.use("/api/supplier-orders", supplierOrderRouter);
 app.use(errorHandler);

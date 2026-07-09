@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useNotify } from '@/composables/useNotify'
-import type { Pet, PetId, Race, RaceId } from '@armali/schemas'
+import type { Pet, PetId, Race } from '@armali/schemas'
 import { petApi } from '../api'
 import { raceApi } from '@/features/races/api'
 

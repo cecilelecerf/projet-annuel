@@ -5,13 +5,18 @@ const mockPrisma = vi.hoisted(() => ({
   clinic: { findUnique: vi.fn(), count: vi.fn() },
   clinicProduct: { findMany: vi.fn() },
   order: { findMany: vi.fn() },
-  user: { count: vi.fn() },
+  user: { count: vi.fn(), findMany: vi.fn() },
   clinicRequest: { count: vi.fn() },
   productRequest: { count: vi.fn() },
+  animal: { count: vi.fn(), findMany: vi.fn() },
+  veterinarianClinic: { findMany: vi.fn() },
 }));
 vi.mock("@api/lib/prisma", () => ({ prisma: mockPrisma }));
 
 const mockReviewService = vi.hoisted(() => ({ getStats: vi.fn() }));
+const mockReviewRepository = vi.hoisted(() => ({
+  findReviewsByVeterinarian: vi.fn(),
+}));
 const mockStaffService = vi.hoisted(() => ({
   getStaffCountByUser: vi.fn(),
   getStaffIdsByUser: vi.fn(),
@@ -21,6 +26,7 @@ const mockClinicService = vi.hoisted(() => ({ getClinicIdByUserId: vi.fn() }));
 const mockMeetingService = vi.hoisted(() => ({
   getAnimalMeetingsByClinic: vi.fn(),
   getAnimalMeetingsAsVet: vi.fn(),
+  getAvailabilities: vi.fn(),
 }));
 const mockOrderRepository = vi.hoisted(() => ({
   findPendingPickupByClinic: vi.fn(),
@@ -39,6 +45,7 @@ const service = new DashboardService(
   mockClinicService as any,
   mockMeetingService as any,
   mockOrderRepository as any,
+  mockReviewRepository as any,
 );
 
 beforeEach(() => {
@@ -132,12 +139,38 @@ describe("DashboardService.getClinicDashboard", () => {
 
 // ── getSecretaryDashboard ─────────────────────────────────────────────────────
 
+const makeOrder = (overrides = {}) => ({
+  id: "order-1",
+  status: "CONFIRMED",
+  client: { firstname: "Alice", lastname: "Durand" },
+  orderItems: [
+    { quantity: 2, unitPrice: 10, productClinic: { product: { name: "Croquettes" } } },
+  ],
+  ...overrides,
+});
+
+const makeAnimalMeeting = (overrides = {}) => ({
+  id: "meeting-1",
+  date: new Date(),
+  startTime: new Date("2026-01-01T10:00:00Z"),
+  endTime: new Date("2026-01-01T10:30:00Z"),
+  animalId: "animal-1",
+  veterinarianClinicId: "vc-1",
+  ...overrides,
+});
+
 describe("DashboardService.getSecretaryDashboard", () => {
-  it("résout la clinique via ClinicService avec le rôle SECRETARY", async () => {
+  beforeEach(() => {
     mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockOrderRepository.findPendingPickupByClinic.mockResolvedValue([]);
     mockMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([]);
+    mockMeetingService.getAvailabilities.mockResolvedValue([]);
+    mockPrisma.animal.findMany.mockResolvedValue([]);
+    mockPrisma.veterinarianClinic.findMany.mockResolvedValue([]);
+    mockPrisma.user.findMany.mockResolvedValue([]);
+  });
 
+  it("résout la clinique via ClinicService avec le rôle SECRETARY", async () => {
     await service.getSecretaryDashboard("user-1" as any);
 
     expect(mockClinicService.getClinicIdByUserId).toHaveBeenCalledWith({
@@ -146,48 +179,85 @@ describe("DashboardService.getSecretaryDashboard", () => {
     });
   });
 
-  it("sépare les commandes à préparer (CONFIRMED) des prêtes à récupérer (READY)", async () => {
-    mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
+  it("sépare les commandes CONFIRMED/READY et résume client + articles", async () => {
     mockOrderRepository.findPendingPickupByClinic.mockResolvedValue([
-      { id: "o1", status: "CONFIRMED" },
-      { id: "o2", status: "CONFIRMED" },
-      { id: "o3", status: "READY" },
+      makeOrder({ id: "o1", status: "CONFIRMED" }),
+      makeOrder({ id: "o2", status: "READY" }),
     ]);
-    mockMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([]);
 
     const result = await service.getSecretaryDashboard("user-1" as any);
 
-    expect(result.role).toBe("SECRETARY");
-    expect(result.ordersToPrepareCount).toBe(2);
+    expect(result.ordersToPrepareCount).toBe(1);
     expect(result.ordersReadyForPickupCount).toBe(1);
+    expect(result.ordersToPrepare[0]).toEqual({
+      id: "o1",
+      clientName: "Alice Durand",
+      items: "2× Croquettes",
+      total: 20,
+    });
   });
 
-  it("compte les RDV du jour de la clinique via meetingService.getAnimalMeetingsByClinic", async () => {
-    mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
-    mockOrderRepository.findPendingPickupByClinic.mockResolvedValue([]);
+  it("enrichit les RDV du jour avec le nom de l'animal et du vétérinaire", async () => {
     mockMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([
-      { id: "m1" },
-      { id: "m2" },
+      makeAnimalMeeting(),
+    ]);
+    mockPrisma.animal.findMany.mockResolvedValue([
+      { id: "animal-1", name: "Rex" },
+    ]);
+    mockPrisma.veterinarianClinic.findMany.mockResolvedValue([
+      {
+        id: "vc-1",
+        veterinarian: { user: { firstname: "Claire", lastname: "Moreau" } },
+      },
     ]);
 
     const result = await service.getSecretaryDashboard("user-1" as any);
 
-    expect(mockMeetingService.getAnimalMeetingsByClinic).toHaveBeenCalledWith(
-      "clinic-1",
-      expect.any(Date),
-      expect.any(Date),
+    expect(result.todaysMeetingsCount).toBe(1);
+    expect(result.todaysMeetings[0]).toMatchObject({
+      animalName: "Rex",
+      veterinarianName: "Claire Moreau",
+    });
+  });
+
+  it("ne considère un vétérinaire présent que s'il a une disponibilité aujourd'hui", async () => {
+    mockStaffService.getStaffIdsByUser.mockResolvedValue(["vet-1", "vet-2"]);
+    mockMeetingService.getAvailabilities.mockImplementation(({ userId }: any) =>
+      Promise.resolve(userId === "vet-1" ? [{ id: "avail-1" }] : []),
     );
-    expect(result.todaysMeetingsCount).toBe(2);
+    mockPrisma.user.findMany.mockResolvedValue([
+      { id: "vet-1", firstname: "Claire", lastname: "Moreau" },
+    ]);
+
+    const result = await service.getSecretaryDashboard("user-1" as any);
+
+    expect(result.presentVeterinarians).toHaveLength(1);
+    expect(result.presentVeterinarians[0].firstname).toBe("Claire");
+  });
+
+  it("staff reflète les compteurs vétérinaires/secrétaires de la clinique", async () => {
+    mockStaffService.getStaffCountByUser
+      .mockResolvedValueOnce(4) // véto
+      .mockResolvedValueOnce(2); // secrétaires
+
+    const result = await service.getSecretaryDashboard("user-1" as any);
+
+    expect(result.staff).toEqual({ veterinarianCount: 4, secretaryCount: 2 });
   });
 });
 
 // ── getVeterinarianDashboard ───────────────────────────────────────────────
 
 describe("DashboardService.getVeterinarianDashboard", () => {
-  it("utilise userId directement comme vetProfileId (PK partagée)", async () => {
+  beforeEach(() => {
     mockMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
     mockReviewService.getStats.mockResolvedValue({ average: null, count: 0 });
+    mockReviewRepository.findReviewsByVeterinarian.mockResolvedValue([]);
+    mockPrisma.animal.count.mockResolvedValue(0);
+    mockPrisma.animal.findMany.mockResolvedValue([]);
+  });
 
+  it("utilise userId directement comme vetProfileId (PK partagée)", async () => {
     await service.getVeterinarianDashboard("vet-1" as any);
 
     expect(mockMeetingService.getAnimalMeetingsAsVet).toHaveBeenCalledWith(
@@ -202,19 +272,88 @@ describe("DashboardService.getVeterinarianDashboard", () => {
     });
   });
 
-  it("retourne le nombre de RDV à venir et la note du vétérinaire", async () => {
+  it("sépare todaysMeetingsCount et upcomingMeetingsCount (semaine)", async () => {
+    const today = new Date();
+    const in3Days = new Date();
+    in3Days.setDate(in3Days.getDate() + 3);
+
     mockMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
-      { id: "m1" },
-      { id: "m2" },
-      { id: "m3" },
+      makeAnimalMeeting({ date: today }),
+      makeAnimalMeeting({ id: "m2", date: in3Days, animalId: "animal-2" }),
     ]);
-    mockReviewService.getStats.mockResolvedValue({ average: 4.7, count: 21 });
+    mockPrisma.animal.findMany.mockResolvedValue([
+      { id: "animal-1", name: "Rex", client: { user: { firstname: "A", lastname: "B" } } },
+      { id: "animal-2", name: "Milo", client: { user: { firstname: "C", lastname: "D" } } },
+    ]);
 
     const result = await service.getVeterinarianDashboard("vet-1" as any);
 
-    expect(result.role).toBe("VETERINARIAN");
-    expect(result.upcomingMeetingsCount).toBe(3);
-    expect(result.rating).toEqual({ average: 4.7, count: 21 });
+    expect(result.todaysMeetingsCount).toBe(1);
+    expect(result.upcomingMeetingsCount).toBe(2);
+  });
+
+  it("enrichit les prochains RDV avec animal + client, limités à 5, triés par date", async () => {
+    const meetings = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      return makeAnimalMeeting({
+        id: `m${i}`,
+        date,
+        startTime: date,
+        endTime: date,
+        animalId: `animal-${i}`,
+      });
+    });
+    mockMeetingService.getAnimalMeetingsAsVet.mockResolvedValue(meetings);
+    mockPrisma.animal.findMany.mockResolvedValue(
+      Array.from({ length: 7 }, (_, i) => ({
+        id: `animal-${i}`,
+        name: `Animal${i}`,
+        client: { user: { firstname: "Client", lastname: `${i}` } },
+      })),
+    );
+
+    const result = await service.getVeterinarianDashboard("vet-1" as any);
+
+    expect(result.upcomingMeetings).toHaveLength(5);
+    expect(result.upcomingMeetings[0].animalName).toBe("Animal0");
+  });
+
+  it("retourne les 3 derniers avis avec commentaire et nom du client", async () => {
+    mockReviewRepository.findReviewsByVeterinarian.mockResolvedValue([
+      {
+        rating: 5,
+        comment: "Excellent",
+        client: { user: { firstname: "Alice", lastname: "Durand" } },
+        updatedAt: new Date("2026-01-01"),
+      },
+      {
+        rating: 4,
+        comment: null,
+        client: { user: { firstname: "Bob", lastname: "Martin" } },
+        updatedAt: new Date("2026-01-02"),
+      },
+    ]);
+
+    const result = await service.getVeterinarianDashboard("vet-1" as any);
+
+    expect(result.recentReviews).toHaveLength(2);
+    expect(result.recentReviews[0]).toMatchObject({
+      rating: 5,
+      comment: "Excellent",
+      clientName: "Alice Durand",
+    });
+  });
+
+  it("compte les patients distincts via Animal.attendingVeterinarianId", async () => {
+    mockPrisma.animal.count.mockResolvedValue(17);
+
+    const result = await service.getVeterinarianDashboard("vet-1" as any);
+
+    expect(mockPrisma.animal.count).toHaveBeenCalledWith({
+      where: { attendingVeterinarianId: "vet-1" },
+    });
+    expect(result.patientsCount).toBe(17);
   });
 });
 

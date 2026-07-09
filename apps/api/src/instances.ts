@@ -252,6 +252,7 @@ export const dashboardService = new DashboardService(
   clinicService,
   meetingService,
   orderRepository,
+  reviewRepository,
 );
 
 // ═══════════════════════════════════════════════════════════════

@@ -1,7 +1,8 @@
 import { prisma } from "@api/lib/prisma";
 import { NotFoundError } from "@api/errors";
-import type { ClinicId, UserId } from "@armali/schemas";
+import type { ClinicId, UserId, VeterinarianId } from "@armali/schemas";
 import { ReviewService } from "@api/reviews/review.service";
+import { ReviewRepository } from "@api/reviews/review.repository";
 import { StaffService } from "@api/staffs/staff.service";
 import { UserService } from "@api/users";
 import { ClinicService } from "@api/clinics/clinic.service";
@@ -20,6 +21,7 @@ export class DashboardService {
     private clinicService: ClinicService,
     private meetingService: MeetingService,
     private orderRepository: OrderRepository,
+    private reviewRepository: ReviewRepository,
   ) {}
 
   // ── Dashboard "gestion de clinique" (référent + directeur, contenu identique) ──
@@ -179,22 +181,81 @@ export class DashboardService {
 
   async getVeterinarianDashboard(userId: UserId) {
     const now = new Date();
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
     const inSevenDays = new Date();
     inSevenDays.setDate(inSevenDays.getDate() + 7);
 
-    const [upcomingMeetings, rating] = await Promise.all([
-      this.meetingService.getAnimalMeetingsAsVet(userId, now, inSevenDays),
-      this.reviewService.getStats({
-        veterinarianId: userId,
-        userId,
-        role: "VETERINARIAN",
-      }),
-    ]);
+    const [weekMeetings, rating, recentReviewsRaw, patientsCount] =
+      await Promise.all([
+        this.meetingService.getAnimalMeetingsAsVet(userId, now, inSevenDays),
+        this.reviewService.getStats({
+          veterinarianId: userId,
+          userId,
+          role: "VETERINARIAN",
+        }),
+        this.reviewRepository.findReviewsByVeterinarian(
+          userId as unknown as VeterinarianId,
+        ),
+        prisma.animal.count({ where: { attendingVeterinarianId: userId } }),
+      ]);
+
+    const todaysMeetingsCount = weekMeetings.filter(
+      (m) => new Date(m.date) <= endOfToday,
+    ).length;
+
+    // Prochains RDV enrichis (animal + client) — uniquement les entrées
+    // issues d'un rendez-vous animalier (celles qui portent un animalId)
+    const upcomingAnimalMeetings = weekMeetings
+      .filter((m): m is typeof m & { animalId: string } => "animalId" in m)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 5);
+
+    const animalIds = [
+      ...new Set(upcomingAnimalMeetings.map((m) => m.animalId)),
+    ];
+    const animals = animalIds.length
+      ? await prisma.animal.findMany({
+          where: { id: { in: animalIds } },
+          select: {
+            id: true,
+            name: true,
+            client: {
+              select: { user: { select: { firstname: true, lastname: true } } },
+            },
+          },
+        })
+      : [];
+    const animalById = new Map(animals.map((a) => [a.id, a]));
+
+    const upcomingMeetings = upcomingAnimalMeetings.map((m) => {
+      const animal = animalById.get(m.animalId);
+      return {
+        date: new Date(m.date).toISOString(),
+        startTime: new Date(m.startTime).toISOString(),
+        endTime: new Date(m.endTime).toISOString(),
+        animalName: animal?.name ?? "—",
+        clientName: animal
+          ? `${animal.client.user.firstname} ${animal.client.user.lastname}`
+          : "—",
+      };
+    });
+
+    const recentReviews = recentReviewsRaw.slice(0, 3).map((r) => ({
+      rating: r.rating,
+      comment: r.comment,
+      clientName: `${r.client.user.firstname} ${r.client.user.lastname}`,
+      date: r.updatedAt.toISOString(),
+    }));
 
     return {
       role: "VETERINARIAN" as const,
-      upcomingMeetingsCount: upcomingMeetings.length,
+      todaysMeetingsCount,
+      upcomingMeetingsCount: weekMeetings.length,
+      upcomingMeetings,
       rating: { average: rating.average, count: rating.count },
+      recentReviews,
+      patientsCount,
     };
   }
 

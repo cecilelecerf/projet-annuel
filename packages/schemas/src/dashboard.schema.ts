@@ -58,10 +58,29 @@ export const secretaryDashboardSchema = z.object({
 
 // ── Vétérinaire : RDV à venir + sa propre note ──────────────────────────────
 
+const upcomingMeetingSchema = z.object({
+  date: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  animalName: z.string(),
+  clientName: z.string(),
+})
+
+const recentReviewSchema = z.object({
+  rating: z.number(),
+  comment: z.string().nullable(),
+  clientName: z.string(),
+  date: z.string(),
+})
+
 export const veterinarianDashboardSchema = z.object({
   role: z.literal('VETERINARIAN'),
+  todaysMeetingsCount: z.number().int().nonnegative(),
   upcomingMeetingsCount: z.number().int().nonnegative(),
+  upcomingMeetings: z.array(upcomingMeetingSchema),
   rating: reviewStatSchema,
+  recentReviews: z.array(recentReviewSchema),
+  patientsCount: z.number().int().nonnegative(),
 })
 
 // ── Super admin : vue plateforme globale ────────────────────────────────────

@@ -4,28 +4,46 @@ import { ElMessageBox } from 'element-plus'
 import { useNotify } from '@/composables/useNotify'
 import { useAuthStore } from '@/stores/authStore'
 import { supplierApi } from '../api/supplier.api'
+import { supplierOrderApi } from '@/features/supplier-orders/api/supplier-order.api'
+import { budgetApi } from '@/features/budget/api/budget.api'
 import { productsApi } from '@/features/products/api/products.api'
-import type { ProductId, SupplierWithProducts } from '@armali/schemas'
+import type { SupplierWithProducts } from '@armali/schemas'
 
 const notify = useNotify()
 const authStore = useAuthStore()
 
-// Catalogue fournisseurs global : seul l'admin peut créer/modifier/supprimer
-// (référent/directeur ne font que consulter pour préparer leurs commandes)
+
 const canManage = computed(() => authStore.user?.role === 'ADMIN')
+const canOrder = computed(
+  () => authStore.user?.role === 'REFERENT' || authStore.user?.role === 'DIRECTOR',
+)
 
 const suppliers = ref<SupplierWithProducts[]>([])
 const loading = ref(false)
 const expandedId = ref<string | null>(null)
+const balance = ref<number | null>(null)
 
-const allProducts = ref<{ id: ProductId; name: string; brand: { name: string } }[]>([])
+const allProducts = ref<{ id: string; name: string; brand: { name: string } }[]>([])
+
+// Quantités en cours de saisie, par fournisseur puis par produit
+const quantities = ref<Record<string, Record<string, number>>>({})
 
 async function load() {
   loading.value = true
   try {
-    const [s, p] = await Promise.all([supplierApi.getAll(), productsApi.getAll()])
-    suppliers.value = s
-    allProducts.value = p
+    const calls: Promise<unknown>[] = [supplierApi.getAll()]
+    if (canManage.value) calls.push(productsApi.getAll())
+    if (canOrder.value) calls.push(budgetApi.get())
+
+    const results = await Promise.all(calls)
+    suppliers.value = results[0] as SupplierWithProducts[]
+    if (canManage.value) allProducts.value = results[1] as typeof allProducts.value
+    if (canOrder.value) {
+      const b = (canManage.value ? results[2] : results[1]) as Awaited<
+        ReturnType<typeof budgetApi.get>
+      >
+      balance.value = b.balance
+    }
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Impossible de charger les fournisseurs')
   } finally {
@@ -36,6 +54,57 @@ onMounted(load)
 
 function toggleExpand(id: string) {
   expandedId.value = expandedId.value === id ? null : id
+  if (!quantities.value[id]) quantities.value[id] = {}
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)
+}
+
+// ── Commande (référent/directeur) ────────────────────────────────────────────
+
+function orderTotalFor(supplier: SupplierWithProducts) {
+  const qtys = quantities.value[supplier.id] ?? {}
+  return supplier.supplierProducts.reduce((sum, sp) => {
+    const qty = qtys[sp.productId] ?? 0
+    return sum + qty * sp.costPrice
+  }, 0)
+}
+
+const submittingOrder = ref<string | null>(null)
+
+async function submitOrder(supplier: SupplierWithProducts) {
+  const qtys = quantities.value[supplier.id] ?? {}
+  const items = Object.entries(qtys)
+    .filter(([, qty]) => (qty as number) > 0)
+    .map(([productId, quantity]) => ({ productId, quantity: quantity as number }))
+
+  if (items.length === 0) {
+    notify.error('Indique une quantité pour au moins un produit')
+    return
+  }
+
+  const total = orderTotalFor(supplier)
+  try {
+    await ElMessageBox.confirm(
+      `Commander pour ${formatCurrency(total)} chez ${supplier.name} ?`,
+      'Confirmer la commande',
+    )
+  } catch {
+    return
+  }
+
+  submittingOrder.value = supplier.id
+  try {
+    await supplierOrderApi.create({ supplierId: supplier.id, items })
+    notify.success('Commande envoyée au fournisseur')
+    quantities.value[supplier.id] = {}
+    await load()
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Impossible de créer la commande')
+  } finally {
+    submittingOrder.value = null
+  }
 }
 
 // ── Création / édition fournisseur (admin uniquement) ────────────────────────
@@ -114,10 +183,7 @@ async function deleteSupplier(s: SupplierWithProducts) {
 
 const productDialogOpen = ref(false)
 const productDialogSupplierId = ref<string | null>(null)
-const productForm = ref<{ productId: ProductId; costPrice: number }>({
-  productId: '' as ProductId,
-  costPrice: 0,
-})
+const productForm = ref({ productId: '', costPrice: 0 })
 const submittingProduct = ref(false)
 
 const availableProductsForDialog = computed(() => {
@@ -131,13 +197,13 @@ const availableProductsForDialog = computed(() => {
     ),
   )
   return allProducts.value.filter(
-    (p: { id: ProductId; name: string; brand: { name: string } }) => !existingIds.has(p.id),
+    (p: { id: string; name: string; brand: { name: string } }) => !existingIds.has(p.id),
   )
 })
 
 function openAddProduct(supplierId: string) {
   productDialogSupplierId.value = supplierId
-  productForm.value = { productId: '' as ProductId, costPrice: 0 }
+  productForm.value = { productId: '', costPrice: 0 }
   productDialogOpen.value = true
 }
 
@@ -181,10 +247,6 @@ async function removeProduct(supplierId: string, linkId: string) {
     notify.error(err instanceof Error ? err.message : 'Impossible de retirer le produit')
   }
 }
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value)
-}
 </script>
 
 <template>
@@ -192,11 +254,16 @@ function formatCurrency(value: number) {
     <div>
       <h1>Fournisseurs</h1>
       <p v-if="canManage">Gérez le catalogue fournisseurs et leurs prix d'achat</p>
-      <p v-else>Catalogue des fournisseurs disponibles pour vos commandes</p>
+      <p v-else-if="canOrder">Parcourez le catalogue et commandez pour votre clinique</p>
     </div>
-    <el-button v-if="canManage" type="primary" @click="openCreateSupplier">
-      Nouveau fournisseur
-    </el-button>
+    <div class="header-right">
+      <span v-if="canOrder && balance !== null" class="balance-pill">
+        Budget disponible : <strong>{{ formatCurrency(balance) }}</strong>
+      </span>
+      <el-button v-if="canManage" type="primary" @click="openCreateSupplier">
+        Nouveau fournisseur
+      </el-button>
+    </div>
   </div>
 
   <el-skeleton v-if="loading" :rows="4" animated />
@@ -235,12 +302,14 @@ function formatCurrency(value: number) {
         <div v-if="supplier.supplierProducts.length === 0" class="no-data">
           Aucun produit dans le catalogue de ce fournisseur.
         </div>
+
         <table v-else class="catalog-table">
           <thead>
             <tr>
               <th>Produit</th>
               <th>Marque</th>
               <th>Prix d'achat</th>
+              <th v-if="canOrder">Quantité</th>
               <th v-if="canManage"></th>
             </tr>
           </thead>
@@ -256,12 +325,17 @@ function formatCurrency(value: number) {
                   :precision="2"
                   :step="0.5"
                   size="small"
-                  @change="
-                    (v: number | undefined) =>
-                      v !== undefined && updateProductCost(supplier.id, sp.id, v)
-                  "
+                  @change="(v: number | undefined) => v !== undefined && updateProductCost(supplier.id, sp.id, v)"
                 />
                 <span v-else>{{ formatCurrency(sp.costPrice) }}</span>
+              </td>
+              <td v-if="canOrder">
+                <el-input-number
+                  v-model="quantities[supplier.id][sp.productId]"
+                  :min="0"
+                  :step="1"
+                  size="small"
+                />
               </td>
               <td v-if="canManage">
                 <el-button
@@ -276,6 +350,19 @@ function formatCurrency(value: number) {
             </tr>
           </tbody>
         </table>
+
+        <div v-if="canOrder && supplier.supplierProducts.length > 0" class="order-footer">
+          <span class="order-total">
+            Total : <strong>{{ formatCurrency(orderTotalFor(supplier)) }}</strong>
+          </span>
+          <el-button
+            type="primary"
+            :loading="submittingOrder === supplier.id"
+            @click="submitOrder(supplier)"
+          >
+            Commander chez {{ supplier.name }}
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
@@ -364,6 +451,21 @@ function formatCurrency(value: number) {
   margin: 0;
   font-size: 14px;
 }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.balance-pill {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+}
+.balance-pill strong {
+  color: var(--el-color-primary);
+}
 
 .empty-state {
   color: var(--el-text-color-secondary);
@@ -432,5 +534,19 @@ function formatCurrency(value: number) {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-bottom: 1px solid var(--el-border-color-lighter);
   font-size: 13px;
+}
+
+.order-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+.order-total {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
 }
 </style>

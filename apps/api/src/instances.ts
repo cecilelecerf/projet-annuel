@@ -68,7 +68,6 @@ import { AvailabilityService } from "./meetings/availabilities/availability.serv
 import { InternalMeetingService } from "./meetings/internal-meeting/internal-meeting.service";
 import { RecurringService } from "./meetings/recurring-meeting/recurring-meeting.service";
 import { PrescriptionService } from "./prescriptions/prescription.service";
-import { ReferentService } from "./referents/referent.service";
 import { ReviewService } from "./reviews/review.service";
 import { UserService } from "./users/user.service";
 import { ProductService } from "./products/product.service";
@@ -97,7 +96,6 @@ import { AnimalMeetingController } from "./meetings/animal-meeting/animal-meetin
 import { AvailabilityController } from "./meetings/availabilities/availability.controller";
 import { InternalMeetingController } from "./meetings/internal-meeting/internal-meeting.controller";
 import { PrescriptionController } from "./prescriptions/prescription.controller";
-import { ReferentController } from "./referents/referent.controller";
 import { ReviewController } from "./reviews/review.controller";
 import { UserController } from "./users/user.controller";
 import { AnimalMedicalHistoryService } from "./medicalHistories/medical-history.service";
@@ -193,11 +191,6 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
 const prescriptionService = new PrescriptionService(prescriptionRepository);
 
 const reviewService = new ReviewService(reviewRepository, clinicService);
-const referentService = new ReferentService(
-  reviewService,
-  staffService,
-  userService,
-);
 
 const recurringService = new RecurringService(
   recurringRepository,
@@ -298,7 +291,6 @@ export const recurringController = new RecurringMeetingController(
 export const prescriptionController = new PrescriptionController(
   prescriptionService,
 );
-export const referentController = new ReferentController(referentService);
 export const reviewController = new ReviewController(reviewService);
 export const userController = new UserController(userService);
 

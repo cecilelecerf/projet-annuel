@@ -10,13 +10,28 @@ if [ -f /run/secrets/db_user ]; then
   export JWT_REFRESH_SECRET=$(cat /run/secrets/jwt_refresh_secret)
 fi
 
+if [ -f /run/secrets/aws_access_key_id_v2 ]; then
+  export AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id_v2)
+  export AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key_v2)
+  export S3_BUCKET=$(cat /run/secrets/s3_bucket)
+  export S3_ENDPOINT=$(cat /run/secrets/s3_endpoint)
+ fi
+
+if [ -f /run/secrets/stripe_secret_key ]; then
+  export STRIPE_SECRET_KEY=$(cat /run/secrets/stripe_secret_key)
+  export STRIPE_WEBHOOK_SECRET=$(cat /run/secrets/stripe_webhook_secret_v2)
+fi
+
+if [ -f /run/secrets/resend_api_key ]; then
+  export RESEND_API_KEY=$(cat /run/secrets/resend_api_key)
+fi
 
 echo "Checking DATABASE_URL..."
 if [ -z "$DATABASE_URL" ]; then
   echo "❌ DATABASE_URL is not set"
   exit 1
 fi
-echo "$DATABASE_URL"
+echo "✅ DATABASE_URL is set"
 echo "Waiting for database..."
 
 echo "Running migrations..."

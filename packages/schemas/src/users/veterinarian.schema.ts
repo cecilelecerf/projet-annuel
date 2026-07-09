@@ -2,7 +2,7 @@ import { z } from "zod";
 import { veterinarianIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema } from "./base-user.schema";
 import { specialitySchema } from "../specilities.schema";
-import { veterinarianClinicSchema } from "../veterinarian-clinic.schema";
+import { veterinarianClinicSchema } from "../clinics/veterinarian-clinic.schema";
 
 export const veterinarianProfileSchema = z.object({
   id: veterinarianIdSchema,

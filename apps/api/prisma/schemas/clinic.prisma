@@ -16,7 +16,7 @@ model Clinic {
   director   DirectorClinicProfile @relation(fields: [directorId], references: [id])
 
   specialities           Speciality[]
-  clinicPet              Pet[]
+  pets                   Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
   veterinarianClinics    VeterinarianClinic[]
@@ -81,11 +81,12 @@ model VeterinarianClinic {
   clinicId       String
   clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
-  animalMedicalHistoryId String?
-  animalMedicalHistory   AnimalMedicalHistory? @relation(fields: [animalMedicalHistoryId], references: [id])
-
-  reviews        Review[]
-  animalMeetings AnimalMeeting[]
-
+  actsRealised           AnimalMedicalHistory[]
+  reviews                Review[]
+  animalMeetings         AnimalMeeting[]
+  hospitalizationReports HospitalizationReport[]
+  animals                Animal[]
+  
+  @@unique([id, clinicId])
   @@map("veterinarian_clinics")
 }

@@ -3,7 +3,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
-import Sidebar, { type MenuItem } from './SidebarComponent.vue'
+import Sidebar from './SidebarComponent.vue'
 import NotificationMessageItem from './clocks/NotificationMessageItem.vue'
 import NotificationStockItem from './clocks/NotificationStockItem.vue'
 import { getStringRole } from '@/utils/role.utils'
@@ -13,10 +13,11 @@ import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
 import { http } from '@/lib/api'
 import { productsApi } from '@/features/products/api/products.api'
 import { useCartStore } from '@/features/shop/stores/cartStore'
+import type { NavNode } from './NaveNode.ts'
 
 const notify = useNotify()
 
-defineProps<{ menuItems: MenuItem[] }>()
+defineProps<{ menuItems: NavNode[] }>()
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -97,9 +98,7 @@ const unreadLowStockCount = computed(
   () => lowStockProducts.value.filter((p) => !readStockIds.value.has(p.id)).length,
 )
 
-const totalNotifications = computed(
-  () => messagingStore.totalUnread + unreadLowStockCount.value,
-)
+const totalNotifications = computed(() => messagingStore.totalUnread + unreadLowStockCount.value)
 
 const userInitials = computed(() => {
   if (!user.value) return '?'

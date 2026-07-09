@@ -10,11 +10,11 @@ model Animal {
   outdoorAccess Boolean @default(false)
   animalContact Boolean @default(false)
 
-  attendingVeterinarianId String?
-  attendingVeterinarian   VeterinarianProfile? @relation(fields: [attendingVeterinarianId], references: [id])
+  attendingVeterinarianClinicId String?
+  attendingVeterinarianClinic   VeterinarianClinic? @relation(fields: [attendingVeterinarianClinicId], references: [id])
 
   clientId String
-  client   ClientProfile @relation(fields: [clientId], references: [id])
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   raceId String
   race   Race   @relation(fields: [raceId], references: [id])
@@ -40,8 +40,8 @@ model Pet {
 
   races            Race[]
   vaccine          Vaccine[]
-  clinic           Clinic[]
-  veterinarian     VeterinarianProfile[]
+  clinics          Clinic[]
+  veterinarians    VeterinarianProfile[]
   healthConditions HealthCondition[]
 
   @@map("pets")
@@ -55,7 +55,7 @@ model Race {
   picture   String?
 
   petId  String
-  pet    Pet      @relation(fields: [petId], references: [id])
+  pet    Pet      @relation(fields: [petId], references: [id], onDelete: Cascade)
   animal Animal[]
 
   @@map("races")
@@ -88,7 +88,7 @@ model Vaccine {
   countryRules    VaccineCountryRule[]
 
   petId          String
-  pet            Pet             @relation(fields: [petId], references: [id])
+  pet            Pet             @relation(fields: [petId], references: [id], onDelete: Cascade)
   animalVaccines AnimalVaccine[]
 
   act Act?

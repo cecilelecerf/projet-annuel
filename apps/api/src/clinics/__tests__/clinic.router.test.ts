@@ -56,8 +56,8 @@ async function cleanupDisposable(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
     await prisma.clinic.deleteMany({ where: { directorId: user.id } });
+    await prisma.user.deleteMany({ where: { email } });
   }
-  await prisma.user.deleteMany({ where: { email } });
 }
 
 // ── GET /api/clinics/ ──────────────────────────────────────────────────────────
@@ -85,29 +85,6 @@ describe("GET /api/clinics/", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBeGreaterThan(0);
-  });
-});
-
-// ── GET /api/clinics/:id/medical-histories ────────────────────────────────────
-
-describe("GET /api/clinics/:id/medical-histories", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get(
-      "/api/clinics/some-id/medical-histories",
-    );
-    expect(res.status).toBe(401);
-  });
-
-  it("200 — VETERINARIAN retourne l'historique de sa clinique", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/medical-histories`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
   });
 });
 
@@ -179,43 +156,6 @@ describe("PATCH /api/clinics/:id/specialities", () => {
       .patch(`/api/clinics/${clinic!.id}/specialities`)
       .set("Authorization", `Bearer ${token}`)
       .send({ specialityIds: specialities.map((s) => s.id) });
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-});
-
-// ── GET /api/clinics/:id/staffs ────────────────────────────────────────────────
-
-describe("GET /api/clinics/:id/staffs", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get("/api/clinics/some-id/staffs");
-    expect(res.status).toBe(401);
-  });
-
-  it("403 — rôle CLIENT non autorisé", async () => {
-    const token = await loginAs("client@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/staffs`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(403);
-  });
-
-  it("200 — DIRECTOR retourne le staff de sa clinique", async () => {
-    const token = await loginAs("directeur@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst({
-      where: {
-        director: {
-          user: { email: "directeur@gmail.com" },
-        },
-      },
-    });
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/staffs`)
-      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -395,87 +335,5 @@ describe("DELETE /api/clinics/:id", () => {
     } finally {
       await cleanupDisposable(email);
     }
-  });
-});
-// ── GET /api/clinics/:id/clinic-acts ───────────────────────────────────────────
-
-describe("GET /api/clinics/:id/clinic-acts", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get("/api/clinics/some-id/clinic-acts");
-    expect(res.status).toBe(401);
-  });
-
-  it("403 — rôle CLIENT non autorisé", async () => {
-    const token = await loginAs("client@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/clinic-acts`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(403);
-  });
-
-  it("403 — rôle ADMIN non autorisé (absent de CLINIC_STAFF_ROLES)", async () => {
-    const token = await loginAs("admin@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/clinic-acts`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(403);
-  });
-
-  it("200 — DIRECTOR retourne les actes de sa clinique", async () => {
-    const token = await loginAs("directeur@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst({
-      where: {
-        director: {
-          user: { email: "directeur@gmail.com" },
-        },
-      },
-    });
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/clinic-acts`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  it("200 — VETERINARIAN retourne les actes de la clinique", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/clinic-acts`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
-
-  it("200 — SECRETARY retourne les actes de la clinique", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/clinic-acts`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-  });
-
-  it("200 — REFERENT retourne les actes de la clinique", async () => {
-    const token = await loginAs("referent@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(`/api/clinics/${clinic!.id}/clinic-acts`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
   });
 });

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+import { useAuthStore } from '@/stores/authStore'
+import { clinicIdSchema } from '@armali/schemas'
 import {
   House,
   UserFilled,
@@ -13,22 +15,45 @@ import {
   Box,
   List,
 } from '@element-plus/icons-vue'
+const { user } = useAuthStore()
+const clinicId = clinicIdSchema.parse(user?.clinicId)
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
     index: 'REFERENT.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'REFERENT.Staff',
-    label: 'Personnel',
-    icon: UserFilled,
-  },
-  {
     index: 'REFERENT.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
+    children: [
+      {
+        index: 'REFERENT.Clinic',
+        label: 'Général',
+      },
+      {
+        index: 'REFERENT.Staff',
+        label: 'Personnel',
+        icon: UserFilled,
+      },
+      {
+        index: 'REFERENT.Acts',
+        label: 'Acts',
+        params: { id: clinicId },
+      },
+      {
+        index: 'REFERENT.Pets',
+        label: 'Pets',
+        params: { id: clinicId },
+      },
+      {
+        index: 'REFERENT.Specialities',
+        label: 'Spécialités',
+        params: { id: clinicId },
+      },
+    ],
   },
   {
     index: 'REFERENT.Boutique',

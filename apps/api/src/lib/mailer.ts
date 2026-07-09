@@ -1,30 +1,34 @@
 import nodemailer from "nodemailer";
 
 const isEmailEnabled = process.env.ENABLE_EMAIL === "true";
+const isProd = process.env.NODE_ENV === "production";
 
 let transporter: nodemailer.Transporter;
-console.log(process.env.ENABLE_EMAIL);
+
 if (isEmailEnabled) {
+  if (isProd && !process.env.RESEND_API_KEY) {
+    throw new Error(
+      "ENABLE_EMAIL=true mais RESEND_API_KEY manque dans l'environnement",
+    );
+  }
   if (
-    !process.env.MAIL_HOST ||
-    !process.env.MAIL_USER ||
-    !process.env.MAIL_PASS
+    !isProd &&
+    (!process.env.MAIL_HOST || !process.env.MAIL_USER || !process.env.MAIL_PASS)
   ) {
     throw new Error(
       "ENABLE_EMAIL=true mais MAIL_HOST/MAIL_USER/MAIL_PASS manquent dans l'environnement",
     );
   }
+
   transporter = nodemailer.createTransport({
-    host: process.env.MAIL_HOST,
-    port: Number(process.env.MAIL_PORT),
-    secure: false,
-    requireTLS: process.env.MAIL_REQUIRE_TLS !== "false",
-    auth: process.env.MAIL_USER
-      ? {
-          user: process.env.MAIL_USER,
-          pass: process.env.MAIL_PASS,
-        }
-      : undefined,
+    host: isProd ? "smtp.resend.com" : process.env.MAIL_HOST,
+    port: isProd ? 465 : Number(process.env.MAIL_PORT),
+    secure: isProd ? true : false, // 465 = TLS direct en prod, Mailhog reste en clair + STARTTLS
+    requireTLS: !isProd, // requireTLS redondant avec secure:true, utile seulement pour Mailhog
+    auth: {
+      user: isProd ? "resend" : process.env.MAIL_USER,
+      pass: isProd ? process.env.RESEND_API_KEY : process.env.MAIL_PASS,
+    },
   });
 } else {
   transporter = {

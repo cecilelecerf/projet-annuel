@@ -116,7 +116,6 @@ export class BookingService {
       user: {
         firstname: vc.veterinarian.user.firstname,
         lastname: vc.veterinarian.user.lastname,
-        picture: vc.veterinarian.user.picture ?? null,
         avatarUrl: withAvatarUrl(vc.veterinarian.user).avatarUrl,
       },
       specialities: vc.veterinarian.specialities.map((s) => ({

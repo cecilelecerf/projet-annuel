@@ -78,9 +78,12 @@ services:
       NODE_ENV: production
       CORS_ORIGIN: https://armali.online
       S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: https://s3.armali.online
       S3_BUCKET: armali-files
       AWS_REGION: us-east-1
       ASSETS_BASE_URL: https://s3.armali.online/armali-files
+      ENABLE_EMAIL: "true"
+      MAIL_FROM: "Armali <contact@armali.online>"
     secrets:
       - db_user
       - db_password
@@ -89,6 +92,14 @@ services:
       - jwt_refresh_secret
       - minio_root_user
       - minio_root_password
+      - s3_bucket
+      - s3_endpoint
+      - aws_region
+      - aws_access_key_id_v2
+      - aws_secret_access_key_v2
+      - stripe_secret_key
+      - stripe_webhook_secret_v2
+      - resend_api_key
     networks:
       - backend
       - frontend
@@ -259,6 +270,7 @@ services:
     environment:
       MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
       MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+      MINIO_API_CORS_ALLOW_ORIGIN: "https://armali.online"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -307,7 +319,6 @@ services:
     networks:
       - backend
 
-
 volumes:
   prometheus-data:
     driver: local
@@ -342,6 +353,22 @@ secrets:
   minio_root_user:
     external: true
   minio_root_password:
+    external: true
+  s3_bucket:
+    external: true
+  s3_endpoint:
+    external: true
+  aws_region:
+    external: true
+  aws_access_key_id_v2:
+    external: true
+  aws_secret_access_key_v2:
+    external: true
+  stripe_secret_key:
+    external: true
+  stripe_webhook_secret_v2:
+    external: true
+  resend_api_key:
     external: true
 
 configs:

@@ -44,7 +44,6 @@ const mockUser = {
   firstname: "Alice",
   lastname: "Dupont",
   password: "hashed_password",
-  picture: null,
   clinicId: null,
   role: UserRole.CLIENT,
   createdAt: new Date(),

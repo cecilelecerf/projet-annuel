@@ -237,7 +237,6 @@ export class MeetingController {
       });
       return res.status(200).json(bookingSlotSchema.array().parse(slots));
     } catch (err) {
-      console.log(err);
       next(err);
     }
   }

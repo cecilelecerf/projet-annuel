@@ -114,3 +114,4 @@ export type SupplierId = z.infer<typeof supplierIdSchema>;
 export type SupplierProductId = z.infer<typeof supplierProductIdSchema>;
 export type SupplierOrderId = z.infer<typeof supplierOrderIdSchema>;
 export type SupplierOrderItemId = z.infer<typeof supplierOrderItemIdSchema>;
+export type FileId = z.infer<typeof fileIdSchema>;

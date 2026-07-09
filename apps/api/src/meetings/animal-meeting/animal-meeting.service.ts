@@ -4,12 +4,17 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "@api/errors";
-import type {
-  CreateAnimalMeeting,
-  AnimalId,
-  UpdateAnimalMeeting,
+import {
+  type CreateAnimalMeeting,
+  type AnimalId,
+  type UpdateAnimalMeeting,
+  type AnimalMeetingWithMeeting,
+  animalMeetigWithMeetingSchema,
 } from "@armali/schemas";
-import { AnimalMeetingRepository } from "./animal-meeting.repository";
+import {
+  AnimalMeetingForUser,
+  AnimalMeetingRepository,
+} from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { prisma } from "@api/lib/prisma";
 import { flatUser, withUserAvatar } from "@api/users/user.utils";
@@ -129,6 +134,27 @@ export class AnimalMeetingService {
     if (hoursUntilMeeting < 48) {
       throw new ForbiddenError(message);
     }
+  }
+
+  private animalMeetignWithFlatUser(
+    meeting: AnimalMeetingForUser,
+  ): AnimalMeetingWithMeeting {
+    const client = flatUser(meeting.animal.client);
+    const veterinarian = meeting.veterinarianClinic
+      ? flatUser(meeting.veterinarianClinic?.veterinarian)
+      : undefined;
+    const animalMeeting = {
+      ...meeting,
+      animal: {
+        ...meeting.animal,
+        client,
+      },
+      veterinarianClinic: {
+        ...meeting.veterinarianClinic,
+        veterinarian,
+      },
+    };
+    return animalMeetigWithMeetingSchema.parse(animalMeeting);
   }
 
   async create({ data }: { data: CreateAnimalMeeting }) {
@@ -362,7 +388,8 @@ export class AnimalMeetingService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-    return this.repository.findByClient(id);
+    const animalMeetings = await this.repository.findByClient(id);
+    return animalMeetings.map(this.animalMeetignWithFlatUser);
   }
 
   async getByAnimal({
@@ -382,7 +409,7 @@ export class AnimalMeetingService {
 
     if (!isStaff(role) && animal.clientId !== userId)
       throw new ForbiddenError();
-
-    return this.repository.findByAnimal(animalId);
+    const animalMeetings = await this.repository.findByAnimal(animalId);
+    return animalMeetings.map(this.animalMeetignWithFlatUser);
   }
 }

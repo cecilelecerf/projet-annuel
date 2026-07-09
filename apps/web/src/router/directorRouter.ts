@@ -43,7 +43,7 @@ export const directorRouter: RouteRecordRaw[] = [
         component: () => import('@/features/staffs/views/StaffDetailView.vue'),
       },
       {
-        path: 'clinique',
+        path: 'clinics',
         name: 'DIRECTOR.Clinic',
         component: () => import('@/features/clinics/views/ClinicView.vue'),
       },
@@ -52,6 +52,22 @@ export const directorRouter: RouteRecordRaw[] = [
         name: 'DIRECTOR.Boutique',
         component: () => import('@/features/products/views/ShopView.vue'),
       },
+      {
+        path: 'clinics/:id/acts',
+        name: 'DIRECTOR.Acts',
+        component: () => import('@/features/clinic-acts/view/ClinicActView.vue'),
+      },
+      {
+        path: 'clinics/:id/pets',
+        name: 'DIRECTOR.Pets',
+        component: () => import('@/features/pets/views/LinkPetsView.vue'),
+      },
+      {
+        path: 'clinics/:id/specialities',
+        name: 'DIRECTOR.Specialities',
+        component: () => import('@/features/specialities/views/LinkSpecialitiesView.vue'),
+      },
+
       // ── Messagerie ────────────────────────────────────────────
       {
         path: 'messagerie',

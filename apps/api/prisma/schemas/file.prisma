@@ -35,4 +35,6 @@ enum FileEntityType {
   CLINIC
   BRAND
   PRODUCT
+  IMAGING
+  ANALYSIS
 }

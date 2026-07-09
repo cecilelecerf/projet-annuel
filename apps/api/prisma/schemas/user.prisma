@@ -71,14 +71,12 @@ model VeterinarianProfile {
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  animals                Animal[]
-  specialities           Speciality[]
-  veterinarianClinics    VeterinarianClinic[]
-  pets                   Pet[]
-  hospitalizationReports HospitalizationReport[]
-  prescriptions          Prescription[]
-  veterinarianIdentity   VeterinarianIdentity?
-  bankingInfo            BankingInfo?
+  specialities         Speciality[]
+  veterinarianClinics  VeterinarianClinic[]
+  pets                 Pet[]
+  veterinarianIdentity VeterinarianIdentity?
+  bankingInfo          BankingInfo?
+  prescriptions        Prescription[]
 
   @@map("veterinarian_profiles")
 }

@@ -2,7 +2,6 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
-  ClinicId,
   createSpecialitySchema,
   SpecialityId,
   specialitySchema,
@@ -81,38 +80,6 @@ export class SpecialityController {
     try {
       await this.service.delete(req.params.id, req.user.role);
       res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async getAllByClinic(
-    req: RequestWithParams<{ id: ClinicId }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const specialities = await this.service.getAllByClinicId({
-        clinicId: req.params.id,
-      });
-      res.status(200).json(specialitySchema.array().parse(specialities));
-    } catch (err) {
-      next(err);
-    }
-  }
-  async linkWithClinic(
-    req: RequestWithParams<{ id: ClinicId }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const specialities = await this.service.linkWithClinic({
-        userId: req.user!.id,
-        role: req.user.role,
-        data: req.body,
-        clinicId: req.params.id,
-      });
-      res.status(200).json(specialities);
     } catch (err) {
       next(err);
     }

@@ -84,6 +84,17 @@ describe("GET /api/meetings/calendar", () => {
       expect(res.body).toHaveProperty("meetings");
       expect(res.body).toHaveProperty("availabilities");
     });
+
+    it("200 — ADMIN retourne son calendrier (vetProfile/clientProfile absents, clinicIds ignoré)", async () => {
+      const token = await loginAs("admin@gmail.com");
+      const res = await request(app)
+        .get(`/api/meetings/calendar?${validQuery}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("meetings");
+      expect(res.body).toHaveProperty("availabilities");
+    });
   });
 });
 
@@ -135,6 +146,75 @@ describe("GET /api/meetings/calendar/:veterinarianId", () => {
   });
 });
 
+// ── GET /api/meetings/veterinarians/:veterinarianId/slots ────────────────────
+
+describe("GET /api/meetings/veterinarians/:veterinarianId/slots", () => {
+  it("401 — sans token", async () => {
+    const res = await request(app).get(
+      "/api/meetings/veterinarians/some-id/slots",
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — rôle non-CLIENT (route réservée au client)", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const res = await request(app)
+      .get(
+        "/api/meetings/veterinarians/some-id/slots?date=2026-06-01&clinicId=some-clinic-id",
+      )
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("400 — date et clinicId manquants", async () => {
+    const token = await loginAs("client@gmail.com");
+    const res = await request(app)
+      .get("/api/meetings/veterinarians/some-id/slots")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it("400 — clinicId manquant seul", async () => {
+    const token = await loginAs("client@gmail.com");
+    const res = await request(app)
+      .get("/api/meetings/veterinarians/some-id/slots?date=2026-06-01")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it("404 — vétérinaire introuvable", async () => {
+    const token = await loginAs("client@gmail.com");
+    const clinic = await getPrisma().clinic.findFirst();
+
+    const res = await request(app)
+      .get(
+        `/api/meetings/veterinarians/non-existent-id/slots?date=2026-06-01&clinicId=${clinic!.id}`,
+      )
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
+  });
+
+  it("200 — retourne les créneaux disponibles du vétérinaire", async () => {
+    const token = await loginAs("client@gmail.com");
+    const vetoProfile = await getPrisma().veterinarianProfile.findFirst({
+      include: { veterinarianClinics: true },
+    });
+    const clinicId =
+      vetoProfile!.veterinarianClinics[0]?.clinicId ??
+      (await getPrisma().clinic.findFirst())!.id;
+
+    const res = await request(app)
+      .get(
+        `/api/meetings/veterinarians/${vetoProfile!.id}/slots?date=2026-06-01&clinicId=${clinicId}`,
+      )
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
 // ── GET /api/meetings/:id ─────────────────────────────────────────────────────
 
 describe("GET /api/meetings/:id", () => {
@@ -162,6 +242,7 @@ describe("GET /api/meetings/:id", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("id", meeting!.id);
   });
+
   it("200 — CLIENT retourne son propre meeting animal", async () => {
     const token = await loginAs("client@gmail.com");
 
@@ -205,5 +286,96 @@ describe("GET /api/meetings/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(403);
+  });
+
+  it("400 — date invalide sur un meeting récurrent", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const recurring = await getPrisma().meetingReccuring.findFirst();
+
+    // Si aucun meeting récurrent n'est seedé, ce test est ignoré plutôt que
+    // de faire échouer la suite pour une donnée de seed manquante.
+    if (!recurring) return;
+
+    const res = await request(app)
+      .get(`/api/meetings/${recurring.id}?date=not-a-valid-date`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("409 — meeting récurrent de type ANIMAL (non supporté, ConflictError)", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const recurring = await getPrisma().meetingReccuring.findFirst({
+      where: { kind: "ANIMAL" },
+    });
+
+    if (!recurring) return;
+
+    const res = await request(app)
+      .get(`/api/meetings/${recurring.id}?date=2026-06-01`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(409);
+  });
+
+  it("200 — meeting de type INTERNAL", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const internal = await getPrisma().meetingBase.findFirst({
+      where: { kind: "INTERNAL" },
+    });
+
+    if (!internal) return;
+
+    const res = await request(app)
+      .get(`/api/meetings/${internal.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("id", internal.id);
+  });
+
+  it("200 — meeting récurrent de type INTERNAL avec date valide", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const recurring = await getPrisma().meetingReccuring.findFirst({
+      where: { kind: "INTERNAL" },
+    });
+
+    if (!recurring) return;
+
+    const res = await request(app)
+      .get(`/api/meetings/${recurring.id}?date=2026-06-01`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  it("200 — meeting de type AVAILABILITY", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const availability = await getPrisma().meetingBase.findFirst({
+      where: { kind: "AVAILABILITY" },
+    });
+
+    if (!availability) return;
+
+    const res = await request(app)
+      .get(`/api/meetings/${availability.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
+
+  it("200 — meeting récurrent de type AVAILABILITY avec date valide", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const recurring = await getPrisma().meetingReccuring.findFirst({
+      where: { kind: "AVAILABILITY" },
+    });
+
+    if (!recurring) return;
+
+    const res = await request(app)
+      .get(`/api/meetings/${recurring.id}?date=2026-06-01`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
   });
 });

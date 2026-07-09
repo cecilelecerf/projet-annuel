@@ -1,27 +1,30 @@
 <script setup lang="ts">
 import { Menu } from '@element-plus/icons-vue'
-import { ref, computed, type Component } from 'vue'
+import type { NavNode } from './NaveNode'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import RecursiveSideBarItem from './RecursiveSideBarItem.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 const drawer = ref(false)
-
-type LinkItem = {
-  index: string
-  label: string
-}
-export type MenuItem = LinkItem & {
-  icon: Component | string
-  children?: LinkItem[]
-}
-defineProps<{ menuItems: MenuItem[] }>()
-
 const activeMenu = computed(() => route.name as string)
+const props = defineProps<{ menuItems: NavNode[] }>()
+function findNode(nodes: NavNode[], index: string): NavNode | undefined {
+  for (const node of nodes) {
+    if (node.index === index) return node
+    if (node.children) {
+      const found = findNode(node.children, index)
+      if (found) return found
+    }
+  }
+  return undefined
+}
 
-const handleMenuSelect = (index: string) => {
-  router.push({ name: index })
+function handleMenuSelect(index: string) {
+  const node = findNode(props.menuItems, index)
+  router.push({ name: index, params: node?.params })
 }
 </script>
 
@@ -29,25 +32,9 @@ const handleMenuSelect = (index: string) => {
   <aside>
     <el-drawer v-model="drawer" title="Menu" direction="ltr">
       <el-menu :default-active="activeMenu" @select="handleMenuSelect">
-        <template v-for="item in menuItems" :key="item.index">
-          <el-sub-menu v-if="item.children" :index="item.index">
-            <template #title>
-              <el-icon><component :is="item.icon" /></el-icon>
-              <span>{{ item.label }}</span>
-            </template>
-            <el-menu-item v-for="child in item.children" :key="child.index" :index="child.index">
-              <span />
-              {{ child.label }}
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-menu-item v-else :index="item.index">
-            <el-icon><component :is="item.icon" /></el-icon>
-            <template #title>{{ item.label }}</template>
-          </el-menu-item>
-        </template>
-      </el-menu></el-drawer
-    >
+        <recursive-side-bar-item v-for="item in menuItems" :key="item.index" :item="item" />
+      </el-menu>
+    </el-drawer>
     <!-- Toggle collapse -->
     <el-button type="primary" :icon="Menu" circle @click="drawer = !drawer" />
   </aside>

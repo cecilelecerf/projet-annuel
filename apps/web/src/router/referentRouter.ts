@@ -43,6 +43,24 @@ export const referentRouter: RouteRecordRaw[] = [
         component: () => import('@/features/products/views/ShopView.vue'),
       },
       {
+        path: 'clinics/:id/acts',
+        name: 'REFERENT.Acts',
+        component: () => import('@/features/clinic-acts/view/ClinicActView.vue'),
+      },
+      {
+        path: 'clinics/:id/pets',
+        name: 'REFERENT.Pets',
+        component: () => import('@/features/pets/views/LinkPetsView.vue'),
+      },
+      {
+        path: 'clinics/:id/specialities',
+        name: 'REFERENT.Specialities',
+        component: () => import('@/features/specialities/views/LinkSpecialitiesView.vue'),
+      },
+
+      // ── Messagerie ────────────────────────────────────────────
+
+      {
         path: 'messagerie',
         name: 'REFERENT.Messagerie',
         component: () => import('@/features/messaging/views/MessagingView.vue'),

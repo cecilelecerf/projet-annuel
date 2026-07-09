@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { staffApi } from '@/features/staffs/staff.api'
-import type { StaffMemberDetail, StaffRole } from '@armali/schemas'
+import type { ClinicId, StaffMemberDetail, StaffRole } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
 import ReviewComponent from '@/features/reviews/components/ReviewComponent.vue'
 
@@ -28,7 +28,10 @@ const hasRightColumn = computed(
 async function load() {
   loading.value = true
   try {
-    member.value = await staffApi.getById(route.params.id as string)
+    member.value = await staffApi.getById(
+      route.params.id as string,
+      route.params.clinicId as ClinicId,
+    )
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Impossible de charger ce profil')
   } finally {

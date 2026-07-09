@@ -19,7 +19,7 @@ import brandRouter from "./brands/brand.router";
 import specialityRouter from "./specialities/speciality.router";
 import messagingRouter from "./messaging/messaging.router";
 import bookingRouter from "./bookings/booking.router";
-import veterinarianRouter from "./users/veterinarian.router";
+import veterinarianRouter from "./veterinarians/veterinarian.router";
 import veterinarianClinicRouter from "./clinics/veterinarian-clinics/veterinarian-clinic.router";
 import petRouter from "./pets/pet.router";
 import vaccineRouter from "./vaccines/vaccine.router";

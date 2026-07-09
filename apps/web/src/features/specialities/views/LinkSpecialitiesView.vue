@@ -4,11 +4,20 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import AcceptedSpecialitiesAccordion from '../components/AcceptedSpecialitiesAccordion.vue'
 import AddSpecialitySearch from '../components/AddSpecialitySearch.vue'
-import { useClinicSpecialities } from '../composables/useLinkSpecialities.ts'
+import {
+  useClinicSpecialities as useLinkSpecialities,
+  type LinkClinic,
+  type LinkVeterinarian,
+} from '../composables/useLinkSpecialities.ts'
 
 const { user } = storeToRefs(useAuthStore())
 
 const clinicId = user.value!.clinicId!
+
+const data: LinkClinic | LinkVeterinarian =
+  user?.value?.role === 'VETERINARIAN'
+    ? { type: 'veterinarian', veterinarianId: user.value.id }
+    : { type: 'clinic', clinicId }
 
 const {
   allSpecialities,
@@ -23,7 +32,7 @@ const {
   removeSpeciality,
   addSpeciality,
   save,
-} = useClinicSpecialities(clinicId)
+} = useLinkSpecialities(data)
 
 const activeNames = ref<string[]>([])
 
@@ -35,7 +44,7 @@ onMounted(load)
     <div class="page-header">
       <div>
         <h1>Spécialités proposées</h1>
-        <p>Configurez les spécialités médicales proposées par votre clinique</p>
+        <p>Configurez les spécialités médicales proposées</p>
       </div>
       <div class="page-header-actions">
         <template v-if="!editing">

@@ -1,10 +1,14 @@
 import { ref, computed } from 'vue'
 import { useNotify } from '@/composables/useNotify'
-import type { ClinicId, Speciality, SpecialityId } from '@armali/schemas'
+import type { ClinicId, Speciality, SpecialityId, VeterinarianId } from '@armali/schemas'
 import { specialityApi } from '@/features/specialities/speciality.api'
 import { clinicApi } from '@/features/clinics/clinic.api'
+import { match } from 'ts-pattern'
+import { veterinarianApi } from '@/features/users/veterinarian.api'
 
-export function useClinicSpecialities(clinicId: ClinicId) {
+export type LinkVeterinarian = { type: 'veterinarian'; veterinarianId: VeterinarianId }
+export type LinkClinic = { type: 'clinic'; clinicId: ClinicId }
+export function useClinicSpecialities(data: LinkClinic | LinkVeterinarian) {
   const notify = useNotify()
 
   const allSpecialities = ref<Speciality[]>([])
@@ -21,10 +25,21 @@ export function useClinicSpecialities(clinicId: ClinicId) {
   async function load() {
     loading.value = true
     try {
-      const [all, accepted] = await Promise.all([
-        specialityApi.getAll(),
-        clinicApi.specialities.getAcceptedSpecialities({ clinicId }),
-      ])
+      const accepted = await match(data)
+        .with(
+          { type: 'clinic' },
+          async (d) =>
+            await clinicApi.specialities.getAcceptedSpecialities({ clinicId: d.clinicId }),
+        )
+        .with(
+          { type: 'veterinarian' },
+          async (d) =>
+            await veterinarianApi.specialities.getAcceptedSpecialities({
+              veterinarianId: d.veterinarianId,
+            }),
+        )
+        .exhaustive()
+      const all = await specialityApi.getAll()
       allSpecialities.value = all
       selectedIds.value = accepted.map((s) => s.id)
     } catch (err: unknown) {
@@ -56,10 +71,25 @@ export function useClinicSpecialities(clinicId: ClinicId) {
   async function save() {
     saving.value = true
     try {
-      const accepted = await clinicApi.specialities.setAcceptedSpecialities({
-        clinicId,
-        specialityIds: selectedIds.value,
-      })
+      const accepted = await match(data)
+        .with(
+          { type: 'clinic' },
+          async (d) =>
+            await clinicApi.specialities.setAcceptedSpecialities({
+              clinicId: d.clinicId,
+              specialityIds: selectedIds.value,
+            }),
+        )
+        .with(
+          { type: 'veterinarian' },
+          async (d) =>
+            await veterinarianApi.specialities.setAcceptedSpecialities({
+              veterinarianId: d.veterinarianId,
+              specialityIds: selectedIds.value,
+            }),
+        )
+        .exhaustive()
+
       selectedIds.value = accepted.map((s) => s.id)
       notify.success('Spécialités mises à jour')
       editing.value = false

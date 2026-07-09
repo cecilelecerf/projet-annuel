@@ -16,9 +16,14 @@ export class OrderService {
     private emailService: EmailService,
   ) {}
 
-  async checkout(clientUserId: string, data: Checkout): Promise<CheckoutResult> {
+  async checkout(
+    clientUserId: string,
+    data: Checkout,
+  ): Promise<CheckoutResult> {
     const accessibleClinicIds = await getClientClinicIds(clientUserId);
-    const client = await prisma.user.findUnique({ where: { id: clientUserId } });
+    const client = await prisma.user.findUnique({
+      where: { id: clientUserId },
+    });
     if (!client) throw new NotFoundError("Client");
 
     const createdOrders = [];
@@ -94,7 +99,7 @@ export class OrderService {
 
   async handlePaymentSuccess(
     sessionId: string,
-    cardInfo?: { brand: string; last4: string },
+    _cardInfo?: { brand: string; last4: string },
   ) {
     const orders = await this.repository.findByStripeSession(sessionId);
     if (orders.length === 0) return;
@@ -103,23 +108,32 @@ export class OrderService {
       if (order.status !== "PENDING") continue;
 
       const pickupCode = randomBytes(3).toString("hex").toUpperCase();
-      const updated = await this.repository.confirmPayment(order.id, pickupCode);
+      const updated = await this.repository.confirmPayment(
+        order.id,
+        pickupCode,
+      );
 
-      const client = await prisma.user.findUnique({ where: { id: order.clientId } });
+      const client = await prisma.user.findUnique({
+        where: { id: order.clientId },
+      });
       if (client) {
-        await this.emailService.sendOrderConfirmation(client.email, client.firstname, {
-          clinicName: updated.clinic.name,
-          pickupCode,
-          items: updated.orderItems.map((i) => ({
-            name: i.productClinic.product.name,
-            quantity: i.quantity,
-            unitPrice: Number(i.unitPrice),
-          })),
-          total: updated.orderItems.reduce(
-            (sum, i) => sum + Number(i.unitPrice) * i.quantity,
-            0,
-          )
-        });
+        await this.emailService.sendOrderConfirmation(
+          client.email,
+          client.firstname,
+          {
+            clinicName: updated.clinic.name,
+            pickupCode,
+            items: updated.orderItems.map((i) => ({
+              name: i.productClinic.product.name,
+              quantity: i.quantity,
+              unitPrice: Number(i.unitPrice),
+            })),
+            total: updated.orderItems.reduce(
+              (sum, i) => sum + Number(i.unitPrice) * i.quantity,
+              0,
+            ),
+          },
+        );
       }
     }
   }
@@ -145,7 +159,8 @@ export class OrderService {
     const profile = await prisma.secretaryProfile.findUnique({
       where: { id: secretaryUserId },
     });
-    if (!profile) throw new BadRequestError("Aucune clinique associée à ce compte");
+    if (!profile)
+      throw new BadRequestError("Aucune clinique associée à ce compte");
     return profile.clinicId;
   }
 

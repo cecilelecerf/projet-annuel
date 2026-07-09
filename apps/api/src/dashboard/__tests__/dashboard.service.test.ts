@@ -92,12 +92,27 @@ describe("DashboardService.getClinicDashboard", () => {
     mockPrisma.clinic.findUnique.mockResolvedValue({ name: "Clinique Test" });
     mockPrisma.clinicProduct.findMany.mockResolvedValue([]);
     mockPrisma.order.findMany.mockResolvedValue([
-      { status: "CONFIRMED", createdAt: new Date(), orderItems: [{ quantity: 2, unitPrice: 10 }] },
-      { status: "PENDING", createdAt: new Date(), orderItems: [{ quantity: 10, unitPrice: 100 }] },
-      { status: "CANCELLED", createdAt: new Date(), orderItems: [{ quantity: 10, unitPrice: 100 }] },
+      {
+        status: "CONFIRMED",
+        createdAt: new Date(),
+        orderItems: [{ quantity: 2, unitPrice: 10 }],
+      },
+      {
+        status: "PENDING",
+        createdAt: new Date(),
+        orderItems: [{ quantity: 10, unitPrice: 100 }],
+      },
+      {
+        status: "CANCELLED",
+        createdAt: new Date(),
+        orderItems: [{ quantity: 10, unitPrice: 100 }],
+      },
     ]);
 
-    const result = await service.getClinicDashboard("user-1" as any, "REFERENT");
+    const result = await service.getClinicDashboard(
+      "user-1" as any,
+      "REFERENT",
+    );
 
     expect(result.sales.totalRevenue).toBe(20);
     expect(result.sales.totalOrdersCount).toBe(3);
@@ -113,7 +128,10 @@ describe("DashboardService.getClinicDashboard", () => {
       { stock: 20, minimumRequired: 5 },
     ]);
 
-    const result = await service.getClinicDashboard("user-1" as any, "DIRECTOR");
+    const result = await service.getClinicDashboard(
+      "user-1" as any,
+      "DIRECTOR",
+    );
 
     expect(result.sales.lowStockCount).toBe(2);
   });
@@ -124,12 +142,18 @@ describe("DashboardService.getClinicDashboard", () => {
     mockPrisma.clinicProduct.findMany.mockResolvedValue([]);
     mockPrisma.order.findMany.mockResolvedValue([]);
     mockStaffService.getStaffIdsByUser.mockResolvedValue(["vet-1"]);
-    mockUserService.getUserById.mockResolvedValue({ id: "vet-1", firstname: "Jean" });
+    mockUserService.getUserById.mockResolvedValue({
+      id: "vet-1",
+      firstname: "Jean",
+    });
     mockReviewService.getStats
       .mockResolvedValueOnce({ average: 4.0, count: 12 }) // stats clinique
       .mockResolvedValueOnce({ average: 4.5, count: 6 }); // stats du vétérinaire
 
-    const result = await service.getClinicDashboard("user-1" as any, "REFERENT");
+    const result = await service.getClinicDashboard(
+      "user-1" as any,
+      "REFERENT",
+    );
 
     expect(result.reviews.veterinarians).toHaveLength(1);
     expect(result.reviews.veterinarians[0].veterinarian.firstname).toBe("Jean");
@@ -144,7 +168,11 @@ const makeOrder = (overrides = {}) => ({
   status: "CONFIRMED",
   client: { firstname: "Alice", lastname: "Durand" },
   orderItems: [
-    { quantity: 2, unitPrice: 10, productClinic: { product: { name: "Croquettes" } } },
+    {
+      quantity: 2,
+      unitPrice: 10,
+      productClinic: { product: { name: "Croquettes" } },
+    },
   ],
   ...overrides,
 });
@@ -282,8 +310,16 @@ describe("DashboardService.getVeterinarianDashboard", () => {
       makeAnimalMeeting({ id: "m2", date: in3Days, animalId: "animal-2" }),
     ]);
     mockPrisma.animal.findMany.mockResolvedValue([
-      { id: "animal-1", name: "Rex", client: { user: { firstname: "A", lastname: "B" } } },
-      { id: "animal-2", name: "Milo", client: { user: { firstname: "C", lastname: "D" } } },
+      {
+        id: "animal-1",
+        name: "Rex",
+        client: { user: { firstname: "A", lastname: "B" } },
+      },
+      {
+        id: "animal-2",
+        name: "Milo",
+        client: { user: { firstname: "C", lastname: "D" } },
+      },
     ]);
 
     const result = await service.getVeterinarianDashboard("vet-1" as any);
@@ -351,7 +387,7 @@ describe("DashboardService.getVeterinarianDashboard", () => {
     const result = await service.getVeterinarianDashboard("vet-1" as any);
 
     expect(mockPrisma.animal.count).toHaveBeenCalledWith({
-      where: { attendingVeterinarianId: "vet-1" },
+      where: { attendingVeterinarianClinic: { veterinarianId: "vet-1" } },
     });
     expect(result.patientsCount).toBe(17);
   });

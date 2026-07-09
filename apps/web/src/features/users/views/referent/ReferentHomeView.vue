@@ -15,7 +15,7 @@ async function load() {
   loading.value = true
   try {
     const data = await dashboardApi.get()
-    if (data.role !== 'REFERENT') return // garde-fou, ne devrait pas arriver (route déjà restreinte au rôle)
+    if (data.role !== 'REFERENT') return
     dashboard.value = data
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Impossible de charger le tableau de bord')

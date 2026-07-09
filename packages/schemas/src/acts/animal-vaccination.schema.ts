@@ -5,7 +5,11 @@ import {
   petVaccineIdSchema,
   medicalHistoryIdSchema,
 } from "../ids";
+<<<<<<< Updated upstream
 import { vaccineSchema as vaccineSchema } from "./vaccine";
+=======
+import { vaccineSchema } from "./vaccine/vaccine.schema";
+>>>>>>> Stashed changes
 
 export const animalVaccineSchema = z.object({
   id: petVaccineIdSchema,

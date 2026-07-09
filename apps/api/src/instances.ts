@@ -109,6 +109,11 @@ import { FileRepository } from "./files/file.repository";
 import { FileService } from "./files/file.service";
 import { ClinicActService } from "./clinic-acts/clinic-act.service";
 import { ClinicActController } from "./clinic-acts/clinic-act.controller";
+import { PetRepository } from "./pets/pet.repository";
+import { PetService } from "./pets/pet.service";
+import { VaccineService } from "./vaccines/vaccine.service";
+import { VaccineController } from "./vaccines/vaccine.controller";
+import { PetController } from "./pets/pet.controller";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -124,7 +129,7 @@ const availabilityRepository = new AvailabilityRepository(prisma);
 const internalMeetingRepository = new InternalMeetingRepository(prisma);
 const recurringRepository = new RecurringRepository(prisma);
 const bookingRepository = new BookingRepository(prisma);
-
+const petRepository = new PetRepository(prisma);
 const prescriptionRepository = new PrescriptionRepository(prisma);
 const userRepository = new UserRepository(prisma);
 const vaccineRepository = new VaccineRepository(prisma);
@@ -164,8 +169,8 @@ const clinicActService = new ClinicActService(
 );
 const actService = new ActService(actRepository);
 
+const petService = new PetService(petRepository);
 const animalService = new AnimalService(animalRepository, vaccineRepository);
-
 const medicalHistoryService = new AnimalMedicalHistoryService(
   medicalHistoryRepository,
   animalMeetingRepository,
@@ -213,7 +218,7 @@ const bookingService = new BookingService(
   clinicRepository,
   meetingService,
 );
-
+const vaccineService = new VaccineService(vaccineRepository, petRepository);
 const productService = new ProductService(
   productRepository,
   productClinicRepository,
@@ -252,6 +257,7 @@ export const clinicActController = new ClinicActController(clinicActService);
 export const animalMeetingController = new AnimalMeetingController(
   animalMeetingService,
 );
+export const vaccineController = new VaccineController(vaccineService);
 export const bookingController = new BookingController(bookingService);
 export const availabilityController = new AvailabilityController(
   availabilityService,
@@ -276,3 +282,4 @@ export const staffController = new StaffController(staffService);
 export const clinicRequestController = new ClinicRequestController(
   clinicRequestService,
 );
+export const petController = new PetController(petService);

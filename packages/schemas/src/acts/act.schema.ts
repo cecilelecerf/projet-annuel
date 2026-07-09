@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { actIdSchema, vaccineIdSchema } from "../ids";
+<<<<<<< Updated upstream
 import { minVaccineSchema } from "./vaccine/vaccine.schema";
+=======
+>>>>>>> Stashed changes
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -42,14 +45,14 @@ export const actSchema = z.object({
   type: actTypeSchema,
   basePrice: z.coerce.number().multipleOf(0.01),
   vaccineId: vaccineIdSchema.nullable().optional(),
-  vaccine: minVaccineSchema.nullable().optional(),
+  // vaccine: minVaccineSchema.nullable().optional(),
 });
 
 export const createActSchema = actSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-  vaccine: true,
+  // vaccine: true,
 });
 export const updateActSchema = createActSchema.partial();
 

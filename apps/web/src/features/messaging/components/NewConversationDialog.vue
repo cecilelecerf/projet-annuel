@@ -38,8 +38,6 @@ function contactSubtitle(contact: ConversationContact): string {
   return clinics ? `${role} · ${clinics}` : role
 }
 
-// ── Regroupement par clinique — un vétérinaire apparaît dans CHACUNE de ses
-// cliniques (pas juste la première), puisqu'il en fait vraiment partie ────
 
 interface ClinicGroup {
   clinicId: string
@@ -62,8 +60,6 @@ function groupByClinic(contacts: ConversationContact[]): ClinicGroup[] {
 
 const clinicGroups = computed(() => groupByClinic(messagingStore.contacts?.clinic ?? []))
 
-// ── Entrée "réseau" : vétérinaires (multi-cliniques) pour un vétérinaire,
-// directeurs pour un directeur — jamais les deux à la fois pour un même rôle
 interface NetworkEntry {
   label: string
   pool: ConversationContact[]
@@ -85,8 +81,6 @@ const networkEntry = computed<NetworkEntry | null>(() => {
   return null
 })
 
-// Une seule clinique et aucun réseau (secrétaire, référent) → pas d'écran de
-// liste intermédiaire, on va directement au détail
 const hasSingleEntry = computed(
   () => clinicGroups.value.length === 1 && !networkEntry.value,
 )

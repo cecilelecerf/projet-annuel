@@ -17,9 +17,6 @@ export class MessagingService {
     private contactsRepository: ContactsRepository,
   ) {}
 
-  // Résolution centralisée des cliniques de l'acteur — un vétérinaire peut en
-  // avoir plusieurs (JWT n'en retient qu'une), les autres rôles n'en ont
-  // qu'une seule (celle du JWT).
   private async resolveActorClinicIds(actor: JwtPayload): Promise<string[]> {
     if (actor.role === "VETERINARIAN") {
       return this.contactsRepository.findClinicIdsForVeterinarian(actor.id);
@@ -91,10 +88,6 @@ export class MessagingService {
     return conversation;
   }
 
-  // Transforme conversationMembers[].user.avatar (relation brute) en
-  // avatarUrl (string) — nécessaire partout où une Conversation complète est
-  // renvoyée telle quelle (create, addMembers), sinon la validation Zod
-  // côté front échoue sur avatarUrl manquant.
   private formatConversation<
     T extends { conversationMembers: Parameters<typeof withUsersAvatar>[0] },
   >(conversation: T) {
@@ -212,10 +205,6 @@ export class MessagingService {
 
     let clinicId: string | null = null;
     if (data.scope === "CLINIC") {
-      // clinicId est garanti présent par le schéma (refine), mais on
-      // vérifie en plus que l'acteur a bien accès à CETTE clinique précise
-      // (un vétérinaire multi-clinique ne doit pas pouvoir créer un groupe
-      // pour une clinique où il ne travaille pas).
       if (!data.clinicId || !actorClinicIds.includes(data.clinicId)) {
         throw new ForbiddenError();
       }

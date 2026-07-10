@@ -14,11 +14,6 @@ export class ContactsRepository {
   }
 
   // TODO : delete this, is in clinic repository and service
-  // Accepte maintenant plusieurs cliniques (nécessaire pour les vétérinaires
-  // qui peuvent en avoir plus d'une) — les rôles mono-clinique passent
-  // simplement un tableau à un seul élément. Renvoie aussi le(s) nom(s) de
-  // clinique concerné(s) pour chaque contact (utile côté front pour
-  // distinguer les homonymes entre cliniques).
   async listClinicColleagues(clinicIds: string[], excludeUserId: string) {
     if (clinicIds.length === 0) return [];
 

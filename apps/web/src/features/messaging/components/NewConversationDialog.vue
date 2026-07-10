@@ -38,7 +38,6 @@ function contactSubtitle(contact: ConversationContact): string {
   return clinics ? `${role} · ${clinics}` : role
 }
 
-
 interface ClinicGroup {
   clinicId: string
   clinicName: string
@@ -67,7 +66,7 @@ interface NetworkEntry {
 }
 
 const allVeterinarians = computed(() =>
-  (messagingStore.contacts?.clinic ?? []).filter((c) => c.role === 'VETERINARIAN'),
+  (messagingStore.contacts?.clinic ?? []).filter((c: ConversationContact) => c.role === 'VETERINARIAN'),
 )
 const directorsPool = computed(() => messagingStore.contacts?.directors ?? [])
 
@@ -81,6 +80,8 @@ const networkEntry = computed<NetworkEntry | null>(() => {
   return null
 })
 
+// Une seule clinique et aucun réseau (secrétaire, référent) → pas d'écran de
+// liste intermédiaire, on va directement au détail
 const hasSingleEntry = computed(
   () => clinicGroups.value.length === 1 && !networkEntry.value,
 )

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMessagingStore } from '../stores/messagingStore'
@@ -38,7 +38,8 @@ function contactSubtitle(contact: ConversationContact): string {
   return clinics ? `${role} · ${clinics}` : role
 }
 
-// ── Regroupement par clinique + vétérinaires à part ──────────────────────────
+// ── Regroupement par clinique — un vétérinaire apparaît dans CHACUNE de ses
+// cliniques (pas juste la première), puisqu'il en fait vraiment partie ────
 
 interface ClinicGroup {
   clinicId: string
@@ -46,57 +47,79 @@ interface ClinicGroup {
   contacts: ConversationContact[]
 }
 
-function groupByClinic(contacts: ConversationContact[]): {
-  clinicGroups: ClinicGroup[]
-  veterinarians: ConversationContact[]
-} {
-  const veterinarians = contacts.filter((c) => c.role === 'VETERINARIAN')
-  const staff = contacts.filter((c) => c.role !== 'VETERINARIAN')
-
+function groupByClinic(contacts: ConversationContact[]): ClinicGroup[] {
   const map = new Map<string, ClinicGroup>()
-  for (const contact of staff) {
-    const clinic = contact.clinics?.[0]
-    if (!clinic) continue
-    if (!map.has(clinic.id)) {
-      map.set(clinic.id, { clinicId: clinic.id, clinicName: clinic.name, contacts: [] })
+  for (const contact of contacts) {
+    for (const clinic of contact.clinics ?? []) {
+      if (!map.has(clinic.id)) {
+        map.set(clinic.id, { clinicId: clinic.id, clinicName: clinic.name, contacts: [] })
+      }
+      map.get(clinic.id)!.contacts.push(contact)
     }
-    map.get(clinic.id)!.contacts.push(contact)
   }
-
-  return { clinicGroups: [...map.values()], veterinarians }
+  return [...map.values()]
 }
 
-const directGrouped = computed(() => groupByClinic(messagingStore.contacts?.clinic ?? []))
-const groupGrouped = computed(() => groupByClinic(messagingStore.contacts?.clinic ?? []))
+const clinicGroups = computed(() => groupByClinic(messagingStore.contacts?.clinic ?? []))
+
+// ── Entrée "réseau" : vétérinaires (multi-cliniques) pour un vétérinaire,
+// directeurs pour un directeur — jamais les deux à la fois pour un même rôle
+interface NetworkEntry {
+  label: string
+  pool: ConversationContact[]
+  scope: Extract<ConversationScope, 'VETERINARIAN_NETWORK' | 'DIRECTOR_NETWORK'>
+}
+
+const allVeterinarians = computed(() =>
+  (messagingStore.contacts?.clinic ?? []).filter((c) => c.role === 'VETERINARIAN'),
+)
 const directorsPool = computed(() => messagingStore.contacts?.directors ?? [])
 
-// Navigation par clic (remplace l'accordéon) : liste des cliniques → détail
-type DirectView = 'list' | 'clinic' | 'veterinarians'
-const directView = ref<DirectView>('list')
+const networkEntry = computed<NetworkEntry | null>(() => {
+  if (isVeterinarian.value && allVeterinarians.value.length > 0) {
+    return { label: 'Vétérinaires', pool: allVeterinarians.value, scope: 'VETERINARIAN_NETWORK' }
+  }
+  if (isDirector.value && directorsPool.value.length > 0) {
+    return { label: 'Directeurs', pool: directorsPool.value, scope: 'DIRECTOR_NETWORK' }
+  }
+  return null
+})
+
+// Une seule clinique et aucun réseau (secrétaire, référent) → pas d'écran de
+// liste intermédiaire, on va directement au détail
+const hasSingleEntry = computed(
+  () => clinicGroups.value.length === 1 && !networkEntry.value,
+)
+
+// ── Navigation par clic (commune aux deux onglets) ──────────────────────────
+
+type View = 'list' | 'clinic' | 'network'
+
+const directView = ref<View>('list')
 const selectedDirectClinic = ref<ClinicGroup | null>(null)
 
-function openDirectClinic(group: ClinicGroup) {
-  selectedDirectClinic.value = group
-  directView.value = 'clinic'
+const groupView = ref<View>('list')
+const selectedGroupClinic = ref<ClinicGroup | null>(null)
+const groupName = ref('')
+const selectedMemberIds = ref<UserId[]>([])
+
+function resetDirectNav() {
+  directView.value = hasSingleEntry.value ? 'clinic' : 'list'
+  selectedDirectClinic.value = hasSingleEntry.value ? clinicGroups.value[0] : null
 }
 
-function openDirectVeterinarians() {
-  directView.value = 'veterinarians'
+function resetGroupNav() {
+  groupView.value = hasSingleEntry.value ? 'clinic' : 'list'
+  selectedGroupClinic.value = hasSingleEntry.value ? clinicGroups.value[0] : null
+  groupName.value = ''
+  selectedMemberIds.value = []
 }
-
-function backToDirectList() {
-  directView.value = 'list'
-  selectedDirectClinic.value = null
-}
-
-// ── Onglet "Discussion privée" ───────────────────────────────────────────────
 
 const hasAnyDirectContact = computed(
-  () =>
-    directGrouped.value.clinicGroups.length > 0 ||
-    directGrouped.value.veterinarians.length > 0 ||
-    directorsPool.value.length > 0,
+  () => clinicGroups.value.length > 0 || !!networkEntry.value,
 )
+
+// ── Discussion privée ────────────────────────────────────────────────────
 
 async function startDirect(userId: UserId) {
   loading.value = true
@@ -110,75 +133,29 @@ async function startDirect(userId: UserId) {
   }
 }
 
-// ── Onglet "Nouveau groupe" ───────────────────────────────────────────────────
-
-const groupScope = ref<ConversationScope>('CLINIC')
-const groupName = ref('')
-const selectedMemberIds = ref<UserId[]>([])
-
-// Navigation par clic : liste des cliniques → détail d'une clinique choisie
-// (ou des vétérinaires, tous établissements confondus)
-type GroupView = 'list' | 'clinic' | 'veterinarians'
-const groupView = ref<GroupView>('list')
-const selectedClinic = ref<ClinicGroup | null>(null)
-
-function resetGroupSelection() {
-  groupView.value = 'list'
-  selectedClinic.value = null
-  groupName.value = ''
-  selectedMemberIds.value = []
-}
-
-function openClinic(group: ClinicGroup) {
-  selectedClinic.value = group
-  groupView.value = 'clinic'
-  groupName.value = ''
-  selectedMemberIds.value = []
-}
-
-function openVeterinarians() {
-  groupView.value = 'veterinarians'
-  groupName.value = ''
-  selectedMemberIds.value = []
-}
-
-function backToList() {
-  groupView.value = 'list'
-  selectedClinic.value = null
-  groupName.value = ''
-  selectedMemberIds.value = []
-}
-
-// Réinitialise la navigation quand on bascule "Mon équipe" / "Réseau des directeurs"
-watch(groupScope, () => resetGroupSelection())
+// ── Nouveau groupe ────────────────────────────────────────────────────────
 
 async function submitGroup() {
   if (!groupName.value.trim() || selectedMemberIds.value.length < 2) return
 
   let payload: CreateConversation
-  if (groupView.value === 'veterinarians') {
+  if (groupView.value === 'network' && networkEntry.value) {
     payload = {
       type: 'GROUP',
-      scope: 'VETERINARIAN_NETWORK',
+      scope: networkEntry.value.scope,
       name: groupName.value.trim(),
       memberIds: selectedMemberIds.value,
     }
-  } else if (groupScope.value === 'DIRECTOR_NETWORK') {
+  } else if (groupView.value === 'clinic' && selectedGroupClinic.value) {
     payload = {
       type: 'GROUP',
-      scope: 'DIRECTOR_NETWORK',
+      scope: 'CLINIC',
+      clinicId: selectedGroupClinic.value.clinicId,
       name: groupName.value.trim(),
       memberIds: selectedMemberIds.value,
     }
   } else {
-    if (!selectedClinic.value) return
-    payload = {
-      type: 'GROUP',
-      scope: 'CLINIC',
-      clinicId: selectedClinic.value.clinicId,
-      name: groupName.value.trim(),
-      memberIds: selectedMemberIds.value,
-    }
+    return
   }
 
   loading.value = true
@@ -195,11 +172,10 @@ async function submitGroup() {
 async function open() {
   visible.value = true
   activeTab.value = 'direct'
-  groupScope.value = 'CLINIC'
-  resetGroupSelection()
-  directView.value = 'list'
-  selectedDirectClinic.value = null
+  loading.value = false
   await messagingStore.fetchContacts()
+  resetDirectNav()
+  resetGroupNav()
 }
 
 defineExpose({ open })
@@ -213,49 +189,24 @@ defineExpose({ open })
         <p v-if="!hasAnyDirectContact" class="empty">Aucun contact disponible.</p>
 
         <template v-else>
-          <!-- Vue liste : cliniques + vétérinaires -->
-          <div v-if="directView === 'list'" class="contact-section">
-            <div class="nav-list">
-              <button
-                v-for="group in directGrouped.clinicGroups"
-                :key="group.clinicId"
-                class="nav-row"
-                @click="openDirectClinic(group)"
-              >
-                <span>{{ group.clinicName }}</span>
-                <el-icon><ArrowRight /></el-icon>
-              </button>
-              <button
-                v-if="directGrouped.veterinarians.length"
-                class="nav-row"
-                @click="openDirectVeterinarians"
-              >
-                <span>Vétérinaires</span>
-                <el-icon><ArrowRight /></el-icon>
-              </button>
-            </div>
-
-            <template v-if="directorsPool.length">
-              <h4>Autres directeurs</h4>
-              <button
-                v-for="contact in directorsPool"
-                :key="contact.id"
-                class="contact-row"
-                :disabled="loading"
-                @click="startDirect(contact.id)"
-              >
-                <el-avatar :size="32">{{ contact.firstname[0] }}{{ contact.lastname[0] }}</el-avatar>
-                <div class="contact-info">
-                  <span class="contact-name">{{ contact.firstname }} {{ contact.lastname }}</span>
-                  <span class="contact-subtitle">{{ contactSubtitle(contact) }}</span>
-                </div>
-              </button>
-            </template>
+          <div v-if="directView === 'list'" class="nav-list">
+            <button
+              v-for="group in clinicGroups"
+              :key="group.clinicId"
+              class="nav-row"
+              @click="selectedDirectClinic = group; directView = 'clinic'"
+            >
+              <span>{{ group.clinicName }}</span>
+              <el-icon><ArrowRight /></el-icon>
+            </button>
+            <button v-if="networkEntry" class="nav-row" @click="directView = 'network'">
+              <span>{{ networkEntry.label }}</span>
+              <el-icon><ArrowRight /></el-icon>
+            </button>
           </div>
 
-          <!-- Vue détail d'une clinique -->
           <div v-else-if="directView === 'clinic' && selectedDirectClinic">
-            <button class="back-row" @click="backToDirectList">
+            <button v-if="!hasSingleEntry" class="back-row" @click="directView = 'list'">
               <el-icon><ArrowLeft /></el-icon>
               <span>{{ selectedDirectClinic.clinicName }}</span>
             </button>
@@ -274,14 +225,13 @@ defineExpose({ open })
             </button>
           </div>
 
-          <!-- Vue vétérinaires (multi-cliniques) -->
-          <div v-else-if="directView === 'veterinarians'">
-            <button class="back-row" @click="backToDirectList">
+          <div v-else-if="directView === 'network' && networkEntry">
+            <button class="back-row" @click="directView = 'list'">
               <el-icon><ArrowLeft /></el-icon>
-              <span>Vétérinaires</span>
+              <span>{{ networkEntry.label }}</span>
             </button>
             <button
-              v-for="contact in directGrouped.veterinarians"
+              v-for="contact in networkEntry.pool"
               :key="contact.id"
               class="contact-row"
               :disabled="loading"
@@ -299,77 +249,40 @@ defineExpose({ open })
 
       <!-- ── Nouveau groupe ─────────────────────────────────────────────── -->
       <el-tab-pane label="Nouveau groupe" name="group">
-        <el-radio-group v-if="isDirector" v-model="groupScope" class="scope-picker">
-          <el-radio-button value="CLINIC">Mon équipe clinique</el-radio-button>
-          <el-radio-button value="DIRECTOR_NETWORK">Réseau des directeurs</el-radio-button>
-        </el-radio-group>
+        <p v-if="clinicGroups.length === 0 && !networkEntry" class="empty">
+          Aucun contact disponible pour créer un groupe.
+        </p>
 
-        <!-- ── Scope DIRECTOR_NETWORK : liste plate, inchangé ─────────────── -->
-        <template v-if="groupScope === 'DIRECTOR_NETWORK'">
-          <el-input v-model="groupName" placeholder="Nom du groupe" style="margin: 12px 0" />
-          <p v-if="directorsPool.length === 0" class="empty">Aucun contact disponible pour ce groupe.</p>
-          <el-checkbox-group v-else v-model="selectedMemberIds" class="member-list">
-            <el-checkbox
-              v-for="contact in directorsPool"
-              :key="contact.id"
-              :value="contact.id"
-              class="member-checkbox"
-            >
-              <div class="contact-info">
-                <span class="contact-name">{{ contact.firstname }} {{ contact.lastname }}</span>
-                <span class="contact-subtitle">{{ contactSubtitle(contact) }}</span>
-              </div>
-            </el-checkbox>
-          </el-checkbox-group>
-          <div class="group-footer">
-            <el-button
-              type="primary"
-              :loading="loading"
-              :disabled="!groupName.trim() || selectedMemberIds.length < 2"
-              @click="submitGroup"
-            >
-              Créer le groupe
-            </el-button>
-          </div>
-        </template>
-
-        <!-- ── Scope CLINIC : navigation par clic ─────────────────────────── -->
         <template v-else>
           <div v-if="groupView === 'list'" class="nav-list">
-            <p
-              v-if="groupGrouped.clinicGroups.length === 0 && !isVeterinarian"
-              class="empty"
-            >
-              Aucune clinique disponible.
-            </p>
             <button
-              v-for="group in groupGrouped.clinicGroups"
+              v-for="group in clinicGroups"
               :key="group.clinicId"
               class="nav-row"
-              @click="openClinic(group)"
+              @click="selectedGroupClinic = group; groupView = 'clinic'; groupName = ''; selectedMemberIds = []"
             >
               <span>{{ group.clinicName }}</span>
               <el-icon><ArrowRight /></el-icon>
             </button>
             <button
-              v-if="isVeterinarian && groupGrouped.veterinarians.length"
+              v-if="networkEntry"
               class="nav-row"
-              @click="openVeterinarians"
+              @click="groupView = 'network'; groupName = ''; selectedMemberIds = []"
             >
-              <span>Vétérinaires</span>
+              <span>{{ networkEntry.label }}</span>
               <el-icon><ArrowRight /></el-icon>
             </button>
           </div>
 
-          <div v-else-if="groupView === 'clinic' && selectedClinic">
-            <button class="back-row" @click="backToList">
+          <div v-else-if="groupView === 'clinic' && selectedGroupClinic">
+            <button v-if="!hasSingleEntry" class="back-row" @click="groupView = 'list'">
               <el-icon><ArrowLeft /></el-icon>
-              <span>{{ selectedClinic.clinicName }}</span>
+              <span>{{ selectedGroupClinic.clinicName }}</span>
             </button>
             <el-input v-model="groupName" placeholder="Nom du groupe" style="margin: 12px 0" />
             <el-checkbox-group v-model="selectedMemberIds" class="member-list">
               <el-checkbox
-                v-for="contact in selectedClinic.contacts"
+                v-for="contact in selectedGroupClinic.contacts"
                 :key="contact.id"
                 :value="contact.id"
                 class="member-checkbox"
@@ -392,15 +305,15 @@ defineExpose({ open })
             </div>
           </div>
 
-          <div v-else-if="groupView === 'veterinarians'">
-            <button class="back-row" @click="backToList">
+          <div v-else-if="groupView === 'network' && networkEntry">
+            <button class="back-row" @click="groupView = 'list'">
               <el-icon><ArrowLeft /></el-icon>
-              <span>Vétérinaires</span>
+              <span>{{ networkEntry.label }}</span>
             </button>
             <el-input v-model="groupName" placeholder="Nom du groupe" style="margin: 12px 0" />
             <el-checkbox-group v-model="selectedMemberIds" class="member-list">
               <el-checkbox
-                v-for="contact in groupGrouped.veterinarians"
+                v-for="contact in networkEntry.pool"
                 :key="contact.id"
                 :value="contact.id"
                 class="member-checkbox"
@@ -437,11 +350,6 @@ defineExpose({ open })
 :deep(.el-tabs__item) {
   line-height: normal;
 }
-.contact-section h4 {
-  margin: var(--spacing-md) 0 var(--spacing-xs);
-  font-size: var(--fs-base);
-  color: var(--el-text-color-secondary);
-}
 .contact-row {
   display: flex;
   align-items: center;
@@ -474,9 +382,6 @@ defineExpose({ open })
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
-}
-.scope-picker {
-  margin-bottom: var(--spacing-md);
 }
 
 .nav-list {

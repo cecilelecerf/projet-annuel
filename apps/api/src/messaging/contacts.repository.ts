@@ -97,12 +97,24 @@ export class ContactsRepository {
     });
   }
   // TODO : delete this, is in user repository and service
-
   async listDirectors(excludeUserId: string) {
-    return this.prisma.user.findMany({
+    const directors = await this.prisma.user.findMany({
       where: { role: "DIRECTOR", id: { not: excludeUserId } },
-      select: conversationMemberUserSelect,
+      select: {
+        ...conversationMemberUserSelect,
+        directorClinicProfile: {
+          select: { clinic: { select: { id: true, name: true } } },
+        },
+      },
       orderBy: [{ lastname: "asc" }, { firstname: "asc" }],
+    });
+
+    return directors.map((director) => {
+      const { directorClinicProfile, ...rest } = director;
+      return {
+        ...rest,
+        clinics: directorClinicProfile?.clinic ? [directorClinicProfile.clinic] : [],
+      };
     });
   }
   // TODO : delete this, is in clinics repository and service

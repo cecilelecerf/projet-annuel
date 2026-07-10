@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useMessagingStore } from '../stores/messagingStore'
 import { useNotify } from '@/composables/useNotify'
 import type {
+  ClinicId,
   ConversationContact,
   ConversationScope,
   CreateConversation,
@@ -38,6 +39,9 @@ function contactSubtitle(contact: ConversationContact): string {
   return clinics ? `${role} · ${clinics}` : role
 }
 
+// ── Regroupement par clinique — un vétérinaire apparaît dans CHACUNE de ses
+// cliniques (pas juste la première), puisqu'il en fait vraiment partie ────
+
 interface ClinicGroup {
   clinicId: string
   clinicName: string
@@ -59,6 +63,8 @@ function groupByClinic(contacts: ConversationContact[]): ClinicGroup[] {
 
 const clinicGroups = computed(() => groupByClinic(messagingStore.contacts?.clinic ?? []))
 
+// ── Entrée "réseau" : vétérinaires (multi-cliniques) pour un vétérinaire,
+// directeurs pour un directeur — jamais les deux à la fois pour un même rôle
 interface NetworkEntry {
   label: string
   pool: ConversationContact[]
@@ -100,12 +106,12 @@ const selectedMemberIds = ref<UserId[]>([])
 
 function resetDirectNav() {
   directView.value = hasSingleEntry.value ? 'clinic' : 'list'
-  selectedDirectClinic.value = hasSingleEntry.value ? clinicGroups.value[0] : null
+  selectedDirectClinic.value = hasSingleEntry.value ? (clinicGroups.value[0] ?? null) : null
 }
 
 function resetGroupNav() {
   groupView.value = hasSingleEntry.value ? 'clinic' : 'list'
-  selectedGroupClinic.value = hasSingleEntry.value ? clinicGroups.value[0] : null
+  selectedGroupClinic.value = hasSingleEntry.value ? (clinicGroups.value[0] ?? null) : null
   groupName.value = ''
   selectedMemberIds.value = []
 }
@@ -145,7 +151,7 @@ async function submitGroup() {
     payload = {
       type: 'GROUP',
       scope: 'CLINIC',
-      clinicId: selectedGroupClinic.value.clinicId,
+      clinicId: selectedGroupClinic.value.clinicId as ClinicId,
       name: groupName.value.trim(),
       memberIds: selectedMemberIds.value,
     }

@@ -169,7 +169,17 @@ export class AnimalMeetingRepository {
     });
   }
 
-  // TODO : pas le bon nom + verif si dupliquer
+  async findByVeterinarian(vet: UserId) {
+    return this.prisma.animalMeeting.findMany({
+      where: {
+        veterinarianClinic: {
+          veterinarian: { id: vet },
+        },
+      },
+      include: { meeting: true, speciality: true, animal: true },
+    });
+  }
+
   async findByVeterinarianAndClinic(
     vetProfileId: string,
     start: Date,

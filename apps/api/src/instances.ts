@@ -43,7 +43,7 @@ import { OrderRepository } from "./orders/order.repository";
 
 // ── Clinic ──────────────────────────────────────
 import { SpecialityRepository } from "./specialities/speciality.repository";
-import { ClinicRequestRepository } from "./clinics/requests/request.repository";
+import { ClinicRequestRepository } from "./clinics/clinic-requests/request.repository";
 
 // Chat
 import { ContactsRepository } from "./messaging/contacts.repository";
@@ -85,7 +85,7 @@ import { ClientShopService } from "./shop/shop.service";
 import { OrderService } from "./orders/order.service";
 import { SalesService } from "./sales/sales.service";
 import { StaffService } from "./clinics/staffs/staff.service";
-import { ClinicRequestService } from "./clinics/requests/request.service";
+import { ClinicRequestService } from "./clinics/clinic-requests/request.service";
 import { DashboardService } from "./dashboard/dashboard.service";
 import { BudgetService } from "./budget/budget.service";
 import { SupplierService } from "./suppliers/supplier.service";
@@ -125,7 +125,7 @@ import { BudgetController } from "./budget/budget.controller";
 import { SupplierController } from "./suppliers/supplier.controller";
 import { SupplierOrderController } from "./supplier-orders/supplier-order.controller";
 import { StaffController } from "./clinics/staffs/staff.controller";
-import { ClinicRequestController } from "./clinics/requests/request.controller";
+import { ClinicRequestController } from "./clinics/clinic-requests/request.controller";
 import { FileRepository } from "./files/file.repository";
 import { FileService } from "./files/file.service";
 import { ClinicActService } from "./clinics/clinic-acts/clinic-act.service";

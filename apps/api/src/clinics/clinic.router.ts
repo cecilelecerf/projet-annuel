@@ -16,7 +16,7 @@ import {
 } from "@api/instances";
 import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
-import clinicRequestRouter from "./requests/request.router";
+import clinicRequestRouter from "./clinic-requests/request.router";
 import staffRouter from "./staffs/staff.router";
 import clinicActRouter from "./clinic-acts/clinic-act.router";
 

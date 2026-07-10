@@ -51,26 +51,40 @@ export class InternalMeetingParticipantRepository {
 
   async findByUserAndClinicIds(
     userId: string,
-    start: Date,
-    end: Date,
+    start?: Date,
+    end?: Date,
     clinicIds?: ClinicId[],
   ) {
     return this.prisma.internalMeetingParticipant.findMany({
       where: {
         userId,
-        ...(clinicIds && { meeting: { clinicId: { in: clinicIds } } }),
+        ...(clinicIds && {
+          meeting: {
+            clinicId: { in: clinicIds },
+          },
+        }),
       },
       include: {
         meeting: {
           include: {
-            recurring: {
-              where: recurringFilter(start, end),
-              include: recurringWithChildrenInclude(start, end),
-            },
+            ...(start &&
+              end && {
+                recurring: {
+                  where: recurringFilter(start, end),
+                  include: recurringWithChildrenInclude(start, end),
+                },
+              }),
             meeting: {
-              where: { ...baseFilter(start, end), parentId: null },
+              where: {
+                ...(start && end && baseFilter(start, end)),
+                parentId: null,
+              },
               include: {
-                internalMeeting: { include: { participants: true } },
+                internalMeeting: {
+                  include: {
+                    participants: true,
+                  },
+                },
               },
             },
           },

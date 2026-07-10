@@ -13,6 +13,7 @@ import {
   ClinicId,
   FlatMeeting,
   VeterinarianId,
+  UserId,
 } from "@armali/schemas";
 import {
   AnimalMeetingForUser,
@@ -378,12 +379,12 @@ export class AnimalMeetingService {
     return deleted;
   }
 
-  async getByUser({
+  async getAllByClient({
     id,
     userId,
     role,
   }: {
-    id: string;
+    id: UserId;
     userId: string;
     role: UserRole;
   }) {
@@ -405,21 +406,20 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    console.log(animalId);
     const animal = await prisma.animal.findUnique({
       where: { id: animalId },
       select: { clientId: true },
     });
-    console.log(animal);
     if (!animal) throw new NotFoundError("Animal");
 
     if (!isStaff(role) && animal.clientId !== userId)
       throw new ForbiddenError();
     const animalMeetings = await this.repository.findByAnimal(animalId);
-    console.log(animalMeetings);
     return animalMeetings.map(this.animalMeetignWithFlatUser);
   }
-
+  async getAllByVet(vetProfileId: VeterinarianId) {
+    return await this.repository.findByVeterinarian(vetProfileId);
+  }
   async getAnimalMeetingsAsVet(
     vetProfileId: VeterinarianId,
     start: Date,

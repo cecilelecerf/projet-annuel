@@ -1,6 +1,7 @@
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors";
 import type { CreateClinicRequest } from "@armali/schemas";
 import { ClinicRequestRepository } from "./request.repository";
+import { withAvatarUrl, withUserAvatar } from "@api/users/user.utils";
 
 export class ClinicRequestService {
   constructor(private readonly repository: ClinicRequestRepository) {}
@@ -72,11 +73,24 @@ export class ClinicRequestService {
   }
 
   async getMyRequests(directorUserId: string) {
+    return Promise.all(
+      (await this.repository.findRequestsByDirector(directorUserId)).map(
+        (r) => ({
+          ...r,
+          director: withUserAvatar(r.director),
+        }),
+      ),
+    );
     return this.repository.findRequestsByDirector(directorUserId);
   }
 
   async getClinicRequests() {
-    return this.repository.findAllRequests();
+    return Promise.all(
+      (await this.repository.findAllRequests()).map((r) => ({
+        ...r,
+        director: withUserAvatar(r.director),
+      })),
+    );
   }
 
   async approveClinicRequest(requestId: string) {

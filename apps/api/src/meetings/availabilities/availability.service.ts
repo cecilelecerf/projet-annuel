@@ -1,4 +1,9 @@
-import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@api/errors";
 import type {
   ClinicId,
   CreateAvailability,
@@ -83,11 +88,15 @@ export class AvailabilityService {
     data,
     userId,
     role,
+    scope,
+    date,
   }: {
     id: Availability["id"];
     data: UpdateAvailability;
     userId: string;
     role: UserRole;
+    scope?: "single" | "all";
+    date?: Date;
   }): Promise<Availability> {
     const existing = await this.getById({ id, role, userId });
     if (!existing) throw new NotFoundError("Disponibilité");
@@ -105,6 +114,18 @@ export class AvailabilityService {
       .with({ type: "RECURRING" }, async (d) => {
         if (!existing.recurringId)
           throw new ConflictError("RecurringId doesn't exist");
+
+        if (scope === "single") {
+          if (!date)
+            throw new BadRequestError("La date de l'occurrence est requise");
+          const recurring = await this.reccuringService.getById(
+            existing.recurringId as MeetingRecurringId,
+          );
+          return await this.reccuringService.materializeOccurrence({
+            recurring,
+            date,
+          });
+        }
         const { recurringId: _, type: __, ...rest } = d;
         return await this.reccuringService.update({
           id: existing.recurringId as MeetingRecurringId,
@@ -233,7 +254,7 @@ export class AvailabilityService {
         end,
         clinicIds,
       }),
-      this.internalMeetingService.getInternalMeetings(
+      this.internalMeetingService.getFlatsByUser(
         veterinarianId,
         start,
         end,

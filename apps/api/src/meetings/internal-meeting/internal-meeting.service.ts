@@ -46,7 +46,7 @@ export class InternalMeetingService {
       role,
     });
     if (!clinicIds.includes(data.clinicId)) throw new ForbiddenError();
-    return this.repository.create({
+    return this.repository.createPunctual({
       data,
       authorId: userId,
     });
@@ -62,7 +62,7 @@ export class InternalMeetingService {
     id: string;
     data: UpdateInternalMeeting;
     userId: string;
-    date?: Date; // date de l'occurrence visée — requise dès qu'une récurrence est impliquée
+    date?: Date;
     scope: "single" | "all";
   }) {
     const existing = await this.repository.findById(id);
@@ -71,8 +71,10 @@ export class InternalMeetingService {
       (p) => p.userId === userId,
     );
     if (!isParticipant) throw new ForbiddenError();
-
     // Pas de récurrence : update simple, comportement inchangé
+
+    console.log(existing);
+    console.log(data);
     if (!existing.recurringId) {
       return this.repository.update({ id: id as MeetingId, data });
     }
@@ -124,7 +126,6 @@ export class InternalMeetingService {
     });
     if (!parsed.success) throw new ConflictError("Champs manquants");
     const isMaterializedOverride = existing.meetingId !== null;
-
     if (isMaterializedOverride) {
       const internalMeeting = await this.repository.update({
         id, // le MeetingBase.id reçu en paramètre, pas existing.id
@@ -144,27 +145,23 @@ export class InternalMeetingService {
 
       return this.repository.findById(internalMeeting.id);
     } else {
-      // Occurrence encore virtuelle : il faut poser une exception pour
-      // empêcher RRule de régénérer l'occurrence par défaut à cette date
-      await this.repository.createException({
-        parentId: existing.recurring!.id as MeetingRecurringId,
+      // Occurrence encore virtuelle : on re-fetch la récurrence complète
+      // (avec internalMeeting/availabilty imbriqués) plutôt que de caster
+      // existing.recurring, qui n'a que les colonnes scalaires brutes.
+      const recurring = await this.recurringService.getById(
+        existing.recurring.id as MeetingRecurringId,
+      );
+      const meetingBase = await this.recurringService.materializeOccurrence({
+        recurring,
         date,
-        startTime: existing.recurring!.startTime,
-        endTime: existing.recurring!.endTime,
       });
-      const internalMeeting = await this.repository.create({
-        data: parsed.data,
-        authorId: existing.adminId as UserId,
-        clinicId: existing.clinicId as ClinicId,
-      });
-
-      if (!isRescheduling && internalMeeting.internalMeeting) {
+      if (!isRescheduling && meetingBase) {
         await this.participantRepository.copyStatus({
-          targetInternalMeetingId: internalMeeting.internalMeeting.id,
+          targetInternalMeetingId: meetingBase.id,
           sourceParticipants: existing.participants,
         });
       }
-      return this.repository.findById(internalMeeting.id);
+      return this.repository.findById(meetingBase.id);
     }
   }
 
@@ -216,7 +213,8 @@ export class InternalMeetingService {
     if (role === "CLIENT") throw new ForbiddenError();
     const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
-    return {
+
+    const internal = {
       ...meeting,
       participants: meeting.participants.map((participant) => ({
         ...participant,
@@ -226,6 +224,7 @@ export class InternalMeetingService {
         },
       })),
     };
+    return internal;
   }
 
   async updateParticipantStatus({
@@ -288,8 +287,11 @@ export class InternalMeetingService {
     });
   }
 
-  async getInternalMeetings(
-    userId: string,
+  async getAllByUser(userId: UserId) {
+    return await this.repository.findByUser(userId);
+  }
+  async getFlatsByUser(
+    userId: UserId,
     start: Date,
     end: Date,
     clinicIds?: ClinicId[],

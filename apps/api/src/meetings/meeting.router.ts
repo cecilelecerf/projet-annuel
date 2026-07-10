@@ -18,6 +18,11 @@ meetingRouter.get(
   roleMiddleware(STAFF_ROLES),
   meetingController.getMyCalendar.bind(meetingController) as RequestHandler,
 );
+meetingRouter.get(
+  "/calendar/download",
+  roleMiddleware(STAFF_ROLES),
+  meetingController.exportMyCalendar.bind(meetingController) as RequestHandler,
+);
 
 meetingRouter.use("/recurrings", recurringMeetingRouter);
 meetingRouter.use("/availabilities", availabilityRouter);

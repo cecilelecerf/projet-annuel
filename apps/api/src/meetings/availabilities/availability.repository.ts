@@ -2,6 +2,7 @@ import type {
   CreateAvailabilityException,
   CreatePunctualAvailability,
   CreateRecurringAvailability,
+  MeetingRecurringId,
   UpdatePunctualAvailability,
   UpdateRecurringAvailability,
 } from "@armali/schemas";
@@ -80,7 +81,7 @@ export class AvailabilityRepository {
     authorId,
     clinicId,
   }: {
-    data: CreatePunctualAvailability;
+    data: Omit<CreatePunctualAvailability, "kind" | "type">;
     authorId: string;
     clinicId: string;
   }) {
@@ -129,7 +130,39 @@ export class AvailabilityRepository {
       include: { availabilty: true },
     });
   }
-
+  async createOccurrenceOverride({
+    parentId,
+    date,
+    startTime,
+    endTime,
+    authorId,
+    clinicId,
+  }: {
+    parentId: MeetingRecurringId;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    authorId: string;
+    clinicId: string;
+  }) {
+    return this.prisma.meetingBase.create({
+      data: {
+        kind: "AVAILABILITY" as const,
+        type: "SPECIFIED" as const, // ← SPECIFIED, symétrique à InternalMeetingRepository
+        date,
+        startTime,
+        endTime,
+        parentId,
+        availabilty: {
+          create: {
+            userId: authorId,
+            clinicId,
+          },
+        },
+      },
+      include: { availabilty: true },
+    });
+  }
   async updatePunctual({
     id,
     data,

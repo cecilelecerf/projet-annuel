@@ -13,6 +13,7 @@ import {
   MeetingReccuring,
   PrismaClient,
 } from "../../../prisma/generated/prisma/client";
+import { buildInternalMeetingCreate } from "../recurring-meeting/utils";
 export class InternalMeetingRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -29,7 +30,8 @@ export class InternalMeetingRepository {
     });
   }
 
-  async create({
+  // C'est le meeting qui porte la fk donc pas le choix du sens
+  async createPunctual({
     data,
     authorId,
     clinicId,
@@ -40,6 +42,7 @@ export class InternalMeetingRepository {
     clinicId?: ClinicId;
     parentId?: MeetingRecurringId;
   }) {
+    console.log(data.date);
     return this.prisma.meetingBase.create({
       data: {
         kind: "INTERNAL",
@@ -48,20 +51,16 @@ export class InternalMeetingRepository {
         endTime: data.endTime,
         type: "SPECIFIED",
         parentId: parentId,
-        internalMeeting: {
-          create: {
-            title: data.title,
-            description: data.description,
-            clinicId: data.clinicId ?? clinicId,
-            adminId: authorId,
-            participants: {
-              create: data.userIds?.map((userId) => ({
-                userId,
-                status: "PENDING",
-              })),
-            },
-          },
-        },
+        internalMeeting: buildInternalMeetingCreate({
+          title: data.title,
+          description: data.description,
+          adminId: authorId,
+          clinicId: data.clinicId ?? clinicId,
+          participants: (data.userIds ?? []).map((userId) => ({
+            userId,
+            status: "PENDING",
+          })),
+        }),
       },
       include: {
         internalMeeting: {
@@ -99,6 +98,7 @@ export class InternalMeetingRepository {
     return this.prisma.internalMeeting.delete({ where: { id } });
   }
 
+  // Même principe de fk
   async createOccurrenceOverride({
     internalMeeting,
     date,
@@ -177,6 +177,24 @@ export class InternalMeetingRepository {
   async deleteFutureChildren(recurringId: string, fromDate: Date) {
     return this.prisma.meetingBase.deleteMany({
       where: { parentId: recurringId, date: { gte: fromDate } },
+    });
+  }
+
+  async findByUser(userId: UserId) {
+    return this.prisma.internalMeeting.findMany({
+      where: {
+        OR: [
+          { adminId: userId },
+          {
+            participants: {
+              some: {
+                userId,
+              },
+            },
+          },
+        ],
+      },
+      include: { meeting: true, recurring: true },
     });
   }
 }

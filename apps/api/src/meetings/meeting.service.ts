@@ -3,6 +3,7 @@ import {
   Availability,
   InternalMeeting,
   MeetingBase,
+  MeetingReccuring,
 } from "../../prisma/generated/prisma/client";
 import { MeetingRepository } from "./meeting.repository";
 import type {
@@ -13,16 +14,38 @@ import type {
   VeterinarianId,
 } from "@armali/schemas";
 import { NotFoundError } from "@api/errors";
-import { match } from "ts-pattern";
 import { AnimalMeetingService } from "./animal-meeting";
 import { MeetingBaseWithSpecific } from "./type";
 import { flattenBase } from "./utils";
 import { InternalMeetingService } from "./internal-meeting";
 import { AvailabilityService } from "./availabilities";
 import { ClinicService } from "@api/clinics/clinic.service";
+import { createEvents, EventAttributes } from "ics";
+import dayjs from "dayjs";
+import { RRULE_DAYS, RRULE_FREQ } from "./data";
+import RRuleLib from "rrule";
 
+const { RRule } = RRuleLib;
 const DEFAULT_SLOT_DURATION_MINUTES = 30;
+function toIcsDate(date: Date, time: Date) {
+  const d = dayjs(date)
+    .set("hour", time.getHours())
+    .set("minute", time.getMinutes());
 
+  return [d.year(), d.month() + 1, d.date(), d.hour(), d.minute()] as [
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+}
+
+function toIcsDateTime(date: Date): [number, number, number, number, number] {
+  const d = dayjs(date);
+
+  return [d.year(), d.month() + 1, d.date(), d.hour(), d.minute()];
+}
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type FlatMeeting = MeetingBase &
@@ -72,7 +95,7 @@ export class MeetingService {
         : [];
 
     const [internal, availabilities] = await Promise.all([
-      this.internalMeetingService.getInternalMeetings(
+      this.internalMeetingService.getFlatsByUser(
         targetId,
         start,
         end,
@@ -85,6 +108,7 @@ export class MeetingService {
         clinicIds: authorClinicIds,
       }),
     ]);
+
     return {
       meetings: [...internal, ...animal],
       availabilities,
@@ -117,11 +141,7 @@ export class MeetingService {
         end,
         clinicIds,
       }),
-      this.internalMeetingService.getInternalMeetings(
-        veterinarianId,
-        start,
-        end,
-      ),
+      this.internalMeetingService.getFlatsByUser(veterinarianId, start, end),
       this.animalMeetingService.getAnimalMeetingsAsVet(
         veterinarianId,
         start,
@@ -142,5 +162,132 @@ export class MeetingService {
         slotDurationMinutes,
       ),
     );
+  }
+
+  async generateIcs(userId: UserId, role: UserRole) {
+    const animalMeeting = await this.animalMeetingService.getAllByVet(userId);
+    const events: EventAttributes[] = [];
+    console.log("zfezof");
+    console.log(animalMeeting);
+    for (const meeting of animalMeeting) {
+      if (!meeting || !meeting.meeting) continue;
+
+      events.push({
+        uid: meeting.meeting.id,
+        title: meeting.speciality?.name ?? "Consultation générale",
+        start: toIcsDate(meeting.meeting.date, meeting.meeting.startTime),
+        duration: {
+          minutes: dayjs(meeting.meeting.endTime).diff(
+            meeting.meeting.startTime,
+            "minutes",
+          ),
+        },
+        description: `RDV avec : ${meeting.animal.name}\n${meeting.description ?? ""}`,
+      });
+    }
+
+    const internalMeetings =
+      await this.internalMeetingService.getAllByUser(userId);
+    const speciefedInternal = internalMeetings.filter(
+      (im) => im.meetingId && im.meeting && im.meeting?.type === "SPECIFIED",
+    );
+
+    speciefedInternal.forEach((meeting) => {
+      if (!meeting.meeting) return;
+      events.push({
+        uid: meeting.id,
+        title: meeting.title,
+        start: toIcsDate(meeting.meeting.date, meeting.meeting.startTime),
+        duration: {
+          minutes: dayjs(meeting.meeting.endTime).diff(
+            meeting.meeting.startTime,
+            "minutes",
+          ),
+        },
+        description: meeting.description ?? "",
+      });
+    });
+
+    const recurrenceWithExclusion = internalMeetings.reduce<
+      Record<
+        string,
+        {
+          recurring: MeetingReccuring | null;
+          internalMeeting: InternalMeeting;
+          exclusions: MeetingBase[];
+        }
+      >
+    >((acc, im) => {
+      // Meeting spécifique indépendant
+      if (im.meeting?.type === "SPECIFIED") {
+        return acc;
+      }
+
+      // Création de la clé pour la récurrence
+      if (im.recurringId) {
+        acc[im.recurringId] ??= {
+          recurring: im.recurring,
+          internalMeeting: im,
+          exclusions: [],
+        };
+      }
+
+      // Override d'une occurrence
+      if (im.meeting?.parentId && im.meeting.type === "EXCEPTION") {
+        acc[im.meeting.parentId].exclusions.push(im.meeting);
+      }
+
+      return acc;
+    }, {});
+
+    Object.values(recurrenceWithExclusion).forEach((recurring) => {
+      if (!recurring.recurring) return;
+      const freq = RRULE_FREQ[recurring.recurring.frequency];
+      const rule = new RRule({
+        freq,
+        byweekday: recurring.recurring.dayOfWeek.map((d) => RRULE_DAYS[d]),
+        dtstart: new Date(
+          dayjs(recurring.recurring.dateStart)
+            .set("hour", recurring.recurring.startTime.getHours())
+            .set("minute", recurring.recurring.startTime.getMinutes())
+            .toISOString(),
+        ),
+        until: new Date(
+          recurring.recurring.dateEnd.toISOString().split("T")[0] +
+            "T23:59:59.000Z",
+        ),
+      });
+      const firstOccurrence = rule.after(new Date(0), true);
+      if (!firstOccurrence) return;
+      const recurrenceRule = rule
+        .toString()
+        .split("\n")
+        .find((line) => line.startsWith("RRULE:"))
+        ?.replace("RRULE:", "");
+      events.push({
+        uid: recurring.recurring.id,
+        title: recurring.internalMeeting.title ?? "",
+        start: toIcsDate(firstOccurrence, recurring.recurring?.startTime),
+        duration: {
+          minutes: dayjs(recurring.recurring.endTime).diff(
+            recurring.recurring.startTime,
+            "minutes",
+          ),
+        },
+        recurrenceRule,
+        exclusionDates:
+          recurring.exclusions.length > 0
+            ? recurring.exclusions.map((d) => toIcsDateTime(d.date))
+            : undefined,
+      });
+    });
+
+    const { error, value } = createEvents(events);
+
+    if (error) {
+      throw error;
+    }
+
+    return value;
   }
 }

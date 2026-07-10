@@ -67,12 +67,23 @@ export const expandRecurring = ({
 
   const occurrences = ruleSet.between(start, end, true);
 
-  return occurrences.map((date) => {
-    const dateStr = date.toISOString().split("T")[0];
+  const occurrenceDateStrs = new Set(
+    occurrences.map((d) => d.toISOString().split("T")[0]),
+  );
 
+  const overrideOnlyDates = Object.keys(overrideMap).filter(
+    (dateStr) => !occurrenceDateStrs.has(dateStr),
+  );
+
+  const allDates = [
+    ...occurrences.map((d) => d.toISOString().split("T")[0]),
+    ...overrideOnlyDates,
+  ];
+  return allDates.map((dateStr) => {
     if (overrideMap[dateStr]) {
       return flattenBase(overrideMap[dateStr]);
     }
+    const date = new Date(dateStr + "T00:00:00.000Z");
 
     let t: AnimalMeeting | InternalMeeting | Availability | undefined;
     if (reccuring.animalMeeting) t = reccuring.animalMeeting;
@@ -83,7 +94,6 @@ export const expandRecurring = ({
       throw new Error(
         `RecurringMeetingBase ${reccuring.id} has no specific type`,
       );
-
     return {
       ...t,
       id: reccuring.id,
@@ -93,7 +103,7 @@ export const expandRecurring = ({
       startTime: reccuring.startTime,
       endTime: reccuring.endTime,
       kind: reccuring.kind,
-      date: new Date(dateStr + "T00:00:00.000Z"),
+      date,
       type: "SPECIFIED" as const,
     };
   });

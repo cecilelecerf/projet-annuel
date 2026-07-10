@@ -25,7 +25,6 @@ export class AnimalService {
   ) {}
 
   private async formatWithClient(animal: Animal & AnimalWithMeta) {
-    console.log({ ...animal, client: withUserAvatar(animal.client) });
     return { ...animal, client: withUserAvatar(animal.client) };
   }
 

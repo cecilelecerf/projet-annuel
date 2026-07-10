@@ -134,7 +134,7 @@ export class MeetingController {
             id: req.params.id,
             role: req.user.role,
           });
-          const data = { ...meeting, ...meetingBase };
+          const data = { ...meetingBase, ...meeting, id: meetingBase.id };
           return res.status(200).json(internalMeetingMetaSchema.parse(data));
         }
         case "AVAILABILITY": {
@@ -176,6 +176,28 @@ export class MeetingController {
         clinicIds: [clinicId],
       });
       return res.status(200).json(bookingSlotSchema.array().parse(slots));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async exportMyCalendar(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { id: userId, role } = req.user;
+
+      const calendar = await this.service.generateIcs(userId, role);
+
+      res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="calendar.ics"',
+      );
+
+      return res.status(200).send(calendar);
     } catch (err) {
       next(err);
     }

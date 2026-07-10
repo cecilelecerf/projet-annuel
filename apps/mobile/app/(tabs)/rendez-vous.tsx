@@ -1,11 +1,11 @@
 import { Text, View } from "react-native";
 
-export default function AccueilScreen() {
+export default function RendezVousScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-white px-6 pb-24">
-      <Text className="text-2xl font-bold text-primary">Bienvenue sur Armali</Text>
+      <Text className="text-2xl font-bold text-gray-900">Rendez-vous</Text>
       <Text className="mt-2 text-center text-gray-500">
-        Retrouvez ici l&apos;essentiel pour prendre soin de vos animaux.
+        Vos rendez-vous vétérinaires apparaîtront ici.
       </Text>
     </View>
   );

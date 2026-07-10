@@ -6,7 +6,7 @@ import { useNotify } from '@/composables/useNotify'
 import MessageBubble from './MessageBubble.vue'
 import GroupMembersDialog from './GroupMembersDialog.vue'
 import { Setting, Promotion } from '@element-plus/icons-vue'
-import type { Message } from '@armali/schemas'
+import type { ConversationMember, Message } from '@armali/schemas'
 
 const authStore = useAuthStore()
 const messagingStore = useMessagingStore()
@@ -20,7 +20,9 @@ const loadingOlder = ref(false)
 const conversation = computed(() => messagingStore.activeConversation)
 
 function otherMember() {
-  return conversation.value?.conversationMembers?.find((m) => m.userId !== authStore.user?.id)
+  return conversation.value?.conversationMembers?.find(
+    (m: ConversationMember) => m.userId !== authStore.user?.id,
+  )
 }
 
 const title = computed(() => {
@@ -45,7 +47,9 @@ const typingLabel = computed(() => {
   const ids = [...messagingStore.typingUserIds].filter((id) => id !== authStore.user?.id)
   if (ids.length === 0) return ''
   const names = ids.map((id) => {
-    const member = conversation.value?.conversationMembers?.find((m) => m.userId === id)
+    const member = conversation.value?.conversationMembers?.find(
+      (m: ConversationMember) => m.userId === id,
+    )
     return member?.user?.firstname ?? "Quelqu'un"
   })
   return names.length > 1 ? `${names.join(', ')} écrivent...` : `${names[0]} écrit...`
@@ -57,13 +61,16 @@ function seenLabel(message: Message, idx: number) {
   if (!isOwn) return undefined
   const isLastOwn = !messagingStore.messages
     .slice(idx + 1)
-    .some((m) => m.senderId === authStore.user?.id)
+    .some((m: Message) => m.senderId === authStore.user?.id)
   if (!isLastOwn) return undefined
-
+ 
   const others =
-    conversation.value.conversationMembers?.filter((m) => m.userId !== authStore.user?.id) ?? []
+    conversation.value.conversationMembers?.filter(
+      (m: ConversationMember) => m.userId !== authStore.user?.id,
+    ) ?? []
   const seenBy = others.filter(
-    (m) => m.lastReadAt && new Date(m.lastReadAt) >= new Date(message.createdAt),
+    (m: ConversationMember) =>
+      m.lastReadAt && new Date(m.lastReadAt) >= new Date(message.createdAt),
   )
   if (seenBy.length === 0) return undefined
   return conversation.value.type === 'DIRECT' ? 'Vu' : `Vu par ${seenBy.length}`

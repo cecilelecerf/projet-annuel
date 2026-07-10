@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ConversationScope" ADD VALUE 'VETERINARIAN_NETWORK';

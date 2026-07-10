@@ -2,6 +2,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import { SupplierOrderRepository } from "./supplier-order.repository";
 import { SupplierRepository } from "@api/suppliers/supplier.repository";
 import { BudgetRepository } from "@api/budget/budget.repository";
+import { ProductClinicRepository } from "@api/products/product-clinic.repository";
 import { ClinicService } from "@api/clinics/clinic.service";
 import type { CreateSupplierOrder, UserId, UserRole } from "@armali/schemas";
 
@@ -15,9 +16,6 @@ function computeTotal(items: { unitCost: unknown; quantity: number }[]) {
   );
 }
 
-// Convertit les Date Prisma en ISO string — le schéma Zod (supplierOrderWithDetailsSchema)
-// valide `createdAt`/`receivedAt` en string, ce qui échoue si on lui passe un objet
-// Date brut (la sérialisation JSON n'a lieu qu'après la validation Zod, pas avant).
 function serializeOrder<T extends { createdAt: Date; receivedAt: Date | null }>(
   order: T,
 ) {
@@ -34,6 +32,7 @@ export class SupplierOrderService {
     private supplierRepository: SupplierRepository,
     private budgetRepository: BudgetRepository,
     private clinicService: ClinicService,
+    private productClinicRepository: ProductClinicRepository,
   ) {}
 
   private async getClinicId(userId: UserId, role: UserRole): Promise<string> {
@@ -126,23 +125,23 @@ export class SupplierOrderService {
     }
 
     for (const item of order.items) {
-      const clinicProduct = await this.repository.findClinicProduct(
+      const clinicProduct = await this.productClinicRepository.findByClinicAndProduct(
         order.clinicId,
         item.productId,
       );
       if (clinicProduct) {
-        await this.repository.incrementClinicProductStock(
+        await this.productClinicRepository.incrementStock(
           clinicProduct.id,
           item.quantity,
         );
       } else {
-        // Produit jamais ajouté à la boutique de la clinique : on le crée
-        // avec le stock reçu ; prix de vente et seuil à ajuster ensuite.
-        await this.repository.createClinicProduct(
-          order.clinicId,
-          item.productId,
-          item.quantity,
-        );
+        await this.productClinicRepository.create({
+          clinicId: order.clinicId,
+          productId: item.productId,
+          stock: item.quantity,
+          minimumRequired: 0,
+          price: 0,
+        } as never);
       }
     }
 

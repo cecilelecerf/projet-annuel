@@ -15,10 +15,7 @@ const mockStripe = vi.hoisted(() => ({
 }));
 vi.mock("@api/lib/stripe", () => ({ stripe: mockStripe }));
 
-const mockGetClientClinicIds = vi.hoisted(() => vi.fn());
-vi.mock("@api/shop/shop.service", () => ({
-  getClientClinicIds: mockGetClientClinicIds,
-}));
+const mockAnimalRepository = vi.hoisted(() => ({ findClinicIdsForClient: vi.fn() }));
 
 const mockRepository = vi.hoisted(() => ({
   createWithItems: vi.fn(),
@@ -50,6 +47,7 @@ const { OrderService } = await import("../order.service");
 const service = new OrderService(
   new OrderRepository({} as any),
   mockEmailService as any,
+  mockAnimalRepository as any,
 );
 
 beforeEach(() => vi.clearAllMocks());
@@ -67,7 +65,7 @@ describe("OrderService.checkout", () => {
   } as any;
 
   it("ForbiddenError si la clinique n'est pas accessible au client", async () => {
-    mockGetClientClinicIds.mockResolvedValue(["clinic-autre"]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-autre"]);
     mockPrisma.user.findUnique.mockResolvedValue({ id: "client-1", email: "c@c.fr" });
 
     await expect(service.checkout("client-1", baseData)).rejects.toThrow(
@@ -76,7 +74,7 @@ describe("OrderService.checkout", () => {
   });
 
   it("NotFoundError si le client n'existe pas", async () => {
-    mockGetClientClinicIds.mockResolvedValue(["clinic-1"]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
     mockPrisma.user.findUnique.mockResolvedValue(null);
 
     await expect(service.checkout("client-1", baseData)).rejects.toThrow(
@@ -85,7 +83,7 @@ describe("OrderService.checkout", () => {
   });
 
   it("BadRequestError si le produit n'appartient pas à la clinique du groupe", async () => {
-    mockGetClientClinicIds.mockResolvedValue(["clinic-1"]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
     mockPrisma.user.findUnique.mockResolvedValue({ id: "client-1", email: "c@c.fr" });
     mockPrisma.clinicProduct.findUnique.mockResolvedValue({
       id: "cp-1",
@@ -101,7 +99,7 @@ describe("OrderService.checkout", () => {
   });
 
   it("BadRequestError si le stock est insuffisant", async () => {
-    mockGetClientClinicIds.mockResolvedValue(["clinic-1"]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
     mockPrisma.user.findUnique.mockResolvedValue({ id: "client-1", email: "c@c.fr" });
     mockPrisma.clinicProduct.findUnique.mockResolvedValue({
       id: "cp-1",
@@ -117,7 +115,7 @@ describe("OrderService.checkout", () => {
   });
 
   it("crée la/les commande(s), la session Stripe, et l'attache aux commandes", async () => {
-    mockGetClientClinicIds.mockResolvedValue(["clinic-1"]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
     mockPrisma.user.findUnique.mockResolvedValue({ id: "client-1", email: "c@c.fr" });
     mockPrisma.clinicProduct.findUnique.mockResolvedValue({
       id: "cp-1",

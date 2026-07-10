@@ -28,6 +28,7 @@ const mockContactsRepository = vi.hoisted(() => ({
   listClinicColleagues: vi.fn(),
   listDirectors: vi.fn(),
   findUsersWithClinicIds: vi.fn(),
+  findClinicIdsForVeterinarian: vi.fn(),
 }));
 
 vi.mock("@api/messaging/conversation.repository", () => ({
@@ -122,12 +123,15 @@ const makeConversation = (overrides = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+    "clinic-1",
+  ]);
 });
 
 // ── Éligibilité CLINIC ────────────────────────────────────────────────────────
 
 describe("createConversation — scope CLINIC", () => {
-  it("crée un groupe quand tous les membres appartiennent à la même clinique", async () => {
+  it("crée un groupe quand tous les membres appartiennent à la clinique ciblée", async () => {
     mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
       makeSecretaryUser("sec-1", "clinic-1"),
       makeVetUser("vet-2", ["clinic-1"]),
@@ -139,6 +143,7 @@ describe("createConversation — scope CLINIC", () => {
     await messagingService.createConversation(makeActor(), {
       type: "GROUP",
       scope: "CLINIC",
+      clinicId: "clinic-1" as ClinicId,
       name: "Équipe",
       memberIds: ["sec-1" as UserId, "vet-2" as UserId],
     });
@@ -157,6 +162,7 @@ describe("createConversation — scope CLINIC", () => {
       messagingService.createConversation(makeActor(), {
         type: "GROUP",
         scope: "CLINIC",
+        clinicId: "clinic-1" as ClinicId,
         name: "Équipe",
         memberIds: ["sec-1"] as UserId[],
       }),
@@ -164,7 +170,7 @@ describe("createConversation — scope CLINIC", () => {
     expect(mockConversationRepository.createGroup).not.toHaveBeenCalled();
   });
 
-  it("accepte un véto qui exerce dans plusieurs cliniques dont celle de l'acteur", async () => {
+  it("accepte un véto qui exerce dans plusieurs cliniques dont celle ciblée", async () => {
     mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
       makeVetUser("vet-multi", ["clinic-2", "clinic-1"]),
     ]);
@@ -172,29 +178,50 @@ describe("createConversation — scope CLINIC", () => {
       makeConversation(),
     );
 
-    await messagingService.createConversation(
-      makeActor({ clinicId: "clinic-1" as ClinicId }),
-      {
-        type: "GROUP",
-        scope: "CLINIC",
-        name: "Équipe",
-        memberIds: ["vet-multi" as UserId],
-      },
-    );
+    await messagingService.createConversation(makeActor(), {
+      type: "GROUP",
+      scope: "CLINIC",
+      clinicId: "clinic-1" as ClinicId,
+      name: "Équipe",
+      memberIds: ["vet-multi" as UserId],
+    });
 
     expect(mockConversationRepository.createGroup).toHaveBeenCalledWith(
       expect.objectContaining({ clinicId: "clinic-1", scope: "CLINIC" }),
     );
   });
 
-  it("rejette si l'acteur n'a pas de clinique", async () => {
+  it("rejette si l'acteur n'a pas accès à la clinique ciblée (véto sans cette clinique)", async () => {
+    mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+      "clinic-9",
+    ]);
+
     await expect(
-      messagingService.createConversation(makeActor({ clinicId: undefined }), {
+      messagingService.createConversation(makeActor(), {
         type: "GROUP",
         scope: "CLINIC",
+        clinicId: "clinic-1" as ClinicId,
         name: "Équipe",
         memberIds: ["sec-1"] as UserId[],
       }),
+    ).rejects.toThrow(ForbiddenError);
+    expect(
+      mockContactsRepository.findUsersWithClinicIds,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rejette un acteur (rôle mono-clinique) sans clinique du tout", async () => {
+    await expect(
+      messagingService.createConversation(
+        makeActor({ role: "SECRETARY", clinicId: undefined }),
+        {
+          type: "GROUP",
+          scope: "CLINIC",
+          clinicId: "clinic-1" as ClinicId,
+          name: "Équipe",
+          memberIds: ["sec-1"] as UserId[],
+        },
+      ),
     ).rejects.toThrow(ForbiddenError);
   });
 });
@@ -260,10 +287,86 @@ describe("createConversation — scope DIRECTOR_NETWORK", () => {
   });
 });
 
+// ── Éligibilité VETERINARIAN_NETWORK ──────────────────────────────────────────
+
+describe("createConversation — scope VETERINARIAN_NETWORK", () => {
+  it("rejette un acteur qui n'est pas vétérinaire", async () => {
+    await expect(
+      messagingService.createConversation(
+        makeActor({ role: "DIRECTOR", clinicId: "clinic-1" as ClinicId }),
+        {
+          type: "GROUP",
+          scope: "VETERINARIAN_NETWORK",
+          name: "Vétos",
+          memberIds: ["vet-2", "vet-3"] as UserId[],
+        },
+      ),
+    ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("rejette si un membre n'est pas vétérinaire", async () => {
+    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+      makeSecretaryUser("sec-1", "clinic-1"),
+    ]);
+
+    await expect(
+      messagingService.createConversation(makeActor(), {
+        type: "GROUP",
+        scope: "VETERINARIAN_NETWORK",
+        name: "Vétos",
+        memberIds: ["sec-1"] as UserId[],
+      }),
+    ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("rejette un vétérinaire qui ne partage aucune clinique avec l'acteur", async () => {
+    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+      makeVetUser("vet-isole", ["clinic-9"]),
+    ]);
+
+    await expect(
+      messagingService.createConversation(makeActor(), {
+        type: "GROUP",
+        scope: "VETERINARIAN_NETWORK",
+        name: "Vétos",
+        memberIds: ["vet-isole"] as UserId[],
+      }),
+    ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("accepte des vétérinaires partageant au moins une clinique avec l'acteur, même multi-cliniques", async () => {
+    mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+      "clinic-1",
+      "clinic-2",
+    ]);
+    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+      makeVetUser("vet-a", ["clinic-2", "clinic-5"]),
+      makeVetUser("vet-b", ["clinic-1"]),
+    ]);
+    mockConversationRepository.createGroup.mockResolvedValue(
+      makeConversation({ scope: "VETERINARIAN_NETWORK", clinicId: null }),
+    );
+
+    await messagingService.createConversation(makeActor(), {
+      type: "GROUP",
+      scope: "VETERINARIAN_NETWORK",
+      name: "Vétos",
+      memberIds: ["vet-a", "vet-b"] as UserId[],
+    });
+
+    expect(mockConversationRepository.createGroup).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clinicId: null,
+        scope: "VETERINARIAN_NETWORK",
+      }),
+    );
+  });
+});
+
 // ── Dédoublonnage des conversations DIRECT ───────────────────────────────────
 
 describe("createConversation — type DIRECT", () => {
-  it("retourne la conversation existante au lieu d'en créer une nouvelle", async () => {
+  it("retourne la conversation existante (avec avatars formatés) au lieu d'en créer une nouvelle", async () => {
     const existing = makeConversation({ type: "DIRECT" });
     mockConversationRepository.findExistingDirect.mockResolvedValue(existing);
 
@@ -272,7 +375,7 @@ describe("createConversation — type DIRECT", () => {
       userId: "other-user" as UserId,
     });
 
-    expect(result).toBe(existing);
+    expect(result.id).toBe(existing.id);
     expect(mockConversationRepository.createDirect).not.toHaveBeenCalled();
   });
 
@@ -304,6 +407,31 @@ describe("createConversation — type DIRECT", () => {
     );
   });
 
+  it("infère le scope VETERINARIAN_NETWORK entre deux vétérinaires sans clinique commune", async () => {
+    mockConversationRepository.findExistingDirect.mockResolvedValue(null);
+    mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+      "clinic-1",
+    ]);
+    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+      makeVetUser("vet-autre", ["clinic-9"]),
+    ]);
+    mockConversationRepository.createDirect.mockResolvedValue(
+      makeConversation({ scope: "VETERINARIAN_NETWORK", clinicId: null }),
+    );
+
+    await messagingService.createConversation(makeActor(), {
+      type: "DIRECT",
+      userId: "vet-autre" as UserId,
+    });
+
+    expect(mockConversationRepository.createDirect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: "VETERINARIAN_NETWORK",
+        clinicId: null,
+      }),
+    );
+  });
+
   it("un directeur peut écrire à un véto qui exerce dans sa clinique parmi d'autres", async () => {
     mockConversationRepository.findExistingDirect.mockResolvedValue(null);
     mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
@@ -321,6 +449,20 @@ describe("createConversation — type DIRECT", () => {
     expect(mockConversationRepository.createDirect).toHaveBeenCalledWith(
       expect.objectContaining({ scope: "CLINIC", clinicId: "clinic-1" }),
     );
+  });
+
+  it("rejette deux utilisateurs sans clinique commune ni relation directeur/vétérinaire", async () => {
+    mockConversationRepository.findExistingDirect.mockResolvedValue(null);
+    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+      makeSecretaryUser("sec-isolee", "clinic-9"),
+    ]);
+
+    await expect(
+      messagingService.createConversation(makeActor(), {
+        type: "DIRECT",
+        userId: "sec-isolee" as UserId,
+      }),
+    ).rejects.toThrow(ForbiddenError);
   });
 });
 
@@ -347,8 +489,44 @@ describe("droits admin d'un groupe", () => {
     );
 
     await expect(
-      messagingService.addMembers("conv-1", "actor-1", ["new-user"]),
+      messagingService.addMembers(
+        "conv-1",
+        "actor-1",
+        "VETERINARIAN",
+        ["new-user"],
+      ),
     ).rejects.toThrow(ForbiddenError);
+  });
+
+  it("un ADMIN de clinique peut ajouter un membre de la même clinique", async () => {
+    mockConversationRepository.findById.mockResolvedValue(
+      makeConversation({
+        conversationMembers: [makeMember({ role: "ADMIN" })],
+      }),
+    );
+    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+      makeSecretaryUser("sec-nouveau", "clinic-1"),
+    ]);
+    mockConversationRepository.addMembers.mockResolvedValue(
+      makeConversation({
+        conversationMembers: [
+          makeMember({ role: "ADMIN" }),
+          makeMember({ id: "member-2", userId: "sec-nouveau" }),
+        ],
+      }),
+    );
+
+    await messagingService.addMembers(
+      "conv-1",
+      "actor-1",
+      "VETERINARIAN",
+      ["sec-nouveau"],
+    );
+
+    expect(mockConversationRepository.addMembers).toHaveBeenCalledWith(
+      "conv-1",
+      ["sec-nouveau"],
+    );
   });
 
   it("refuse à un MEMBER de retirer un autre membre", async () => {
@@ -400,5 +578,38 @@ describe("droits admin d'un groupe", () => {
         "ADMIN",
       ),
     ).rejects.toThrow(BadRequestError);
+  });
+});
+
+// ── Marquage de lecture à l'envoi ─────────────────────────────────────────────
+
+describe("sendMessage — marque sa propre lecture", () => {
+  it("met à jour son propre lastReadAt après avoir envoyé un message", async () => {
+    mockConversationRepository.findById.mockResolvedValue(
+      makeConversation({
+        conversationMembers: [makeMember({ role: "ADMIN" })],
+      }),
+    );
+    mockMessageRepository.create.mockResolvedValue({
+      id: "msg-1",
+      conversationId: "conv-1",
+      senderId: "actor-1",
+      content: "Bonjour",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      sender: {
+        id: "actor-1",
+        firstname: "Jean",
+        lastname: "Dupont",
+        avatar: null,
+      },
+    });
+
+    await messagingService.sendMessage(makeActor(), "conv-1", "Bonjour");
+
+    expect(mockConversationRepository.updateLastReadAt).toHaveBeenCalledWith(
+      "conv-1",
+      "actor-1",
+      new Date("2026-01-01T10:00:00Z"),
+    );
   });
 });

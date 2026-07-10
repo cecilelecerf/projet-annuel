@@ -19,6 +19,12 @@ export class ProductClinicRepository {
     });
   }
 
+  async findByClinicAndProduct(clinicId: string, productId: string) {
+    return this.prisma.clinicProduct.findFirst({
+      where: { clinicId, productId },
+    });
+  }
+
   async create(data: CreateProductClinic) {
     return this.prisma.clinicProduct.create({
       data: {

@@ -25,8 +25,6 @@ export interface CreateSupplierInput {
 export class SupplierRepository {
   constructor(private prisma: PrismaClient) {}
 
-  // ── Supplier ──────────────────────────────────────────────────────────────
-
   async findAll() {
     return this.prisma.supplier.findMany({
       include: WITH_PRODUCTS,
@@ -58,30 +56,5 @@ export class SupplierRepository {
 
   async delete(id: string) {
     return this.prisma.supplier.delete({ where: { id } });
-  }
-
-  // ── SupplierProduct ───────────────────────────────────────────────────────
-
-  async findProductLink(id: string) {
-    return this.prisma.supplierProduct.findUnique({ where: { id } });
-  }
-
-  async addProduct(supplierId: string, productId: string, costPrice: number) {
-    return this.prisma.supplierProduct.upsert({
-      where: { supplierId_productId: { supplierId, productId } },
-      update: { costPrice },
-      create: { supplierId, productId, costPrice },
-    });
-  }
-
-  async updateProductCost(id: string, costPrice: number) {
-    return this.prisma.supplierProduct.update({
-      where: { id },
-      data: { costPrice },
-    });
-  }
-
-  async removeProduct(id: string) {
-    return this.prisma.supplierProduct.delete({ where: { id } });
   }
 }

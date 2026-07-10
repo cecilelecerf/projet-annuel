@@ -57,6 +57,7 @@ import { StaffRepository } from "./clinics/staffs/staff.repository";
 import { BudgetRepository } from "./budget/budget.repository";
 import { SupplierRepository } from "./suppliers/supplier.repository";
 import { SupplierOrderRepository } from "./supplier-orders/supplier-order.repository";
+import { SupplierProductRepository } from "./suppliers/supplier-product.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // Services
@@ -185,6 +186,7 @@ const clinicRequestRepository = new ClinicRequestRepository(prisma);
 const budgetRepository = new BudgetRepository(prisma);
 const supplierRepository = new SupplierRepository(prisma);
 const supplierOrderRepository = new SupplierOrderRepository(prisma);
+const supplierProductRepository = new SupplierProductRepository(prisma);
 const raceRepository = new RaceRepository(prisma);
 const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
 
@@ -298,12 +300,17 @@ export const dashboardService = new DashboardService(
 );
 
 export const budgetService = new BudgetService(budgetRepository, clinicService);
-export const supplierService = new SupplierService(supplierRepository);
+
+export const supplierService = new SupplierService(
+  supplierRepository,
+  supplierProductRepository, 
+);
 export const supplierOrderService = new SupplierOrderService(
   supplierOrderRepository,
   supplierRepository,
   budgetRepository,
   clinicService,
+  productClinicRepository,
 );
 
 const veterinarianPetService = new VeterinarianPetService(

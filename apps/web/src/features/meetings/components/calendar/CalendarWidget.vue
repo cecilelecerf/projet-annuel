@@ -88,6 +88,7 @@ const onNewEventDrawerClose = () => {
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
     @close="selectedMeeting = null"
+    :kind="selectedMeeting.kind"
   />
 </template>
 

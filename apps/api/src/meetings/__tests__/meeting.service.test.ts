@@ -629,7 +629,7 @@ describe("MeetingService.getCalendar", () => {
 describe("MeetingService.getMeeting", () => {
   it("meeting introuvable — NotFoundError", async () => {
     mockMeetingRepository.getMeetingById.mockResolvedValue(null);
-    await expect(meetingService.getMeeting("unknown")).rejects.toThrow(
+    await expect(meetingService.getMeetingById("unknown")).rejects.toThrow(
       NotFoundError,
     );
   });
@@ -638,7 +638,7 @@ describe("MeetingService.getMeeting", () => {
     mockMeetingRepository.getMeetingById.mockResolvedValue(
       makeBaseWithAnimal(),
     );
-    const result = await meetingService.getMeeting("base-1");
+    const result = await meetingService.getMeetingById("base-1");
     expect(result).toHaveProperty("animalId", "pet-1");
   });
 });

@@ -16,7 +16,7 @@ export const animalWithUserSchema = animalSchema.extend({
   client: userSchema,
 });
 export const animalMetaSchema = animalSchema.extend({
-  client: clientSchema,
+  client: clientProfileSchema.extend({ user: baseUserSchema }),
   age: z
     .object({
       years: z.number().nonnegative(),

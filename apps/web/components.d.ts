@@ -49,6 +49,7 @@ declare module 'vue' {
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
+    ElSlider: typeof import('element-plus/es')['ElSlider']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
@@ -59,6 +60,7 @@ declare module 'vue' {
     ElTimePicker: typeof import('element-plus/es')['ElTimePicker']
     ElTimeSelect: typeof import('element-plus/es')['ElTimeSelect']
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
+    ElUpload: typeof import('element-plus/es')['ElUpload']
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     HeroComponent: typeof import('./src/components/landingPage/HeroComponent.vue')['default']
     NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']
@@ -67,6 +69,8 @@ declare module 'vue' {
     RecursiveSideBarItem: typeof import('./src/components/ui/nav/RecursiveSideBarItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SearchSelectMultiple: typeof import('./src/components/ui/SearchSelectMultiple.vue')['default']
+    SearchSelectSingle: typeof import('./src/components/ui/SearchSelectSingle.vue')['default']
     SidebarComponent: typeof import('./src/components/ui/nav/SidebarComponent.vue')['default']
   }
   export interface GlobalDirectives {

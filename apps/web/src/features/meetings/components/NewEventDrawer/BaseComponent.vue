@@ -4,14 +4,20 @@ import DrawerHeader from './DrawerHeader.vue'
 import MeetingTypeSelector from './MeetingTypeSelector.vue'
 import AnimalMeetingForm from './AnimalMeetingForm.vue'
 import InternalMeetingForm from './InternalMeetingForm.vue'
-import MeetingDateTimeFields from './MeetingDateTimeFields.vue'
+import MeetingDateTimeFields from './fields/MeetingDateTimeFields.vue'
 import { useMeetingDrawerForm } from '../../composables/useMeetingDrawerForm.ts'
+import { useAuthStore } from '@/stores/authStore.ts'
+import { useRouter } from 'vue-router'
 
 const { initialDate } = defineProps<{
   initialDate: Date | null
 }>()
+const { user } = useAuthStore()
+const router = useRouter()
 const emit = defineEmits<{ close: [] }>()
-
+if (user?.role === 'CLIENT' || user?.role === 'ADMIN') {
+  router.push({ name: 'Forbidden' })
+}
 const {
   canCreateAnimal,
   date,

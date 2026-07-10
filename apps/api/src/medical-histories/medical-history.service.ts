@@ -2,6 +2,8 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import { AnimalMedicalHistoryRepository } from "./medical-history.repository";
 import type {
   AnimalId,
+  ClientId,
+  ClinicId,
   CreateFreeMedicalHistory,
   CreateMedicalHistory,
   CreateMettingMedicalHistory,
@@ -20,6 +22,7 @@ import { ClinicActRepository } from "@api/clinics/clinic-acts/clinic-act.reposit
 import { withUserAvatar } from "@api/users/user.utils";
 import { File } from "../../prisma/generated/prisma/client";
 import { FileService } from "@api/files/file.service";
+import { ClinicService } from "@api/clinics/clinic.service";
 
 const ALLOWED_ROLES: UserRole[] = ["CLIENT", "VETERINARIAN", "SECRETARY"];
 
@@ -32,6 +35,7 @@ export class AnimalMedicalHistoryService {
     private vaccineRepository: VaccineRepository,
     private veterinarianClinicRepository: VeterinarianClinicRepository,
     private clinicActRepository: ClinicActRepository,
+    private clinicService: ClinicService,
     private fileService: FileService,
   ) {}
   private formatMedicalHistory<
@@ -64,10 +68,7 @@ export class AnimalMedicalHistoryService {
    */
   private async assertStaffBelongsToClinic(userId: string, clinicId: string) {
     const veterinarianClinic =
-      await this.veterinarianClinicRepository.findByVeterinarianAndClinic(
-        userId,
-        clinicId,
-      );
+      await this.veterinarianClinicRepository.findByKeys(userId, clinicId);
     if (!veterinarianClinic) {
       throw new ForbiddenError(
         "Vous n'appartenez pas à la clinique de cet acte",
@@ -299,15 +300,17 @@ export class AnimalMedicalHistoryService {
       );
       if (animal?.clientId !== userId) throw new ForbiddenError();
     } else if (isStaff(role) && animalMeeting.veterinarianClinicId) {
+      const meClinicIds = await this.clinicService.getClinicIdsByUserId({
+        userId,
+        role,
+      });
       const veterinarianClinic =
         await this.veterinarianClinicRepository.findById(
           animalMeeting.veterinarianClinicId as VeterinarianClinicId,
         );
       if (!veterinarianClinic) throw new NotFoundError("veterinarian clinic");
-      await this.assertStaffBelongsToClinic(
-        userId,
-        veterinarianClinic.clinicId,
-      );
+      if (!meClinicIds.includes(veterinarianClinic.clinicId as ClinicId))
+        throw new ForbiddenError();
     }
 
     const acts = await this.repository.findByMeeting(meetingId);
@@ -324,11 +327,23 @@ export class AnimalMedicalHistoryService {
     if (role === "CLIENT") {
       if (animal.clientId !== userId) throw new ForbiddenError();
     } else if (isStaff(role)) {
-      if (!animal.attendingVeterinarianClinic) throw new ForbiddenError();
-      await this.assertStaffBelongsToClinic(
+      const clientId = animal.clientId as ClientId;
+      const clinicIds = await this.clinicService.getClinicIdsByUserId({
         userId,
-        animal.attendingVeterinarianClinic.clinicId,
-      );
+        role,
+      });
+      const meetingWithThisClient =
+        await this.animalMeetingRepository.findByClientAndClinic(
+          clientId,
+          clinicIds,
+        );
+      const attendingClinic: ClinicId | undefined = animal
+        .attendingVeterinarianClinic?.clinicId as ClinicId;
+      const isAttendingClinic = attendingClinic
+        ? clinicIds.includes(attendingClinic)
+        : undefined;
+      if (!isAttendingClinic && meetingWithThisClient.length === 0)
+        throw new ForbiddenError();
     }
 
     const acts = await this.repository.findByAnimalId(animalId);

@@ -24,21 +24,21 @@ export const clientRouter: RouteRecordRaw[] = [
       },
 
       // ── Animal ───────────────────────────────────────────────
-      // {
-      //   path: 'animaux',
-      //   name: 'CLIENT.Animaux',
-      //   component: () => import('@/features/animals/views/AnimalView/'),
-      // },
-      // {
-      //   path: 'animaux/nouveau',
-      //   name: 'CLIENT.Animal.Nouveau',
-      //   //        component: () => import('@/views/client/animal/NouvelAnimal.vue'),
-      //   // Champs : Nom, Photo, Description
-      // },
       {
-        path: 'animal/:id',
+        path: 'animals',
+        name: 'CLIENT.Animals',
+        component: () => import('@/features/animals/views/AnimalsListView.vue'),
+      },
+      {
+        path: 'animals/create',
+        name: 'CLIENT.Animals.Create',
+        component: () => import('@/features/animals/views/AnimalCreateView.vue'),
+        // Champs : Nom, Photo, Description
+      },
+      {
+        path: 'animals/:id',
         name: 'CLIENT.Animals.Detail',
-        component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
+        component: () => import('@/features/animals/views/AnimalDetailView.vue'),
       },
       // {
       //   path: 'animaux/:id/regime-alimentaire',

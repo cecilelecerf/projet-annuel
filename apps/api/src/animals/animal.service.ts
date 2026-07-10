@@ -1,21 +1,33 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
-import { AnimalRepository } from "./animal.repository";
+import { AnimalRepository, AnimalWithMeta } from "./animal.repository";
 import type {
+  ClinicId,
   CreateAnimal,
   UpdateAnimal,
   UserId,
   UserRole,
 } from "@armali/schemas";
-import { isStaff } from "@api/utils";
+import { CLINIC_STAFF_ROLES, isStaff } from "@api/utils";
 import dayjs from "dayjs";
 import { VaccineRepository } from "@api/vaccines/vaccine.repository";
 import { withAvatarUrl, withUserAvatar } from "@api/users/user.utils";
+import { ClinicService } from "@api/clinics/clinic.service";
+import { PaginationQueryDto } from "../../../../packages/schemas/src/pagination.schema";
+import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
+import { Animal } from "../../prisma/generated/prisma/client";
 
 export class AnimalService {
   constructor(
     private repository: AnimalRepository,
     private vaccineRepository: VaccineRepository,
+    private clinicService: ClinicService,
+    private veterinarianRepository: VeterinarianProfileRepository,
   ) {}
+
+  private async formatWithClient(animal: Animal & AnimalWithMeta) {
+    console.log({ ...animal, client: withUserAvatar(animal.client) });
+    return { ...animal, client: withUserAvatar(animal.client) };
+  }
 
   private async assertOwner({
     petId,
@@ -47,6 +59,7 @@ export class AnimalService {
     if (isStaff(role)) return this.repository.findAll();
     return this.repository.findByClientId(userId);
   }
+
   async getByUser({
     targetUserId,
     requesterId,
@@ -58,7 +71,8 @@ export class AnimalService {
   }) {
     if (!isStaff(role) && targetUserId !== requesterId)
       throw new ForbiddenError();
-    return this.repository.findByClientId(targetUserId);
+    const animals = await this.repository.findByClientId(targetUserId);
+    return Promise.all(animals.map(this.formatWithClient));
   }
 
   async getById({
@@ -187,5 +201,52 @@ export class AnimalService {
             : "NOT_APPLICABLE",
       };
     });
+  }
+
+  async getAnimalByVeterinarian(
+    veterinarianId: UserId,
+    role: UserRole,
+    userId: UserId,
+    pagination: PaginationQueryDto,
+  ) {
+    if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
+    const veterinarian =
+      await this.veterinarianRepository.findById(veterinarianId);
+
+    const meClinicIds = await this.clinicService.getClinicIdsByUserId({
+      userId,
+      role,
+    });
+
+    if (
+      !meClinicIds.some((id) =>
+        veterinarian?.veterinarianClinics.some((vc) => vc.clinicId === id),
+      )
+    )
+      throw new ForbiddenError();
+    const animals = await this.repository.findPaginatedByAttendingVeterinarian(
+      veterinarianId,
+      pagination,
+    );
+    return Promise.all(animals.map((a) => this.formatWithClient(a)));
+  }
+
+  async getAnimalByClinic(
+    role: UserRole,
+    userId: UserId,
+    clinicId: ClinicId,
+    pagination: PaginationQueryDto,
+  ) {
+    if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
+    const clinicIds = await this.clinicService.getClinicIdsByUserId({
+      userId,
+      role,
+    });
+    if (clinicIds.every((id) => id !== clinicId)) throw new ForbiddenError();
+    const animals = await this.repository.findPaginatedByAttendingClinic(
+      clinicId,
+      pagination,
+    );
+    return Promise.all(animals.map((a) => this.formatWithClient(a)));
   }
 }

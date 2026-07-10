@@ -1,66 +1,45 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useFormErrorStore } from '@/stores/formErrorStore'
-import StaffList from '../components/StaffList.vue'
-import { type StaffMember, type UserRole } from '@armali/schemas'
-import { staffApi } from '../staff.api.ts'
-import { getStaffPageTexts } from '../utils.ts'
-
-const ROLES: UserRole[] = ['DIRECTOR', 'REFERENT', 'SECRETARY', 'VETERINARIAN']
+import { type AnimalMeta } from '@armali/schemas'
+import { animalApi } from '../api'
+import { Plus } from '@element-plus/icons-vue'
+import AnimalList from '../components/AnimalList.vue'
+import { match } from 'ts-pattern'
 
 const router = useRouter()
-const route = useRoute()
-const formError = useFormErrorStore()
+const { user } = useAuthStore()
 
-const authStore = useAuthStore()
-const { user } = storeToRefs(authStore)
-
-const role = computed<UserRole | undefined>(() => {
-  console.log(route.name)
-  if (route.name?.toString() === 'SECRETARY.Veto.List') return 'VETERINARIAN'
-  const value = route.query.role
-  return typeof value === 'string' && ROLES.includes(value as UserRole)
-    ? (value as UserRole)
-    : undefined
-})
-
-const staffs = ref<StaffMember[]>()
+const animals = ref<AnimalMeta[]>()
 const loading = ref(false)
-
-async function loadStaff() {
-  if (!user.value || user.value?.role === 'CLIENT' || user.value?.role === 'ADMIN') return
-
+async function loadAnimals() {
   loading.value = true
-  formError.clear()
+
+  if (!user) return
   try {
-    staffs.value = await staffApi.getAllByClinic({
-      clinicId: user.value.clinicId,
-      roles: role.value ? [role.value] : [],
-    })
+    animals.value = await match(user)
+      .with({ role: 'CLIENT' }, async () => await animalApi.getAllByUser(user.id))
+      .with({ role: 'VETERINARIAN' }, async () => await animalApi.getAllByVeterinarian(user.id))
+      .with({ role: 'SECRETARY' }, async (u) => await animalApi.getAllByClinic(u.clinicId))
+      .otherwise(() => [])
   } catch (err) {
-    formError.handle(err)
+    console.log(err)
+    /* silencieux */
   } finally {
     loading.value = false
   }
 }
-
-// Redirige si l'utilisateur n'a pas accès à cette page, sans casser le rendu
-onMounted(() => {
-  loadStaff()
-})
-
-watch(role, () => {
-  if (user.value && ROLES.includes(user.value.role)) loadStaff()
-})
-
-const pageTexts = computed(() => getStaffPageTexts(role.value))
-
+const pageDescription = computed(() =>
+  match(user?.role)
+    .with('CLIENT', () => 'Retrouvez ici tous vos animaux enregistrés sur Armali')
+    .with('VETERINARIAN', () => 'Retrouvez ici tous les animaux suivis')
+    .with('SECRETARY', () => 'Retrouvez ici tous les animaux suivis par votre clinique')
+    .otherwise(() => ''),
+)
+onMounted(loadAnimals)
 function goToCreate() {
-  if (!user.value) return
-  router.push({ name: `${user.value.role.toUpperCase()}.Staff.Create` })
+  router.push({ name: `${user?.role.toUpperCase()}.Animals.Create` })
 }
 </script>
 
@@ -68,18 +47,14 @@ function goToCreate() {
   <div class="staff-page">
     <div class="page-header">
       <div>
-        <h1>{{ pageTexts.title }}</h1>
-        <p>{{ pageTexts.description }}</p>
+        <h1>Mes animaux</h1>
+        <p>{{ pageDescription }}</p>
       </div>
-      <el-button
-        type="primary"
-        @click="goToCreate"
-        v-if="user?.role === 'DIRECTOR' || user?.role === 'REFERENT'"
-        >+ Ajouter un membre</el-button
+      <el-button type="primary" @click="goToCreate" v-if="user?.role === 'CLIENT'" :icon="Plus"
+        >Ajouter un animal</el-button
       >
     </div>
-    <!-- TODO : fetch le nom de la clinique -->
-    <StaffList v-if="staffs" :staffs="staffs" clinic-name="fefe" :with-go-to-detail="true" />
+    <AnimalList v-if="animals" :animals="animals" clinic-name="fefe" :with-go-to-detail="true" />
   </div>
 </template>
 

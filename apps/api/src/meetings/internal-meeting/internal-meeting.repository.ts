@@ -1,9 +1,11 @@
 import { userWithProfileAndClinicIdInclude } from "@api/users/user.types";
 import type {
+  ClinicId,
   CreateInternalMeeting,
   MeetingParticipantStatus,
   MeetingRecurringId,
   UpdateInternalMeeting,
+  UserId,
 } from "@armali/schemas";
 import {
   InternalMeeting,
@@ -11,7 +13,6 @@ import {
   MeetingReccuring,
   PrismaClient,
 } from "../../../prisma/generated/prisma/client";
-
 export class InternalMeetingRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -35,8 +36,8 @@ export class InternalMeetingRepository {
     parentId,
   }: {
     data: CreateInternalMeeting;
-    authorId: string;
-    clinicId: string;
+    authorId: UserId;
+    clinicId?: ClinicId;
     parentId?: MeetingRecurringId;
   }) {
     return this.prisma.meetingBase.create({
@@ -96,41 +97,6 @@ export class InternalMeetingRepository {
 
   async delete(id: string) {
     return this.prisma.internalMeeting.delete({ where: { id } });
-  }
-  async findParticipant(internalMeetingId: string, userId: string) {
-    return this.prisma.internalMeetingParticipant.findFirst({
-      where: { meetingId: internalMeetingId, userId },
-    });
-  }
-  async updateParticipantStatus({
-    internalMeetingId,
-    userId,
-    status,
-  }: {
-    internalMeetingId: string;
-    userId: string;
-    status: MeetingParticipantStatus;
-  }) {
-    return this.prisma.internalMeetingParticipant.updateMany({
-      where: { meetingId: internalMeetingId, userId },
-      data: { status },
-    });
-  }
-  async copyParticipantStatuses({
-    targetInternalMeetingId,
-    sourceParticipants,
-  }: {
-    targetInternalMeetingId: string;
-    sourceParticipants: InternalMeetingParticipant[];
-  }) {
-    await this.prisma.$transaction(
-      sourceParticipants.map((p) =>
-        this.prisma.internalMeetingParticipant.updateMany({
-          where: { meetingId: targetInternalMeetingId, userId: p.userId },
-          data: { status: p.status },
-        }),
-      ),
-    );
   }
 
   async createOccurrenceOverride({

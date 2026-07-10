@@ -11,6 +11,11 @@ import {
   PrismaClient,
   User,
 } from "../../../prisma/generated/prisma/client";
+import {
+  baseFilter,
+  recurringFilter,
+  recurringWithChildrenInclude,
+} from "../meeting.repository";
 
 export class AvailabilityRepository {
   constructor(private prisma: PrismaClient) {}
@@ -218,5 +223,42 @@ export class AvailabilityRepository {
     });
 
     return { availabilities, existingMeetings };
+  }
+
+  async getAvailabilities({
+    userId,
+    start,
+    end,
+    clinicIds,
+  }: {
+    userId: string;
+    start: Date;
+    end: Date;
+    clinicIds?: string[];
+  }) {
+    return this.prisma.availability.findMany({
+      where: {
+        userId,
+        ...(clinicIds &&
+          clinicIds.length > 0 && { clinicId: { in: clinicIds } }),
+        OR: [
+          {
+            recurringId: { not: null },
+            recurring: recurringFilter(start, end),
+          },
+          { meetingId: { not: null }, meeting: baseFilter(start, end) },
+        ],
+      },
+      include: {
+        recurring: {
+          where: recurringFilter(start, end),
+          include: recurringWithChildrenInclude(start, end),
+        },
+        meeting: {
+          where: { ...baseFilter(start, end), parentId: null },
+          include: { availabilty: { include: { clinic: true } } },
+        },
+      },
+    });
   }
 }

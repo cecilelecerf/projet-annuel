@@ -35,9 +35,19 @@ export const veterinarianRouter: RouteRecordRaw[] = [
         component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
+        path: 'clients/:id/meetings',
+        name: 'VETERINARIAN.Clients.Meetings.List',
+        component: () => import('@/features/meetings/views/ListAnimalMeetingView.vue'),
+      },
+      {
+        path: 'animals',
+        name: 'VETERINARIAN.Animals.List',
+        component: () => import('@/features/animals/views/AnimalsListView.vue'),
+      },
+      {
         path: 'animals/:id',
         name: 'VETERINARIAN.Animals.Detail',
-        component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
+        component: () => import('@/features/animals/views/AnimalDetailView.vue'),
       },
       {
         path: 'profil',

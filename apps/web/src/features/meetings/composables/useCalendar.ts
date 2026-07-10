@@ -19,9 +19,13 @@ import type {
   EventInput,
 } from '@fullcalendar/core/index.js'
 import type { VerboseFormattingArg } from '@fullcalendar/core/internal'
+import { useAuthStore } from '@/stores/authStore'
+import { useRoute } from 'vue-router'
 dayjs.locale('fr')
 
 export function useCalendar(userId?: UserId) {
+  const route = useRoute()
+
   const calendarData = ref<Calendar | null>(null)
   const dateSelect = ref<Date | null>(null)
   const openNewEvent = ref(false)
@@ -36,11 +40,20 @@ export function useCalendar(userId?: UserId) {
   const selectedClinicIds = ref<string[]>([])
 
   const availableClinics = computed(() => extractDistinctClinics(calendarData.value))
+  const id = computed(() => {
+    const value = route.params.id
+    return typeof value === 'string' ? value : undefined
+  })
 
-  const fetchMeetings = (startStr: string, endStr: string) => {
+  const fetchMeetings = async (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
-    return meetingApi.getCalendar({ start, end, userId })
+    if (id.value) {
+      console.log(id.value)
+      return await meetingApi.getVeterinarianCalendar({ start, end, userId: id.value as UserId })
+    }
+
+    return await meetingApi.getCalendar({ start, end })
   }
 
   function refreshDisplayedEvents() {

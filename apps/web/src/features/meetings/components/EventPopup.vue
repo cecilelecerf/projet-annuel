@@ -19,6 +19,7 @@ dayjs.locale('fr')
 const { meetingId, date } = defineProps<{
   meetingId: string
   date?: Date
+  kind: 'ANIMAL' | 'INTERNAL'
 }>()
 const emit = defineEmits<{ close: [] }>()
 const { user } = useAuthStore()

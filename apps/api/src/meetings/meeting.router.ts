@@ -18,18 +18,6 @@ meetingRouter.get(
   roleMiddleware(STAFF_ROLES),
   meetingController.getMyCalendar.bind(meetingController) as RequestHandler,
 );
-meetingRouter.get(
-  "/veterinarians/:veterinarianId/slots",
-  roleMiddleware(["CLIENT"]),
-  meetingController.getVetSlots.bind(meetingController) as RequestHandler,
-);
-meetingRouter.get(
-  "/calendar/:veterinarianId",
-  roleMiddleware(["SECRETARY"]),
-  meetingController.getVeterinarianCalendar.bind(
-    meetingController,
-  ) as RequestHandler,
-);
 
 meetingRouter.use("/recurrings", recurringMeetingRouter);
 meetingRouter.use("/availabilities", availabilityRouter);

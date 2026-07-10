@@ -1,12 +1,13 @@
 import { UserService } from "@api/users/user.service";
 import { BadRequestError } from "@api/errors";
 import type { NextFunction, Response } from "express";
-import { AuthenticatedRequest } from "@api/middlewares";
+import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import {
   baseUserSchema,
   fileIdSchema,
   uploadResponseSchema,
+  UserId,
   userRoleSchema,
 } from "@armali/schemas";
 import z from "zod";
@@ -17,7 +18,7 @@ const STAFF_ROLES: UserRole[] = [
   "VETERINARIAN",
 ];
 const getUsersQuerySchema = z.object({
-  roles: z.preprocess(
+  role: z.preprocess(
     (val) =>
       val === undefined
         ? undefined
@@ -37,10 +38,11 @@ export class UserController {
       const query = getUsersQuerySchema.safeParse(req.query);
       if (!query.success) throw new BadRequestError("Rôle invalide");
 
-      const targetRoles = query.data.roles ?? [];
+      const targetRoles = query.data.role ?? [];
       const rolesToSearch: UserRole[] = targetRoles.includes("STAFF")
         ? STAFF_ROLES
         : (targetRoles as UserRole[]);
+      console.log(rolesToSearch);
       const { id, role } = req.user;
       const users = await this.service.getUsersByRoles(id, role, rolesToSearch);
 
@@ -51,20 +53,15 @@ export class UserController {
   }
 
   async getUserById(
-    req: AuthenticatedRequest,
+    req: RequestWithParams<{ id: UserId }>,
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const { id, role } = req.user;
-      const targetId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-
       const user = await this.service.getUserById({
-        requesterId: id,
-        requesterRole: role,
-        targetId,
+        requesterId: req.user.id,
+        requesterRole: req.user.role,
+        targetId: req.params.id,
       });
       res.status(200).json(user);
     } catch (err) {

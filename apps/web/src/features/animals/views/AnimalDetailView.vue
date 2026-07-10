@@ -5,17 +5,17 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import type { AnimalId } from '@armali/schemas'
-import { animalApi } from '../../api'
+import { animalApi } from '../api'
 import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore.ts'
-import WeightChart from '../../components/WeightChart.vue'
+import WeightChart from '../components/WeightChart.vue'
 import ContactCard from '@/components/ContactCard.vue'
 import MedicalHistorySection from '@/features/medical-histories/components/MedicalHistorySection.vue'
 import { medicalHistoriesApi } from '@/features/medical-histories/medical-history.api.ts'
 import AnimalHealthConditionItem from '@/features/animal-health-conditions/components/AnimalHealthConditionItem.vue'
 import NotebookVaccingTable from '@/features/vaccines/components/notebook/NotebookVaccingTable.vue'
 import MeetingListByAnimal from '@/features/meetings/components/animal-meeting/MeetingListByAnimal.vue'
-import AnimalDetailCard from '../../components/AnimalDetailCard.vue'
+import AnimalDetailCard from '../components/AnimalDetailCard.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
@@ -144,7 +144,12 @@ const weightData = computed(
           <p v-else class="empty-text">Aucune condition de santé enregistrée</p>
         </el-tab-pane>
       </el-tabs>
-      <MeetingListByAnimal :animal-id="animal.id" />
+      <MeetingListByAnimal
+        :meetings="meetings"
+        :animal-id="animal.id"
+        :client-id="animal.clientId"
+        :more="true"
+      />
     </div>
   </div>
 </template>

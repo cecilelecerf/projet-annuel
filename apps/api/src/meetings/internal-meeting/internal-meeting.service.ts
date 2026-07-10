@@ -5,6 +5,7 @@ import {
   NotFoundError,
 } from "@api/errors";
 import {
+  ClinicId,
   createInternalMeetingSchema,
   MeetingId,
   MeetingRecurringId,
@@ -17,25 +18,37 @@ import { InternalMeetingRepository } from "./internal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { withAvatarUrl } from "@api/users/user.utils";
 import { RecurringService } from "../recurring-meeting/recurring-meeting.service";
+import { FlatMeeting } from "../meeting.service";
+import { MeetingBaseWithSpecific, MeetingRecurringWithChildren } from "../type";
+import { expandAll } from "../utils";
+import { ClinicService } from "@api/clinics/clinic.service";
+import { InternalMeetingParticipantRepository } from "./participant.repository";
 
 export class InternalMeetingService {
   constructor(
     private repository: InternalMeetingRepository,
+    private participantRepository: InternalMeetingParticipantRepository,
     private recurringService: RecurringService,
+    private clinicService: ClinicService,
   ) {}
+
   async create({
     data,
     userId,
-    clinicId,
+    role,
   }: {
     data: CreateInternalMeeting;
-    userId: string;
-    clinicId: string;
+    userId: UserId;
+    role: UserRole;
   }) {
+    const clinicIds = await this.clinicService.getClinicIdsByUserId({
+      userId,
+      role,
+    });
+    if (!clinicIds.includes(data.clinicId)) throw new ForbiddenError();
     return this.repository.create({
       data,
       authorId: userId,
-      clinicId,
     });
   }
 
@@ -123,7 +136,7 @@ export class InternalMeetingService {
       });
 
       if (!isRescheduling && internalMeeting) {
-        await this.repository.copyParticipantStatuses({
+        await this.participantRepository.copyStatus({
           targetInternalMeetingId: internalMeeting.id,
           sourceParticipants: existing.participants,
         });
@@ -141,12 +154,12 @@ export class InternalMeetingService {
       });
       const internalMeeting = await this.repository.create({
         data: parsed.data,
-        authorId: existing.adminId,
-        clinicId: existing.clinicId,
+        authorId: existing.adminId as UserId,
+        clinicId: existing.clinicId as ClinicId,
       });
 
       if (!isRescheduling && internalMeeting.internalMeeting) {
-        await this.repository.copyParticipantStatuses({
+        await this.participantRepository.copyStatus({
           targetInternalMeetingId: internalMeeting.internalMeeting.id,
           sourceParticipants: existing.participants,
         });
@@ -236,13 +249,13 @@ export class InternalMeetingService {
     if (!participant) throw new ForbiddenError();
     // ── Cas 1 : la réunion est déjà un MeetingBase concret (ponctuel ou override) ──
     if (internalMeeting && !internalMeeting?.recurringId) {
-      const participant = await this.repository.findParticipant(
+      const participant = await this.participantRepository.findByKeys(
         internalMeeting.id,
         userId,
       );
       if (!participant) throw new ForbiddenError();
 
-      return this.repository.updateParticipantStatus({
+      return this.participantRepository.updateStatus({
         userId: participant.userId,
         internalMeetingId: internalMeeting.id,
         status,
@@ -253,7 +266,7 @@ export class InternalMeetingService {
 
     // ── Scope "all" : on répond pour toute la série (statut par défaut) ───────────
     if (scope === "all") {
-      return this.repository.updateParticipantStatus({
+      return this.participantRepository.updateStatus({
         internalMeetingId: internalMeeting.id,
         userId,
         status,
@@ -273,5 +286,30 @@ export class InternalMeetingService {
       userId,
       status,
     });
+  }
+
+  async getInternalMeetings(
+    userId: string,
+    start: Date,
+    end: Date,
+    clinicIds?: ClinicId[],
+  ): Promise<FlatMeeting[]> {
+    const participants =
+      await this.participantRepository.findByUserAndClinicIds(
+        userId,
+        start,
+        end,
+        clinicIds,
+      );
+    const flat = participants.flatMap(
+      ({
+        meeting: { recurring, meeting },
+      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
+        if (recurring) return [recurring as MeetingRecurringWithChildren];
+        if (meeting) return [meeting as MeetingBaseWithSpecific];
+        return [];
+      },
+    );
+    return expandAll(flat, start, end);
   }
 }

@@ -34,6 +34,24 @@ export const deleteAccountConfirmSchema = z.object({
 });
 export type DeleteAccountConfirm = z.infer<typeof deleteAccountConfirmSchema>;
 
+export const forgotPasswordSchema = baseUserSchema.pick({ email: true });
+export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = baseUserSchema
+  .pick({ email: true })
+  .extend({
+    code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+    newPassword: userPasswordSchema,
+  });
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+
+export const verifyLoginTwoFactorSchema = baseUserSchema
+  .pick({ email: true })
+  .extend({
+    code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+  });
+export type VerifyLoginTwoFactor = z.infer<typeof verifyLoginTwoFactorSchema>;
+
 export * from "./base-user.schema";
 export * from "./client.schema";
 export * from "./veterinarian.schema";

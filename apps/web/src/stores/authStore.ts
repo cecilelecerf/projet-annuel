@@ -48,22 +48,30 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const login = async (email: string, password: string) => {
+  type LoginResponse =
+    | { twoFactorRequired: true; email: string }
+    | { user: UserStore; accessToken: string; refreshToken: string }
+
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<{ twoFactorRequired: true; email: string } | { twoFactorRequired: false }> => {
+    const data = await http.post<LoginResponse>('/auth/login', { email, password })
+
+    if ('twoFactorRequired' in data) {
+      return { twoFactorRequired: true, email: data.email }
+    }
+
+    setAuth(data.user, data.accessToken, data.refreshToken)
+    return { twoFactorRequired: false }
+  }
+
+  const verifyTwoFactor = async (email: string, code: string) => {
     const data = await http.post<{ user: UserStore; accessToken: string; refreshToken: string }>(
-      '/auth/login',
-      {
-        email,
-        password,
-      },
+      '/auth/login/verify-2fa',
+      { email, code },
     )
     setAuth(data.user, data.accessToken, data.refreshToken)
-
-    user.value = data.user
-    accessToken.value = data.accessToken
-    refreshToken.value = data.refreshToken
-
-    localStorage.setItem('accessToken', data.accessToken)
-    localStorage.setItem('refreshToken', data.refreshToken)
   }
 
   const logout = async () => {
@@ -76,5 +84,26 @@ export const useAuthStore = defineStore('auth', () => {
 
     clearAuth()
   }
-  return { user, accessToken, isAuthenticated, login, logout, init, clearAuth, setAuth }
+
+  const forgotPassword = async (email: string) => {
+    await http.post<{ message: string }>('/auth/forgot-password', { email })
+  }
+
+  const resetPassword = async (email: string, code: string, newPassword: string) => {
+    await http.post('/auth/reset-password', { email, code, newPassword })
+  }
+
+  return {
+    user,
+    accessToken,
+    isAuthenticated,
+    login,
+    verifyTwoFactor,
+    logout,
+    init,
+    clearAuth,
+    setAuth,
+    forgotPassword,
+    resetPassword,
+  }
 })

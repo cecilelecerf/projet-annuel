@@ -18,7 +18,7 @@ export const roleHomeMap: Record<UserStore['role'], string> = {
 } as const
 
 // Routes accessibles uniquement si non connecté (redirection si déjà connecté)
-const AUTH_ONLY_ROUTES = ['Login', 'Register', 'Landing']
+const AUTH_ONLY_ROUTES = ['Login', 'Register', 'Landing', 'ForgotPassword', 'ResetPassword']
 
 const routes: RouteRecordRaw[] = [
   {
@@ -49,6 +49,18 @@ const routes: RouteRecordRaw[] = [
     path: '/register',
     name: 'Register',
     component: () => import('@/features/auth/views/RegisterView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/features/auth/views/ResetPasswordView.vue'),
     meta: { public: true },
   },
   {

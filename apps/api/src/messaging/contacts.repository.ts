@@ -3,24 +3,97 @@ import { conversationMemberUserSelect } from "./messaging.types";
 
 export class ContactsRepository {
   constructor(private prisma: PrismaClient) {}
+
+  // ── Résolution des cliniques d'un vétérinaire (peut en avoir plusieurs) ────
+  async findClinicIdsForVeterinarian(userId: string): Promise<string[]> {
+    const profile = await this.prisma.veterinarianProfile.findUnique({
+      where: { id: userId },
+      include: { veterinarianClinics: { select: { clinicId: true } } },
+    });
+    return profile?.veterinarianClinics.map((vc) => vc.clinicId) ?? [];
+  }
+
   // TODO : delete this, is in clinic repository and service
-  async listClinicColleagues(clinicId: string, excludeUserId: string) {
-    return this.prisma.user.findMany({
+  // Accepte maintenant plusieurs cliniques (nécessaire pour les vétérinaires
+  // qui peuvent en avoir plus d'une) — les rôles mono-clinique passent
+  // simplement un tableau à un seul élément. Renvoie aussi le(s) nom(s) de
+  // clinique concerné(s) pour chaque contact (utile côté front pour
+  // distinguer les homonymes entre cliniques).
+  async listClinicColleagues(clinicIds: string[], excludeUserId: string) {
+    if (clinicIds.length === 0) return [];
+
+    const users = await this.prisma.user.findMany({
       where: {
         id: { not: excludeUserId },
         OR: [
-          { secretaryProfile: { clinicId } },
-          { directorClinicProfile: { clinic: { id: clinicId } } },
-          { referentClinicProfile: { clinicId } },
+          { secretaryProfile: { clinicId: { in: clinicIds } } },
+          {
+            directorClinicProfile: { clinic: { id: { in: clinicIds } } },
+          },
+          { referentClinicProfile: { clinicId: { in: clinicIds } } },
           {
             veterinarianProfile: {
-              veterinarianClinics: { some: { clinicId } },
+              veterinarianClinics: { some: { clinicId: { in: clinicIds } } },
             },
           },
         ],
       },
-      select: conversationMemberUserSelect,
+      select: {
+        ...conversationMemberUserSelect,
+        secretaryProfile: {
+          select: { clinic: { select: { id: true, name: true } } },
+        },
+        directorClinicProfile: {
+          select: { clinic: { select: { id: true, name: true } } },
+        },
+        referentClinicProfile: {
+          select: { clinic: { select: { id: true, name: true } } },
+        },
+        veterinarianProfile: {
+          select: {
+            veterinarianClinics: {
+              where: { clinicId: { in: clinicIds } },
+              select: { clinic: { select: { id: true, name: true } } },
+            },
+          },
+        },
+      },
       orderBy: [{ lastname: "asc" }, { firstname: "asc" }],
+    });
+
+    return users.map((user) => {
+      let clinics: { id: string; name: string }[] = [];
+      switch (user.role) {
+        case "SECRETARY":
+          clinics = user.secretaryProfile
+            ? [user.secretaryProfile.clinic]
+            : [];
+          break;
+        case "DIRECTOR":
+          clinics = user.directorClinicProfile?.clinic
+            ? [user.directorClinicProfile.clinic]
+            : [];
+          break;
+        case "REFERENT":
+          clinics = user.referentClinicProfile
+            ? [user.referentClinicProfile.clinic]
+            : [];
+          break;
+        case "VETERINARIAN":
+          clinics =
+            user.veterinarianProfile?.veterinarianClinics.map(
+              (vc) => vc.clinic,
+            ) ?? [];
+          break;
+      }
+      const {
+        secretaryProfile: _sp,
+        directorClinicProfile: _dcp,
+        referentClinicProfile: _rcp,
+        veterinarianProfile: _vp,
+        ...rest
+      } = user;
+      return { ...rest, clinics };
     });
   }
   // TODO : delete this, is in user repository and service

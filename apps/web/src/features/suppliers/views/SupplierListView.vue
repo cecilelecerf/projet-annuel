@@ -201,7 +201,8 @@ const availableProductsForDialog = computed(() => {
     ),
   )
   return allProducts.value.filter(
-    (p: { id: string; name: string; brand: { name: string } }) => !existingIds.has(p.id),
+    (p: { id: string; name: string; brand: { name: string } }) =>
+      !existingIds.has(p.id as ProductId),
   )
 })
 

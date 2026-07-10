@@ -19,6 +19,9 @@ export class ProductClinicRepository {
     });
   }
 
+  // Utilisé à la réception d'une commande fournisseur : on cherche si ce
+  // produit est déjà au catalogue de la clinique (pas via son id de ligne
+  // ClinicProduct, mais via la paire clinique+produit).
   async findByClinicAndProduct(clinicId: string, productId: string) {
     return this.prisma.clinicProduct.findFirst({
       where: { clinicId, productId },
@@ -56,5 +59,51 @@ export class ProductClinicRepository {
 
   async delete(id: string) {
     return this.prisma.clinicProduct.delete({ where: { id } });
+  }
+
+  // ── Boutique client (déplacé depuis shop/shop.repository.ts) ────────────
+  async findByClinics(clinicIds: string[]) {
+    return this.prisma.clinicProduct.findMany({
+      where: { clinicId: { in: clinicIds } },
+      include: {
+        product: { include: { brand: true } },
+        clinic: { select: { id: true, name: true } },
+      },
+      orderBy: { product: { name: "asc" } },
+    });
+  }
+
+  async findByIdWithClinic(id: string) {
+    return this.prisma.clinicProduct.findUnique({
+      where: { id },
+      include: {
+        product: { include: { brand: true } },
+        clinic: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  async findFoodProductsByClinics(clinicIds: string[]) {
+    return this.prisma.clinicProduct.findMany({
+      where: {
+        clinicId: { in: clinicIds },
+        product: { Food: { isNot: null } },
+      },
+      select: {
+        id: true,
+        product: {
+          select: {
+            Food: {
+              select: {
+                caloriesPer100: true,
+                foodHealthConditions: {
+                  select: { healthConditionId: true, recommendation: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
   }
 }

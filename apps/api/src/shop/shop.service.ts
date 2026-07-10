@@ -1,5 +1,8 @@
 import { NotFoundError, ForbiddenError } from "@api/errors";
-import { ShopRepository } from "./shop.repository";
+import { AnimalRepository } from "@api/animals/animal.repository";
+import { AnimalMeetingRepository } from "@api/meetings/animal-meeting/animal-meeting.repository";
+import { ProductClinicRepository } from "@api/products/product-clinic.repository";
+import { AnimalHealthConditionRepository } from "@api/health-conditions/health-condition.repository";
 
 // ── Calcul du grammage journalier ────────────────────────────────────────────
 const ACTIVITY_FACTORS: Record<number, number> = {
@@ -37,19 +40,26 @@ function ageInYears(dateOfBirth: Date): number {
 }
 
 export class ClientShopService {
-  constructor(private repository: ShopRepository) {}
+  constructor(
+    private animalRepository: AnimalRepository,
+    private animalMeetingRepository: AnimalMeetingRepository,
+    private productClinicRepository: ProductClinicRepository,
+    private animalHealthConditionRepository: AnimalHealthConditionRepository,
+  ) {}
 
   async getProducts(clientUserId: string) {
-    const clinicIds = await this.repository.findClinicIdsByClient(clientUserId);
+    const clinicIds =
+      await this.animalRepository.findClinicIdsForClient(clientUserId);
     if (clinicIds.length === 0) return [];
-    return this.repository.findClinicProducts(clinicIds);
+    return this.productClinicRepository.findByClinics(clinicIds);
   }
 
   async getProductById(clientUserId: string, clinicProductId: string) {
-    const clinicIds = await this.repository.findClinicIdsByClient(clientUserId);
+    const clinicIds =
+      await this.animalRepository.findClinicIdsForClient(clientUserId);
 
     const clinicProduct =
-      await this.repository.findClinicProductById(clinicProductId);
+      await this.productClinicRepository.findByIdWithClinic(clinicProductId);
 
     if (!clinicProduct) throw new NotFoundError("Produit");
     if (!clinicIds.includes(clinicProduct.clinicId)) {
@@ -61,20 +71,20 @@ export class ClientShopService {
   // ── Animaux du client (pour le sélecteur/filtre côté boutique) ────────────
 
   async getAnimals(clientUserId: string) {
-    return this.repository.findAnimalsByClient(clientUserId);
+    return this.animalRepository.findNamesByClientId(clientUserId);
   }
 
   // ── Recommandations alimentaires + grammage pour un animal donné ─────────
 
   async getFoodRecommendations(clientUserId: string, animalId: string) {
-    const animal = await this.repository.findAnimalOwnedByClient(animalId);
+    const animal = await this.animalRepository.findOwnershipInfo(animalId);
     if (!animal) throw new NotFoundError("Animal");
     if (animal.clientId !== clientUserId) throw new ForbiddenError();
 
     const [latestWeightMeeting, animalConditions, clinicIds] = await Promise.all([
-      this.repository.findLatestWeight(animalId),
-      this.repository.findAnimalHealthConditions(animalId),
-      this.repository.findClinicIdsByClient(clientUserId),
+      this.animalMeetingRepository.findLatestWeight(animalId),
+      this.animalHealthConditionRepository.findByAnimal(animalId),
+      this.animalRepository.findClinicIdsForClient(clientUserId),
     ]);
 
     if (clinicIds.length === 0) return [];
@@ -84,7 +94,8 @@ export class ClientShopService {
       animalConditions.map((c) => [c.healthConditionId, c.healthCondition.name]),
     );
 
-    const foodClinicProducts = await this.repository.findFoodClinicProducts(clinicIds);
+    const foodClinicProducts =
+      await this.productClinicRepository.findFoodProductsByClinics(clinicIds);
 
     const weightKg = latestWeightMeeting?.petWeight
       ? Number(latestWeightMeeting.petWeight)

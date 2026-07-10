@@ -14,6 +14,9 @@ import { AnimalRepository } from "./animals/animal.repository";
 // ── Medical histories ─────────────────────────────────────────
 import { AnimalMedicalHistoryRepository } from "./medical-histories/medical-history.repository";
 
+// ── Health condition ─────────────────────────────────────────
+import { AnimalHealthConditionRepository } from "./health-conditions/health-condition.repository";
+
 // ── Meetings ──────────────────────────────────────────────────
 import { MeetingRepository } from "./meetings/meeting.repository";
 import { AnimalMeetingRepository } from "./meetings/animal-meeting/animal-meeting.repository";
@@ -40,7 +43,6 @@ import { ProductClinicRepository } from "./products/product-clinic.repository";
 import { BrandRepository } from "./brands/brand.repository";
 import { ProductRequestRepository } from "./product-requests/product-request.repository";
 import { OrderRepository } from "./orders/order.repository";
-import { ShopRepository } from "./shop/shop.repository";
 
 // ── Clinic ──────────────────────────────────────
 import { SpecialityRepository } from "./specialities/speciality.repository";
@@ -174,7 +176,6 @@ const productClinicRepository = new ProductClinicRepository(prisma);
 const brandRepository = new BrandRepository(prisma);
 const productRequestRepository = new ProductRequestRepository(prisma);
 const orderRepository = new OrderRepository(prisma);
-const shopRepository = new ShopRepository(prisma);
 const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
@@ -189,6 +190,8 @@ const supplierOrderRepository = new SupplierOrderRepository(prisma);
 const supplierProductRepository = new SupplierProductRepository(prisma);
 const raceRepository = new RaceRepository(prisma);
 const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
+
+const animalHealthConditionRepository = new AnimalHealthConditionRepository(prisma);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
@@ -284,9 +287,14 @@ const productRequestService = new ProductRequestService(
   brandRepository,
 );
 
-const clientShopService = new ClientShopService(shopRepository);
+const clientShopService = new ClientShopService(
+  animalRepository,
+  animalMeetingRepository,
+  productClinicRepository,
+  animalHealthConditionRepository,
+);
 
-export const orderService = new OrderService(orderRepository, emailService, shopRepository);
+export const orderService = new OrderService(orderRepository, emailService, animalRepository);
 export const salesService = new SalesService();
 
 export const dashboardService = new DashboardService(

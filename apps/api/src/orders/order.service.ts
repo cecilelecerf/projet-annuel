@@ -3,7 +3,7 @@ import { prisma } from "@api/lib/prisma";
 import { stripe } from "@api/lib/stripe";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
 import { OrderRepository } from "./order.repository";
-import { ShopRepository } from "@api/shop/shop.repository";
+import { AnimalRepository } from "@api/animals/animal.repository";
 import { EmailService } from "@api/emails/email.service";
 import type { Checkout, CheckoutResult } from "@armali/schemas";
 import type Stripe from "stripe";
@@ -14,11 +14,11 @@ export class OrderService {
   constructor(
     private repository: OrderRepository,
     private emailService: EmailService,
-    private shopRepository: ShopRepository,
+    private animalRepository: AnimalRepository,
   ) {}
 
   async checkout(clientUserId: string, data: Checkout): Promise<CheckoutResult> {
-    const accessibleClinicIds = await this.shopRepository.findClinicIdsByClient(
+    const accessibleClinicIds = await this.animalRepository.findClinicIdsForClient(
       clientUserId,
     );
     const client = await prisma.user.findUnique({ where: { id: clientUserId } });

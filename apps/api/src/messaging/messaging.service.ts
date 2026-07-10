@@ -128,6 +128,7 @@ export class MessagingService {
         );
         const unreadCount = await this.repository.countUnread(
           conversation.id,
+          userId,
           me?.lastReadAt ?? null,
         );
         const { messages, ...rest } = conversation;
@@ -275,6 +276,11 @@ export class MessagingService {
     });
     await this.conversationRepository.touchLastMessageAt(
       conversationId,
+      message.createdAt,
+    );
+    await this.conversationRepository.updateLastReadAt(
+      conversationId,
+      actor.id,
       message.createdAt,
     );
     return message;

@@ -7,12 +7,13 @@ import { supplierApi } from '../api/supplier.api'
 import { supplierOrderApi } from '@/features/supplier-orders/api/supplier-order.api'
 import { budgetApi } from '@/features/budget/api/budget.api'
 import { productsApi } from '@/features/products/api/products.api'
-import type { SupplierWithProducts } from '@armali/schemas'
+import type { SupplierWithProducts, ProductId } from '@armali/schemas'
 
 const notify = useNotify()
 const authStore = useAuthStore()
 
-
+// Catalogue fournisseurs global : seul l'admin peut créer/modifier/supprimer.
+// Référent/directeur consultent et passent commande pour leur clinique.
 const canManage = computed(() => authStore.user?.role === 'ADMIN')
 const canOrder = computed(
   () => authStore.user?.role === 'REFERENT' || authStore.user?.role === 'DIRECTOR',
@@ -77,7 +78,10 @@ async function submitOrder(supplier: SupplierWithProducts) {
   const qtys = quantities.value[supplier.id] ?? {}
   const items = Object.entries(qtys)
     .filter(([, qty]) => (qty as number) > 0)
-    .map(([productId, quantity]) => ({ productId, quantity: quantity as number }))
+    .map(([productId, quantity]) => ({
+      productId: productId as ProductId,
+      quantity: quantity as number,
+    }))
 
   if (items.length === 0) {
     notify.error('Indique une quantité pour au moins un produit')
@@ -215,7 +219,7 @@ async function submitAddProduct() {
   submittingProduct.value = true
   try {
     await supplierApi.addProduct(productDialogSupplierId.value!, {
-      productId: productForm.value.productId,
+      productId: productForm.value.productId as ProductId,
       costPrice: productForm.value.costPrice,
     })
     notify.success('Produit ajouté au catalogue')
@@ -331,7 +335,7 @@ async function removeProduct(supplierId: string, linkId: string) {
               </td>
               <td v-if="canOrder">
                 <el-input-number
-                  v-model="quantities[supplier.id][sp.productId]"
+                  v-model="quantities[supplier.id]![sp.productId]"
                   :min="0"
                   :step="1"
                   size="small"

@@ -7,25 +7,27 @@ import type {
 } from "@armali/schemas";
 import { ConversationRepository } from "./conversation.repository";
 import { MessageRepository } from "./message.repository";
-import { ContactsRepository } from "./contacts.repository";
+import { UserRepository } from "@api/users/user.repository";
+import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
 import { withAvatarUrl, withUsersAvatar } from "@api/users/user.utils";
 
 export class MessagingService {
   constructor(
     private repository: MessageRepository,
     private conversationRepository: ConversationRepository,
-    private contactsRepository: ContactsRepository,
+    private userRepository: UserRepository,
+    private veterinarianProfileRepository: VeterinarianProfileRepository,
   ) {}
 
   private async resolveActorClinicIds(actor: JwtPayload): Promise<string[]> {
     if (actor.role === "VETERINARIAN") {
-      return this.contactsRepository.findClinicIdsForVeterinarian(actor.id);
+      return this.veterinarianProfileRepository.findClinicIds(actor.id);
     }
     return actor.clinicId ? [actor.clinicId] : [];
   }
 
   private async resolveClinicSets(userIds: string[]) {
-    const users = await this.contactsRepository.findUsersWithClinicIds(userIds);
+    const users = await this.userRepository.findWithClinicIds(userIds);
     if (users.length !== userIds.length) throw new NotFoundError("Utilisateur");
     return users;
   }
@@ -103,11 +105,11 @@ export class MessagingService {
     if (clinicIds.length === 0) throw new ForbiddenError();
 
     const clinic = (
-      await this.contactsRepository.listClinicColleagues(clinicIds, actor.id)
+      await this.userRepository.findClinicColleagues(clinicIds, actor.id)
     ).map(withAvatarUrl);
     if (actor.role !== "DIRECTOR") return { clinic };
     const directors = (
-      await this.contactsRepository.listDirectors(actor.id)
+      await this.userRepository.findDirectors(actor.id)
     ).map(withAvatarUrl);
     return { clinic, directors };
   }
@@ -155,7 +157,7 @@ export class MessagingService {
       );
       if (existing) return this.formatConversation(existing);
 
-      const [target] = await this.contactsRepository.findUsersWithClinicIds([
+      const [target] = await this.userRepository.findWithClinicIds([
         data.userId,
       ]);
       if (!target) throw new NotFoundError("Utilisateur");

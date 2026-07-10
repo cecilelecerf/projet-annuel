@@ -47,7 +47,6 @@ import { SpecialityRepository } from "./specialities/speciality.repository";
 import { ClinicRequestRepository } from "./clinics/requests/request.repository";
 
 // Chat
-import { ContactsRepository } from "./messaging/contacts.repository";
 import { MessageRepository } from "./messaging/message.repository";
 import { ConversationRepository } from "./messaging/conversation.repository";
 
@@ -179,7 +178,6 @@ const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
 const messageRepository = new MessageRepository(prisma);
-const contactsRepository = new ContactsRepository(prisma);
 const conversationRepository = new ConversationRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const staffRepository = new StaffRepository(prisma);
@@ -267,7 +265,8 @@ const specialityService = new SpecialityService(specialityRepository);
 export const messagingService = new MessagingService(
   messageRepository,
   conversationRepository,
-  contactsRepository,
+  userRepository,
+  veterinarianProfileRepository,
 );
 const clinicRequestService = new ClinicRequestService(clinicRequestRepository);
 const raceService = new RaceService(raceRepository, petRepository);

@@ -24,11 +24,14 @@ const mockMessageRepository = vi.hoisted(() => ({
   countUnread: vi.fn(),
 }));
 
-const mockContactsRepository = vi.hoisted(() => ({
-  listClinicColleagues: vi.fn(),
-  listDirectors: vi.fn(),
-  findUsersWithClinicIds: vi.fn(),
-  findClinicIdsForVeterinarian: vi.fn(),
+const mockUserRepository = vi.hoisted(() => ({
+  findClinicColleagues: vi.fn(),
+  findDirectors: vi.fn(),
+  findWithClinicIds: vi.fn(),
+}));
+
+const mockVeterinarianProfileRepository = vi.hoisted(() => ({
+  findClinicIds: vi.fn(),
 }));
 
 vi.mock("@api/messaging/conversation.repository", () => ({
@@ -41,9 +44,14 @@ vi.mock("@api/messaging/message.repository", () => ({
     return mockMessageRepository;
   }),
 }));
-vi.mock("@api/messaging/contacts.repository", () => ({
-  ContactsRepository: vi.fn(function (this: unknown) {
-    return mockContactsRepository;
+vi.mock("@api/users/user.repository", () => ({
+  UserRepository: vi.fn(function (this: unknown) {
+    return mockUserRepository;
+  }),
+}));
+vi.mock("@api/veterinarians/veterinarian-profile.repository", () => ({
+  VeterinarianProfileRepository: vi.fn(function (this: unknown) {
+    return mockVeterinarianProfileRepository;
   }),
 }));
 
@@ -51,13 +59,16 @@ const { MessagingService } = await import("@api/messaging/messaging.service");
 const { MessageRepository } = await import("@api/messaging/message.repository");
 const { ConversationRepository } =
   await import("@api/messaging/conversation.repository");
-const { ContactsRepository } =
-  await import("@api/messaging/contacts.repository");
+const { UserRepository } = await import("@api/users/user.repository");
+const { VeterinarianProfileRepository } = await import(
+  "@api/veterinarians/veterinarian-profile.repository"
+);
 
 const messagingService = new MessagingService(
   new MessageRepository({} as any),
   new ConversationRepository({} as any),
-  new ContactsRepository({} as any),
+  new UserRepository({} as any),
+  new VeterinarianProfileRepository({} as any),
 );
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -123,16 +134,14 @@ const makeConversation = (overrides = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
-    "clinic-1",
-  ]);
+  mockVeterinarianProfileRepository.findClinicIds.mockResolvedValue(["clinic-1"]);
 });
 
 // ── Éligibilité CLINIC ────────────────────────────────────────────────────────
 
 describe("createConversation — scope CLINIC", () => {
   it("crée un groupe quand tous les membres appartiennent à la clinique ciblée", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeSecretaryUser("sec-1", "clinic-1"),
       makeVetUser("vet-2", ["clinic-1"]),
     ]);
@@ -154,7 +163,7 @@ describe("createConversation — scope CLINIC", () => {
   });
 
   it("rejette si un membre appartient à une autre clinique", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeSecretaryUser("sec-1", "clinic-2"),
     ]);
 
@@ -171,7 +180,7 @@ describe("createConversation — scope CLINIC", () => {
   });
 
   it("accepte un véto qui exerce dans plusieurs cliniques dont celle ciblée", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeVetUser("vet-multi", ["clinic-2", "clinic-1"]),
     ]);
     mockConversationRepository.createGroup.mockResolvedValue(
@@ -192,7 +201,7 @@ describe("createConversation — scope CLINIC", () => {
   });
 
   it("rejette si l'acteur n'a pas accès à la clinique ciblée (véto sans cette clinique)", async () => {
-    mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+    mockVeterinarianProfileRepository.findClinicIds.mockResolvedValue([
       "clinic-9",
     ]);
 
@@ -205,9 +214,7 @@ describe("createConversation — scope CLINIC", () => {
         memberIds: ["sec-1"] as UserId[],
       }),
     ).rejects.toThrow(ForbiddenError);
-    expect(
-      mockContactsRepository.findUsersWithClinicIds,
-    ).not.toHaveBeenCalled();
+    expect(mockUserRepository.findWithClinicIds).not.toHaveBeenCalled();
   });
 
   it("rejette un acteur (rôle mono-clinique) sans clinique du tout", async () => {
@@ -238,13 +245,11 @@ describe("createConversation — scope DIRECTOR_NETWORK", () => {
         memberIds: ["dir-2", "dir-3"] as UserId[],
       }),
     ).rejects.toThrow(ForbiddenError);
-    expect(
-      mockContactsRepository.findUsersWithClinicIds,
-    ).not.toHaveBeenCalled();
+    expect(mockUserRepository.findWithClinicIds).not.toHaveBeenCalled();
   });
 
   it("rejette si un membre n'est pas directeur", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeDirectorUser("dir-2", "clinic-2"),
       makeVetUser("vet-3", ["clinic-3"]),
     ]);
@@ -263,7 +268,7 @@ describe("createConversation — scope DIRECTOR_NETWORK", () => {
   });
 
   it("accepte des directeurs de cliniques différentes", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeDirectorUser("dir-2", "clinic-2"),
       makeDirectorUser("dir-3", "clinic-3"),
     ]);
@@ -305,7 +310,7 @@ describe("createConversation — scope VETERINARIAN_NETWORK", () => {
   });
 
   it("rejette si un membre n'est pas vétérinaire", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeSecretaryUser("sec-1", "clinic-1"),
     ]);
 
@@ -320,7 +325,7 @@ describe("createConversation — scope VETERINARIAN_NETWORK", () => {
   });
 
   it("rejette un vétérinaire qui ne partage aucune clinique avec l'acteur", async () => {
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeVetUser("vet-isole", ["clinic-9"]),
     ]);
 
@@ -335,11 +340,11 @@ describe("createConversation — scope VETERINARIAN_NETWORK", () => {
   });
 
   it("accepte des vétérinaires partageant au moins une clinique avec l'acteur, même multi-cliniques", async () => {
-    mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+    mockVeterinarianProfileRepository.findClinicIds.mockResolvedValue([
       "clinic-1",
       "clinic-2",
     ]);
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeVetUser("vet-a", ["clinic-2", "clinic-5"]),
       makeVetUser("vet-b", ["clinic-1"]),
     ]);
@@ -390,7 +395,7 @@ describe("createConversation — type DIRECT", () => {
 
   it("infère le scope DIRECTOR_NETWORK pour un directeur d'une autre clinique", async () => {
     mockConversationRepository.findExistingDirect.mockResolvedValue(null);
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeDirectorUser("dir-2", "clinic-2"),
     ]);
     mockConversationRepository.createDirect.mockResolvedValue(
@@ -409,10 +414,10 @@ describe("createConversation — type DIRECT", () => {
 
   it("infère le scope VETERINARIAN_NETWORK entre deux vétérinaires sans clinique commune", async () => {
     mockConversationRepository.findExistingDirect.mockResolvedValue(null);
-    mockContactsRepository.findClinicIdsForVeterinarian.mockResolvedValue([
+    mockVeterinarianProfileRepository.findClinicIds.mockResolvedValue([
       "clinic-1",
     ]);
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeVetUser("vet-autre", ["clinic-9"]),
     ]);
     mockConversationRepository.createDirect.mockResolvedValue(
@@ -434,7 +439,7 @@ describe("createConversation — type DIRECT", () => {
 
   it("un directeur peut écrire à un véto qui exerce dans sa clinique parmi d'autres", async () => {
     mockConversationRepository.findExistingDirect.mockResolvedValue(null);
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeVetUser("vet-multi", ["clinic-2", "clinic-1"]),
     ]);
     mockConversationRepository.createDirect.mockResolvedValue(
@@ -453,7 +458,7 @@ describe("createConversation — type DIRECT", () => {
 
   it("rejette deux utilisateurs sans clinique commune ni relation directeur/vétérinaire", async () => {
     mockConversationRepository.findExistingDirect.mockResolvedValue(null);
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeSecretaryUser("sec-isolee", "clinic-9"),
     ]);
 
@@ -504,7 +509,7 @@ describe("droits admin d'un groupe", () => {
         conversationMembers: [makeMember({ role: "ADMIN" })],
       }),
     );
-    mockContactsRepository.findUsersWithClinicIds.mockResolvedValue([
+    mockUserRepository.findWithClinicIds.mockResolvedValue([
       makeSecretaryUser("sec-nouveau", "clinic-1"),
     ]);
     mockConversationRepository.addMembers.mockResolvedValue(

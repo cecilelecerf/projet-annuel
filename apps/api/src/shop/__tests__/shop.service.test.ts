@@ -1,20 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NotFoundError, ForbiddenError } from "@api/errors";
 
-const mockRepository = vi.hoisted(() => ({
-  findClinicIdsByClient: vi.fn(),
-  findClinicProducts: vi.fn(),
-  findClinicProductById: vi.fn(),
-  findAnimalsByClient: vi.fn(),
-  findAnimalOwnedByClient: vi.fn(),
+const mockAnimalRepository = vi.hoisted(() => ({
+  findClinicIdsForClient: vi.fn(),
+  findNamesByClientId: vi.fn(),
+  findOwnershipInfo: vi.fn(),
+}));
+const mockAnimalMeetingRepository = vi.hoisted(() => ({
   findLatestWeight: vi.fn(),
-  findAnimalHealthConditions: vi.fn(),
-  findFoodClinicProducts: vi.fn(),
+}));
+const mockProductClinicRepository = vi.hoisted(() => ({
+  findByClinics: vi.fn(),
+  findByIdWithClinic: vi.fn(),
+  findFoodProductsByClinics: vi.fn(),
+}));
+const mockAnimalHealthConditionRepository = vi.hoisted(() => ({
+  findByAnimal: vi.fn(),
 }));
 
 const { ClientShopService } = await import("../shop.service");
 
-const service = new ClientShopService(mockRepository as any);
+const service = new ClientShopService(
+  mockAnimalRepository as any,
+  mockAnimalMeetingRepository as any,
+  mockProductClinicRepository as any,
+  mockAnimalHealthConditionRepository as any,
+);
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -22,17 +33,17 @@ beforeEach(() => vi.clearAllMocks());
 
 describe("ClientShopService.getProducts", () => {
   it("retourne un tableau vide si le client n'a accès à aucune clinique", async () => {
-    mockRepository.findClinicIdsByClient.mockResolvedValue([]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue([]);
     const result = await service.getProducts("client-1");
     expect(result).toEqual([]);
-    expect(mockRepository.findClinicProducts).not.toHaveBeenCalled();
+    expect(mockProductClinicRepository.findByClinics).not.toHaveBeenCalled();
   });
 
   it("délègue au repository avec les cliniques accessibles", async () => {
-    mockRepository.findClinicIdsByClient.mockResolvedValue(["clinic-1"]);
-    mockRepository.findClinicProducts.mockResolvedValue([{ id: "cp-1" }]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
+    mockProductClinicRepository.findByClinics.mockResolvedValue([{ id: "cp-1" }]);
     const result = await service.getProducts("client-1");
-    expect(mockRepository.findClinicProducts).toHaveBeenCalledWith(["clinic-1"]);
+    expect(mockProductClinicRepository.findByClinics).toHaveBeenCalledWith(["clinic-1"]);
     expect(result).toHaveLength(1);
   });
 });
@@ -41,16 +52,16 @@ describe("ClientShopService.getProducts", () => {
 
 describe("ClientShopService.getProductById", () => {
   it("NotFoundError si le produit n'existe pas", async () => {
-    mockRepository.findClinicIdsByClient.mockResolvedValue(["clinic-1"]);
-    mockRepository.findClinicProductById.mockResolvedValue(null);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
+    mockProductClinicRepository.findByIdWithClinic.mockResolvedValue(null);
     await expect(service.getProductById("client-1", "cp-1")).rejects.toThrow(
       NotFoundError,
     );
   });
 
   it("ForbiddenError si le produit appartient à une clinique inaccessible", async () => {
-    mockRepository.findClinicIdsByClient.mockResolvedValue(["clinic-1"]);
-    mockRepository.findClinicProductById.mockResolvedValue({
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
+    mockProductClinicRepository.findByIdWithClinic.mockResolvedValue({
       id: "cp-1",
       clinicId: "clinic-AUTRE",
     });
@@ -60,8 +71,8 @@ describe("ClientShopService.getProductById", () => {
   });
 
   it("retourne le produit si la clinique est accessible", async () => {
-    mockRepository.findClinicIdsByClient.mockResolvedValue(["clinic-1"]);
-    mockRepository.findClinicProductById.mockResolvedValue({
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
+    mockProductClinicRepository.findByIdWithClinic.mockResolvedValue({
       id: "cp-1",
       clinicId: "clinic-1",
     });
@@ -74,7 +85,9 @@ describe("ClientShopService.getProductById", () => {
 
 describe("ClientShopService.getAnimals", () => {
   it("délègue au repository", async () => {
-    mockRepository.findAnimalsByClient.mockResolvedValue([{ id: "a1", name: "Rex" }]);
+    mockAnimalRepository.findNamesByClientId.mockResolvedValue([
+      { id: "a1", name: "Rex" },
+    ]);
     const result = await service.getAnimals("client-1");
     expect(result).toHaveLength(1);
   });
@@ -85,21 +98,21 @@ describe("ClientShopService.getAnimals", () => {
 const makeAnimal = (overrides = {}) => ({
   id: "animal-1",
   clientId: "client-1",
-  dateOfBirth: new Date(new Date().setFullYear(new Date().getFullYear() - 3)), // 3 ans
+  dateOfBirth: new Date(new Date().setFullYear(new Date().getFullYear() - 3)),
   activity: 3,
   ...overrides,
 });
 
 describe("ClientShopService.getFoodRecommendations — accès", () => {
   it("NotFoundError si l'animal n'existe pas", async () => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(null);
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(null);
     await expect(
       service.getFoodRecommendations("client-1", "unknown"),
     ).rejects.toThrow(NotFoundError);
   });
 
   it("ForbiddenError si l'animal appartient à un autre client", async () => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ clientId: "client-AUTRE" }),
     );
     await expect(
@@ -108,29 +121,31 @@ describe("ClientShopService.getFoodRecommendations — accès", () => {
   });
 
   it("retourne un tableau vide si aucune clinique accessible", async () => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(makeAnimal());
-    mockRepository.findLatestWeight.mockResolvedValue(null);
-    mockRepository.findAnimalHealthConditions.mockResolvedValue([]);
-    mockRepository.findClinicIdsByClient.mockResolvedValue([]);
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(makeAnimal());
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue(null);
+    mockAnimalHealthConditionRepository.findByAnimal.mockResolvedValue([]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue([]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
     expect(result).toEqual([]);
-    expect(mockRepository.findFoodClinicProducts).not.toHaveBeenCalled();
+    expect(
+      mockProductClinicRepository.findFoodProductsByClinics,
+    ).not.toHaveBeenCalled();
   });
 });
 
 describe("ClientShopService.getFoodRecommendations — classification", () => {
   beforeEach(() => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(makeAnimal());
-    mockRepository.findClinicIdsByClient.mockResolvedValue(["clinic-1"]);
-    mockRepository.findLatestWeight.mockResolvedValue(null);
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(makeAnimal());
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue(null);
   });
 
   it("recommendation null si le produit n'a aucun lien avec les conditions de l'animal", async () => {
-    mockRepository.findAnimalHealthConditions.mockResolvedValue([
+    mockAnimalHealthConditionRepository.findByAnimal.mockResolvedValue([
       { healthConditionId: "hc-1", healthCondition: { name: "Diabète" } },
     ]);
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       {
         id: "cp-1",
         product: {
@@ -146,10 +161,10 @@ describe("ClientShopService.getFoodRecommendations — classification", () => {
   });
 
   it("recommendation RECOMMENDED si une condition correspond", async () => {
-    mockRepository.findAnimalHealthConditions.mockResolvedValue([
+    mockAnimalHealthConditionRepository.findByAnimal.mockResolvedValue([
       { healthConditionId: "hc-1", healthCondition: { name: "Diabète" } },
     ]);
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       {
         id: "cp-1",
         product: {
@@ -170,11 +185,11 @@ describe("ClientShopService.getFoodRecommendations — classification", () => {
   });
 
   it("AVOID prend le pas sur RECOMMENDED si le produit a les deux", async () => {
-    mockRepository.findAnimalHealthConditions.mockResolvedValue([
+    mockAnimalHealthConditionRepository.findByAnimal.mockResolvedValue([
       { healthConditionId: "hc-1", healthCondition: { name: "Diabète" } },
       { healthConditionId: "hc-2", healthCondition: { name: "Obésité" } },
     ]);
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       {
         id: "cp-1",
         product: {
@@ -195,8 +210,8 @@ describe("ClientShopService.getFoodRecommendations — classification", () => {
   });
 
   it("ignore les produits qui ne sont pas des aliments (Food null)", async () => {
-    mockRepository.findAnimalHealthConditions.mockResolvedValue([]);
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalHealthConditionRepository.findByAnimal.mockResolvedValue([]);
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: null } },
     ]);
 
@@ -209,14 +224,14 @@ describe("ClientShopService.getFoodRecommendations — classification", () => {
 
 describe("ClientShopService.getFoodRecommendations — calcul du grammage", () => {
   beforeEach(() => {
-    mockRepository.findClinicIdsByClient.mockResolvedValue(["clinic-1"]);
-    mockRepository.findAnimalHealthConditions.mockResolvedValue([]);
+    mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
+    mockAnimalHealthConditionRepository.findByAnimal.mockResolvedValue([]);
   });
 
   it("dailyGrams null si le poids de l'animal est inconnu", async () => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(makeAnimal());
-    mockRepository.findLatestWeight.mockResolvedValue(null);
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(makeAnimal());
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue(null);
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
     ]);
 
@@ -225,9 +240,9 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
   });
 
   it("dailyGrams null si les calories du produit sont inconnues", async () => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(makeAnimal());
-    mockRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(makeAnimal());
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: { caloriesPer100: null, foodHealthConditions: [] } } },
     ]);
 
@@ -236,13 +251,11 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
   });
 
   it("calcule correctement le grammage pour un adulte (RER × 1.6 × 1)", async () => {
-    // poids 10kg, activité 3 (facteur 1.6), 3 ans (facteur 1), 350 kcal/100g
-    // RER = 70 × 10^0.75 ≈ 393.64 → MER ≈ 629.82 → 629.82/350×100 ≈ 180g
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ activity: 3 }),
     );
-    mockRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
     ]);
 
@@ -252,46 +265,44 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
 
   it("applique un facteur x2 pour un chiot/chaton (< 1 an)", async () => {
     const puppyBirthDate = new Date();
-    puppyBirthDate.setMonth(puppyBirthDate.getMonth() - 6); // 6 mois
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(
+    puppyBirthDate.setMonth(puppyBirthDate.getMonth() - 6);
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ dateOfBirth: puppyBirthDate, activity: 3 }),
     );
-    mockRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
-    // Adulte = 180g, chiot devrait être ~2x plus (facteur 2 vs 1)
     expect(result[0].dailyGrams).toBe(360);
   });
 
   it("applique un facteur x0.9 pour un senior (≥ 7 ans)", async () => {
     const seniorBirthDate = new Date();
     seniorBirthDate.setFullYear(seniorBirthDate.getFullYear() - 8);
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ dateOfBirth: seniorBirthDate, activity: 3 }),
     );
-    mockRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
-    // Adulte = 180g, senior = 180 × 0.9 = 162g
     expect(result[0].dailyGrams).toBe(162);
   });
 
   it("utilise le facteur d'activité par défaut (3) si activity est null", async () => {
-    mockRepository.findAnimalOwnedByClient.mockResolvedValue(
+    mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ activity: null }),
     );
-    mockRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
-    mockRepository.findFoodClinicProducts.mockResolvedValue([
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
       { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
-    expect(result[0].dailyGrams).toBe(180); // même résultat qu'activity=3
+    expect(result[0].dailyGrams).toBe(180);
   });
 });

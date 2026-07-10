@@ -200,7 +200,7 @@ describe("InternalMeetingService.update", () => {
         data: { startTime: new Date("2027-06-01T09:00:00Z") } as any,
         userId: USER_ID,
         scope: "all",
-        date,
+        originDate: date,
       });
 
       expect(mockRecurringService.update).toHaveBeenCalledWith({
@@ -235,7 +235,7 @@ describe("InternalMeetingService.update", () => {
         data: { title: "Nouveau titre" } as any,
         userId: USER_ID,
         scope: "all",
-        date,
+        originDate: date,
       });
 
       expect(mockRecurringService.update).toHaveBeenCalledWith({
@@ -266,7 +266,7 @@ describe("InternalMeetingService.update", () => {
         data: {} as any,
         userId: USER_ID,
         scope: "all",
-        date: new Date("2027-06-01"),
+        originDate: new Date("2027-06-01"),
       });
 
       expect(mockRepository.findById).toHaveBeenLastCalledWith(
@@ -308,7 +308,7 @@ describe("InternalMeetingService.update", () => {
           data: {} as any,
           userId: USER_ID,
           scope: "single",
-          date: new Date("2027-06-01"),
+          originDate: new Date("2027-06-01"),
         }),
       ).rejects.toThrow(NotFoundError);
     });
@@ -336,7 +336,7 @@ describe("InternalMeetingService.update", () => {
           data: {} as any,
           userId: USER_ID,
           scope: "single",
-          date: new Date("2027-06-01"),
+          originDate: new Date("2027-06-01"),
         }),
       ).rejects.toThrow(ConflictError);
     });
@@ -365,7 +365,7 @@ describe("InternalMeetingService.update", () => {
         data: {} as any,
         userId: USER_ID,
         scope: "single",
-        date: new Date("2027-06-01"),
+        originDate: new Date("2027-06-01"),
       });
 
       // Comportement actuel observé : le service rappelle findById avec
@@ -400,7 +400,7 @@ describe("InternalMeetingService.update", () => {
         data: { title: "Nouveau titre" } as any, // pas de date/startTime/endTime → isRescheduling = false
         userId: USER_ID,
         scope: "single",
-        date: new Date("2027-06-01"),
+        originDate: new Date("2027-06-01"),
       });
 
       expect(mockRepository.copyParticipantStatuses).toHaveBeenCalledWith({
@@ -429,7 +429,7 @@ describe("InternalMeetingService.update", () => {
         data: { startTime: new Date("2027-06-01T11:00:00Z") } as any,
         userId: USER_ID,
         scope: "single",
-        date: new Date("2027-06-01"),
+        originDate: new Date("2027-06-01"),
       });
 
       expect(mockRepository.copyParticipantStatuses).not.toHaveBeenCalled();
@@ -477,7 +477,7 @@ describe("InternalMeetingService.update", () => {
         data: {} as any,
         userId: USER_ID,
         scope: "single",
-        date: new Date("2027-06-01"),
+        originDate: new Date("2027-06-01"),
       });
 
       expect(mockRepository.createException).toHaveBeenCalledWith({

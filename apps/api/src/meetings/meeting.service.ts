@@ -167,8 +167,6 @@ export class MeetingService {
   async generateIcs(userId: UserId, role: UserRole) {
     const animalMeeting = await this.animalMeetingService.getAllByVet(userId);
     const events: EventAttributes[] = [];
-    console.log("zfezof");
-    console.log(animalMeeting);
     for (const meeting of animalMeeting) {
       if (!meeting || !meeting.meeting) continue;
 

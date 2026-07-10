@@ -85,6 +85,18 @@ export const meetingApi = {
       .get(`/veterinarians/${veterinarianId}/meetings/slots?${params}`)
       .then((d) => bookingSlotSchema.array().parse(d))
   },
+  download: async () => {
+    const blob = await http.getBlob('/meetings/calendar/download')
+
+    const url = window.URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'calendar.ics'
+    link.click()
+
+    URL.revokeObjectURL(url)
+  },
 
   internal: {
     new: async (meeting: CreateInternalMeeting) => {

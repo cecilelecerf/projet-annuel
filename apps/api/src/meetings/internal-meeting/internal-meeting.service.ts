@@ -56,13 +56,13 @@ export class InternalMeetingService {
     id,
     data,
     userId,
-    date,
+    originDate,
     scope,
   }: {
     id: string;
     data: UpdateInternalMeeting;
     userId: string;
-    date?: Date;
+    originDate?: Date;
     scope: "single" | "all";
   }) {
     const existing = await this.repository.findById(id);
@@ -73,25 +73,24 @@ export class InternalMeetingService {
     if (!isParticipant) throw new ForbiddenError();
     // Pas de récurrence : update simple, comportement inchangé
 
-    console.log(existing);
-    console.log(data);
     if (!existing.recurringId) {
       return this.repository.update({ id: id as MeetingId, data });
     }
 
-    if (!date) throw new BadRequestError("La date de l'occurrence est requise");
+    if (!originDate)
+      throw new BadRequestError("La date de l'occurrence est requise");
 
     // ── Scope "all" : délègue au split de série (ne touche que le futur) ────────
     if (scope === "all") {
       const hasInternalChanges =
         data.title !== undefined || data.description !== undefined;
-
       const recurring = await this.recurringService.update({
         id: existing.recurringId as MeetingRecurringId,
         data: {
-          dateToStartAction: date,
+          dateToStartAction: originDate,
           startTime: data.startTime,
           endTime: data.endTime,
+          dateStart: data.date,
           ...(hasInternalChanges && {
             internal: {
               title: data.title ?? existing.title,
@@ -117,7 +116,7 @@ export class InternalMeetingService {
     const parsed = createInternalMeetingSchema.safeParse({
       title: data.title ?? existing.title,
       description: data.description ?? existing.description,
-      date: data.date ?? date,
+      date: data.date ?? originDate,
       startTime: data.startTime ?? existing.recurring.startTime.toISOString(),
       endTime: data.endTime ?? existing.recurring.endTime.toISOString(),
       clinicId: existing.clinicId,
@@ -153,7 +152,8 @@ export class InternalMeetingService {
       );
       const meetingBase = await this.recurringService.materializeOccurrence({
         recurring,
-        date,
+        originDate,
+        targetDate: data.date ?? originDate,
       });
       if (!isRescheduling && meetingBase) {
         await this.participantRepository.copyStatus({

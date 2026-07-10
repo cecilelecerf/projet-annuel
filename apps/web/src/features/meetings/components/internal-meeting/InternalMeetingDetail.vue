@@ -60,7 +60,7 @@ const onSave = async (scope: 'single' | 'all') => {
   await saveSchedule({
     meetingId: meeting.id,
     parentId: meeting.parentId ?? null,
-    date: meeting.date,
+    originDate: meeting.date,
     startTime: edit.value.startTime,
     endTime: edit.value.endTime,
     scope,

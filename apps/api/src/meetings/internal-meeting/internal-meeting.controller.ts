@@ -8,6 +8,7 @@ import {
   updateParticipantStatusSchema,
 } from "@armali/schemas";
 import { InternalMeetingService } from "./internal-meeting.service";
+import dayjs from "dayjs";
 
 export class InternalMeetingController {
   constructor(private service: InternalMeetingService) {}
@@ -39,10 +40,13 @@ export class InternalMeetingController {
     try {
       const meeting = await this.service.update({
         id: req.params.id,
-        data: req.body,
+        data: {
+          ...req.body,
+          date: dayjs.utc(req.body.date).add(1, "day").startOf("day").toDate(),
+        },
         userId: req.user.id,
         scope: result.data.scope,
-        date: result.data.date,
+        originDate: result.data.date,
       });
       res.status(200).json(meeting);
     } catch (err) {

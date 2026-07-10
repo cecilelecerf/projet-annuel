@@ -42,7 +42,6 @@ export class InternalMeetingRepository {
     clinicId?: ClinicId;
     parentId?: MeetingRecurringId;
   }) {
-    console.log(data.date);
     return this.prisma.meetingBase.create({
       data: {
         kind: "INTERNAL",

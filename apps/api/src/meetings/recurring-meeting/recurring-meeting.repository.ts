@@ -79,10 +79,10 @@ export class RecurringRepository {
         where: { id: current.id },
         data: { dateEnd: dayBeforeSplit },
       });
-
+      const datOfWeek = changes.dateStart?.getDay();
       // 2. On crée la nouvelle série à partir du split, avec les modifs appliquées
       const newRecurringData = {
-        dayOfWeek: changes.dayOfWeek ?? current.dayOfWeek,
+        dayOfWeek: datOfWeek ? [datOfWeek] : current.dayOfWeek,
         startTime: changes.startTime ?? current.startTime,
         endTime: changes.endTime ?? current.endTime,
         frequency: changes.frequency ?? current.frequency,

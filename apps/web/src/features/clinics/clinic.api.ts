@@ -3,6 +3,7 @@ import {
   baseUserSchema,
   clientProfileSchema,
   clinicGuardRequest,
+  clinicRequestSchema,
   clinicSchema,
   clinicStatusSchema,
   petSchema,
@@ -55,7 +56,7 @@ export const clinicApi = {
     getAll: async () => {
       return await http
         .get('/clinics/requests')
-        .then((data) => clinicSchema.extend({ status: clinicStatusSchema }).array().parse(data))
+        .then((data) => clinicRequestSchema.array().parse(data))
     },
     approve: async ({ id }: { id: ClinicRequestId }) => {
       return await http.get(`/clinics/requests/${id}/approve`)

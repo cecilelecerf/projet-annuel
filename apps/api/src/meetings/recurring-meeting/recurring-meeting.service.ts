@@ -37,7 +37,6 @@ export class RecurringService {
     data: UpdateRecurring;
   }) {
     const current = await this.getById(id);
-
     const splitDate = dayjs.utc(data.dateToStartAction).startOf("day").toDate();
     if (current.dateStart >= splitDate) {
       if (current.internalMeeting && data.internal) {
@@ -49,7 +48,6 @@ export class RecurringService {
       const { dateToStartAction: _, ...d } = data;
       return this.repository.update(id, d);
     }
-
     return this.repository.splitFromDate(current, data, splitDate);
   }
 
@@ -62,25 +60,26 @@ export class RecurringService {
    */
   async materializeOccurrence({
     recurring,
-    date,
+    originDate,
+    targetDate,
   }: {
     recurring: RecurringWithRelations;
-    date: Date;
+    originDate: Date;
+    targetDate: Date;
   }) {
     await this.repository.createException({
       parentId: recurring.id as MeetingRecurringId,
-      date,
+      date: originDate,
       startTime: recurring.startTime,
       endTime: recurring.endTime,
       kind: recurring.kind,
     });
-
     if (recurring.kind === "INTERNAL" && recurring.internalMeeting) {
       return this.internalMeetingRepository.createPunctual({
         data: {
           title: recurring.internalMeeting.title,
           description: recurring.internalMeeting.description,
-          date,
+          date: targetDate,
           startTime: recurring.startTime,
           endTime: recurring.endTime,
           clinicId: recurring.internalMeeting.clinicId as ClinicId,
@@ -97,7 +96,7 @@ export class RecurringService {
     if (recurring.kind === "AVAILABILITY" && recurring.availabilty) {
       return this.availabilityRepository.createPunctual({
         data: {
-          date,
+          date: targetDate,
           startTime: recurring.startTime,
           endTime: recurring.endTime,
         },

@@ -10,7 +10,26 @@ import {
   InternalMeeting,
 } from "../../prisma/generated/prisma/client";
 import { MeetingBaseWithSpecific, MeetingRecurringWithChildren } from "./type";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const PARIS_TZ = "Europe/Paris";
+
+// Formatte une Date en YYYY-MM-DD selon le calendrier de Paris,
+// peu importe l'offset UTC réellement stocké.
+export const toParisDateStr = (date: Date): string => {
+  return dayjs(date).tz(PARIS_TZ).format("YYYY-MM-DD");
+};
+
+// Reconstruit un instant UTC-minuit à partir d'un jour Paris,
+// pour ré-ancrer les dates avant de les passer à rrule (dtstart, until, exdate)
+export const parisDateStrToUtcMidnight = (dateStr: string): Date => {
+  return dayjs.utc(dateStr + "T00:00:00.000Z").toDate();
+};
 const isRecurring = (
   m: MeetingBaseWithSpecific | MeetingRecurringWithChildren,
 ): m is MeetingRecurringWithChildren => {
@@ -46,44 +65,59 @@ export const expandRecurring = ({
   const overrideMap = (reccuring.childrens ?? [])
     .filter((c) => c.type === "SPECIFIED")
     .reduce<Record<string, MeetingBaseWithSpecific>>((acc, c) => {
-      const dateStr = c.date?.toISOString().split("T")[0];
+      const dateStr = c.date ? toParisDateStr(c.date) : undefined;
       if (dateStr) acc[dateStr] = c as MeetingBaseWithSpecific;
       return acc;
     }, {});
+
   const freq = RRULE_FREQ[reccuring.frequency];
+
   const rule = new RRule({
     freq,
     byweekday: reccuring.dayOfWeek.map((d) => RRULE_DAYS[d]),
-    dtstart: new Date(
-      reccuring.dateStart.toISOString().split("T")[0] + "T00:00:00.000Z",
-    ),
-    until: new Date(
-      reccuring.dateEnd.toISOString().split("T")[0] + "T23:59:59.000Z",
-    ),
+    dtstart: parisDateStrToUtcMidnight(toParisDateStr(reccuring.dateStart)),
+    until: dayjs
+      .utc(toParisDateStr(reccuring.dateEnd) + "T23:59:59.000Z")
+      .toDate(),
   });
+
   const ruleSet = new RRuleSet();
   ruleSet.rrule(rule);
-  exceptionDates.forEach((d) => ruleSet.exdate(d));
-
-  const occurrences = ruleSet.between(start, end, true);
-
-  const occurrenceDateStrs = new Set(
-    occurrences.map((d) => d.toISOString().split("T")[0]),
+  exceptionDates.forEach((d) =>
+    ruleSet.exdate(parisDateStrToUtcMidnight(toParisDateStr(d))),
   );
 
+  // Ici les dates sont good -> il manque juste les dates spécifiques
+
+  // Bien normaliser aussi les bornes de la requête, sinon même souci côté start/end
+  const occurrences = ruleSet.between(
+    parisDateStrToUtcMidnight(toParisDateStr(start)),
+    parisDateStrToUtcMidnight(toParisDateStr(end)),
+    true,
+  );
+
+  const occurrenceDateStrs = new Set(occurrences.map((d) => toParisDateStr(d)));
   const overrideOnlyDates = Object.keys(overrideMap).filter(
     (dateStr) => !occurrenceDateStrs.has(dateStr),
   );
 
   const allDates = [
-    ...occurrences.map((d) => d.toISOString().split("T")[0]),
+    ...occurrences.map((d) => toParisDateStr(d)),
     ...overrideOnlyDates,
   ];
+
   return allDates.map((dateStr) => {
     if (overrideMap[dateStr]) {
-      return flattenBase(overrideMap[dateStr]);
+      const startTime = overrideMap[dateStr].startTime;
+      const date = dayjs(overrideMap[dateStr].date)
+        .set("hours", startTime.getHours())
+        .set("minutes", startTime.getMinutes());
+      return flattenBase({
+        ...overrideMap[dateStr],
+        date: date.tz(PARIS_TZ).toDate(),
+      });
     }
-    const date = new Date(dateStr + "T00:00:00.000Z");
+    const date = parisDateStrToUtcMidnight(dateStr);
 
     let t: AnimalMeeting | InternalMeeting | Availability | undefined;
     if (reccuring.animalMeeting) t = reccuring.animalMeeting;
@@ -108,7 +142,6 @@ export const expandRecurring = ({
     };
   });
 };
-
 export const expandAll = (
   flat: (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[],
   start: Date,

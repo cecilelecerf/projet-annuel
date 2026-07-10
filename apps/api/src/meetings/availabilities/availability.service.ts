@@ -123,7 +123,7 @@ export class AvailabilityService {
           );
           return await this.reccuringService.materializeOccurrence({
             recurring,
-            date,
+            originDate: date,
           });
         }
         const { recurringId: _, type: __, ...rest } = d;

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api";
@@ -16,6 +17,7 @@ import { ApiError } from "@/lib/api";
 export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useAuth();
+  const insets = useSafeAreaInsets();
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
 
@@ -57,7 +59,13 @@ export default function RegisterScreen() {
     >
       <ScrollView
         className="flex-1 px-6"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingVertical: 32, gap: 16 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          paddingTop: insets.top + 32,
+          paddingBottom: 32,
+          gap: 16,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="items-center pb-4">

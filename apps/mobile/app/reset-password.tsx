@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api";
@@ -7,6 +8,7 @@ import { ApiError } from "@/lib/api";
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const { resetPassword } = useAuth();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ email?: string }>();
 
   const [email, setEmail] = useState(params.email ?? "");
@@ -43,7 +45,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white justify-center px-6 gap-4">
+    <View className="flex-1 bg-white justify-center px-6 gap-4" style={{ paddingTop: insets.top }}>
       <Text className="text-3xl font-bold text-gray-900 text-center mb-2">
         Réinitialiser le mot de passe
       </Text>

@@ -136,4 +136,10 @@ export const http = {
 
   patch: <T>(endpoint: string, body: unknown) =>
     api<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }),
+
+  delete: <T>(endpoint: string, body?: unknown) =>
+    api<T>(endpoint, {
+      method: "DELETE",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
 };

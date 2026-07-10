@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api";
@@ -7,6 +8,7 @@ import { ApiError } from "@/lib/api";
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const { forgotPassword } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white justify-center px-6">
+    <View className="flex-1 bg-white justify-center px-6" style={{ paddingTop: insets.top }}>
       <Text className="text-3xl font-bold text-gray-900 mb-4 text-center">Mot de passe oublié</Text>
 
       {!sent ? (

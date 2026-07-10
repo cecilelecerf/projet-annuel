@@ -28,12 +28,15 @@ type AuthContextValue = {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
   /**
-   * Pose un faux utilisateur en mémoire, sans appel réseau ni token persisté.
-   * Utile pour naviguer l'app sur un vrai téléphone tant que l'API locale
-   * (WSL2/Docker) n'est pas joignable depuis le LAN. Absent des builds prod
+   * Connexion avec le compte client seedé (client@gmail.com), pour avoir de
+   * vraies données (commandes, RDV, animaux...) en dev. Si ce compte n'existe
+   * pas côté API (ex: pas encore seedé en prod), retombe sur une session
+   * factice hors-ligne pour au moins naviguer l'UI. Absent des builds prod
    * car gardé par __DEV__ côté UI.
    */
-  devLogin: () => void;
+  devLogin: () => Promise<void>;
+  /** Met à jour l'utilisateur en mémoire (ex: après upload d'avatar). */
+  updateUser: (user: MobileUser) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -113,16 +116,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await http.post("/auth/reset-password", { email, code, newPassword });
   }, []);
 
-  const devLogin = useCallback(() => {
-    setUser({
-      id: "00000000-0000-0000-0000-000000000000" as MobileUser["id"],
-      email: "dev@armali.fr",
-      firstname: "Dev",
-      lastname: "Testeur",
-      role: "CLIENT",
-      avatarUrl: null,
-    });
-  }, []);
+  const devLogin = useCallback(async () => {
+    try {
+      const data = await http.post<AuthSession>("/auth/login", {
+        email: "client@gmail.com",
+        password: "Password123!",
+      });
+      await setSession(data);
+    } catch {
+      // Compte non disponible côté API (ex: pas seedé en prod) : session hors-ligne
+      setUser({
+        id: "00000000-0000-0000-0000-000000000000" as MobileUser["id"],
+        email: "dev@armali.fr",
+        firstname: "Dev",
+        lastname: "Testeur",
+        role: "CLIENT",
+        avatarUrl: null,
+      });
+    }
+  }, [setSession]);
 
   return (
     <AuthContext.Provider
@@ -136,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         forgotPassword,
         resetPassword,
         devLogin,
+        updateUser: setUser,
       }}
     >
       {children}

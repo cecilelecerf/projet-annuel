@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiError } from "@/lib/api";
@@ -15,6 +16,7 @@ import { ApiError } from "@/lib/api";
 export default function LoginScreen() {
   const router = useRouter();
   const { login, devLogin } = useAuth();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -37,9 +39,14 @@ export default function LoginScreen() {
     }
   }
 
-  function handleDevLogin() {
-    devLogin();
-    router.replace("/(tabs)");
+  async function handleDevLogin() {
+    setLoading(true);
+    try {
+      await devLogin();
+      router.replace("/(tabs)");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -47,7 +54,7 @@ export default function LoginScreen() {
       className="flex-1 bg-white"
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View className="flex-1 justify-center px-6">
+      <View className="flex-1 justify-center px-6" style={{ paddingTop: insets.top }}>
         <View className="items-center pb-8">
           <Text style={{ fontFamily: "BlueWinter", color: "#4873a2", fontSize: 28 }}>Armali</Text>
           <Text className="text-gray-500 text-center mt-2">Connectez-vous à votre espace</Text>

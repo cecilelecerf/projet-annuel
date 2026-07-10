@@ -77,7 +77,7 @@ async function cancelOrder(order: SupplierOrderWithDetails) {
   try {
     await ElMessageBox.confirm(
       `Annuler cette commande ? ${formatCurrency(order.total)} seront recrédités au budget.`,
-      'Confirmer l\'annulation',
+      "Confirmer l'annulation",
       { type: 'warning' },
     )
   } catch {

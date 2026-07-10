@@ -10,10 +10,6 @@ import {
   PrismaClient,
 } from "../../../prisma/generated/prisma/client";
 
-// ═══════════════════════════════════════════════════════════════
-// Includes — définis une fois, réutilisés pour typer les retours
-// ═══════════════════════════════════════════════════════════════
-
 const findByIdInclude = {
   meeting: true,
   animal: {
@@ -74,10 +70,6 @@ const findByUserInclude = {
   },
 } satisfies Prisma.AnimalMeetingInclude;
 
-// ═══════════════════════════════════════════════════════════════
-// Types de sortie — dérivés des includes ci-dessus, exportables
-// ═══════════════════════════════════════════════════════════════
-
 export type AnimalMeetingWithDetails = Prisma.AnimalMeetingGetPayload<{
   include: typeof findByIdInclude;
 }>;
@@ -93,10 +85,6 @@ export type UpdatedAnimalMeeting = Prisma.AnimalMeetingGetPayload<{
 export type AnimalMeetingForUser = Prisma.AnimalMeetingGetPayload<{
   include: typeof findByUserInclude;
 }>;
-
-// ═══════════════════════════════════════════════════════════════
-// Repository
-// ═══════════════════════════════════════════════════════════════
 
 export class AnimalMeetingRepository {
   constructor(private prisma: PrismaClient) {}
@@ -186,6 +174,15 @@ export class AnimalMeetingRepository {
     return this.prisma.animalMeeting.findMany({
       where: { animalId },
       include: findByUserInclude,
+    });
+  }
+
+  // ── Boutique client  ────────────
+  async findLatestWeight(animalId: string) {
+    return this.prisma.animalMeeting.findFirst({
+      where: { animalId, petWeight: { not: null } },
+      orderBy: { meeting: { date: "desc" } },
+      select: { petWeight: true },
     });
   }
 }

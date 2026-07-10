@@ -3,10 +3,6 @@ import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 import { vaccineDetailsInclude } from "@api/vaccines/vaccine.repository";
 
-// ═══════════════════════════════════════════════════════════════
-// Includes — définis une fois, réutilisés pour typer les retours
-// ═══════════════════════════════════════════════════════════════
-
 const findAllInclude = {
   race: { include: { pet: true } },
   client: true,
@@ -63,10 +59,6 @@ const findVaccinesByAnimalInclude = {
 export type AnimalVaccineWithDetails = Prisma.AnimalVaccineGetPayload<{
   include: typeof findVaccinesByAnimalInclude;
 }>;
-
-// ═══════════════════════════════════════════════════════════════
-// Repository
-// ═══════════════════════════════════════════════════════════════
 
 export class AnimalRepository {
   constructor(private prisma: PrismaClient) {}
@@ -137,6 +129,50 @@ export class AnimalRepository {
       where: { animalId },
       include: findVaccinesByAnimalInclude,
       orderBy: { medicalHistory: { performedAt: "desc" } },
+    });
+  }
+
+  // ── Boutique client (déplacé depuis shop/shop.repository.ts) ────────────
+
+  async findClinicIdsForClient(clientUserId: string): Promise<string[]> {
+    const animals = await this.prisma.animal.findMany({
+      where: { clientId: clientUserId },
+      select: {
+        attendingVeterinarianClinic: { select: { clinicId: true } },
+        animalMeeting: {
+          select: {
+            veterinarianClinic: { select: { clinicId: true } },
+          },
+        },
+      },
+    });
+
+    const clinicIds = new Set<string>();
+    for (const animal of animals) {
+      if (animal.attendingVeterinarianClinic) {
+        clinicIds.add(animal.attendingVeterinarianClinic.clinicId);
+      }
+      for (const meeting of animal.animalMeeting) {
+        if (meeting.veterinarianClinic?.clinicId) {
+          clinicIds.add(meeting.veterinarianClinic.clinicId);
+        }
+      }
+    }
+    return [...clinicIds];
+  }
+
+  async findNamesByClientId(clientId: string) {
+    return this.prisma.animal.findMany({
+      where: { clientId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findOwnershipInfo(animalId: string) {
+    return this.prisma.animal.findUnique({
+      where: { id: animalId },
+      select: { id: true, clientId: true, dateOfBirth: true, activity: true },
     });
   }
 }

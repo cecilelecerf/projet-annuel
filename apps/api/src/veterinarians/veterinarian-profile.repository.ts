@@ -45,4 +45,12 @@ export class VeterinarianProfileRepository {
     });
     return veterinarian.specialities;
   }
+
+  async findClinicIds(userId: string): Promise<string[]> {
+    const profile = await this.prisma.veterinarianProfile.findUnique({
+      where: { id: userId },
+      include: { veterinarianClinics: { select: { clinicId: true } } },
+    });
+    return profile?.veterinarianClinics.map((vc) => vc.clinicId) ?? [];
+  }
 }

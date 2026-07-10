@@ -14,6 +14,11 @@ import {
   Wallet,
   Box,
   List,
+  Setting,
+  Tickets,
+  Collection,
+  Star,
+  Shop,
 } from '@element-plus/icons-vue'
 const { user } = useAuthStore()
 const clinicId = clinicIdSchema.parse(user?.clinicId)
@@ -32,6 +37,7 @@ const menuItems: NavNode[] = [
       {
         index: 'REFERENT.Clinic',
         label: 'Général',
+        icon: Setting,
       },
       {
         index: 'REFERENT.Staff',
@@ -40,45 +46,55 @@ const menuItems: NavNode[] = [
       },
       {
         index: 'REFERENT.Acts',
-        label: 'Acts',
+        label: 'Actes',
+        icon: Tickets,
         params: { id: clinicId },
       },
       {
         index: 'REFERENT.Pets',
-        label: 'Pets',
+        label: 'Animaux',
+        icon: Collection,
         params: { id: clinicId },
       },
       {
         index: 'REFERENT.Specialities',
         label: 'Spécialités',
+        icon: Star,
         params: { id: clinicId },
       },
     ],
   },
   {
-    index: 'REFERENT.Boutique',
-    label: 'Boutique',
-    icon: ShoppingCart,
-  },
-  {
-    index: 'REFERENT.Sales',
-    label: 'Ventes',
-    icon: TrendCharts,
-  },
-  {
-    index: 'REFERENT.Budget',
-    label: 'Budget',
-    icon: Wallet,
-  },
-  {
-    index: 'REFERENT.Suppliers',
-    label: 'Fournisseurs',
-    icon: Box,
-  },
-  {
-    index: 'REFERENT.SupplierOrders',
-    label: 'Commandes Fournisseurs',
-    icon: List,
+    index: 'DIRECTOR.Commerce',
+    label: 'Commerce',
+    icon: Shop,
+    children: [
+      {
+        index: 'REFERENT.Boutique',
+        label: 'Boutique',
+        icon: ShoppingCart,
+      },
+      {
+        index: 'REFERENT.Sales',
+        label: 'Ventes',
+        icon: TrendCharts,
+      },
+      {
+        index: 'REFERENT.Budget',
+        label: 'Budget',
+        icon: Wallet,
+      },
+      {
+        index: 'REFERENT.Suppliers',
+        label: 'Fournisseurs',
+        icon: Box,
+      },
+      {
+        index: 'REFERENT.SupplierOrders',
+        label: 'Commandes Fournisseurs',
+        icon: List,
+      },
+    ],
   },
   {
     index: 'REFERENT.Messagerie',

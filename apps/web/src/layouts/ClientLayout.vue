@@ -11,11 +11,6 @@ const menuItems: NavNode[] = [
     icon: House,
   },
   {
-    index: 'CLIENT.Profil',
-    label: 'Profil',
-    icon: User,
-  },
-  {
     index: 'CLIENT.Meetings',
     label: 'Rendez-vous',
     icon: Calendar,
@@ -29,6 +24,11 @@ const menuItems: NavNode[] = [
     index: 'CLIENT.Orders',
     label: 'Mes commandes',
     icon: Box,
+  },
+  {
+    index: 'CLIENT.Profil',
+    label: 'Profil',
+    icon: User,
   },
 ]
 </script>

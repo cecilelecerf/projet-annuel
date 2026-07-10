@@ -45,7 +45,7 @@ const clinics = computed(() => {
 
 function clinicColor(clinicId: string) {
   return clinics.value.find(
-    (c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] }) =>
+    (c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] | undefined }) =>
       c.id === clinicId,
   )?.color ?? 'purple'
 }
@@ -70,7 +70,7 @@ const groupedByClinic = computed(() => {
     return [
       {
         clinic: clinics.value.find(
-          (c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] }) =>
+          (c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] | undefined }) =>
             c.id === filteredProducts.value[0]?.clinic.id,
         ),
         items: filteredProducts.value,
@@ -83,7 +83,7 @@ const groupedByClinic = computed(() => {
     groups.get(item.clinic.id)!.push(item)
   }
   return [...groups.entries()].map(([clinicId, items]) => ({
-    clinic: clinics.value.find((c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] }) => c.id === clinicId),
+    clinic: clinics.value.find((c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] | undefined }) => c.id === clinicId),
     items,
   }))
 })

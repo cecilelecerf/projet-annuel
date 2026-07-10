@@ -88,18 +88,21 @@ async function main() {
   const analysisActs = acts.allPerformedActs.filter(
     (act) => act.type === "ANALYSIS",
   );
-  imagingActs.map(async (act, i) => {
-    await seedImaging(prisma, {
-      imagingIds: imagingActs.map((act) => act.id),
-      localImagePath: `assets/imagings/imagings-${i}.jpg`,
-    });
-  });
-  analysisActs.map(async (act, i) => {
-    await seedAnalyses(prisma, {
-      analysisIds: analysisActs.map((act) => act.id),
-      localImagePath: `assets/analysiss/analyse-${i}.pdf`,
-    });
-  });
+
+  Promise.all([
+    ...imagingActs.map(async (act, i) => {
+      await seedImaging(prisma, {
+        imagingIds: imagingActs.map((act) => act.id),
+        localImagePath: `assets/imagings/imagings-${i}.jpg`,
+      });
+    }),
+    ...analysisActs.map(async (act, i) => {
+      await seedAnalyses(prisma, {
+        analysisIds: analysisActs.map((act) => act.id),
+        localImagePath: `assets/analysiss/analyse-${i}.pdf`,
+      });
+    }),
+  ]);
 
   const products = await seedProducts(prisma, {
     clinics,

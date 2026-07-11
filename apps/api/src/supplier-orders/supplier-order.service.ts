@@ -36,7 +36,8 @@ export class SupplierOrderService {
   ) {}
 
   private async getClinicId(userId: UserId, role: UserRole): Promise<string> {
-    if (!SUPPLIER_ORDER_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (!SUPPLIER_ORDER_MANAGER_ROLES.includes(role))
+      throw new ForbiddenError();
     return this.clinicService.getClinicIdByUserId({ userId, role });
   }
 
@@ -99,7 +100,10 @@ export class SupplierOrderService {
   async getAll(userId: UserId, role: UserRole, status?: string) {
     const clinicId = await this.getClinicId(userId, role);
     const orders = await this.repository.findByClinic(clinicId, status);
-    return orders.map((o) => ({ ...serializeOrder(o), total: computeTotal(o.items) }));
+    return orders.map((o) => ({
+      ...serializeOrder(o),
+      total: computeTotal(o.items),
+    }));
   }
 
   private async getOwnedOrder(userId: UserId, role: UserRole, id: string) {
@@ -125,10 +129,11 @@ export class SupplierOrderService {
     }
 
     for (const item of order.items) {
-      const clinicProduct = await this.productClinicRepository.findByClinicAndProduct(
-        order.clinicId,
-        item.productId,
-      );
+      const clinicProduct =
+        await this.productClinicRepository.findByClinicAndProduct(
+          order.clinicId,
+          item.productId,
+        );
       if (clinicProduct) {
         await this.productClinicRepository.incrementStock(
           clinicProduct.id,

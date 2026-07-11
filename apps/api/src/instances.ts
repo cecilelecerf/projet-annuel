@@ -194,7 +194,9 @@ const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
 const internalMeetingParticipantRepository =
   new InternalMeetingParticipantRepository(prisma);
 
-const animalHealthConditionRepository = new AnimalHealthConditionRepository(prisma);
+const animalHealthConditionRepository = new AnimalHealthConditionRepository(
+  prisma,
+);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
@@ -315,7 +317,11 @@ const clientShopService = new ClientShopService(
   animalHealthConditionRepository,
 );
 
-export const orderService = new OrderService(orderRepository, emailService, animalRepository);
+export const orderService = new OrderService(
+  orderRepository,
+  emailService,
+  animalRepository,
+);
 export const salesService = new SalesService();
 
 export const dashboardService = new DashboardService(
@@ -334,7 +340,7 @@ export const budgetService = new BudgetService(budgetRepository, clinicService);
 
 export const supplierService = new SupplierService(
   supplierRepository,
-  supplierProductRepository, 
+  supplierProductRepository,
 );
 export const supplierOrderService = new SupplierOrderService(
   supplierOrderRepository,

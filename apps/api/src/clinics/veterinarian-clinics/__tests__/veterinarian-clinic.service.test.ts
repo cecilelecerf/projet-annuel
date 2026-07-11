@@ -1,5 +1,6 @@
-import { VeterinarianClinicId } from "@armali/schemas";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ForbiddenError, NotFoundError, ConflictError } from "@api/errors";
+import { UserRole, VeterinarianClinicId } from "@armali/schemas";
 
 const mockRepository = vi.hoisted(() => ({
   findAll: vi.fn(),
@@ -11,48 +12,42 @@ const mockRepository = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
-const mockIsStaff = vi.hoisted(() => vi.fn());
-
-vi.mock(
-  "@api/clinics/veterinarian-clinics/veterinarian-clinic.repository",
-  () => ({
-    VeterinarianClinicRepository: vi.fn(function () {
-      return mockRepository;
-    }),
+vi.mock("../veterinarian-clinic.repository", () => ({
+  VeterinarianClinicRepository: vi.fn(function () {
+    return mockRepository;
   }),
-);
-
-vi.mock("@api/utils", () => ({
-  isStaff: mockIsStaff,
 }));
 
 const { VeterinarianClinicRepository } =
-  await import("@api/clinics/veterinarian-clinics/veterinarian-clinic.repository");
+  await import("../veterinarian-clinic.repository");
 const { VeterinarianClinicService } =
-  await import("@api/clinics/veterinarian-clinics/veterinarian-clinic.service");
+  await import("../veterinarian-clinic.service");
 
 const service = new VeterinarianClinicService(
   new VeterinarianClinicRepository({} as any),
 );
 
-beforeEach(() => vi.clearAllMocks());
+const VC_ID = "vc-1";
+const VET_ID = "vet-1";
+const CLINIC_ID = "clinic-1";
 
-const makeVc = (overrides: Partial<any> = {}) => ({
-  id: "vc-1",
-  veterinarianId: "vet-1",
-  clinicId: "clinic-1",
-  veterinarian: {
-    user: { id: "vet-1", firstname: "Jean", lastname: "Dupont" },
-  },
-  clinic: { id: "clinic-1", name: "Clinique A" },
+const makeVeterinarianClinic = (overrides = {}) => ({
+  id: VC_ID,
+  veterinarianId: VET_ID,
+  clinicId: CLINIC_ID,
+  createdAt: new Date(),
+  veterinarian: { user: { firstname: "Paul" } },
+  clinic: { name: "Clinique du Parc" },
   ...overrides,
 });
+
+beforeEach(() => vi.clearAllMocks());
 
 // ── getAll ───────────────────────────────────────────────────────────────────
 
 describe("VeterinarianClinicService.getAll", () => {
   it("délègue directement au repository", async () => {
-    mockRepository.findAll.mockResolvedValue([makeVc()]);
+    mockRepository.findAll.mockResolvedValue([makeVeterinarianClinic()]);
 
     const result = await service.getAll();
 
@@ -64,45 +59,44 @@ describe("VeterinarianClinicService.getAll", () => {
 // ── getById ──────────────────────────────────────────────────────────────────
 
 describe("VeterinarianClinicService.getById", () => {
-  it("retourne l'association trouvée", async () => {
-    mockRepository.findById.mockResolvedValue(makeVc());
-
-    const result = await service.getById({
-      id: "vc-1" as VeterinarianClinicId,
-    });
-
-    expect(mockRepository.findById).toHaveBeenCalledWith("vc-1");
-    expect(result.id).toBe("vc-1");
-  });
-
-  it("lève NotFoundError si l'association n'existe pas", async () => {
+  it("introuvable — NotFoundError", async () => {
     mockRepository.findById.mockResolvedValue(null);
 
     await expect(
-      service.getById({ id: "unknown" as VeterinarianClinicId }),
-    ).rejects.toThrow();
+      service.getById({ id: VC_ID as VeterinarianClinicId }),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("retourne l'association trouvée", async () => {
+    mockRepository.findById.mockResolvedValue(makeVeterinarianClinic());
+
+    const result = await service.getById({ id: VC_ID as VeterinarianClinicId });
+
+    expect(mockRepository.findById).toHaveBeenCalledWith(VC_ID);
+    expect(result.id).toBe(VC_ID);
   });
 });
 
 // ── getByClinic ──────────────────────────────────────────────────────────────
 
 describe("VeterinarianClinicService.getByClinic", () => {
-  it("retourne les associations si le rôle est staff", async () => {
-    mockIsStaff.mockReturnValue(true);
-    mockRepository.findByClinic.mockResolvedValue([makeVc()]);
-
-    const result = await service.getByClinic("clinic-1", "DIRECTOR");
-
-    expect(mockIsStaff).toHaveBeenCalledWith("DIRECTOR");
-    expect(mockRepository.findByClinic).toHaveBeenCalledWith("clinic-1");
-    expect(result).toHaveLength(1);
+  it("rôle non-staff (ex: CLIENT) — ForbiddenError", async () => {
+    await expect(
+      service.getByClinic(CLINIC_ID, "CLIENT" as UserRole),
+    ).rejects.toThrow(ForbiddenError);
+    expect(mockRepository.findByClinic).not.toHaveBeenCalled();
   });
 
-  it("lève ForbiddenError si le rôle n'est pas staff", async () => {
-    mockIsStaff.mockReturnValue(false);
+  it("rôle staff — retourne les associations de la clinique", async () => {
+    mockRepository.findByClinic.mockResolvedValue([makeVeterinarianClinic()]);
 
-    await expect(service.getByClinic("clinic-1", "CLIENT")).rejects.toThrow();
-    expect(mockRepository.findByClinic).not.toHaveBeenCalled();
+    const result = await service.getByClinic(
+      CLINIC_ID,
+      "SECRETARY" as UserRole,
+    );
+
+    expect(mockRepository.findByClinic).toHaveBeenCalledWith(CLINIC_ID);
+    expect(result).toHaveLength(1);
   });
 });
 
@@ -110,11 +104,13 @@ describe("VeterinarianClinicService.getByClinic", () => {
 
 describe("VeterinarianClinicService.getByVeterinarian", () => {
   it("délègue directement au repository, sans vérification de rôle", async () => {
-    mockRepository.findByVeterinarian.mockResolvedValue([makeVc()]);
+    mockRepository.findByVeterinarian.mockResolvedValue([
+      makeVeterinarianClinic(),
+    ]);
 
-    const result = await service.getByVeterinarian("vet-1");
+    const result = await service.getByVeterinarian(VET_ID);
 
-    expect(mockRepository.findByVeterinarian).toHaveBeenCalledWith("vet-1");
+    expect(mockRepository.findByVeterinarian).toHaveBeenCalledWith(VET_ID);
     expect(result).toHaveLength(1);
   });
 });
@@ -122,88 +118,86 @@ describe("VeterinarianClinicService.getByVeterinarian", () => {
 // ── create ───────────────────────────────────────────────────────────────────
 
 describe("VeterinarianClinicService.create", () => {
-  it("crée l'association si le rôle est staff et qu'aucun doublon n'existe", async () => {
-    mockIsStaff.mockReturnValue(true);
-    mockRepository.findByKeys.mockResolvedValue(null);
-    mockRepository.create.mockResolvedValue(makeVc());
-
-    const result = await service.create({
-      veterinarianId: "vet-1",
-      clinicId: "clinic-1",
-      role: "DIRECTOR",
-    });
-
-    expect(mockRepository.findByKeys).toHaveBeenCalledWith("vet-1", "clinic-1");
-    expect(mockRepository.create).toHaveBeenCalledWith("vet-1", "clinic-1");
-    expect(result.id).toBe("vc-1");
-  });
-
-  it("lève ForbiddenError si le rôle n'est pas staff", async () => {
-    mockIsStaff.mockReturnValue(false);
-
+  it("rôle non-staff — ForbiddenError avant toute lecture", async () => {
     await expect(
       service.create({
-        veterinarianId: "vet-1",
-        clinicId: "clinic-1",
-        role: "CLIENT",
+        veterinarianId: VET_ID,
+        clinicId: CLINIC_ID,
+        role: "CLIENT" as UserRole,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(ForbiddenError);
+
     expect(mockRepository.findByKeys).not.toHaveBeenCalled();
     expect(mockRepository.create).not.toHaveBeenCalled();
   });
 
-  it("lève ConflictError si l'association existe déjà", async () => {
-    mockIsStaff.mockReturnValue(true);
-    mockRepository.findByKeys.mockResolvedValue(makeVc());
+  it("association déjà existante — ConflictError", async () => {
+    mockRepository.findByKeys.mockResolvedValue(makeVeterinarianClinic());
 
     await expect(
       service.create({
-        veterinarianId: "vet-1",
-        clinicId: "clinic-1",
-        role: "DIRECTOR",
+        veterinarianId: VET_ID,
+        clinicId: CLINIC_ID,
+        role: "DIRECTOR" as UserRole,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(ConflictError);
+
     expect(mockRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("crée l'association si elle n'existe pas encore", async () => {
+    mockRepository.findByKeys.mockResolvedValue(null);
+    mockRepository.create.mockResolvedValue(makeVeterinarianClinic());
+
+    const result = await service.create({
+      veterinarianId: VET_ID,
+      clinicId: CLINIC_ID,
+      role: "DIRECTOR" as UserRole,
+    });
+
+    expect(mockRepository.findByKeys).toHaveBeenCalledWith(VET_ID, CLINIC_ID);
+    expect(mockRepository.create).toHaveBeenCalledWith(VET_ID, CLINIC_ID);
+    expect(result.id).toBe(VC_ID);
   });
 });
 
 // ── delete ───────────────────────────────────────────────────────────────────
 
 describe("VeterinarianClinicService.delete", () => {
-  it("supprime l'association si le rôle est staff et qu'elle existe", async () => {
-    mockIsStaff.mockReturnValue(true);
-    mockRepository.findById.mockResolvedValue(makeVc());
-    mockRepository.delete.mockResolvedValue(undefined);
-
-    await service.delete({
-      id: "vc-1" as VeterinarianClinicId,
-      role: "DIRECTOR",
-    });
-
-    expect(mockRepository.findById).toHaveBeenCalledWith("vc-1");
-    expect(mockRepository.delete).toHaveBeenCalledWith("vc-1");
-  });
-
-  it("lève ForbiddenError si le rôle n'est pas staff", async () => {
-    mockIsStaff.mockReturnValue(false);
-
+  it("rôle non-staff — ForbiddenError avant toute lecture", async () => {
     await expect(
-      service.delete({ id: "vc-1" as VeterinarianClinicId, role: "CLIENT" }),
-    ).rejects.toThrow();
+      service.delete({
+        id: VC_ID as VeterinarianClinicId,
+        role: "CLIENT" as UserRole,
+      }),
+    ).rejects.toThrow(ForbiddenError);
+
     expect(mockRepository.findById).not.toHaveBeenCalled();
     expect(mockRepository.delete).not.toHaveBeenCalled();
   });
 
-  it("lève NotFoundError si l'association n'existe pas", async () => {
-    mockIsStaff.mockReturnValue(true);
+  it("introuvable — NotFoundError", async () => {
     mockRepository.findById.mockResolvedValue(null);
 
     await expect(
       service.delete({
-        id: "unknown" as VeterinarianClinicId,
-        role: "DIRECTOR",
+        id: VC_ID as VeterinarianClinicId,
+        role: "DIRECTOR" as UserRole,
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(NotFoundError);
+
     expect(mockRepository.delete).not.toHaveBeenCalled();
+  });
+
+  it("supprime l'association existante", async () => {
+    mockRepository.findById.mockResolvedValue(makeVeterinarianClinic());
+    mockRepository.delete.mockResolvedValue(undefined);
+
+    await service.delete({
+      id: VC_ID as VeterinarianClinicId,
+      role: "DIRECTOR" as UserRole,
+    });
+
+    expect(mockRepository.delete).toHaveBeenCalledWith(VC_ID);
   });
 });

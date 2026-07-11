@@ -65,7 +65,9 @@ describe("Client Shop router", () => {
 
   describe("GET /api/shop/recommendations/:animalId", () => {
     it("401 — sans token", async () => {
-      const res = await request(app).get(`/api/shop/recommendations/${animalId}`);
+      const res = await request(app).get(
+        `/api/shop/recommendations/${animalId}`,
+      );
       expect(res.status).toBe(401);
     });
 

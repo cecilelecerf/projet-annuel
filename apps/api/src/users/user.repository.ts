@@ -114,9 +114,7 @@ export class UserRepository {
       let clinics: { id: string; name: string }[] = [];
       switch (user.role) {
         case "SECRETARY":
-          clinics = user.secretaryProfile
-            ? [user.secretaryProfile.clinic]
-            : [];
+          clinics = user.secretaryProfile ? [user.secretaryProfile.clinic] : [];
           break;
         case "DIRECTOR":
           clinics = user.directorClinicProfile?.clinic

@@ -5,7 +5,6 @@ import {
   clinicGuardRequest,
   clinicRequestSchema,
   clinicSchema,
-  clinicStatusSchema,
   petSchema,
   specialitySchema,
   type ClinicId,

@@ -11,7 +11,6 @@ import {
   type AnimalMeetingWithMeeting,
   animalMeetigWithMeetingSchema,
   ClinicId,
-  FlatMeeting,
   VeterinarianId,
   UserId,
 } from "@armali/schemas";

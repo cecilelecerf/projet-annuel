@@ -12,7 +12,6 @@ const WITH_ITEMS = {
   },
 } as const;
 
-
 const WITH_ITEMS_AND_CLIENT = {
   ...WITH_ITEMS,
   client: {

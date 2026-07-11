@@ -1,6 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import type { RequestWithParams } from "@api/middlewares";
-import { animalOptionSchema, productRecommendationSchema } from "@armali/schemas";
+import {
+  animalOptionSchema,
+  productRecommendationSchema,
+} from "@armali/schemas";
 import { ClientShopService } from "./shop.service";
 
 export class ClientShopController {
@@ -50,7 +53,9 @@ export class ClientShopController {
         req.user!.id,
         req.params.animalId,
       );
-      res.status(200).json(productRecommendationSchema.array().parse(recommendations));
+      res
+        .status(200)
+        .json(productRecommendationSchema.array().parse(recommendations));
     } catch (err) {
       next(err);
     }

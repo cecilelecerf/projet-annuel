@@ -19,11 +19,10 @@ import type {
   EventInput,
 } from '@fullcalendar/core/index.js'
 import type { VerboseFormattingArg } from '@fullcalendar/core/internal'
-import { useAuthStore } from '@/stores/authStore'
 import { useRoute } from 'vue-router'
 dayjs.locale('fr')
 
-export function useCalendar(userId?: UserId) {
+export function useCalendar() {
   const route = useRoute()
 
   const calendarData = ref<Calendar | null>(null)

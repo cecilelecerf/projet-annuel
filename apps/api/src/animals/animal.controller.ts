@@ -4,7 +4,6 @@ import {
   animalDetailSchema,
   AnimalId,
   animalMetaSchema,
-  animalSchema,
   animalWithRaceMetaSchema,
   ClinicId,
   UserId,

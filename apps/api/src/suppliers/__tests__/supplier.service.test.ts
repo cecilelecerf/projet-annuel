@@ -25,7 +25,11 @@ const service = new SupplierService(
 
 beforeEach(() => vi.clearAllMocks());
 
-const READ_FORBIDDEN_ROLES: UserRole[] = ["SECRETARY", "VETERINARIAN", "CLIENT"];
+const READ_FORBIDDEN_ROLES: UserRole[] = [
+  "SECRETARY",
+  "VETERINARIAN",
+  "CLIENT",
+];
 const WRITE_FORBIDDEN_ROLES: UserRole[] = [
   "REFERENT",
   "DIRECTOR",
@@ -93,7 +97,9 @@ describe("SupplierService.create", () => {
   );
 
   it("ADMIN — crée le fournisseur", async () => {
-    mockSupplierRepository.create.mockResolvedValue(makeSupplier({ name: "Virbac" }));
+    mockSupplierRepository.create.mockResolvedValue(
+      makeSupplier({ name: "Virbac" }),
+    );
     const result = await service.create("ADMIN", data);
     expect(mockSupplierRepository.create).toHaveBeenCalledWith(data);
     expect(result.name).toBe("Virbac");
@@ -120,7 +126,9 @@ describe("SupplierService.update / delete", () => {
 
   it("ADMIN — update — modifie le fournisseur", async () => {
     mockSupplierRepository.findById.mockResolvedValue(makeSupplier());
-    mockSupplierRepository.update.mockResolvedValue(makeSupplier({ name: "Nouveau" }));
+    mockSupplierRepository.update.mockResolvedValue(
+      makeSupplier({ name: "Nouveau" }),
+    );
     const result = await service.update("ADMIN", "supplier-1", {
       name: "Nouveau",
     } as any);
@@ -158,16 +166,16 @@ describe("SupplierService.addProduct", () => {
   const data = { productId: "product-1", costPrice: 12.5 } as any;
 
   it.each(WRITE_FORBIDDEN_ROLES)("%s — ForbiddenError", async (role) => {
-    await expect(
-      service.addProduct(role, "supplier-1", data),
-    ).rejects.toThrow(ForbiddenError);
+    await expect(service.addProduct(role, "supplier-1", data)).rejects.toThrow(
+      ForbiddenError,
+    );
   });
 
   it("ADMIN — NotFoundError si le fournisseur n'existe pas", async () => {
     mockSupplierRepository.findById.mockResolvedValue(null);
-    await expect(
-      service.addProduct("ADMIN", "unknown", data),
-    ).rejects.toThrow(NotFoundError);
+    await expect(service.addProduct("ADMIN", "unknown", data)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   it("ADMIN — ajoute le produit au catalogue (upsert)", async () => {

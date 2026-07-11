@@ -17,7 +17,7 @@ const {
   selectedMeeting,
   availableClinics,
   selectedClinicIds,
-} = useCalendar(userId)
+} = useCalendar()
 const newEventDate = ref<Date | null>(null)
 
 const isDateDrawerOpen = computed({

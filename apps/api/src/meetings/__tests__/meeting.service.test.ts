@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NotFoundError } from "@api/errors";
+import { ForbiddenError, NotFoundError } from "@api/errors";
 
 const mockMeetingRepository = vi.hoisted(() => ({
-  findById: vi.fn(),
-}));
-const mockVeterinarianRepository = vi.hoisted(() => ({
   findById: vi.fn(),
 }));
 const mockAnimalMeetingService = vi.hoisted(() => ({
@@ -22,16 +19,13 @@ const mockAvailabilityService = vi.hoisted(() => ({
 const mockClinicService = vi.hoisted(() => ({
   getClinicIdsByUserId: vi.fn(),
 }));
+const mockVeterinarianProfileRepository = vi.hoisted(() => ({
+  findById: vi.fn(),
+}));
 
 vi.mock("@api/meetings/meeting.repository", () => ({
   MeetingRepository: vi.fn(function () {
     return mockMeetingRepository;
-  }),
-}));
-
-vi.mock("@api/veterinarians/veterinarian-profile.repository", () => ({
-  MeetingRepository: vi.fn(function () {
-    return mockVeterinarianRepository;
   }),
 }));
 vi.mock("@api/meetings/animal-meeting", () => ({
@@ -54,15 +48,20 @@ vi.mock("@api/clinics/clinic.service", () => ({
     return mockClinicService;
   }),
 }));
+vi.mock("@api/veterinarians/veterinarian-profile.repository", () => ({
+  VeterinarianProfileRepository: vi.fn(function () {
+    return mockVeterinarianProfileRepository;
+  }),
+}));
 
 const { MeetingRepository } = await import("@api/meetings/meeting.repository");
-const { VeterinarianProfileRepository } =
-  await import("@api/veterinarians/veterinarian-profile.repository");
 const { AnimalMeetingService } = await import("@api/meetings/animal-meeting");
 const { InternalMeetingService } =
   await import("@api/meetings/internal-meeting");
 const { AvailabilityService } = await import("@api/meetings/availabilities");
 const { ClinicService } = await import("@api/clinics/clinic.service");
+const { VeterinarianProfileRepository } =
+  await import("@api/veterinarians/veterinarian-profile.repository");
 const { MeetingService } = await import("@api/meetings/meeting.service");
 
 const meetingService = new MeetingService(
@@ -178,7 +177,40 @@ describe("MeetingService.flattenMeetingByBase", () => {
 // ── getCalendar ───────────────────────────────────────────────────────────────
 
 describe("MeetingService.getCalendar", () => {
-  it("targetRole VETERINARIAN — récupère les animalMeetings avec les clinicIds de l'auteur", async () => {
+  it("ForbiddenError si role !== SECRETARY et targetId !== userId (consultation du calendrier d'autrui)", async () => {
+    await expect(
+      meetingService.getCalendar({
+        userId: "user-1" as any,
+        role: "VETERINARIAN" as any,
+        targetId: "vet-2" as any, // différent de userId
+        targetRole: "VETERINARIAN" as any,
+        start,
+        end,
+      }),
+    ).rejects.toThrow(ForbiddenError);
+
+    expect(mockClinicService.getClinicIdsByUserId).not.toHaveBeenCalled();
+  });
+
+  it("autorisé si targetId === userId, même sans être SECRETARY", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+
+    const result = await meetingService.getCalendar({
+      userId: "vet-1" as any,
+      role: "VETERINARIAN" as any,
+      targetId: "vet-1" as any, // égal à userId
+      targetRole: "VETERINARIAN" as any,
+      start,
+      end,
+    });
+
+    expect(result.meetings).toHaveLength(0);
+  });
+
+  it("SECRETARY peut consulter le calendrier d'un autre utilisateur", async () => {
     mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
     mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
       meetingService.flattenMeetingByBase(makeBaseWithAnimal()),
@@ -187,8 +219,45 @@ describe("MeetingService.getCalendar", () => {
     mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
 
     const result = await meetingService.getCalendar({
-      userId: "user-1" as any,
-      role: "VETERINARIAN" as any,
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
+      targetId: "vet-1" as any,
+      targetRole: "VETERINARIAN" as any,
+      start,
+      end,
+    });
+
+    expect(result.meetings).toHaveLength(1);
+  });
+
+  it("NotFoundError si la cible n'a aucune clinique associée", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValueOnce([]); // résolution de la cible
+
+    await expect(
+      meetingService.getCalendar({
+        userId: "secretary-1" as any,
+        role: "SECRETARY" as any,
+        targetId: "vet-1" as any,
+        targetRole: "VETERINARIAN" as any,
+        start,
+        end,
+      }),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("targetRole VETERINARIAN — récupère les animalMeetings avec les clinicIds de l'auteur", async () => {
+    mockClinicService.getClinicIdsByUserId
+      .mockResolvedValueOnce(["target-clinic"]) // résolution de la cible (targetId/targetRole)
+      .mockResolvedValueOnce(["clinic-1"]); // clinicIds de l'auteur (userId/role)
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
+      meetingService.flattenMeetingByBase(makeBaseWithAnimal()),
+    ]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+
+    const result = await meetingService.getCalendar({
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
       targetId: "vet-1" as any,
       targetRole: "VETERINARIAN" as any,
       start,
@@ -202,12 +271,14 @@ describe("MeetingService.getCalendar", () => {
   });
 
   it("targetRole différent de VETERINARIAN — pas d'appel animalMeetings", async () => {
-    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockClinicService.getClinicIdsByUserId
+      .mockResolvedValueOnce(["target-clinic"])
+      .mockResolvedValueOnce(["clinic-1"]);
     mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
     mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
 
     const result = await meetingService.getCalendar({
-      userId: "user-1" as any,
+      userId: "secretary-1" as any,
       role: "SECRETARY" as any,
       targetId: "client-1" as any,
       targetRole: "CLIENT" as any,
@@ -222,7 +293,9 @@ describe("MeetingService.getCalendar", () => {
   });
 
   it("combine internal + animal dans meetings, availabilities retourné séparément", async () => {
-    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockClinicService.getClinicIdsByUserId
+      .mockResolvedValueOnce(["target-clinic"])
+      .mockResolvedValueOnce(["clinic-1"]);
     mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
       meetingService.flattenMeetingByBase(makeBaseWithAnimal()),
     ]);
@@ -244,8 +317,8 @@ describe("MeetingService.getCalendar", () => {
     ]);
 
     const result = await meetingService.getCalendar({
-      userId: "user-1" as any,
-      role: "VETERINARIAN" as any,
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
       targetId: "vet-1" as any,
       targetRole: "VETERINARIAN" as any,
       start,
@@ -277,7 +350,26 @@ describe("MeetingService.getMeetingById", () => {
 // ── getVetSlots ───────────────────────────────────────────────────────────────
 
 describe("MeetingService.getVetSlots", () => {
+  it("NotFoundError si le vétérinaire n'existe pas", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      meetingService.getVetSlots({
+        veterinarianId: "vet-1" as any,
+        start,
+        end,
+        clinicIds: ["clinic-1" as any],
+      }),
+    ).rejects.toThrow(NotFoundError);
+
+    expect(mockAvailabilityService.getAvailabilities).not.toHaveBeenCalled();
+  });
+
   it("passe les créneaux occupés (internal + animal) à sliceAvailabilityIntoSlots", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue({
+      id: "vet-1",
+    });
+
     const availability = meetingService.flattenMeetingByBase(
       makeBase({
         kind: "AVAILABILITY" as const,
@@ -335,6 +427,9 @@ describe("MeetingService.getVetSlots", () => {
   });
 
   it("utilise slotDurationMinutes personnalisé", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue({
+      id: "vet-1",
+    });
     mockAvailabilityService.getAvailabilities.mockResolvedValue([
       meetingService.flattenMeetingByBase(
         makeBase({
@@ -361,6 +456,9 @@ describe("MeetingService.getVetSlots", () => {
   });
 
   it("aucune disponibilité — tableau vide, slicer jamais appelé", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue({
+      id: "vet-1",
+    });
     mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
     mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
     mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
@@ -509,10 +607,6 @@ describe("MeetingService.generateIcs", () => {
     expect(ics).toContain("DURATION:PT60M");
   });
 
-  // ⚠️ Le reduce de `recurrenceWithExclusion` fait `acc[im.meeting.parentId].exclusions.push(...)`
-  // sans initialiser la clé au préalable si l'EXCEPTION arrive avant l'entrée "recurring" dans le
-  // tableau. Ce test suppose l'ordre "recurring d'abord" — si getAllByUser ne garantit pas cet ordre,
-  // ce code peut throw un TypeError en prod (accès à .exclusions sur undefined).
   it("ajoute les EXDATE pour les occurrences EXCEPTION d'une récurrence", async () => {
     mockAnimalMeetingService.getAllByVet.mockResolvedValue([]);
     mockInternalMeetingService.getAllByUser.mockResolvedValue([

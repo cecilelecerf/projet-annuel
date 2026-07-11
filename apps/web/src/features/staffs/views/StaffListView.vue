@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import StaffList from '../components/StaffList.vue'
-import { type StaffMember, type UserRole } from '@armali/schemas'
+import { type ClinicId, type StaffMember, type UserRole } from '@armali/schemas'
 import { staffApi } from '../staff.api.ts'
 import { getStaffPageTexts } from '../utils.ts'
 
@@ -25,8 +25,11 @@ const role = computed<UserRole | undefined>(() => {
     ? (value as UserRole)
     : undefined
 })
-
-const staffs = ref<StaffMember[]>()
+const clinicIds = computed(() => {
+  if (user.value?.role === 'ADMIN' || user.value?.role === 'CLIENT') return []
+  return user.value?.role === 'VETERINARIAN' ? user.value.clinicIds : [user.value?.clinicId]
+})
+const staffByClinic = ref<Record<ClinicId, StaffMember[]>>({})
 const loading = ref(false)
 
 async function loadStaff() {
@@ -35,10 +38,13 @@ async function loadStaff() {
   loading.value = true
   formError.clear()
   try {
-    staffs.value = await staffApi.getAllByClinic({
-      clinicId: user.value.clinicId,
-      roles: role.value ? [role.value] : [],
-    })
+    if (clinicIds.value.some((c) => c === undefined)) return
+    const results = await Promise.all(
+      clinicIds.value.map((c) =>
+        staffApi.getAllByClinic({ clinicId: c! }).then((staff) => [c, staff] as const),
+      ),
+    )
+    staffByClinic.value = Object.fromEntries(results)
   } catch (err) {
     formError.handle(err)
   } finally {
@@ -64,7 +70,7 @@ function goToCreate() {
 </script>
 
 <template>
-  <div class="staff-page">
+  <div class="staff-page" v-if="clinicIds">
     <div class="page-header">
       <div>
         <h1>{{ pageTexts.title }}</h1>
@@ -78,7 +84,9 @@ function goToCreate() {
       >
     </div>
     <!-- TODO : fetch le nom de la clinique -->
-    <StaffList v-if="staffs" :staffs="staffs" clinic-name="fefe" :with-go-to-detail="true" />
+    <template v-for="id in clinicIds" :key="id">
+      <StaffList v-if="id && staffByClinic[id]" clinic-name="e" :staffs="staffByClinic[id] ?? []" />
+    </template>
   </div>
 </template>
 

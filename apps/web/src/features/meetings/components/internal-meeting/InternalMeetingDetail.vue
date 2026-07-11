@@ -64,6 +64,7 @@ const onSave = async (scope: 'single' | 'all') => {
     startTime: edit.value.startTime,
     endTime: edit.value.endTime,
     scope,
+    targetDate: edit.value.date,
     internal: {
       title: edit.value.title,
       description: edit.value.description ?? '',

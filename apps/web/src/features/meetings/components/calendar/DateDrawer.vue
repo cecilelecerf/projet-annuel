@@ -4,7 +4,7 @@ import FullCalendar from '@fullcalendar/vue3'
 
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { meetingApi } from '../../api/meeting.api.ts'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -17,10 +17,12 @@ import type {
   EventContentArg,
   EventInput,
 } from '@fullcalendar/core'
+import { useRoute } from 'vue-router'
 
 dayjs.locale('fr')
+const route = useRoute()
 
-const { date, userId } = defineProps<{
+const { date } = defineProps<{
   date: Date
   userId?: UserId
 }>()
@@ -32,10 +34,10 @@ const emit = defineEmits<{
 
 const calendar = ref<Calendar | null>(null)
 const formatted = dayjs(date).format('YYYY-MM-DD')
-
-meetingApi
-  .getCalendar({ start: formatted, end: formatted, userId })
-  .then((data) => (calendar.value = data))
+const id = computed(() => {
+  const value = route.params.id
+  return typeof value === 'string' ? value : undefined
+})
 
 const formattedDate = dayjs(date).format('YYYY-MM-DD')
 
@@ -65,7 +67,13 @@ const calendarOptions = ref<CalendarOptions>({
     emit('newEvent', info.date)
   },
   datesSet: async () => {
-    const data = await meetingApi.getCalendar({ start: formatted, end: formatted, userId })
+    const data = id.value
+      ? await meetingApi.getVeterinarianCalendar({
+          start: formatted,
+          end: formatted,
+          userId: id.value as UserId,
+        })
+      : await meetingApi.getCalendar({ start: formatted, end: formatted })
     calendar.value = data
     calendarOptions.value.events = data.meetings.map(toCalendarEvent)
     calendarOptions.value.businessHours = availabilitiesToBackgroundEvents({ calendar: data })

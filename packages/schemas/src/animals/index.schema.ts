@@ -4,6 +4,7 @@ import {
   animalIdSchema,
   raceIdSchema,
   veterinarianClinicIdSchema,
+  fileIdSchema,
 } from "../ids";
 // ── Animal (animal d'un client) ─────────────────────────────────────────────
 export const animalSchema = z.object({
@@ -17,7 +18,8 @@ export const animalSchema = z.object({
   activity: z.number().int().min(1).max(10).nullable().optional(),
   outdoorAccess: z.boolean(),
   animalContact: z.boolean(),
-  //   picture: z.url().max(255).nullable().optional(),
+  photoId: fileIdSchema.nullable(),
+  photoUrl: z.url().max(255).nullable(),
 });
 
 export const createAnimalSchema = animalSchema
@@ -25,6 +27,8 @@ export const createAnimalSchema = animalSchema
     id: true,
     clientId: true,
     attendingVeterinarianClinicId: true,
+    photoId: true,
+    photoUrl: true,
   })
   .extend({ clientId: clientIdSchema.optional() });
 export const updateAnimalSchema = createAnimalSchema

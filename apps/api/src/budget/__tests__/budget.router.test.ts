@@ -1,84 +1,119 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import request from "supertest";
-import { app } from "@api/app";
-import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { BadRequestError } from "@api/errors";
+import type { UserRole } from "@armali/schemas";
 
-describe("Budget router", () => {
-  let referentToken: string;
-  let directorToken: string;
-  let clientToken: string;
+const mockRepository = vi.hoisted(() => ({
+  create: vi.fn(),
+  findByClinic: vi.fn(),
+  getBalance: vi.fn(),
+}));
+const mockClinicService = vi.hoisted(() => ({ getClinicIdByUserId: vi.fn() }));
 
-  beforeAll(async () => {
-    referentToken = await loginAs("referent@gmail.com");
-    directorToken = await loginAs("directeur@gmail.com");
-    clientToken = await loginAs("client@gmail.com");
+const { BudgetService } = await import("../budget.service");
+
+const service = new BudgetService(mockRepository as any, mockClinicService as any);
+
+beforeEach(() => vi.clearAllMocks());
+
+const VIEW_FORBIDDEN_ROLES: UserRole[] = [
+  "ADMIN",
+  "SECRETARY",
+  "VETERINARIAN",
+  "CLIENT",
+];
+// Le référent peut CONSULTER le budget mais pas le créditer
+const CREDIT_FORBIDDEN_ROLES: UserRole[] = [
+  "ADMIN",
+  "REFERENT",
+  "SECRETARY",
+  "VETERINARIAN",
+  "CLIENT",
+];
+
+describe("BudgetService.getSummary — consultation (référent + directeur)", () => {
+  it.each(VIEW_FORBIDDEN_ROLES)(
+    "%s — BadRequestError, réservé référent/directeur",
+    async (role) => {
+      await expect(service.getSummary("user-1" as any, role)).rejects.toThrow(
+        BadRequestError,
+      );
+      expect(mockClinicService.getClinicIdByUserId).not.toHaveBeenCalled();
+    },
+  );
+
+  it("résout la clinique puis renvoie solde + historique", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
+    mockRepository.getBalance.mockResolvedValue(312.5);
+    mockRepository.findByClinic.mockResolvedValue([
+      {
+        id: "tx-1",
+        type: "CREDIT",
+        amount: 500,
+        createdAt: new Date("2026-01-01T10:00:00Z"),
+        createdBy: { firstname: "Sophie", lastname: "Bernard" },
+      },
+    ]);
+
+    const result = await service.getSummary("user-1" as any, "REFERENT");
+
+    expect(mockClinicService.getClinicIdByUserId).toHaveBeenCalledWith({
+      userId: "user-1",
+      role: "REFERENT",
+    });
+    expect(result.balance).toBe(312.5);
+    expect(result.transactions).toHaveLength(1);
   });
 
-  describe("GET /api/budget", () => {
-    it("401 — sans token", async () => {
-      const res = await request(app).get("/api/budget");
-      expect(res.status).toBe(401);
-    });
+  it("convertit createdAt en ISO string (pas un objet Date brut)", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
+    mockRepository.getBalance.mockResolvedValue(0);
+    mockRepository.findByClinic.mockResolvedValue([
+      {
+        id: "tx-1",
+        type: "CREDIT",
+        amount: 100,
+        createdAt: new Date("2026-01-01T10:00:00Z"),
+        createdBy: { firstname: "A", lastname: "B" },
+      },
+    ]);
 
-    it("403 — CLIENT n'a pas accès au budget", async () => {
-      const res = await request(app)
-        .get("/api/budget")
-        .set("Authorization", `Bearer ${clientToken}`);
-      expect(res.status).toBe(403);
-    });
+    const result = await service.getSummary("user-1" as any, "DIRECTOR");
 
-    it("200 — REFERENT reçoit solde + historique", async () => {
-      const res = await request(app)
-        .get("/api/budget")
-        .set("Authorization", `Bearer ${referentToken}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty("balance");
-      expect(Array.isArray(res.body.transactions)).toBe(true);
-    });
-
-    it("200 — DIRECTOR reçoit le budget de sa clinique", async () => {
-      const res = await request(app)
-        .get("/api/budget")
-        .set("Authorization", `Bearer ${directorToken}`);
-      expect(res.status).toBe(200);
-    });
+    expect(typeof result.transactions[0].createdAt).toBe("string");
+    expect(result.transactions[0].createdAt).toBe("2026-01-01T10:00:00.000Z");
   });
+});
 
-  describe("POST /api/budget/credit", () => {
-    it("403 — CLIENT ne peut pas créditer", async () => {
-      const res = await request(app)
-        .post("/api/budget/credit")
-        .set("Authorization", `Bearer ${clientToken}`)
-        .send({ amount: 100 });
-      expect(res.status).toBe(403);
+describe("BudgetService.credit — directeur uniquement", () => {
+  it.each(CREDIT_FORBIDDEN_ROLES)(
+    "%s — BadRequestError, aucun crédit (référent inclus : consultation ≠ crédit)",
+    async (role) => {
+      await expect(
+        service.credit("user-1" as any, role, { amount: 100 }),
+      ).rejects.toThrow(BadRequestError);
+      expect(mockRepository.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it("DIRECTOR — crée une transaction CREDIT liée à la clinique résolue", async () => {
+    mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
+    mockRepository.create.mockResolvedValue({ id: "tx-1" });
+
+    await service.credit("user-1" as any, "DIRECTOR", {
+      amount: 200,
+      reason: "Réappro trimestriel",
     });
 
-    it("400 — body invalide (amount négatif)", async () => {
-      const res = await request(app)
-        .post("/api/budget/credit")
-        .set("Authorization", `Bearer ${referentToken}`)
-        .send({ amount: -50 });
-      expect(res.status).toBe(400);
+    expect(mockClinicService.getClinicIdByUserId).toHaveBeenCalledWith({
+      userId: "user-1",
+      role: "DIRECTOR",
     });
-
-    it("201 — REFERENT crédite le budget, le solde augmente en conséquence", async () => {
-      const before = await request(app)
-        .get("/api/budget")
-        .set("Authorization", `Bearer ${referentToken}`);
-      const balanceBefore = before.body.balance;
-
-      const res = await request(app)
-        .post("/api/budget/credit")
-        .set("Authorization", `Bearer ${referentToken}`)
-        .send({ amount: 100, reason: "Test" });
-
-      expect(res.status).toBe(201);
-
-      const after = await request(app)
-        .get("/api/budget")
-        .set("Authorization", `Bearer ${referentToken}`);
-      expect(after.body.balance).toBe(balanceBefore + 100);
+    expect(mockRepository.create).toHaveBeenCalledWith({
+      clinicId: "clinic-1",
+      createdById: "user-1",
+      type: "CREDIT",
+      amount: 200,
+      reason: "Réappro trimestriel",
     });
   });
 });

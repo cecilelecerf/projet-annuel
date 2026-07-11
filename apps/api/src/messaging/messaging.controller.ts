@@ -113,6 +113,7 @@ export class MessagingController {
       const conversation = await this.service.addMembers(
         req.params.id,
         req.user.id,
+        req.user.role,
         req.body.memberIds,
       );
       if (!conversation) throw new BadRequestError("Conversation introuvable");

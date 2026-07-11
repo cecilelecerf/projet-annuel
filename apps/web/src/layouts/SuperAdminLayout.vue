@@ -20,7 +20,6 @@ const menuItems: NavNode[] = [
     label: 'Accueil',
     icon: House,
   },
-
   {
     index: 'ADMIN.ClinicRequests',
     label: 'Demandes cliniques',

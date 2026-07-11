@@ -7,7 +7,7 @@ import { Calendar, Search } from '@element-plus/icons-vue'
 import { meetingApi } from '../api/meeting.api.ts'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
-import MeetingCard from '../components/animal-meeting/MeetingCard.vue'
+import MeetingCard from '../components/animal-meeting/AnimalMeetingCard.vue'
 import { combineDateAndTime } from '../components/utils.ts'
 
 dayjs.extend(utc)

@@ -3,8 +3,6 @@ import { actSchema, type Act, type ActType, type CreateAct, type UpdateAct } fro
 
 export const actApi = {
   getAll: async (params?: { types?: ActType[] }): Promise<Act[]> => {
-    console.log('enter')
-    console.log(params)
     const query = new URLSearchParams()
     params?.types?.forEach((type) => query.append('type', type))
     const queryString = query.toString()

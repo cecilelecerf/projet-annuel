@@ -11,12 +11,12 @@ import type {
 } from '@/features/specialities/composables/useLinkSpecialities.ts'
 
 const { user } = storeToRefs(useAuthStore())
+if (!(user.value && ('clinicId' in user.value || 'clinicIds' in user.value))) throw new Error()
 
-const clinicId = user.value!.clinicId!
 const data: LinkClinic | LinkVeterinarian =
   user?.value?.role === 'VETERINARIAN'
     ? { type: 'veterinarian', veterinarianId: user.value.id }
-    : { type: 'clinic', clinicId }
+    : { type: 'clinic', clinicId: user.value.clinicId }
 
 const {
   allPets,

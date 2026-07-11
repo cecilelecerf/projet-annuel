@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Animal, User, ClinicId, StaffMember } from '@armali/schemas'
-import DateField from './DateField.vue'
+import DateField from './fields/DateField.vue'
 import AvailabilityTimeline from './timeline/AvailabilityTimeline.vue'
-import SearchSelectSingle from './SearchSelectSingle.vue'
+import SearchSelectSingle from '../../../../components/ui/SearchSelectSingle.vue'
 
 defineProps<{
   clients: User[]

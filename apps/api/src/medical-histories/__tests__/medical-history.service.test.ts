@@ -16,6 +16,7 @@ const mockRepository = vi.hoisted(() => ({
 
 const mockAnimalMeetingRepository = vi.hoisted(() => ({
   findById: vi.fn(),
+  findByClientAndClinic: vi.fn(),
 }));
 
 const mockClinicActRepository = vi.hoisted(() => ({
@@ -24,7 +25,7 @@ const mockClinicActRepository = vi.hoisted(() => ({
 
 const mockVeterinarianClinicRepository = vi.hoisted(() => ({
   findById: vi.fn(),
-  findByVeterinarianAndClinic: vi.fn(),
+  findByKeys: vi.fn(),
 }));
 
 const mockAnimalRepository = vi.hoisted(() => ({
@@ -44,7 +45,9 @@ const mockFileService = vi.hoisted(() => ({
   createUpload: vi.fn(),
   confirmUpload: vi.fn(),
 }));
-
+const mockClinicService = vi.hoisted(() => ({
+  getClinicIdsByUserId: vi.fn(),
+}));
 vi.mock("@api/medical-histories/medical-history.repository", () => ({
   AnimalMedicalHistoryRepository: vi.fn(function () {
     return mockRepository;
@@ -89,7 +92,11 @@ vi.mock("@api/acts/act.repository", () => ({
     return mockActRepository;
   }),
 }));
-
+vi.mock("@api/clinics/clinic.service", () => ({
+  ClinicService: vi.fn(function () {
+    return mockClinicService;
+  }),
+}));
 vi.mock("@api/files/file.service", () => ({
   FileService: vi.fn(function () {
     return mockFileService;
@@ -110,6 +117,7 @@ const { ClinicActRepository } =
   await import("@api/clinics/clinic-acts/clinic-act.repository");
 const { ActRepository } = await import("@api/acts/act.repository");
 const { FileService } = await import("@api/files/file.service");
+const { ClinicService } = await import("@api/clinics/clinic.service");
 
 const service = new AnimalMedicalHistoryService(
   new AnimalMedicalHistoryRepository({} as any),
@@ -119,6 +127,8 @@ const service = new AnimalMedicalHistoryService(
   new VaccineRepository({} as any),
   new VeterinarianClinicRepository({} as any),
   new ClinicActRepository({} as any),
+  new ClinicService({} as any),
+
   new FileService({} as any),
 );
 
@@ -201,9 +211,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   // Par défaut, staff appartient à sa clinique — les tests "hors clinique"
   // surchargent explicitement avec mockResolvedValue(null).
-  mockVeterinarianClinicRepository.findByVeterinarianAndClinic.mockResolvedValue(
-    { id: "vet-clinic-1" },
-  );
+  mockVeterinarianClinicRepository.findByKeys.mockResolvedValue({
+    id: "vet-clinic-1",
+  });
 });
 
 // ── create — dispatch ─────────────────────────────────────────────────────────
@@ -297,26 +307,21 @@ describe("AnimalMedicalHistoryService.create — flow libre", () => {
 
     await service.create(makeFreeCreateData() as any, "VETERINARIAN", "user-1");
 
-    expect(
-      mockVeterinarianClinicRepository.findByVeterinarianAndClinic,
-    ).not.toHaveBeenCalled();
+    expect(mockVeterinarianClinicRepository.findByKeys).not.toHaveBeenCalled();
     expect(mockRepository.create).toHaveBeenCalledOnce();
   });
 
   it("staff hors de la clinique suivant l'animal — ForbiddenError", async () => {
     mockActRepository.findById.mockResolvedValue(makeAct());
     mockAnimalRepository.findById.mockResolvedValue(
-      makeAnimal({ attendingVeterinarianClinic: { clinicId: "clinic-1" } }),
+      makeAnimal({ attendingVeterinarianClinic: { clinicId: "clinic-4" } }),
     );
-    mockVeterinarianClinicRepository.findByVeterinarianAndClinic.mockResolvedValue(
-      null,
-    );
+    mockVeterinarianClinicRepository.findByKeys.mockResolvedValue(null);
 
     await expect(
       service.create(makeFreeCreateData() as any, "VETERINARIAN", "user-1"),
     ).rejects.toThrow(ForbiddenError);
   });
-
   it("staff dans la bonne clinique — succès", async () => {
     mockActRepository.findById.mockResolvedValue(makeAct());
     mockAnimalRepository.findById.mockResolvedValue(
@@ -326,9 +331,10 @@ describe("AnimalMedicalHistoryService.create — flow libre", () => {
 
     await service.create(makeFreeCreateData() as any, "VETERINARIAN", "user-1");
 
-    expect(
-      mockVeterinarianClinicRepository.findByVeterinarianAndClinic,
-    ).toHaveBeenCalledWith("user-1", "clinic-1");
+    expect(mockVeterinarianClinicRepository.findByKeys).toHaveBeenCalledWith(
+      "user-1",
+      "clinic-1",
+    );
     expect(mockRepository.create).toHaveBeenCalledOnce();
   });
 
@@ -419,9 +425,7 @@ describe("AnimalMedicalHistoryService.create — flow RDV", () => {
   it("staff hors de la clinique de l'acte — ForbiddenError", async () => {
     mockAnimalMeetingRepository.findById.mockResolvedValue(makeAnimalMeeting());
     mockClinicActRepository.findById.mockResolvedValue(makeClinicAct());
-    mockVeterinarianClinicRepository.findByVeterinarianAndClinic.mockResolvedValue(
-      null,
-    );
+    mockVeterinarianClinicRepository.findByKeys.mockResolvedValue(null);
     await expect(
       service.create(makeMeetingCreateData() as any, "VETERINARIAN", "user-1"),
     ).rejects.toThrow(ForbiddenError);
@@ -750,9 +754,7 @@ describe("AnimalMedicalHistoryService.update", () => {
       }),
     );
     mockClinicActRepository.findById.mockResolvedValue(makeClinicAct());
-    mockVeterinarianClinicRepository.findByVeterinarianAndClinic.mockResolvedValue(
-      null,
-    );
+    mockVeterinarianClinicRepository.findByKeys.mockResolvedValue(null);
 
     await expect(
       service.update(
@@ -801,9 +803,7 @@ describe("AnimalMedicalHistoryService.update", () => {
       "user-1",
     );
 
-    expect(
-      mockVeterinarianClinicRepository.findByVeterinarianAndClinic,
-    ).not.toHaveBeenCalled();
+    expect(mockVeterinarianClinicRepository.findByKeys).not.toHaveBeenCalled();
     expect(result).toHaveProperty("notes", "MàJ");
   });
 });
@@ -907,22 +907,24 @@ describe("AnimalMedicalHistoryService.getByMeeting", () => {
   it("staff avec veterinarianClinicId présent, hors clinique — ForbiddenError", async () => {
     mockAnimalMeetingRepository.findById.mockResolvedValue(makeAnimalMeeting());
     mockVeterinarianClinicRepository.findById.mockResolvedValue(
-      makeVeterinarianClinic(),
+      makeVeterinarianClinic({ clinicId: "clinic-1" }),
     );
-    mockVeterinarianClinicRepository.findByVeterinarianAndClinic.mockResolvedValue(
-      null,
-    );
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-2"]); // ne contient pas "clinic-1"
+
     await expect(
       service.getByMeeting("meeting-1", "VETERINARIAN", "user-1"),
     ).rejects.toThrow(ForbiddenError);
   });
-
   it("staff avec veterinarianClinicId présent, dans la clinique — succès", async () => {
     mockAnimalMeetingRepository.findById.mockResolvedValue(makeAnimalMeeting());
     mockVeterinarianClinicRepository.findById.mockResolvedValue(
       makeVeterinarianClinic(),
     );
     mockRepository.findByMeeting.mockResolvedValue([makeHistory()]);
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockVeterinarianClinicRepository.findByKeys.mockResolvedValue({
+      clinicId: "clinic-1",
+    });
 
     const result = await service.getByMeeting(
       "meeting-1",
@@ -993,6 +995,10 @@ describe("AnimalMedicalHistoryService.getByAnimal", () => {
     mockAnimalRepository.findById.mockResolvedValue(
       makeAnimal({ attendingVeterinarianClinic: null }),
     );
+
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-2"]);
+    mockAnimalMeetingRepository.findByClientAndClinic.mockResolvedValue([]);
+
     await expect(
       service.getByAnimal("animal-1" as AnimalId, "VETERINARIAN", "user-1"),
     ).rejects.toThrow(ForbiddenError);
@@ -1002,9 +1008,10 @@ describe("AnimalMedicalHistoryService.getByAnimal", () => {
     mockAnimalRepository.findById.mockResolvedValue(
       makeAnimal({ attendingVeterinarianClinic: { clinicId: "clinic-1" } }),
     );
-    mockVeterinarianClinicRepository.findByVeterinarianAndClinic.mockResolvedValue(
-      null,
-    );
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-2"]);
+    mockAnimalMeetingRepository.findByClientAndClinic.mockResolvedValue([]);
+
+    mockVeterinarianClinicRepository.findByKeys.mockResolvedValue(null);
     await expect(
       service.getByAnimal("animal-1" as AnimalId, "VETERINARIAN", "user-1"),
     ).rejects.toThrow(ForbiddenError);
@@ -1014,6 +1021,8 @@ describe("AnimalMedicalHistoryService.getByAnimal", () => {
     mockAnimalRepository.findById.mockResolvedValue(
       makeAnimal({ attendingVeterinarianClinic: { clinicId: "clinic-1" } }),
     );
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockAnimalMeetingRepository.findByClientAndClinic.mockResolvedValue([]);
     mockRepository.findByAnimalId.mockResolvedValue([makeHistory()]);
 
     const result = await service.getByAnimal(

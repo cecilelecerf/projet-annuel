@@ -3,7 +3,8 @@ import { BudgetRepository } from "./budget.repository";
 import { ClinicService } from "@api/clinics/clinic.service";
 import type { CreditBudget, UserId, UserRole } from "@armali/schemas";
 
-const BUDGET_MANAGER_ROLES: UserRole[] = ["REFERENT", "DIRECTOR"];
+const BUDGET_VIEW_ROLES: UserRole[] = ["REFERENT", "DIRECTOR"];
+const BUDGET_CREDIT_ROLES: UserRole[] = ["DIRECTOR"];
 
 export class BudgetService {
   constructor(
@@ -11,17 +12,26 @@ export class BudgetService {
     private clinicService: ClinicService,
   ) {}
 
-  private async assertRoleAndGetClinicId(userId: UserId, role: UserRole) {
-    if (!BUDGET_MANAGER_ROLES.includes(role)) {
+  private async assertViewRoleAndGetClinicId(userId: UserId, role: UserRole) {
+    if (!BUDGET_VIEW_ROLES.includes(role)) {
       throw new BadRequestError(
-        "Seuls le référent et le directeur peuvent gérer le budget de la clinique",
+        "Seuls le référent et le directeur peuvent consulter le budget de la clinique",
+      );
+    }
+    return this.clinicService.getClinicIdByUserId({ userId, role });
+  }
+
+  private async assertCreditRoleAndGetClinicId(userId: UserId, role: UserRole) {
+    if (!BUDGET_CREDIT_ROLES.includes(role)) {
+      throw new BadRequestError(
+        "Seul le directeur peut créditer le budget de la clinique",
       );
     }
     return this.clinicService.getClinicIdByUserId({ userId, role });
   }
 
   async getSummary(userId: UserId, role: UserRole) {
-    const clinicId = await this.assertRoleAndGetClinicId(userId, role);
+    const clinicId = await this.assertViewRoleAndGetClinicId(userId, role);
     const [balance, transactions] = await Promise.all([
       this.repository.getBalance(clinicId),
       this.repository.findByClinic(clinicId),
@@ -36,7 +46,7 @@ export class BudgetService {
   }
 
   async credit(userId: UserId, role: UserRole, data: CreditBudget) {
-    const clinicId = await this.assertRoleAndGetClinicId(userId, role);
+    const clinicId = await this.assertCreditRoleAndGetClinicId(userId, role);
     return this.repository.create({
       clinicId,
       createdById: userId,

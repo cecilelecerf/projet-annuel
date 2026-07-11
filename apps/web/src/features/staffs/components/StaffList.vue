@@ -41,7 +41,7 @@ const roleTag: Record<StaffRole, Color> = {
           name:
             user?.role === 'DIRECTOR' || user?.role === 'REFERENT'
               ? `${user?.role.toUpperCase()}.Staff.Detail`
-              : `${user?.role}.Calendar`,
+              : `${user?.role.toUpperCase()}.Veto.Calendar`,
           params: { id: member.id },
         }"
       />

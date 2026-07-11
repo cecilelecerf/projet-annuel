@@ -6,6 +6,7 @@ enum ConversationType {
 enum ConversationScope {
   CLINIC
   DIRECTOR_NETWORK
+  VETERINARIAN_NETWORK
 }
 
 model Conversation {

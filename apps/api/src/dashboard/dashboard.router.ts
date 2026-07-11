@@ -9,7 +9,13 @@ const controller = dashboardController;
 dashboardRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(["REFERENT", "DIRECTOR", "SECRETARY", "VETERINARIAN", "ADMIN"]),
+  roleMiddleware([
+    "REFERENT",
+    "DIRECTOR",
+    "SECRETARY",
+    "VETERINARIAN",
+    "ADMIN",
+  ]),
   controller.getDashboard.bind(controller) as RequestHandler,
 );
 

@@ -19,7 +19,10 @@ export class UserService {
     role: UserRole,
     targetRole?: UserRole[],
   ) {
-    if (role !== "ADMIN") throw new ForbiddenError();
+    if (role !== "ADMIN" && role !== "VETERINARIAN" && role !== "SECRETARY")
+      throw new ForbiddenError();
+    if (targetRole?.includes("ADMIN") && role !== "ADMIN")
+      throw new ForbiddenError();
     const users = await this.repository.getAllUsersByRole({
       roles: targetRole,
     });
@@ -38,7 +41,7 @@ export class UserService {
     const user = await this.repository.getUserById({ id: targetId });
     if (!user) throw new NotFoundError("Utilisateur");
 
-    if (requesterRole === "ADMIN") return user;
+    if (requesterRole === "ADMIN") return withAvatarUrl(user);
     if (user.role === "ADMIN") throw new ForbiddenError();
 
     if (isStaff(user.role)) {
@@ -54,7 +57,7 @@ export class UserService {
     }
 
     // TODO CLIENT → accessible par tout staff
-    return user;
+    return withAvatarUrl(user);
   }
 
   async fileUpload({

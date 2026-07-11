@@ -34,6 +34,12 @@ animalMeetingRouter.get(
   animalController.getByAnimal.bind(animalController) as RequestHandler,
 );
 animalMeetingRouter.get(
+  "/:id/animal/last",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  animalController.getLastByAnimal.bind(animalController) as RequestHandler,
+);
+animalMeetingRouter.get(
   "/:id/medical-histories",
   authMiddleware,
   animalMedicalHistory.getByMeeting.bind(

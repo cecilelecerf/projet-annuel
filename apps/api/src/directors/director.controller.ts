@@ -37,6 +37,31 @@ export class DirectorController {
     }
   }
 
+  async searchVeterinarian(req: Request, res: Response, next: NextFunction) {
+    try {
+      const query = typeof req.query.q === "string" ? req.query.q : "";
+      const results = await directorService.searchVeterinarian(
+        req.user!.id,
+        query,
+      );
+      res.status(200).json(results);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async linkVeterinarian(req: Request, res: Response, next: NextFunction) {
+    try {
+      const linked = await directorService.linkVeterinarian(
+        req.user!.id,
+        req.body.veterinarianId,
+      );
+      res.status(201).json(linked);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getClinicStaff(req: Request, res: Response, next: NextFunction) {
     try {
       const staff = await directorService.getClinicStaff(req.user!.id);
@@ -80,7 +105,7 @@ export class DirectorController {
     try {
       const clinic = await directorService.linkSpeciality(
         req.user!.id,
-        req.params.specialityId,
+        req.params.specialityId as string,
       );
       res.status(200).json(clinic);
     } catch (err) {
@@ -92,7 +117,7 @@ export class DirectorController {
     try {
       const clinic = await directorService.unlinkSpeciality(
         req.user!.id,
-        req.params.specialityId,
+        req.params.specialityId as string,
       );
       res.status(200).json(clinic);
     } catch (err) {
@@ -104,7 +129,7 @@ export class DirectorController {
     try {
       const result = await directorService.deleteStaffMember(
         req.user!.id,
-        req.params.id,
+        req.params.id as string,
       );
       res.status(200).json(result);
     } catch (err) {

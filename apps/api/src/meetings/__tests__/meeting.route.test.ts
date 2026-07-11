@@ -588,6 +588,84 @@ describe("PATCH /api/meetings/animals/:id", () => {
       .send({ report: "Mise à jour du rapport" });
     expect(res.status).toBe(200);
   });
+
+  it("200 — marque un rendez-vous comme effectué (status)", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const animal = await getPrisma().animal.findFirst();
+    const speciality = await getPrisma().speciality.findFirst();
+    const vetoClinic = await getPrisma().veterinarianClinic.findFirst({
+      where: { veterinarian: { user: { email: "veto@gmail.com" } } },
+    });
+    const resCreate = await request(app)
+      .post("/api/meetings/animals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        date: "2026-08-30",
+        startTime: "1970-01-01T09:41:01.000Z",
+        endTime: "1970-01-01T09:41:30.000Z",
+        animalId: animal!.id,
+        veterinarianId: vetoClinic!.veterinarianId,
+        specialityId: speciality!.id,
+      });
+    meetingId = resCreate.body.id;
+
+    const created = await getPrisma().animalMeeting.findFirst({
+      where: { meetingId: resCreate.body.id },
+    });
+    expect(created!.status).toBe("SCHEDULED");
+
+    const res = await request(app)
+      .patch(`/api/meetings/animals/${resCreate.body.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status: "COMPLETED" });
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe("COMPLETED");
+
+    const updated = await getPrisma().animalMeeting.findFirst({
+      where: { meetingId: resCreate.body.id },
+    });
+    expect(updated!.status).toBe("COMPLETED");
+  });
+});
+
+// ── GET /api/meetings/animals/:id/animal/last ─────────────────────────────────
+
+describe("GET /api/meetings/animals/:id/animal/last", () => {
+  it("401 — sans token", async () => {
+    const res = await request(app).get(
+      "/api/meetings/animals/some-id/animal/last",
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("200 — null si aucune visite enregistrée", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const animalWithoutMeeting = await getPrisma().animal.findFirst({
+      where: { animalMeeting: { none: {} } },
+    });
+    const res = await request(app)
+      .get(`/api/meetings/animals/${animalWithoutMeeting!.id}/animal/last`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toBeNull();
+  });
+
+  it("200 — retourne la visite la plus récente avec le nom du vétérinaire", async () => {
+    const token = await loginAs("veto@gmail.com");
+    const existing = await getPrisma().animalMeeting.findFirst({
+      where: { meetingId: { not: null } },
+      include: { meeting: true },
+    });
+    const res = await request(app)
+      .get(`/api/meetings/animals/${existing!.animalId}/animal/last`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("veterinarian");
+    expect(res.body.veterinarian).toHaveProperty("firstname");
+    expect(res.body.veterinarian).toHaveProperty("lastname");
+    expect(res.body).toHaveProperty("status");
+    expect(res.body).toHaveProperty("meeting");
+  });
 });
 
 // ── DELETE /api/meetings/animals/:id ───────────────────────────────────────────

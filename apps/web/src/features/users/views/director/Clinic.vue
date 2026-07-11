@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { http } from '@/lib/api'
+import { http, API_ORIGIN } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
 import AddressFields from '@/components/AddressFields.vue'
 import OpeningHoursEditor from '@/components/OpeningHoursEditor.vue'
@@ -30,6 +30,7 @@ interface ClinicData {
   description?: string | null
   openingHours?: OpeningHoursDay[] | null
   speciality?: Speciality[]
+  image?: string | null
 }
 
 interface RequestData {
@@ -114,6 +115,24 @@ async function saveClinic() {
     notify.error(err instanceof Error ? err.message : 'Erreur')
   } finally {
     saving.value = false
+  }
+}
+
+const uploadingImage = ref(false)
+const imageInput = ref<HTMLInputElement | null>(null)
+
+async function onImageSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  uploadingImage.value = true
+  try {
+    clinic.value = await http.upload('/clinics/me/image', 'image', file)
+    notify.success('Image de la clinique mise à jour')
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : "Erreur lors de l'envoi de l'image")
+  } finally {
+    uploadingImage.value = false
+    ;(e.target as HTMLInputElement).value = ''
   }
 }
 
@@ -257,6 +276,26 @@ async function submitRequest() {
       </div>
 
       <template v-if="!editMode">
+        <div class="clinic-image-block">
+          <img
+            v-if="clinic.image"
+            :src="`${API_ORIGIN}${clinic.image}`"
+            alt="Image de la clinique"
+            class="clinic-image"
+          />
+          <div v-else class="clinic-image-placeholder">Aucune image</div>
+          <input
+            ref="imageInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            @change="onImageSelected"
+          />
+          <el-button size="small" :loading="uploadingImage" @click="imageInput?.click()">
+            {{ clinic.image ? "Changer l'image" : 'Ajouter une image' }}
+          </el-button>
+        </div>
+
         <div class="info-grid">
           <div class="info-row">
             <span class="info-label">Nom</span><span class="info-value">{{ clinic.name }}</span>
@@ -360,6 +399,31 @@ async function submitRequest() {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+.clinic-image-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.clinic-image {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+.clinic-image-placeholder {
+  width: 120px;
+  height: 90px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 .request-summary {
   background: #f8f9fa;

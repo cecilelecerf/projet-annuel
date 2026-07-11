@@ -2,13 +2,14 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
-import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
+import type { AnimalMeetingMeta, AnimalMeetingStatus, UpdateAnimalMeeting } from '@armali/schemas'
 
 dayjs.locale('fr')
 
 const props = defineProps<{
   meeting: AnimalMeetingMeta
   isEditing: boolean
+  status: AnimalMeetingStatus
 }>()
 const edit = defineModel<UpdateAnimalMeeting>('edit', { required: true })
 
@@ -18,14 +19,30 @@ const timeLabel = computed(() => {
   const end = dayjs(props.meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
+
+const statusLabel: Record<AnimalMeetingStatus, string> = {
+  SCHEDULED: 'Planifiée',
+  COMPLETED: 'Effectuée',
+  CANCELLED: 'Annulée',
+}
+const statusTag: Record<AnimalMeetingStatus, string> = {
+  SCHEDULED: 'info',
+  COMPLETED: 'success',
+  CANCELLED: 'danger',
+}
 </script>
 
 <template>
   <!-- Badge + titre -->
   <div class="section title-section">
-    <div class="kind-badge animal">
-      <el-icon><FirstAidKit /></el-icon>
-      Rendez-vous animal
+    <div class="badge-row">
+      <div class="kind-badge animal">
+        <el-icon><FirstAidKit /></el-icon>
+        Rendez-vous animal
+      </div>
+      <el-tag :type="statusTag[status] as any" round size="small">
+        {{ statusLabel[status] }}
+      </el-tag>
     </div>
     <h1 class="meeting-title">{{ meeting.description ?? 'Consultation' }}</h1>
   </div>
@@ -113,6 +130,13 @@ const timeLabel = computed(() => {
 </template>
 
 <style lang="scss" scoped>
+.badge-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
 .meeting-title {
   font-size: 28px;
   font-weight: var(--fw-bold);

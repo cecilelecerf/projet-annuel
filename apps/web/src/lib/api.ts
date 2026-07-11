@@ -11,6 +11,10 @@ export class ApiError extends Error {
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
+// Origine du serveur API (sans le suffixe /api), pour construire les URLs
+// de fichiers statiques servis par l'API (ex: images de clinique uploadées).
+export const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, '')
+
 let isRefreshing = false
 let refreshQueue: ((token: string) => void)[] = []
 
@@ -126,4 +130,22 @@ export const http = {
 
   delete: <T>(endpoint: string, body?: unknown) =>
     api<T>(endpoint, { method: 'DELETE', body: JSON.stringify(body) }),
+
+  upload: async <T>(endpoint: string, fieldName: string, file: File): Promise<T> => {
+    const token = localStorage.getItem('accessToken')
+    const formData = new FormData()
+    formData.append(fieldName, file)
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    })
+
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new ApiError(response.status, data?.error ?? data?.message ?? 'Erreur serveur')
+    }
+    return data as T
+  },
 }

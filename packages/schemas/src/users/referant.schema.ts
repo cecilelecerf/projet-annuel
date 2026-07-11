@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { referantClinicIdSchema, clinicIdSchema } from "../ids";
-import { baseUserSchema } from "./base-user.schema";
-import { registerSchema } from ".";
+import { baseUserSchema, registerSchema } from "./base-user.schema";
 
 export const referantProfileSchema = z.object({
   id: referantClinicIdSchema,
@@ -16,7 +15,11 @@ export const referantSchema = baseUserSchema.extend({
 
 export const createReferantSchema = referantProfileSchema.omit({ id: true });
 export const updateReferantSchema = createReferantSchema.partial();
-export const createReferentStaffSchema = registerSchema;
+// Compte créé par un directeur : le mot de passe est généré et envoyé par
+// email, il n'est plus saisi par le directeur.
+export const createReferentStaffSchema = registerSchema.omit({
+  password: true,
+});
 export type CreateReferentStaff = z.infer<typeof createReferentStaffSchema>;
 
 export type ReferantProfile = z.infer<typeof referantProfileSchema>;

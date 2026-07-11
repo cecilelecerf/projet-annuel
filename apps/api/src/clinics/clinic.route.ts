@@ -5,6 +5,7 @@ import { roleMiddleware } from "@api/middlewares/role.middleware";
 import { validate } from "@api/middlewares/validate.middleware";
 import { updateClinicSchema } from "@armali/schemas";
 import { ClinicController } from "./clinic.controller";
+import { uploadClinicImage } from "@api/middlewares/upload.middleware";
 
 const clinicRouter: RouterType = Router();
 const controller = new ClinicController();
@@ -29,6 +30,14 @@ clinicRouter.patch(
   roleMiddleware(["DIRECTOR"]),
   validate(updateClinicSchema),
   controller.updateClinic.bind(controller),
+);
+
+clinicRouter.post(
+  "/me/image",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR", "REFERANT"]),
+  uploadClinicImage,
+  controller.uploadImage.bind(controller),
 );
 
 export default clinicRouter;

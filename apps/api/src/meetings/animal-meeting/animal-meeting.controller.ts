@@ -134,4 +134,34 @@ export class AnimalMeetingController {
       next(err);
     }
   }
+
+  async getLastByAnimal(
+    req: RequestWithParams<{ id: AnimalId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const meeting = await animalMeetingService.getLastByAnimal({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      if (!meeting) {
+        res.status(200).json(null);
+        return;
+      }
+      const { veterinarianClinic, ...rest } = meeting;
+      res.status(200).json({
+        ...animalMeetingFieldSchema
+          .extend({ meeting: meetingBaseSchema })
+          .parse(rest),
+        veterinarian: {
+          firstname: veterinarianClinic.veterinarian.user.firstname,
+          lastname: veterinarianClinic.veterinarian.user.lastname,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

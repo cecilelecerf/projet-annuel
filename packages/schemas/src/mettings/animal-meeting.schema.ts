@@ -11,6 +11,14 @@ import {
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { animalMetaSchema } from "../animals/meta.schema";
+
+export const animalMeetingStatusSchema = z.enum([
+  "SCHEDULED",
+  "COMPLETED",
+  "CANCELLED",
+]);
+export type AnimalMeetingStatus = z.infer<typeof animalMeetingStatusSchema>;
+
 export const animalMeetingFieldSchema = z.object({
   description: z.string().nullable().optional(),
   petWeight: z.coerce.number().multipleOf(0.01).nullable().optional(),
@@ -19,6 +27,7 @@ export const animalMeetingFieldSchema = z.object({
   specialityId: specialityIdSchema.nullable().optional(),
   animalId: animalIdSchema,
   veterinarianClinicId: veterinarianClinicIdSchema,
+  status: animalMeetingStatusSchema.default("SCHEDULED"),
 });
 export const animalMeetingSchema = meetingBaseSchema.extend({
   ...animalMeetingFieldSchema.shape,
@@ -38,6 +47,7 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
     specialityId: true,
     animalId: true,
     veterinarianClinicId: true,
+    status: true,
   })
   .extend({ meeting: meetingBaseSchema });
 
@@ -66,6 +76,7 @@ export const createAnimalMeetingSchema = createAnimalMeetingFields.refine(
 export const updateAnimalMeetingSchema = createAnimalMeetingFields
   .omit({ veterinarianId: true, animalId: true })
   .partial()
+  .extend({ status: animalMeetingStatusSchema.optional() })
   .refine(timeRefineFn, timeRefineOptions);
 
 export type AnimalMeetingMeta = z.infer<typeof animalMeetingMetaSchema>;

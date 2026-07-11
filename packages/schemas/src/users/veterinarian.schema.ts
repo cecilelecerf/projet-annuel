@@ -3,6 +3,17 @@ import { veterinarianIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema, registerSchema } from "./base-user.schema";
 import { specialitySchema, veterinarianClinicSchema } from "../clinic.schema";
 
+// Numéro de licence/ordre vétérinaire : lettres, chiffres et tirets uniquement.
+export const licenseNumberSchema = z
+  .string()
+  .trim()
+  .min(4, "Numéro de licence trop court (4 caractères minimum)")
+  .max(50)
+  .regex(
+    /^[A-Za-z0-9-]+$/,
+    "Le numéro de licence ne doit contenir que des lettres, chiffres et tirets",
+  );
+
 export const veterinarianProfileSchema = z.object({
   id: veterinarianIdSchema,
   licenseNumber: z.string().max(50),
@@ -23,12 +34,24 @@ export const createVeterinarianSchema = veterinarianProfileSchema.omit({
   veterinarianClinic: true,
 });
 export const updateVeterinarianSchema = createVeterinarianSchema.partial();
-export const createVeterinarianStaffSchema = registerSchema.extend({
-  licenseNumber: z.string().min(1, "Numéro de licence requis"),
-  bio: z.string().max(500).optional(),
-});
+
+// Compte créé par un directeur/référent : le mot de passe est généré et envoyé
+// par email, il n'est plus saisi par la personne qui crée le compte.
+export const createVeterinarianStaffSchema = registerSchema
+  .omit({ password: true })
+  .extend({
+    licenseNumber: licenseNumberSchema,
+    bio: z.string().max(500).optional(),
+  });
 export type CreateVeterinarianStaff = z.infer<
   typeof createVeterinarianStaffSchema
+>;
+
+export const linkVeterinarianStaffSchema = z.object({
+  veterinarianId: veterinarianIdSchema,
+});
+export type LinkVeterinarianStaff = z.infer<
+  typeof linkVeterinarianStaffSchema
 >;
 
 export type VeterinarianProfile = z.infer<typeof veterinarianProfileSchema>;

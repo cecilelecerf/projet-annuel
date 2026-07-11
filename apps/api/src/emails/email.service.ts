@@ -24,6 +24,47 @@ export class EmailService {
     });
   }
 
+  async sendStaffAccountCreated(
+    email: string,
+    firstname: string,
+    temporaryPassword: string,
+    roleLabel: string,
+    clinicName: string,
+  ) {
+    await transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: `Votre compte ${roleLabel} Armali a été créé`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+          <h2 style="color:#2ecc71;">Bienvenue ${firstname} !</h2>
+          <p>Un compte <strong>${roleLabel}</strong> vient d'être créé pour vous au sein de la clinique <strong>${clinicName}</strong> sur Armali.</p>
+          <p>Voici votre mot de passe provisoire :</p>
+          <div style="font-size: 20px; font-weight: bold; letter-spacing: 2px; text-align: center;
+                      padding: 16px; background: #f4f4f4; border-radius: 8px; margin: 16px 0;">
+            ${temporaryPassword}
+          </div>
+          <p>Connectez-vous avec votre email (<strong>${email}</strong>) et ce mot de passe, puis pensez à le modifier depuis votre profil.</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendClinicLinked(email: string, firstname: string, clinicName: string) {
+    await transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: "Vous avez été ajouté à une clinique sur Armali",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+          <h2 style="color:#2ecc71;">Bonjour ${firstname}</h2>
+          <p>Votre compte vétérinaire a été rattaché à la clinique <strong>${clinicName}</strong> sur Armali.</p>
+          <p>Vous pouvez dès maintenant y exercer avec votre compte existant.</p>
+        </div>
+      `,
+    });
+  }
+
   async sendWelcome(email: string, firstname: string) {
     await transporter.sendMail({
       from: this.from,

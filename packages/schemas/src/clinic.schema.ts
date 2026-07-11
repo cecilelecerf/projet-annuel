@@ -32,15 +32,21 @@ export type ClinicAddress = z.infer<typeof clinicAddressSchema>;
 export type OpeningHoursDay = z.infer<typeof openingHoursDaySchema>;
 export type OpeningHours = z.infer<typeof openingHoursSchema>;
 
+// Un SIRET est un identifiant à 14 chiffres (pas de lettres, pas d'espaces).
+export const siretSchema = z
+  .string()
+  .regex(/^\d{14}$/, "Le SIRET doit contenir exactement 14 chiffres");
+
 // ── Clinic ────────────────────────────────────────────────────────────────────
 export const clinicSchema = z.object({
   id: clinicIdSchema,
   name: z.string().min(1, "Nom requis"),
-  siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+  siret: siretSchema,
   phone: z.string().min(10, "Téléphone invalide"),
   website: z.string().min(1, "Site web requis"),
   description: z.string().max(500).nullable().optional(),
   openingHours: openingHoursSchema.nullable().optional(),
+  image: z.string().nullable().optional(),
 }).extend(clinicAddressSchema.shape);
 
 export const createClinicSchema = clinicSchema.omit({ id: true });
@@ -55,7 +61,7 @@ export const updateClinicReferentSchema = clinicAddressSchema
 export const createClinicRequestSchema = z
   .object({
     name: z.string().min(1, "Nom requis"),
-    siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+    siret: siretSchema,
     phone: z.string().min(10, "Téléphone invalide"),
     website: z.string().min(1, "Site web requis"),
     description: z.string().max(500).optional(),

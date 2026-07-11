@@ -8,6 +8,7 @@ import {
   createVeterinarianStaffSchema,
   createSecretaryStaffSchema,
   updateClinicReferentSchema,
+  linkVeterinarianStaffSchema,
 } from "@armali/schemas";
 
 const referentRouter: RouterType = Router();
@@ -26,6 +27,21 @@ referentRouter.post(
   roleMiddleware(["REFERANT"]),
   validate(createVeterinarianStaffSchema),
   controller.createVeterinarian.bind(controller),
+);
+
+referentRouter.get(
+  "/staff/veterinarians/search",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  controller.searchVeterinarian.bind(controller),
+);
+
+referentRouter.post(
+  "/staff/veterinarians/link",
+  authMiddleware,
+  roleMiddleware(["REFERANT"]),
+  validate(linkVeterinarianStaffSchema),
+  controller.linkVeterinarian.bind(controller),
 );
 
 referentRouter.post(

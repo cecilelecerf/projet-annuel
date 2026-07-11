@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { Check, Delete, Edit } from '@element-plus/icons-vue'
+import { Check, CircleCheck, Delete, Edit } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import type { AnimalMeetingMeta } from '@armali/schemas'
+import type { AnimalMeetingMeta, AnimalMeetingStatus } from '@armali/schemas'
 import type { UserStore } from '@/stores/authStore'
 
 defineProps<{
   meeting: AnimalMeetingMeta
   isEditing: boolean
   user: UserStore | null
+  status: AnimalMeetingStatus
 }>()
 
 const emit = defineEmits<{
@@ -15,6 +16,7 @@ const emit = defineEmits<{
   cancel: []
   save: []
   delete: []
+  'mark-done': []
 }>()
 
 const router = useRouter()
@@ -27,6 +29,15 @@ const router = useRouter()
       Retour
     </el-button>
     <div class="header-actions">
+      <el-button
+        v-if="!isEditing && status === 'SCHEDULED' && user?.role !== 'CLIENT'"
+        type="success"
+        plain
+        @click="emit('mark-done')"
+        :icon="CircleCheck"
+      >
+        Marquer comme effectuée
+      </el-button>
       <el-button v-if="!isEditing && user?.role !== 'CLIENT'" @click="emit('edit')" :icon="Edit">
         Modifier
       </el-button>

@@ -67,6 +67,7 @@ export class AnimalMeetingRepository {
         petWeight: data.petWeight,
         petSize: data.petSize,
         report: data.report,
+        status: data.status,
         speciality: data.specialityId
           ? { connect: { id: data.specialityId } }
           : { disconnect: true },
@@ -109,6 +110,22 @@ export class AnimalMeetingRepository {
           include: { clinicAct: { include: { act: true } } },
         },
       },
+    });
+  }
+
+  async findLastByAnimal(animalId: AnimalId) {
+    return prisma.animalMeeting.findFirst({
+      where: { animalId, meetingId: { not: null } },
+      include: {
+        meeting: true,
+        veterinarianClinic: {
+          include: { veterinarian: { include: { user: true } } },
+        },
+      },
+      orderBy: [
+        { meeting: { date: "desc" } },
+        { meeting: { startTime: "desc" } },
+      ],
     });
   }
 }

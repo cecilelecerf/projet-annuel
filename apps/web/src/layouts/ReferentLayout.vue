@@ -2,7 +2,6 @@
 import Navbar from '@/components/ui/nav/Navbar.vue'
 import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
 import {
-  House,
   UserFilled,
   OfficeBuilding,
   User,
@@ -11,11 +10,6 @@ import {
 } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
-  {
-    index: 'Referent.Home',
-    label: 'Accueil',
-    icon: House,
-  },
   {
     index: 'Referent.Staff',
     label: 'Personnel',

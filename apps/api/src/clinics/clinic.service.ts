@@ -140,4 +140,29 @@ export class ClinicService {
 
     return clinic;
   }
+
+  private async getClinicIdForDirectorOrReferent(
+    userId: string,
+  ): Promise<string> {
+    const director = await prisma.directorClinicProfile.findUnique({
+      where: { id: userId },
+    });
+    if (director) return director.clinicId;
+
+    const referent = await prisma.referentClinicProfile.findUnique({
+      where: { id: userId },
+    });
+    if (referent) return referent.clinicId;
+
+    throw new BadRequestError("Aucune clinique associée à ce compte");
+  }
+
+  async updateClinicImage(userId: string, imagePath: string) {
+    const clinicId = await this.getClinicIdForDirectorOrReferent(userId);
+
+    return prisma.clinic.update({
+      where: { id: clinicId },
+      data: { image: imagePath },
+    });
+  }
 }

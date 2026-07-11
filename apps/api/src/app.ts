@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import { resolve } from "path";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
 import clinicRouter from "./clinics/clinic.route";
@@ -40,6 +41,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use("/uploads", express.static(resolve(process.cwd(), "uploads")));
 
 app.get("/api/test", async (req, res) => {
   const users = await prisma.user.findMany({

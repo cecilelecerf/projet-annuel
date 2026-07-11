@@ -78,16 +78,15 @@ onMounted(async () => {
 
 const activeTab = ref<'referent' | 'veterinarian' | 'secretary'>('referent')
 
-const referentForm = reactive({ firstname: '', lastname: '', email: '', password: '' })
+const referentForm = reactive({ firstname: '', lastname: '', email: '' })
 const vetForm = reactive({
   firstname: '',
   lastname: '',
   email: '',
-  password: '',
   licenseNumber: '',
   bio: '',
 })
-const secretaryForm = reactive({ firstname: '', lastname: '', email: '', password: '' })
+const secretaryForm = reactive({ firstname: '', lastname: '', email: '' })
 
 const loadingReferent = ref(false)
 const loadingVet = ref(false)
@@ -97,8 +96,8 @@ async function submitReferent() {
   loadingReferent.value = true
   try {
     await http.post('/director/staff/referents', referentForm)
-    notify.success('Compte référent créé avec succès')
-    Object.assign(referentForm, { firstname: '', lastname: '', email: '', password: '' })
+    notify.success('Compte référent créé, ses identifiants lui ont été envoyés par email')
+    Object.assign(referentForm, { firstname: '', lastname: '', email: '' })
     await loadStaff()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur lors de la création')
@@ -111,12 +110,11 @@ async function submitVet() {
   loadingVet.value = true
   try {
     await http.post('/director/staff/veterinarians', vetForm)
-    notify.success('Compte vétérinaire créé avec succès')
+    notify.success('Compte vétérinaire créé, ses identifiants lui ont été envoyés par email')
     Object.assign(vetForm, {
       firstname: '',
       lastname: '',
       email: '',
-      password: '',
       licenseNumber: '',
       bio: '',
     })
@@ -132,13 +130,58 @@ async function submitSecretary() {
   loadingSecretary.value = true
   try {
     await http.post('/director/staff/secretaries', secretaryForm)
-    notify.success('Compte secrétaire créé avec succès')
-    Object.assign(secretaryForm, { firstname: '', lastname: '', email: '', password: '' })
+    notify.success('Compte secrétaire créé, ses identifiants lui ont été envoyés par email')
+    Object.assign(secretaryForm, { firstname: '', lastname: '', email: '' })
     await loadStaff()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur lors de la création')
   } finally {
     loadingSecretary.value = false
+  }
+}
+
+interface VetSearchResult {
+  id: string
+  firstname: string
+  lastname: string
+  email: string
+  licenseNumber: string
+}
+
+const vetMode = ref<'create' | 'link'>('create')
+const vetSearchQuery = ref('')
+const vetSearchResults = ref<VetSearchResult[]>([])
+const searchingVet = ref(false)
+const linkingVetId = ref<string | null>(null)
+const hasSearchedVet = ref(false)
+
+async function searchVet() {
+  const q = vetSearchQuery.value.trim()
+  if (!q) return
+  searchingVet.value = true
+  hasSearchedVet.value = true
+  try {
+    vetSearchResults.value = await http.get(
+      `/director/staff/veterinarians/search?q=${encodeURIComponent(q)}`,
+    )
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la recherche')
+  } finally {
+    searchingVet.value = false
+  }
+}
+
+async function linkVet(veterinarianId: string) {
+  linkingVetId.value = veterinarianId
+  try {
+    await http.post('/director/staff/veterinarians/link', { veterinarianId })
+    notify.success('Vétérinaire lié à la clinique avec succès')
+    vetSearchResults.value = vetSearchResults.value.filter((v) => v.id !== veterinarianId)
+    await loadStaff()
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la liaison')
+  } finally {
+    linkingVetId.value = null
   }
 }
 </script>
@@ -243,14 +286,9 @@ async function submitSecretary() {
                   placeholder="email@exemple.com"
                 />
               </el-form-item>
-              <el-form-item label="Mot de passe provisoire">
-                <el-input
-                  v-model="referentForm.password"
-                  type="password"
-                  show-password
-                  placeholder="Minimum 8 caractères"
-                />
-              </el-form-item>
+              <p class="form-hint">
+                Un mot de passe provisoire sera généré et envoyé par email au référent.
+              </p>
               <el-button type="primary" native-type="submit" :loading="loadingReferent">
                 Créer le compte référent
               </el-button>
@@ -260,49 +298,94 @@ async function submitSecretary() {
 
         <el-tab-pane label="Vétérinaire" name="veterinarian">
           <div class="form-card">
-            <h2>Créer un compte vétérinaire</h2>
-            <el-form label-position="top" @submit.prevent="submitVet">
-              <el-row :gutter="16">
-                <el-col :span="12">
-                  <el-form-item label="Prénom">
-                    <el-input v-model="vetForm.firstname" placeholder="Prénom" />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item label="Nom">
-                    <el-input v-model="vetForm.lastname" placeholder="Nom" />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-              <el-form-item label="Email">
-                <el-input v-model="vetForm.email" type="email" placeholder="email@exemple.com" />
-              </el-form-item>
-              <el-form-item label="Mot de passe provisoire">
+            <el-radio-group v-model="vetMode" class="vet-mode-switch">
+              <el-radio-button value="create">Créer un nouveau compte</el-radio-button>
+              <el-radio-button value="link">Lier un vétérinaire existant</el-radio-button>
+            </el-radio-group>
+
+            <template v-if="vetMode === 'create'">
+              <h2>Créer un compte vétérinaire</h2>
+              <el-form label-position="top" @submit.prevent="submitVet">
+                <el-row :gutter="16">
+                  <el-col :span="12">
+                    <el-form-item label="Prénom">
+                      <el-input v-model="vetForm.firstname" placeholder="Prénom" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="12">
+                    <el-form-item label="Nom">
+                      <el-input v-model="vetForm.lastname" placeholder="Nom" />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+                <el-form-item label="Email">
+                  <el-input v-model="vetForm.email" type="email" placeholder="email@exemple.com" />
+                </el-form-item>
+                <el-form-item label="Numéro de licence">
+                  <el-input
+                    v-model="vetForm.licenseNumber"
+                    placeholder="Numéro de licence vétérinaire"
+                  />
+                </el-form-item>
+                <el-form-item label="Biographie (optionnel)">
+                  <el-input
+                    v-model="vetForm.bio"
+                    type="textarea"
+                    :rows="3"
+                    placeholder="Spécialités, expériences..."
+                  />
+                </el-form-item>
+                <p class="form-hint">
+                  Un mot de passe provisoire sera généré et envoyé par email au vétérinaire.
+                </p>
+                <el-button type="primary" native-type="submit" :loading="loadingVet">
+                  Créer le compte vétérinaire
+                </el-button>
+              </el-form>
+            </template>
+
+            <template v-else>
+              <h2>Lier un vétérinaire existant</h2>
+              <p class="form-hint">
+                Recherchez un vétérinaire déjà inscrit sur Armali par son email ou son numéro de
+                licence, puis liez-le à votre clinique.
+              </p>
+              <div class="vet-search-bar">
                 <el-input
-                  v-model="vetForm.password"
-                  type="password"
-                  show-password
-                  placeholder="Minimum 8 caractères"
+                  v-model="vetSearchQuery"
+                  placeholder="Email ou numéro de licence"
+                  @keyup.enter="searchVet"
                 />
-              </el-form-item>
-              <el-form-item label="Numéro de licence">
-                <el-input
-                  v-model="vetForm.licenseNumber"
-                  placeholder="Numéro de licence vétérinaire"
-                />
-              </el-form-item>
-              <el-form-item label="Biographie (optionnel)">
-                <el-input
-                  v-model="vetForm.bio"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="Spécialités, expériences..."
-                />
-              </el-form-item>
-              <el-button type="primary" native-type="submit" :loading="loadingVet">
-                Créer le compte vétérinaire
-              </el-button>
-            </el-form>
+                <el-button type="primary" :loading="searchingVet" @click="searchVet">
+                  Rechercher
+                </el-button>
+              </div>
+
+              <div v-if="hasSearchedVet && !searchingVet" class="vet-search-results">
+                <div v-if="vetSearchResults.length === 0" class="list-empty">
+                  Aucun vétérinaire trouvé pour cette recherche.
+                </div>
+                <div
+                  v-for="vet in vetSearchResults"
+                  :key="vet.id"
+                  class="staff-item"
+                >
+                  <div class="staff-avatar">{{ vet.firstname[0] }}{{ vet.lastname[0] }}</div>
+                  <div class="staff-info">
+                    <div class="staff-name">{{ vet.firstname }} {{ vet.lastname }}</div>
+                    <div class="staff-email">{{ vet.email }} · Licence {{ vet.licenseNumber }}</div>
+                  </div>
+                  <el-button
+                    size="small"
+                    type="primary"
+                    :loading="linkingVetId === vet.id"
+                    @click="linkVet(vet.id)"
+                  >
+                    Lier à ma clinique
+                  </el-button>
+                </div>
+              </div>
+            </template>
           </div>
         </el-tab-pane>
 
@@ -329,14 +412,9 @@ async function submitSecretary() {
                   placeholder="email@exemple.com"
                 />
               </el-form-item>
-              <el-form-item label="Mot de passe provisoire">
-                <el-input
-                  v-model="secretaryForm.password"
-                  type="password"
-                  show-password
-                  placeholder="Minimum 8 caractères"
-                />
-              </el-form-item>
+              <p class="form-hint">
+                Un mot de passe provisoire sera généré et envoyé par email au secrétaire.
+              </p>
               <el-button type="primary" native-type="submit" :loading="loadingSecretary">
                 Créer le compte secrétaire
               </el-button>
@@ -377,6 +455,29 @@ async function submitSecretary() {
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 24px;
+}
+.form-hint {
+  color: #6b7280;
+  font-size: 13px;
+  margin: -8px 0 16px;
+  line-height: 1.5;
+}
+.vet-mode-switch {
+  display: flex;
+  margin-bottom: 24px;
+}
+.vet-search-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.vet-search-bar .el-input {
+  flex: 1;
+}
+.vet-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 .gate-card {
   background: white;

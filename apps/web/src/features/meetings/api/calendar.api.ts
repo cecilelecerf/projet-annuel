@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { http } from '@/lib/api'
 import {
   animalMeetigWithMeetingSchema,
@@ -79,8 +80,19 @@ export const calendarApi = {
       return animalMeetigWithMeetingSchema.parse(data)
     },
 
+    getLastByAnimal: async (animalId: AnimalId) => {
+      const data = await http.get(`/meetings/animals/${animalId}/animal/last`)
+      if (!data) return null
+      return animalMeetingFieldSchema
+        .extend({
+          meeting: meetingBaseSchema,
+          veterinarian: z.object({ firstname: z.string(), lastname: z.string() }),
+        })
+        .parse(data)
+    },
+
     getAllByAnimal: async (animalId: AnimalId) => {
-      const data = await http.get(`/meetings/animals/animals/${animalId}`)
+      const data = await http.get(`/meetings/animals/${animalId}/animal`)
       return animalMeetingFieldSchema
         .extend({
           meeting: meetingBaseSchema,

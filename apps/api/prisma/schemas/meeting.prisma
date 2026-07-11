@@ -74,7 +74,7 @@ model Availability {
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   userId   String?
-  user     User?   @relation(fields: [userId], references: [id])
+  user     User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   clinicId String
   clinic   Clinic  @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
@@ -96,7 +96,7 @@ model InternalMeetingParticipant {
   meeting   InternalMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   status MeetingStatus
 
@@ -115,7 +115,7 @@ model InternalMeeting {
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   adminId String
-  admin   User   @relation(fields: [adminId], references: [id])
+  admin   User   @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
   clinicId String
   clinic   Clinic @relation(fields: [clinicId], references: [id])
@@ -125,12 +125,19 @@ model InternalMeeting {
   @@map("internal_meetings")
 }
 
+enum AnimalMeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
 model AnimalMeeting {
-  id          String   @id @default(uuid())
+  id          String              @id @default(uuid())
   description String?
-  petWeight   Decimal? @db.Decimal(5, 2)
-  petSize     Decimal? @db.Decimal(5, 2)
+  petWeight   Decimal?            @db.Decimal(5, 2)
+  petSize     Decimal?            @db.Decimal(5, 2)
   report      String?
+  status      AnimalMeetingStatus @default(SCHEDULED)
 
   recurringId String?           @unique
   recurring   MeetingReccuring? @relation(fields: [recurringId], references: [id], onDelete: Cascade)

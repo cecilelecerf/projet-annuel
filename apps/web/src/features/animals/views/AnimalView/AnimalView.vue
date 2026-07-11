@@ -13,11 +13,24 @@ dayjs.locale('fr')
 
 const route = useRoute()
 const pet = await animalApi.get(route.params.id as AnimalId)
-const [meetings, vaccinesStatus] = await Promise.all([
+const [meetings, vaccinesStatus, lastVisit] = await Promise.all([
   calendarApi.animal.getAllByAnimal(pet.id),
-  await animalApi.getVaccines(route.params.id as AnimalId),
+  animalApi.getVaccines(route.params.id as AnimalId),
+  calendarApi.animal.getLastByAnimal(pet.id),
 ])
 const router = useRouter()
+
+const visitStatusLabel: Record<string, string> = {
+  SCHEDULED: 'Planifiée',
+  COMPLETED: 'Effectuée',
+  CANCELLED: 'Annulée',
+}
+
+const visitStatusTag: Record<string, string> = {
+  SCHEDULED: 'info',
+  COMPLETED: 'success',
+  CANCELLED: 'danger',
+}
 
 const age = computed(() => {
   const years = dayjs().diff(dayjs(pet.dateOfBirth), 'year')
@@ -125,6 +138,28 @@ const lastSize = computed(() => {
       <div v-if="pet.description" class="section">
         <h3 class="section-label">Description</h3>
         <p class="description-text">{{ pet.description }}</p>
+      </div>
+
+      <!-- Dernière visite -->
+      <div class="section">
+        <h3 class="section-label">Dernière visite</h3>
+        <div v-if="lastVisit" class="last-visit-card">
+          <div class="last-visit-main">
+            <span class="last-visit-date">{{
+              dayjs(lastVisit.meeting.date).format('D MMMM YYYY')
+            }}</span>
+            <span class="last-visit-vet">
+              Dr {{ lastVisit.veterinarian.firstname }} {{ lastVisit.veterinarian.lastname }}
+            </span>
+            <span v-if="lastVisit.description" class="last-visit-desc">{{
+              lastVisit.description
+            }}</span>
+          </div>
+          <el-tag :type="visitStatusTag[lastVisit.status] as any" round>
+            {{ visitStatusLabel[lastVisit.status] }}
+          </el-tag>
+        </div>
+        <p v-else class="empty-text">Aucune visite enregistrée</p>
       </div>
 
       <!-- Stats -->
@@ -431,6 +466,41 @@ const lastSize = computed(() => {
   flex-direction: column;
   gap: var(--spacing-xl);
   min-width: 0;
+}
+
+// ── Dernière visite ───────────────────────────────────────────────────────────
+
+.last-visit-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--radius-lg);
+  background: var(--el-bg-color);
+}
+
+.last-visit-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.last-visit-date {
+  font-size: 14px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-primary);
+}
+
+.last-visit-vet {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.last-visit-desc {
+  font-size: 12px;
+  color: var(--el-text-color-placeholder);
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────

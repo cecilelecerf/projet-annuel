@@ -185,4 +185,16 @@ export class AnimalMeetingService {
   }) {
     return animalMeetingRepository.findByAnimal(animalId);
   }
+
+  async getLastByAnimal({
+    animalId,
+    userId,
+    role,
+  }: {
+    animalId: AnimalId;
+    userId: string;
+    role: UserRole;
+  }) {
+    return animalMeetingRepository.findLastByAnimal(animalId);
+  }
 }

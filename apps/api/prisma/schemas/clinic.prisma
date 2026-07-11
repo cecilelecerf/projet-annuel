@@ -12,6 +12,7 @@ model Clinic {
   description  String?
   website      String
   openingHours Json?
+  image        String?
 
   speciality             Speciality[]
   veterinarianClinic     VeterinarianClinic[]

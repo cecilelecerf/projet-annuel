@@ -9,6 +9,7 @@ import {
   createVeterinarianStaffSchema,
   createSecretaryStaffSchema,
   createClinicRequestSchema,
+  linkVeterinarianStaffSchema,
 } from "@armali/schemas";
 
 const directorRouter: RouterType = Router();
@@ -36,6 +37,21 @@ directorRouter.post(
   roleMiddleware(["DIRECTOR"]),
   validate(createSecretaryStaffSchema),
   controller.createSecretary.bind(controller),
+);
+
+directorRouter.get(
+  "/staff/veterinarians/search",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR"]),
+  controller.searchVeterinarian.bind(controller),
+);
+
+directorRouter.post(
+  "/staff/veterinarians/link",
+  authMiddleware,
+  roleMiddleware(["DIRECTOR"]),
+  validate(linkVeterinarianStaffSchema),
+  controller.linkVeterinarian.bind(controller),
 );
 
 directorRouter.get(

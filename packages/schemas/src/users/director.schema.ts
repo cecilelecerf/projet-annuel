@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { directorClinicIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema, registerSchema } from "./base-user.schema";
-import { clinicAddressSchema } from "../clinic.schema";
+import { clinicAddressSchema, siretSchema } from "../clinic.schema";
 
 export const directorProfileSchema = z.object({
   id: directorClinicIdSchema,
@@ -10,7 +10,7 @@ export const directorProfileSchema = z.object({
 export const clinicRegistrationSchema = z
   .object({
     name: z.string().min(1, "Nom requis"),
-    siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
+    siret: siretSchema,
     phone: z.string().min(10, "Téléphone invalide"),
     website: z.string().min(1, "Site web requis"),
     description: z.string().max(500).optional(),

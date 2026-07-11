@@ -1,6 +1,9 @@
 import { hash } from "bcryptjs";
 import { prisma } from "@api/lib/prisma";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
+import { generateTemporaryPassword } from "@api/utils/password";
+import { EmailService } from "@api/emails/email.service";
+import { VeterinarianClinicService } from "@api/clinics/veterinarian-clinics/veterinarian-clinic.service";
 import type {
   CreateVeterinarianStaff,
   CreateSecretaryStaff,
@@ -16,16 +19,26 @@ const VISITS_WEEKS_FORECAST = 4;
 
 const meetingService = new MeetingService();
 
+const emailService = new EmailService();
+const veterinarianClinicService = new VeterinarianClinicService();
+
 export class ReferentService {
-  private async getClinicId(referentUserId: string): Promise<string> {
+  private async getClinic(
+    referentUserId: string,
+  ): Promise<{ id: string; name: string }> {
     const profile = await prisma.referentClinicProfile.findUnique({
       where: { id: referentUserId },
+      include: { clinic: { select: { id: true, name: true } } },
     });
     if (!profile)
       throw new BadRequestError(
         "Aucune clinique associée à ce compte référent"
       );
-    return profile.clinicId;
+    return profile.clinic;
+  }
+
+  private async getClinicId(referentUserId: string): Promise<string> {
+    return (await this.getClinic(referentUserId)).id;
   }
 
   async getClinicStaff(referentUserId: string) {
@@ -62,9 +75,13 @@ export class ReferentService {
     };
   }
 
-  async createVeterinarian(referentUserId: string, data: CreateVeterinarianStaff) {
-    const clinicId = await this.getClinicId(referentUserId);
-    const hashedPassword = await hash(data.password, 10);
+  async createVeterinarian(
+    referentUserId: string,
+    data: CreateVeterinarianStaff,
+  ) {
+    const clinic = await this.getClinic(referentUserId);
+    const temporaryPassword = generateTemporaryPassword();
+    const hashedPassword = await hash(temporaryPassword, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -78,7 +95,7 @@ export class ReferentService {
             licenseNumber: data.licenseNumber,
             bio: data.bio,
             veterinarianClinic: {
-              create: { clinicId },
+              create: { clinicId: clinic.id },
             },
           },
         },
@@ -86,13 +103,24 @@ export class ReferentService {
       include: { veterinarianProfile: true },
     });
 
+    emailService
+      .sendStaffAccountCreated(
+        user.email,
+        user.firstname,
+        temporaryPassword,
+        "vétérinaire",
+        clinic.name,
+      )
+      .catch(() => {});
+
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
   async createSecretary(referentUserId: string, data: CreateSecretaryStaff) {
-    const clinicId = await this.getClinicId(referentUserId);
-    const hashedPassword = await hash(data.password, 10);
+    const clinic = await this.getClinic(referentUserId);
+    const temporaryPassword = generateTemporaryPassword();
+    const hashedPassword = await hash(temporaryPassword, 10);
 
     const user = await prisma.user.create({
       data: {
@@ -102,14 +130,81 @@ export class ReferentService {
         password: hashedPassword,
         role: "SECRETARY",
         secretaryProfile: {
-          create: { clinicId },
+          create: { clinicId: clinic.id },
         },
       },
       include: { secretaryProfile: true },
     });
 
+    emailService
+      .sendStaffAccountCreated(
+        user.email,
+        user.firstname,
+        temporaryPassword,
+        "secrétaire",
+        clinic.name,
+      )
+      .catch(() => {});
+
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
+  }
+
+  async searchVeterinarian(referentUserId: string, query: string) {
+    const clinicId = await this.getClinicId(referentUserId);
+    const q = query.trim();
+    if (!q)
+      throw new BadRequestError(
+        "Veuillez indiquer un email ou un numéro de licence",
+      );
+
+    const profiles = await prisma.veterinarianProfile.findMany({
+      where: {
+        OR: [
+          { licenseNumber: { equals: q, mode: "insensitive" } },
+          { user: { email: { equals: q, mode: "insensitive" } } },
+        ],
+      },
+      include: {
+        user: {
+          select: { id: true, firstname: true, lastname: true, email: true },
+        },
+        veterinarianClinic: { select: { clinicId: true } },
+      },
+      take: 10,
+    });
+
+    return profiles
+      .filter((p) => !p.veterinarianClinic.some((vc) => vc.clinicId === clinicId))
+      .map((p) => ({
+        id: p.user.id,
+        firstname: p.user.firstname,
+        lastname: p.user.lastname,
+        email: p.user.email,
+        licenseNumber: p.licenseNumber,
+      }));
+  }
+
+  async linkVeterinarian(referentUserId: string, veterinarianId: string) {
+    const clinic = await this.getClinic(referentUserId);
+
+    const vetProfile = await prisma.veterinarianProfile.findUnique({
+      where: { id: veterinarianId },
+      include: { user: { select: { firstname: true, email: true } } },
+    });
+    if (!vetProfile) throw new NotFoundError("Vétérinaire");
+
+    const linked = await veterinarianClinicService.create({
+      veterinarianId,
+      clinicId: clinic.id,
+      role: "REFERANT",
+    });
+
+    emailService
+      .sendClinicLinked(vetProfile.user.email, vetProfile.user.firstname, clinic.name)
+      .catch(() => {});
+
+    return linked;
   }
 
   async updateClinic(referentUserId: string, data: UpdateClinicReferent) {
@@ -146,16 +241,22 @@ export class ReferentService {
     if (!target) throw new NotFoundError("Utilisateur");
     if (!DELETABLE_ROLES.includes(target.role)) throw new ForbiddenError();
 
-    let targetClinicId: string | undefined;
-    if (target.role === "SECRETARY") {
-      targetClinicId = (
-        await prisma.secretaryProfile.findUnique({ where: { id: targetId } })
-      )?.clinicId;
-    } else if (target.role === "VETERINARIAN") {
-      targetClinicId = (
-        await prisma.veterinarianClinic.findFirst({ where: { veterinarianId: targetId } })
-      )?.clinicId;
+    // Un vétérinaire peut travailler dans plusieurs cliniques : on ne
+    // supprime que son rattachement à celle-ci, jamais son compte ni son
+    // historique de rendez-vous/dossiers médicaux.
+    if (target.role === "VETERINARIAN") {
+      const link = await prisma.veterinarianClinic.findFirst({
+        where: { veterinarianId: targetId, clinicId },
+      });
+      if (!link) throw new NotFoundError("Utilisateur");
+
+      await prisma.veterinarianClinic.delete({ where: { id: link.id } });
+      return { message: "Vétérinaire retiré de la clinique" };
     }
+
+    const targetClinicId = (
+      await prisma.secretaryProfile.findUnique({ where: { id: targetId } })
+    )?.clinicId;
 
     if (targetClinicId !== clinicId) throw new NotFoundError("Utilisateur");
 

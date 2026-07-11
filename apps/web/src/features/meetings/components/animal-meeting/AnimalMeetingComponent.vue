@@ -27,6 +27,7 @@ const [acts, prescriptions] = await Promise.all([
 const localActs = ref(acts)
 const localPrescriptions = ref(prescriptions)
 const isEditing = ref(false)
+const status = ref(meeting.status)
 
 const edit = ref<UpdateAnimalMeeting>({
   description: meeting.description ?? '',
@@ -41,6 +42,15 @@ const onSave = async () => {
   try {
     await calendarApi.animal.update(meeting.id, { ...edit.value })
     isEditing.value = false
+  } catch (err) {
+    handle(err)
+  }
+}
+
+const onMarkDone = async () => {
+  try {
+    await calendarApi.animal.update(meeting.id, { status: 'COMPLETED' })
+    status.value = 'COMPLETED'
   } catch (err) {
     handle(err)
   }
@@ -72,10 +82,12 @@ const onPrescriptionSaved = async () => {
     :meeting="meeting"
     :is-editing="isEditing"
     :user="user"
+    :status="status"
     @edit="isEditing = true"
     @cancel="isEditing = false"
     @save="onSave"
     @delete="onDelete"
+    @mark-done="onMarkDone"
   />
 
   <div class="meeting-content">
@@ -84,7 +96,7 @@ const onPrescriptionSaved = async () => {
     </div>
 
     <div class="meeting-right">
-      <MeetingInfo :meeting="meeting" :edit="edit" :is-editing="isEditing" />
+      <MeetingInfo :meeting="meeting" :edit="edit" :is-editing="isEditing" :status="status" />
       <MeetingActs :acts="localActs" :meeting-id="meeting.id" @saved="onActSaved" />
       <MeetingPrescriptions
         :prescriptions="localPrescriptions"

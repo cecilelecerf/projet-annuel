@@ -5,6 +5,7 @@ import { AppError, ValidationError } from "@api/errors";
 const PRISMA_UNIQUE_MESSAGES: Record<string, string> = {
   email: "Cet email est déjà utilisé",
   siret: "Ce SIRET est déjà utilisé",
+  licenseNumber: "Ce numéro de licence est déjà utilisé par un autre vétérinaire",
   token: "Token déjà utilisé",
 };
 
@@ -46,6 +47,12 @@ export function errorHandler(
     }
     if (err.code === "P2025") {
       return res.status(404).json({ error: "Ressource introuvable" });
+    }
+    if (err.code === "P2003") {
+      return res.status(409).json({
+        error:
+          "Impossible d'effectuer cette action : cette ressource est encore liée à d'autres données",
+      });
     }
   }
 

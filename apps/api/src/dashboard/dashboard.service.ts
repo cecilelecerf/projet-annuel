@@ -5,15 +5,10 @@ import { ReviewService } from "@api/reviews/review.service";
 import { ReviewRepository } from "@api/reviews/review.repository";
 import { UserService } from "@api/users";
 import { ClinicService } from "@api/clinics/clinic.service";
-import { MeetingService } from "@api/meetings/meeting.service";
 import { OrderRepository } from "@api/orders/order.repository";
 import { StaffService } from "@api/clinics/staffs/staff.service";
 import { AnimalRepository } from "@api/animals/animal.repository";
-import {
-  AnimalMeetingService,
-  AvailabilityService,
-  InternalMeetingService,
-} from "@api/meetings";
+import { AnimalMeetingService, AvailabilityService } from "@api/meetings";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
@@ -24,12 +19,10 @@ export class DashboardService {
     private staffService: StaffService,
     private userService: UserService,
     private clinicService: ClinicService,
-    private meetingService: MeetingService,
     private orderRepository: OrderRepository,
     private reviewRepository: ReviewRepository,
     private animalRepsository: AnimalRepository,
     private animalMeetingService: AnimalMeetingService,
-    private internalMeetingService: InternalMeetingService,
     private availabilityService: AvailabilityService,
   ) {}
 

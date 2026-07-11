@@ -239,6 +239,7 @@ const reviewService = new ReviewService(reviewRepository, clinicService);
 const recurringService = new RecurringService(
   recurringRepository,
   internalMeetingRepository,
+  availabilityRepository,
 );
 
 const internalMeetingService = new InternalMeetingService(
@@ -266,12 +267,13 @@ const meetingService = new MeetingService(
   internalMeetingService,
   availabilityService,
   clinicService,
+  veterinarianProfileRepository,
 );
 
 const bookingService = new BookingService(
   bookingRepository,
   clinicRepository,
-  meetingService,
+  availabilityService,
 );
 const vaccineService = new VaccineService(vaccineRepository, petRepository);
 const productService = new ProductService(
@@ -310,12 +312,10 @@ export const dashboardService = new DashboardService(
   staffService,
   userService,
   clinicService,
-  meetingService,
   orderRepository,
   reviewRepository,
   animalRepository,
   animalMeetingService,
-  internalMeetingService,
   availabilityService,
 );
 

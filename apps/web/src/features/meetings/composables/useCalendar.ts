@@ -49,7 +49,6 @@ export function useCalendar(userId?: UserId) {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
     if (id.value) {
-      console.log(id.value)
       return await meetingApi.getVeterinarianCalendar({ start, end, userId: id.value as UserId })
     }
 
@@ -117,8 +116,6 @@ export function useCalendar(userId?: UserId) {
     eventClick: (info: EventClickArg) => {
       const [id] = info.event.id.split('_')
       if (!id) return
-      console.log(id)
-      console.log(info.event.extendedProps)
       selectedMeeting.value = {
         id: id,
         date: info.event.extendedProps.date,

@@ -3,12 +3,11 @@ import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   availabilityResponseSchema,
   availabilityTimelineSchema,
-  clinicIdSchema,
   CreateAvailability,
   VeterinarianId,
 } from "@armali/schemas";
 import { AvailabilityService } from "./availability.service";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
+import { BadRequestError, ForbiddenError } from "@api/errors";
 import dayjs from "dayjs";
 import z from "zod";
 

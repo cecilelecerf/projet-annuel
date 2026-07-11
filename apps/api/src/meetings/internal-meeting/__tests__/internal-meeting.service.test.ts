@@ -6,27 +6,34 @@ import {
   NotFoundError,
 } from "@api/errors";
 
-// Pas de typage strict ici : on mocke le repository "à la main" avec des
-// vi.fn() sans forcer la forme exacte de InternalMeetingRepository (ça évite
-// les frictions avec les champs privés / types de retour imbriqués, au prix
-// de la détection auto si l'interface réelle change).
 const mockRepository = vi.hoisted(() => ({
   findById: vi.fn(),
-  create: vi.fn(),
+  createPunctual: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
-  findParticipant: vi.fn(),
-  updateParticipantStatus: vi.fn(),
-  copyParticipantStatuses: vi.fn(),
   createOccurrenceOverride: vi.fn(),
   createException: vi.fn(),
   deleteRecurring: vi.fn(),
   truncateRecurring: vi.fn(),
   deleteFutureChildren: vi.fn(),
+  findByUser: vi.fn(),
+}));
+
+const mockParticipantRepository = vi.hoisted(() => ({
+  copyStatus: vi.fn(),
+  findByKeys: vi.fn(),
+  updateStatus: vi.fn(),
+  findByUserAndClinicIds: vi.fn(),
 }));
 
 const mockRecurringService = vi.hoisted(() => ({
   update: vi.fn(),
+  getById: vi.fn(),
+  materializeOccurrence: vi.fn(),
+}));
+
+const mockClinicService = vi.hoisted(() => ({
+  getClinicIdsByUserId: vi.fn(),
 }));
 
 const mockSafeParse = vi.hoisted(() => vi.fn());
@@ -36,13 +43,21 @@ vi.mock("../internal-meeting.repository", () => ({
     return mockRepository;
   }),
 }));
-
+vi.mock("../participant.repository", () => ({
+  InternalMeetingParticipantRepository: vi.fn(function () {
+    return mockParticipantRepository;
+  }),
+}));
 vi.mock("../../recurring-meeting/recurring-meeting.service", () => ({
   RecurringService: vi.fn(function () {
     return mockRecurringService;
   }),
 }));
-
+vi.mock("@api/clinics/clinic.service", () => ({
+  ClinicService: vi.fn(function () {
+    return mockClinicService;
+  }),
+}));
 vi.mock("@armali/schemas", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@armali/schemas")>();
   return {
@@ -50,33 +65,32 @@ vi.mock("@armali/schemas", async (importOriginal) => {
     createInternalMeetingSchema: { safeParse: mockSafeParse },
   };
 });
-
-// On garde les vraies implémentations (withAvatarUrl, flatUser, ...) et on
-// ne mocke que flatClinicId, seule fonction dont ce fichier a besoin de
-// contrôler la sortie.
 vi.mock("@api/users/user.utils", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@api/users/user.utils")>();
   return {
     ...actual,
-    flatClinicId: vi.fn((user) => ({ ...user, flattened: true })),
+    withAvatarUrl: vi.fn((user) => ({ ...user, avatarUrl: null })),
   };
 });
 
 const { InternalMeetingRepository } =
   await import("../internal-meeting.repository");
+const { InternalMeetingParticipantRepository } =
+  await import("../participant.repository");
 const { RecurringService } =
   await import("../../recurring-meeting/recurring-meeting.service");
+const { ClinicService } = await import("@api/clinics/clinic.service");
 const { InternalMeetingService } = await import("../internal-meeting.service");
 
 const service = new InternalMeetingService(
   new InternalMeetingRepository({} as any),
-  new RecurringService({} as any, {} as any),
+  new InternalMeetingParticipantRepository({} as any),
+  new RecurringService({} as any, {} as any, {} as any),
+  new ClinicService({} as any),
 );
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // withAvatarUrl (réel depuis importOriginal) en a besoin dès qu'un test
-  // passe par getById.
   process.env.ASSETS_BASE_URL = "http://localhost:9000/test-bucket";
 });
 
@@ -86,8 +100,8 @@ const CLINIC_ID = "clinic-1";
 
 const makeInternalMeeting = (overrides = {}) =>
   ({
-    id: "internal-meeting-1", // PK propre d'InternalMeeting
-    meetingId: "meeting-base-1", // FK vers MeetingBase (peut être null si occurrence virtuelle)
+    id: "internal-meeting-1",
+    meetingId: "meeting-base-1",
     recurringId: null,
     recurring: null,
     title: "Réunion",
@@ -101,16 +115,33 @@ const makeInternalMeeting = (overrides = {}) =>
 // ── create ───────────────────────────────────────────────────────────────────
 
 describe("InternalMeetingService.create", () => {
-  it("délègue directement au repository", async () => {
-    const data = { title: "Nouvelle réunion" } as any;
-    mockRepository.create.mockResolvedValue(makeInternalMeeting() as any);
+  it("ForbiddenError si la clinique demandée n'appartient pas à l'utilisateur", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["other-clinic"]);
 
-    await service.create({ data, userId: USER_ID, clinicId: CLINIC_ID });
+    await expect(
+      service.create({
+        data: { clinicId: CLINIC_ID } as any,
+        userId: USER_ID as any,
+        role: "VETERINARIAN" as any,
+      }),
+    ).rejects.toThrow(ForbiddenError);
+    expect(mockRepository.createPunctual).not.toHaveBeenCalled();
+  });
 
-    expect(mockRepository.create).toHaveBeenCalledWith({
+  it("délègue à repository.createPunctual si la clinique est autorisée", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue([CLINIC_ID]);
+    mockRepository.createPunctual.mockResolvedValue(makeInternalMeeting());
+
+    const data = { clinicId: CLINIC_ID, title: "Nouvelle réunion" } as any;
+    await service.create({
+      data,
+      userId: USER_ID as any,
+      role: "VETERINARIAN" as any,
+    });
+
+    expect(mockRepository.createPunctual).toHaveBeenCalledWith({
       data,
       authorId: USER_ID,
-      clinicId: CLINIC_ID,
     });
   });
 });
@@ -169,7 +200,7 @@ describe("InternalMeetingService.update", () => {
     expect(mockRecurringService.update).not.toHaveBeenCalled();
   });
 
-  it("récurrence présente mais date absente — BadRequestError", async () => {
+  it("récurrence présente mais originDate absente — BadRequestError", async () => {
     mockRepository.findById.mockResolvedValue(
       makeInternalMeeting({ recurringId: "recurring-1" }),
     );
@@ -186,13 +217,12 @@ describe("InternalMeetingService.update", () => {
 
   describe("scope 'all' — délègue au split de série", () => {
     it("sans changement de titre/description — pas de bloc 'internal' transmis", async () => {
-      mockRepository.findById.mockResolvedValue(
-        makeInternalMeeting({ recurringId: "recurring-1" }),
-      );
+      mockRepository.findById
+        .mockResolvedValueOnce(
+          makeInternalMeeting({ recurringId: "recurring-1" }),
+        )
+        .mockResolvedValueOnce(makeInternalMeeting());
       mockRecurringService.update.mockResolvedValue({ id: "new-recurring-1" });
-      mockRepository.findById.mockResolvedValueOnce(
-        makeInternalMeeting({ recurringId: "recurring-1" }),
-      );
 
       const date = new Date("2027-06-01");
       await service.update({
@@ -209,6 +239,7 @@ describe("InternalMeetingService.update", () => {
           dateToStartAction: date,
           startTime: new Date("2027-06-01T09:00:00Z"),
           endTime: undefined,
+          dateStart: undefined,
         },
       });
     });
@@ -244,6 +275,7 @@ describe("InternalMeetingService.update", () => {
           dateToStartAction: date,
           startTime: undefined,
           endTime: undefined,
+          dateStart: undefined,
           internal: {
             title: "Nouveau titre",
             description: "Ancienne description",
@@ -341,9 +373,13 @@ describe("InternalMeetingService.update", () => {
       ).rejects.toThrow(ConflictError);
     });
 
-    it("BUG SUSPECTÉ : findById est appelé avec InternalMeeting.id au lieu du MeetingBase.id d'origine", async () => {
+    // ⚠️ BUG SUSPECTÉ (toujours présent) : repository.update({ id, ... }) retourne un
+    // InternalMeeting (via prisma.internalMeeting.update), donc son .id est la PK propre
+    // d'InternalMeeting — pas celle de MeetingBase. Le findById suivant reçoit cette PK,
+    // alors que findById() ne matche que sur meetingId/recurringId (des FK vers MeetingBase/
+    // MeetingReccuring). En pratique (hors mock), ce second findById retournera donc null.
+    it("findById final est appelé avec l'id retourné par repository.update (PK InternalMeeting, pas MeetingBase.id)", async () => {
       const existing = makeInternalMeeting({
-        id: "internal-meeting-XYZ", // PK propre d'InternalMeeting, différente de meetingId
         recurringId: "recurring-1",
         recurring: {
           id: "recurring-1",
@@ -353,28 +389,18 @@ describe("InternalMeetingService.update", () => {
         meetingId: "meeting-base-1",
       });
       mockRepository.findById
-        .mockResolvedValueOnce(existing) // premier appel : lookup initial
-        .mockResolvedValueOnce(makeInternalMeeting()); // second appel : valeur de retour finale
-
-      mockRepository.update.mockResolvedValue({
-        id: "internal-meeting-XYZ", // repository.update retourne un InternalMeeting, donc .id = sa propre PK
-      });
+        .mockResolvedValueOnce(existing)
+        .mockResolvedValueOnce(makeInternalMeeting());
+      mockRepository.update.mockResolvedValue({ id: "internal-meeting-XYZ" });
 
       await service.update({
-        id: "meeting-base-1", // id du MeetingBase transmis en paramètre — c'est CELUI-CI qui devrait être réutilisé
+        id: "meeting-base-1",
         data: {} as any,
         userId: USER_ID,
         scope: "single",
         originDate: new Date("2027-06-01"),
       });
 
-      // Comportement actuel observé : le service rappelle findById avec
-      // internalMeeting.id (la PK d'InternalMeeting, "internal-meeting-XYZ"),
-      // alors que findById() ne matche que sur meetingId/recurringId (des FK
-      // vers MeetingBase/MeetingReccuring). "internal-meeting-XYZ" ne
-      // correspondra donc jamais à un MeetingBase.id réel — findById
-      // retournera null en pratique, hors mock. Ce test documente l'appel
-      // tel qu'il est fait aujourd'hui.
       expect(mockRepository.findById).toHaveBeenLastCalledWith(
         "internal-meeting-XYZ",
       );
@@ -397,13 +423,13 @@ describe("InternalMeetingService.update", () => {
 
       await service.update({
         id: "meeting-base-1",
-        data: { title: "Nouveau titre" } as any, // pas de date/startTime/endTime → isRescheduling = false
+        data: { title: "Nouveau titre" } as any,
         userId: USER_ID,
         scope: "single",
         originDate: new Date("2027-06-01"),
       });
 
-      expect(mockRepository.copyParticipantStatuses).toHaveBeenCalledWith({
+      expect(mockParticipantRepository.copyStatus).toHaveBeenCalledWith({
         targetInternalMeetingId: "internal-meeting-1",
         sourceParticipants: existing.participants,
       });
@@ -432,7 +458,7 @@ describe("InternalMeetingService.update", () => {
         originDate: new Date("2027-06-01"),
       });
 
-      expect(mockRepository.copyParticipantStatuses).not.toHaveBeenCalled();
+      expect(mockParticipantRepository.copyStatus).not.toHaveBeenCalled();
     });
   });
 
@@ -453,7 +479,7 @@ describe("InternalMeetingService.update", () => {
       });
     });
 
-    it("crée une exception puis matérialise l'occurrence, findById avec le bon MeetingBase.id (pas de bug ici)", async () => {
+    it("matérialise l'occurrence via recurringService, findById avec le bon MeetingBase.id", async () => {
       const existing = makeInternalMeeting({
         recurringId: "recurring-1",
         recurring: {
@@ -461,15 +487,15 @@ describe("InternalMeetingService.update", () => {
           startTime: new Date("2027-06-01T09:00:00Z"),
           endTime: new Date("2027-06-01T10:00:00Z"),
         },
-        meetingId: null, // occurrence virtuelle, jamais matérialisée
+        meetingId: null,
       });
+      const fullRecurring = { id: "recurring-1", kind: "INTERNAL" };
       mockRepository.findById
         .mockResolvedValueOnce(existing)
         .mockResolvedValueOnce(existing);
-      mockRepository.createException.mockResolvedValue(undefined);
-      mockRepository.create.mockResolvedValue({
-        id: "new-meeting-base-1", // repository.create() retourne un MeetingBase → .id = MeetingBase.id, correct
-        internalMeeting: { id: "new-internal-meeting-1" },
+      mockRecurringService.getById.mockResolvedValue(fullRecurring);
+      mockRecurringService.materializeOccurrence.mockResolvedValue({
+        id: "new-meeting-base-1",
       });
 
       await service.update({
@@ -480,15 +506,50 @@ describe("InternalMeetingService.update", () => {
         originDate: new Date("2027-06-01"),
       });
 
-      expect(mockRepository.createException).toHaveBeenCalledWith({
-        parentId: "recurring-1",
-        date: new Date("2027-06-01"),
-        startTime: existing.recurring?.startTime,
-        endTime: existing.recurring?.endTime,
+      expect(mockRecurringService.getById).toHaveBeenCalledWith("recurring-1");
+      expect(mockRecurringService.materializeOccurrence).toHaveBeenCalledWith({
+        recurring: fullRecurring,
+        originDate: new Date("2027-06-01"),
+        targetDate: new Date("2027-06-01"),
       });
       expect(mockRepository.findById).toHaveBeenLastCalledWith(
         "new-meeting-base-1",
       );
+    });
+
+    it("copie les statuts si !isRescheduling", async () => {
+      const existing = makeInternalMeeting({
+        recurringId: "recurring-1",
+        recurring: {
+          id: "recurring-1",
+          startTime: new Date("2027-06-01T09:00:00Z"),
+          endTime: new Date("2027-06-01T10:00:00Z"),
+        },
+        meetingId: null,
+      });
+      mockRepository.findById
+        .mockResolvedValueOnce(existing)
+        .mockResolvedValueOnce(existing);
+      mockRecurringService.getById.mockResolvedValue({
+        id: "recurring-1",
+        kind: "INTERNAL",
+      });
+      mockRecurringService.materializeOccurrence.mockResolvedValue({
+        id: "new-meeting-base-1",
+      });
+
+      await service.update({
+        id: "meeting-base-1",
+        data: { title: "Nouveau titre" } as any,
+        userId: USER_ID,
+        scope: "single",
+        originDate: new Date("2027-06-01"),
+      });
+
+      expect(mockParticipantRepository.copyStatus).toHaveBeenCalledWith({
+        targetInternalMeetingId: "new-meeting-base-1",
+        sourceParticipants: existing.participants,
+      });
     });
   });
 });
@@ -498,7 +559,6 @@ describe("InternalMeetingService.update", () => {
 describe("InternalMeetingService.delete", () => {
   it("réunion introuvable — NotFoundError", async () => {
     mockRepository.findById.mockResolvedValue(null);
-
     await expect(
       service.delete({ id: "unknown", userId: USER_ID, scope: "all" }),
     ).rejects.toThrow(NotFoundError);
@@ -508,7 +568,6 @@ describe("InternalMeetingService.delete", () => {
     mockRepository.findById.mockResolvedValue(
       makeInternalMeeting({ adminId: OTHER_USER_ID }),
     );
-
     await expect(
       service.delete({ id: "meeting-base-1", userId: USER_ID, scope: "all" }),
     ).rejects.toThrow(ForbiddenError);
@@ -539,7 +598,7 @@ describe("InternalMeetingService.delete", () => {
     ).rejects.toThrow(BadRequestError);
   });
 
-  it("scope 'all' — supprime les occurrences futures et raccourcit la série (dayBeforeDate calculé en heure locale, cf. note)", async () => {
+  it("scope 'all' — supprime les occurrences futures et raccourcit la série", async () => {
     mockRepository.findById.mockResolvedValue(
       makeInternalMeeting({ recurringId: "recurring-1" }),
     );
@@ -560,9 +619,8 @@ describe("InternalMeetingService.delete", () => {
     );
     expect(mockRepository.truncateRecurring).toHaveBeenCalledTimes(1);
     const [, dayBeforeArg] = mockRepository.truncateRecurring.mock.calls[0];
-    // On vérifie seulement que c'est bien le jour précédent (peu importe le
-    // fuseau exact) plutôt qu'une valeur figée, vu la fragilité connue de
-    // ce calcul en heure locale.
+    // ⚠️ dayBeforeDate est calculé avec setDate(-1) en heure locale du serveur — mêmes
+    // risques de décalage jour que ceux vus dans expandRecurring si l'heure croise minuit.
     expect(dayBeforeArg.getTime()).toBeLessThan(date.getTime());
   });
 
@@ -615,16 +673,15 @@ describe("InternalMeetingService.delete", () => {
 describe("InternalMeetingService.getById", () => {
   it("CLIENT — ForbiddenError", async () => {
     await expect(
-      service.getById({ id: "meeting-1", role: "CLIENT" }),
+      service.getById({ id: "meeting-1", role: "CLIENT" as any }),
     ).rejects.toThrow(ForbiddenError);
     expect(mockRepository.findById).not.toHaveBeenCalled();
   });
 
   it("introuvable — NotFoundError", async () => {
     mockRepository.findById.mockResolvedValue(null);
-
     await expect(
-      service.getById({ id: "unknown", role: "VETERINARIAN" }),
+      service.getById({ id: "unknown", role: "VETERINARIAN" as any }),
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -644,12 +701,11 @@ describe("InternalMeetingService.getById", () => {
 
     const result = await service.getById({
       id: "meeting-1",
-      role: "VETERINARIAN",
+      role: "VETERINARIAN" as any,
     });
 
-    expect(result.participants[0].user).toEqual({
+    expect(result.participants[0].user).toMatchObject({
       id: USER_ID,
-      avatarUrl: null,
       clinicId: CLINIC_ID,
     });
   });
@@ -660,7 +716,6 @@ describe("InternalMeetingService.getById", () => {
 describe("InternalMeetingService.updateParticipantStatus", () => {
   it("réunion introuvable — NotFoundError", async () => {
     mockRepository.findById.mockResolvedValue(null);
-
     await expect(
       service.updateParticipantStatus({
         meetingId: "unknown",
@@ -689,11 +744,11 @@ describe("InternalMeetingService.updateParticipantStatus", () => {
   });
 
   describe("cas 1 — MeetingBase concret (pas de récurrence)", () => {
-    it("participant introuvable côté repository — ForbiddenError", async () => {
+    it("participant introuvable côté participantRepository — ForbiddenError", async () => {
       mockRepository.findById.mockResolvedValue(
         makeInternalMeeting({ id: "internal-meeting-1", recurringId: null }),
       );
-      mockRepository.findParticipant.mockResolvedValue(null);
+      mockParticipantRepository.findByKeys.mockResolvedValue(null);
 
       await expect(
         service.updateParticipantStatus({
@@ -709,11 +764,11 @@ describe("InternalMeetingService.updateParticipantStatus", () => {
       mockRepository.findById.mockResolvedValue(
         makeInternalMeeting({ id: "internal-meeting-1", recurringId: null }),
       );
-      mockRepository.findParticipant.mockResolvedValue({
+      mockParticipantRepository.findByKeys.mockResolvedValue({
         userId: USER_ID,
         status: "PENDING",
       });
-      mockRepository.updateParticipantStatus.mockResolvedValue(undefined);
+      mockParticipantRepository.updateStatus.mockResolvedValue(undefined);
 
       await service.updateParticipantStatus({
         meetingId: "meeting-1",
@@ -722,7 +777,7 @@ describe("InternalMeetingService.updateParticipantStatus", () => {
         scope: "all",
       });
 
-      expect(mockRepository.updateParticipantStatus).toHaveBeenCalledWith({
+      expect(mockParticipantRepository.updateStatus).toHaveBeenCalledWith({
         userId: USER_ID,
         internalMeetingId: "internal-meeting-1",
         status: "ACCEPTED",
@@ -738,7 +793,7 @@ describe("InternalMeetingService.updateParticipantStatus", () => {
           recurringId: "recurring-1",
         }),
       );
-      mockRepository.updateParticipantStatus.mockResolvedValue(undefined);
+      mockParticipantRepository.updateStatus.mockResolvedValue(undefined);
 
       await service.updateParticipantStatus({
         meetingId: "recurring-1",
@@ -747,7 +802,7 @@ describe("InternalMeetingService.updateParticipantStatus", () => {
         scope: "all",
       });
 
-      expect(mockRepository.updateParticipantStatus).toHaveBeenCalledWith({
+      expect(mockParticipantRepository.updateStatus).toHaveBeenCalledWith({
         internalMeetingId: "internal-meeting-1",
         userId: USER_ID,
         status: "DECLINED",
@@ -811,5 +866,24 @@ describe("InternalMeetingService.updateParticipantStatus", () => {
         status: "ACCEPTED",
       });
     });
+  });
+});
+
+// ── getFlatsByUser ────────────────────────────────────────────────────────────
+
+describe("InternalMeetingService.getFlatsByUser", () => {
+  it("délègue à participantRepository puis étend via expandAll", async () => {
+    const start = new Date("2026-01-01T00:00:00.000Z");
+    const end = new Date("2026-01-31T00:00:00.000Z");
+    mockParticipantRepository.findByUserAndClinicIds.mockResolvedValue([
+      { meeting: { recurring: null, meeting: null } },
+    ]);
+
+    const result = await service.getFlatsByUser(USER_ID as any, start, end);
+
+    expect(
+      mockParticipantRepository.findByUserAndClinicIds,
+    ).toHaveBeenCalledWith(USER_ID, start, end, undefined);
+    expect(result).toHaveLength(0);
   });
 });

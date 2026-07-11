@@ -19,7 +19,6 @@ const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
 
 const role = computed<UserRole | undefined>(() => {
-  console.log(route.name)
   if (route.name?.toString() === 'SECRETARY.Veto.List') return 'VETERINARIAN'
   const value = route.query.role
   return typeof value === 'string' && ROLES.includes(value as UserRole)

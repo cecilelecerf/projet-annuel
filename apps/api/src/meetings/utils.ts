@@ -13,6 +13,7 @@ import { MeetingBaseWithSpecific, MeetingRecurringWithChildren } from "./type";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import { NotFoundError } from "@api/errors";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -45,6 +46,10 @@ export const flattenBase = ({
   if (animalMeeting) return { ...animalMeeting, ...rest };
   if (internalMeeting) return { ...internalMeeting, ...rest };
   if (availabilty) return { ...availabilty, ...rest };
+
+  if (rest.type === "EXCEPTION") {
+    throw new NotFoundError("Cette occurrence a été annulée");
+  }
   throw new Error(`MeetingBase ${rest.id} has no specific type`);
 };
 

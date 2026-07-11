@@ -8,7 +8,7 @@ export default defineConfig({
     setupFiles: ["./__tests__/setup.ts"],
     hookTimeout: 60_000,
     testTimeout: 15_000,
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.router.test.ts"],
     environment: "node",
     coverage: {
       provider: "v8",

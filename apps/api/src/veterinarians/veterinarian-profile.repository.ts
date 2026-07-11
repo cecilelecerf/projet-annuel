@@ -5,7 +5,6 @@ export class VeterinarianProfileRepository {
   constructor(private prisma: PrismaClient) {}
 
   async findById(userId: VeterinarianId) {
-    console.log(userId);
     return this.prisma.veterinarianProfile.findUnique({
       where: { id: userId },
       include: { veterinarianClinics: true },

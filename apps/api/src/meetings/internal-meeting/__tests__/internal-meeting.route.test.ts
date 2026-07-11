@@ -15,6 +15,7 @@ describe("Internal meeting router", () => {
   let clientToken: string;
 
   let vetUserId: string;
+  let vetClinicId: string | undefined;
   let directorUserId: string;
 
   beforeAll(async () => {
@@ -26,6 +27,9 @@ describe("Internal meeting router", () => {
 
     const vet = await prisma.user.findUnique({
       where: { email: "veto@gmail.com" },
+      include: {
+        veterinarianProfile: { include: { veterinarianClinics: true } },
+      },
     });
 
     const director = await prisma.user.findUnique({
@@ -35,6 +39,7 @@ describe("Internal meeting router", () => {
     if (!vet || !director) throw new Error("Users introuvables");
 
     vetUserId = vet.id;
+    vetClinicId = vet.veterinarianProfile?.veterinarianClinics[0].clinicId;
     directorUserId = director.id;
   });
 
@@ -76,6 +81,8 @@ describe("Internal meeting router", () => {
           startTime: "1970-01-01T09:00:00.000Z",
           endTime: "1970-01-01T10:00:00.000Z",
           userIds: [vetUserId, directorUserId],
+          clinicId: vetClinicId,
+          adminId: vetUserId,
         });
 
       expect(res.status).toBe(201);
@@ -94,6 +101,8 @@ describe("Internal meeting router", () => {
           date: "2027-09-01",
           startTime: "1970-01-01T09:00:00.000Z",
           endTime: "1970-01-01T10:00:00.000Z",
+          clinicId: vetClinicId,
+          adminId: vetUserId,
           userIds: [vetUserId],
         });
 
@@ -150,6 +159,8 @@ describe("Internal meeting router", () => {
           date: "2027-09-15",
           startTime: "1970-01-01T09:00:00.000Z",
           endTime: "1970-01-01T10:00:00.000Z",
+          clinicId: vetClinicId,
+          adminId: vetUserId,
           userIds: [vetUserId],
         });
 
@@ -213,9 +224,10 @@ describe("Internal meeting router", () => {
           date: "2027-10-01",
           startTime: "1970-01-01T09:00:00.000Z",
           endTime: "1970-01-01T10:00:00.000Z",
+          clinicId: vetClinicId,
+          adminId: vetUserId,
           userIds: [vetUserId],
         });
-
       return res.body.id;
     }
 
@@ -238,14 +250,12 @@ describe("Internal meeting router", () => {
 
     it("204 — suppression d'une réunion", async () => {
       const id = await createMeeting();
-
       const res = await request(app)
         .delete(`/api/meetings/internal/${id}`)
         .query({
           scope: "single",
         })
         .set("Authorization", `Bearer ${vetToken}`);
-
       expect(res.status).toBe(204);
     });
   });

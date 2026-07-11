@@ -13,7 +13,7 @@ import type {
   UserRole,
   VeterinarianId,
 } from "@armali/schemas";
-import { NotFoundError } from "@api/errors";
+import { ForbiddenError, NotFoundError } from "@api/errors";
 import { AnimalMeetingService } from "./animal-meeting";
 import { MeetingBaseWithSpecific } from "./type";
 import { flattenBase } from "./utils";
@@ -24,6 +24,7 @@ import { createEvents, EventAttributes } from "ics";
 import dayjs from "dayjs";
 import { RRULE_DAYS, RRULE_FREQ } from "./data";
 import RRuleLib from "rrule";
+import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
 
 const { RRule } = RRuleLib;
 const DEFAULT_SLOT_DURATION_MINUTES = 30;
@@ -58,6 +59,7 @@ export class MeetingService {
     private internalMeetingService: InternalMeetingService,
     private availabilityService: AvailabilityService,
     private clinicService: ClinicService,
+    private veterinarianProfile: VeterinarianProfileRepository,
   ) {}
 
   flattenMeetingByBase(base: MeetingBaseWithSpecific): FlatMeeting {
@@ -79,6 +81,13 @@ export class MeetingService {
     start: Date;
     end: Date;
   }) {
+    if (role !== "SECRETARY" && targetId !== userId) throw new ForbiddenError();
+
+    const target = await this.clinicService.getClinicIdsByUserId({
+      userId: targetId,
+      role: targetRole,
+    });
+    if (target.length === 0) throw new NotFoundError("user");
     const authorClinicIds = await this.clinicService.getClinicIdsByUserId({
       userId,
       role,
@@ -134,6 +143,10 @@ export class MeetingService {
     slotDurationMinutes?: number;
     clinicIds: ClinicId[];
   }) {
+    const veterinarian =
+      await this.veterinarianProfile.findById(veterinarianId);
+    if (!veterinarian) throw new NotFoundError("Veterinarian");
+
     const [availabilities, internal, animal] = await Promise.all([
       this.availabilityService.getAvailabilities({
         userId: veterinarianId,

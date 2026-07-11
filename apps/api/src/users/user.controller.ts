@@ -42,7 +42,6 @@ export class UserController {
       const rolesToSearch: UserRole[] = targetRoles.includes("STAFF")
         ? STAFF_ROLES
         : (targetRoles as UserRole[]);
-      console.log(rolesToSearch);
       const { id, role } = req.user;
       const users = await this.service.getUsersByRoles(id, role, rolesToSearch);
 

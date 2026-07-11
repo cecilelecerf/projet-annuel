@@ -23,13 +23,18 @@ const mockStaffService = vi.hoisted(() => ({
 }));
 const mockUserService = vi.hoisted(() => ({ getUserById: vi.fn() }));
 const mockClinicService = vi.hoisted(() => ({ getClinicIdByUserId: vi.fn() }));
-const mockMeetingService = vi.hoisted(() => ({
-  getAnimalMeetingsByClinic: vi.fn(),
-  getAnimalMeetingsAsVet: vi.fn(),
-  getAvailabilities: vi.fn(),
-}));
 const mockOrderRepository = vi.hoisted(() => ({
   findPendingPickupByClinic: vi.fn(),
+}));
+const mockAnimalMeetingService = vi.hoisted(() => ({
+  getAnimalMeetingsByClinic: vi.fn(),
+  getAnimalMeetingsAsVet: vi.fn(),
+}));
+const mockAnimalRepository = vi.hoisted(() => ({
+  countByAttendingVeterinarian: vi.fn(),
+}));
+const mockAvailabilityService = vi.hoisted(() => ({
+  getAvailabilities: vi.fn(),
 }));
 
 vi.mock("@api/users/user.utils", () => ({
@@ -43,9 +48,11 @@ const service = new DashboardService(
   mockStaffService as any,
   mockUserService as any,
   mockClinicService as any,
-  mockMeetingService as any,
   mockOrderRepository as any,
   mockReviewRepository as any,
+  mockAnimalRepository as any,
+  mockAnimalMeetingService as any,
+  mockAvailabilityService as any,
 );
 
 beforeEach(() => {
@@ -191,8 +198,8 @@ describe("DashboardService.getSecretaryDashboard", () => {
   beforeEach(() => {
     mockClinicService.getClinicIdByUserId.mockResolvedValue("clinic-1");
     mockOrderRepository.findPendingPickupByClinic.mockResolvedValue([]);
-    mockMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([]);
-    mockMeetingService.getAvailabilities.mockResolvedValue([]);
+    mockAnimalMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
     mockPrisma.animal.findMany.mockResolvedValue([]);
     mockPrisma.veterinarianClinic.findMany.mockResolvedValue([]);
     mockPrisma.user.findMany.mockResolvedValue([]);
@@ -226,7 +233,7 @@ describe("DashboardService.getSecretaryDashboard", () => {
   });
 
   it("enrichit les RDV du jour avec le nom de l'animal et du vétérinaire", async () => {
-    mockMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([
+    mockAnimalMeetingService.getAnimalMeetingsByClinic.mockResolvedValue([
       makeAnimalMeeting(),
     ]);
     mockPrisma.animal.findMany.mockResolvedValue([
@@ -250,8 +257,9 @@ describe("DashboardService.getSecretaryDashboard", () => {
 
   it("ne considère un vétérinaire présent que s'il a une disponibilité aujourd'hui", async () => {
     mockStaffService.getStaffIdsByUser.mockResolvedValue(["vet-1", "vet-2"]);
-    mockMeetingService.getAvailabilities.mockImplementation(({ userId }: any) =>
-      Promise.resolve(userId === "vet-1" ? [{ id: "avail-1" }] : []),
+    mockAvailabilityService.getAvailabilities.mockImplementation(
+      ({ userId }: any) =>
+        Promise.resolve(userId === "vet-1" ? [{ id: "avail-1" }] : []),
     );
     mockPrisma.user.findMany.mockResolvedValue([
       { id: "vet-1", firstname: "Claire", lastname: "Moreau" },
@@ -278,7 +286,7 @@ describe("DashboardService.getSecretaryDashboard", () => {
 
 describe("DashboardService.getVeterinarianDashboard", () => {
   beforeEach(() => {
-    mockMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
     mockReviewService.getStats.mockResolvedValue({ average: null, count: 0 });
     mockReviewRepository.findReviewsByVeterinarian.mockResolvedValue([]);
     mockPrisma.animal.count.mockResolvedValue(0);
@@ -288,11 +296,9 @@ describe("DashboardService.getVeterinarianDashboard", () => {
   it("utilise userId directement comme vetProfileId (PK partagée)", async () => {
     await service.getVeterinarianDashboard("vet-1" as any);
 
-    expect(mockMeetingService.getAnimalMeetingsAsVet).toHaveBeenCalledWith(
-      "vet-1",
-      expect.any(Date),
-      expect.any(Date),
-    );
+    expect(
+      mockAnimalMeetingService.getAnimalMeetingsAsVet,
+    ).toHaveBeenCalledWith("vet-1", expect.any(Date), expect.any(Date));
     expect(mockReviewService.getStats).toHaveBeenCalledWith({
       veterinarianId: "vet-1",
       userId: "vet-1",
@@ -305,7 +311,7 @@ describe("DashboardService.getVeterinarianDashboard", () => {
     const in3Days = new Date();
     in3Days.setDate(in3Days.getDate() + 3);
 
-    mockMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
       makeAnimalMeeting({ date: today }),
       makeAnimalMeeting({ id: "m2", date: in3Days, animalId: "animal-2" }),
     ]);
@@ -340,7 +346,7 @@ describe("DashboardService.getVeterinarianDashboard", () => {
         animalId: `animal-${i}`,
       });
     });
-    mockMeetingService.getAnimalMeetingsAsVet.mockResolvedValue(meetings);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue(meetings);
     mockPrisma.animal.findMany.mockResolvedValue(
       Array.from({ length: 7 }, (_, i) => ({
         id: `animal-${i}`,
@@ -381,14 +387,14 @@ describe("DashboardService.getVeterinarianDashboard", () => {
     });
   });
 
-  it("compte les patients distincts via Animal.attendingVeterinarianId", async () => {
-    mockPrisma.animal.count.mockResolvedValue(17);
+  it("compte les patients distincts via animalRepository.countByAttendingVeterinarian", async () => {
+    mockAnimalRepository.countByAttendingVeterinarian.mockResolvedValue(17);
 
     const result = await service.getVeterinarianDashboard("vet-1" as any);
 
-    expect(mockPrisma.animal.count).toHaveBeenCalledWith({
-      where: { attendingVeterinarianClinic: { veterinarianId: "vet-1" } },
-    });
+    expect(
+      mockAnimalRepository.countByAttendingVeterinarian,
+    ).toHaveBeenCalledWith("vet-1");
     expect(result.patientsCount).toBe(17);
   });
 });

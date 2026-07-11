@@ -10,18 +10,18 @@ const loginAs = async (email: string, password = "Password123!") => {
   return res.body.accessToken as string;
 };
 
-// ── GET /api/users?roles=:role ─────────────────────────────────────────────────
+// ── GET /api/users?role=:role ─────────────────────────────────────────────────
 
-describe("GET /api/users?roles=:role", () => {
+describe("GET /api/users?role=:role", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).get("/api/users?roles=veterinarian");
+    const res = await request(app).get("/api/users?role=veterinarian");
     expect(res.status).toBe(401);
   });
 
   it("403 — rôle CLIENT non autorisé", async () => {
     const token = await loginAs("client@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=veterinarian")
+      .get("/api/users?role=veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });
@@ -29,7 +29,7 @@ describe("GET /api/users?roles=:role", () => {
   it("400 — rôle invalide", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=INVALID_ROLE")
+      .get("/api/users?role=INVALID_ROLE")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -37,7 +37,7 @@ describe("GET /api/users?roles=:role", () => {
   it("200 — ADMIN retourne les vétérinaires", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=veterinarian")
+      .get("/api/users?role=veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
@@ -49,7 +49,7 @@ describe("GET /api/users?roles=:role", () => {
   it("200 — ADMIN retourne les clients", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=client")
+      .get("/api/users?role=client")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);

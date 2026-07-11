@@ -6,7 +6,7 @@ const mockRepository = vi.hoisted(() => ({
   findById: vi.fn(),
   findByClinic: vi.fn(),
   findByVeterinarian: vi.fn(),
-  findByVeterinarianAndClinic: vi.fn(),
+  findByKeys: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
 }));
@@ -124,7 +124,7 @@ describe("VeterinarianClinicService.getByVeterinarian", () => {
 describe("VeterinarianClinicService.create", () => {
   it("crée l'association si le rôle est staff et qu'aucun doublon n'existe", async () => {
     mockIsStaff.mockReturnValue(true);
-    mockRepository.findByVeterinarianAndClinic.mockResolvedValue(null);
+    mockRepository.findByKeys.mockResolvedValue(null);
     mockRepository.create.mockResolvedValue(makeVc());
 
     const result = await service.create({
@@ -133,10 +133,7 @@ describe("VeterinarianClinicService.create", () => {
       role: "DIRECTOR",
     });
 
-    expect(mockRepository.findByVeterinarianAndClinic).toHaveBeenCalledWith(
-      "vet-1",
-      "clinic-1",
-    );
+    expect(mockRepository.findByKeys).toHaveBeenCalledWith("vet-1", "clinic-1");
     expect(mockRepository.create).toHaveBeenCalledWith("vet-1", "clinic-1");
     expect(result.id).toBe("vc-1");
   });
@@ -151,13 +148,13 @@ describe("VeterinarianClinicService.create", () => {
         role: "CLIENT",
       }),
     ).rejects.toThrow();
-    expect(mockRepository.findByVeterinarianAndClinic).not.toHaveBeenCalled();
+    expect(mockRepository.findByKeys).not.toHaveBeenCalled();
     expect(mockRepository.create).not.toHaveBeenCalled();
   });
 
   it("lève ConflictError si l'association existe déjà", async () => {
     mockIsStaff.mockReturnValue(true);
-    mockRepository.findByVeterinarianAndClinic.mockResolvedValue(makeVc());
+    mockRepository.findByKeys.mockResolvedValue(makeVc());
 
     await expect(
       service.create({

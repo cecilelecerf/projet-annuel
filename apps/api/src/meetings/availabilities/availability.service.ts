@@ -124,6 +124,7 @@ export class AvailabilityService {
           return await this.reccuringService.materializeOccurrence({
             recurring,
             originDate: date,
+            targetDate: data.startTime ?? date,
           });
         }
         const { recurringId: _, type: __, ...rest } = d;

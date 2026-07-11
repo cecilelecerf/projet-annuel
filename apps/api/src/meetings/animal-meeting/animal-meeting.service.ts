@@ -188,16 +188,14 @@ export class AnimalMeetingService {
     });
     if (!animalMeeting) throw new ConflictError("not created");
 
-    await this.emailService.sendAppointmentEmail(
-      "created",
-      animal.client.user.email,
-      {
+    this.emailService
+      .sendAppointmentEmail("created", animal.client.user.email, {
         firstname: animal.client.user.firstname,
         animalName: animal.name,
         date: data.date,
         startTime: data.startTime,
-      },
-    );
+      })
+      .catch(() => {});
     return animalMeeting;
   }
 
@@ -311,12 +309,14 @@ export class AnimalMeetingService {
     if (isRescheduling) {
       const clientUser = meeting.animal.client.user;
       const type = isOwner ? "updatedConfirmation" : "rescheduled";
-      await this.emailService.sendAppointmentEmail(type, clientUser.email, {
-        firstname: clientUser.firstname,
-        animalName: meeting.animal.name,
-        date: updated.meeting!.date,
-        startTime: updated.meeting!.startTime,
-      });
+      this.emailService
+        .sendAppointmentEmail(type, clientUser.email, {
+          firstname: clientUser.firstname,
+          animalName: meeting.animal.name,
+          date: updated.meeting!.date,
+          startTime: updated.meeting!.startTime,
+        })
+        .catch(() => {});
     }
 
     return updated;
@@ -360,16 +360,14 @@ export class AnimalMeetingService {
 
     // ── Notification email ───────────────────────────────────────────────────────
     const clientUser = meeting.animal.client.user;
-    await this.emailService.sendAppointmentEmail(
-      "cancelled",
-      clientUser.email,
-      {
+    this.emailService
+      .sendAppointmentEmail("cancelled", clientUser.email, {
         firstname: clientUser.firstname,
         animalName: meeting.animal.name,
         date: meetingDate,
         startTime: meetingStartTime,
-      },
-    );
+      })
+      .catch(() => {});
 
     return deleted;
   }

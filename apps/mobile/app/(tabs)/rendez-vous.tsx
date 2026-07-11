@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, RefreshControl, SectionList, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiError, http } from "@/lib/api";
 
@@ -49,6 +50,7 @@ function filterMeetings(meetings: AnimalMeeting[], search: string): AnimalMeetin
 
 export default function RendezVousScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [meetings, setMeetings] = useState<AnimalMeeting[] | null>(null);
   const [error, setError] = useState("");
@@ -109,7 +111,15 @@ export default function RendezVousScreen() {
         }
         ListHeaderComponent={
           <View className="mb-2">
-            <Text className="text-2xl font-bold text-gray-900 mb-3">Rendez-vous</Text>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-2xl font-bold text-gray-900">Rendez-vous</Text>
+              <TouchableOpacity
+                className="bg-primary rounded-full w-9 h-9 items-center justify-center"
+                onPress={() => router.push("/booking")}
+              >
+                <Text className="text-white text-lg font-bold">+</Text>
+              </TouchableOpacity>
+            </View>
             <View className="flex-row items-center border border-gray-200 rounded-2xl bg-gray-50 px-4">
               <Text className="text-gray-400 mr-2">🔍</Text>
               <TextInput

@@ -45,6 +45,7 @@ export default function RootLayout() {
             <Stack.Screen name="reset-password" options={{ headerShown: false }} />
             <Stack.Screen name="product/[id]" options={{ title: '' }} />
             <Stack.Screen name="cart" options={{ title: 'Mon panier' }} />
+            <Stack.Screen name="booking" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           </Stack>
           <StatusBar style="auto" />

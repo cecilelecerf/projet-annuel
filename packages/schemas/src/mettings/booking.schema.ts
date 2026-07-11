@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { animalWithRaceMetaSchema } from "../animals/meta.schema";
-import { clinicSchema } from "../clinic.schema";
+import { clinicSchema } from "../clinics/clinic.schema";
 import { veterinarianProfileSchema } from "../users/veterinarian.schema";
 import { baseUserSchema } from "../users/base-user.schema";
 import { animalIdSchema, specialityIdSchema, meetingIdSchema } from "../ids";

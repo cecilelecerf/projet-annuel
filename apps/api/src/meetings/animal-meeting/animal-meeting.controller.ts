@@ -2,16 +2,13 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
-  medicalHistorySchema,
   animalMeetingFieldSchema,
   ClientId,
   CreateAnimalMeeting,
-  meetingBaseSchema,
   AnimalId,
   UpdateAnimalMeeting,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { flatUser } from "@api/users/user.utils";
 
 export class AnimalMeetingController {
   constructor(private service: AnimalMeetingService) {}
@@ -89,33 +86,15 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await this.service.getByUser({
+      const meetings = await this.service.getAllByClient({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
-      const meetingsWithFlatUser = meetings.map((meeting) => {
-        const client = flatUser(meeting.animal.client);
-        const veterinarian = meeting.veterinarianClinic
-          ? flatUser(meeting.veterinarianClinic?.veterinarian)
-          : undefined;
-        return {
-          ...meeting,
-          animal: {
-            ...meeting.animal,
-            client,
-          },
-          veterinarianClinic: {
-            ...meeting.veterinarianClinic,
-            veterinarian,
-          },
-        };
-      });
+
       res
         .status(200)
-        .json(
-          animalMeetigWithMeetingSchema.array().parse(meetingsWithFlatUser),
-        );
+        .json(animalMeetigWithMeetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }
@@ -132,15 +111,9 @@ export class AnimalMeetingController {
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(
-        animalMeetingFieldSchema
-          .extend({
-            meeting: meetingBaseSchema,
-            animalMedicalHistories: medicalHistorySchema.array(),
-          })
-          .array()
-          .parse(meetings),
-      );
+      res
+        .status(200)
+        .json(animalMeetigWithMeetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }

@@ -18,6 +18,12 @@ const mockVaccineRepository = vi.hoisted(() => ({
   findByPetId: vi.fn(),
 }));
 
+const mockClinicRepository = vi.hoisted(() => ({
+  findClinicByUserId: vi.fn(),
+  findClinicIdByUser: vi.fn(),
+  findClientsById: vi.fn(),
+}));
+
 vi.mock("@api/animals/animal.repository", () => ({
   AnimalRepository: vi.fn(function () {
     return mockAnimalRepository;
@@ -29,20 +35,32 @@ vi.mock("@api/vaccines/vaccine.repository", () => ({
     return mockVaccineRepository;
   }),
 }));
-
+vi.mock("@api/clinic/clinic.repository", () => ({
+  ClinicRepository: vi.fn(function () {
+    return mockClinicRepository;
+  }),
+}));
 const mockPrisma = vi.hoisted(() => ({
   vaccine: { findMany: vi.fn() },
 }));
 
 vi.mock("@api/lib/prisma", () => ({ prisma: mockPrisma }));
+const { ClinicRepository } = await import("@api/clinics/clinic.repository");
 
 const { AnimalRepository } = await import("@api/animals/animal.repository");
 const { VaccineRepository } = await import("@api/vaccines/vaccine.repository");
 const { AnimalService } = await import("@api/animals/animal.service");
+const { VeterinarianProfileRepository } =
+  await import("@api/veterinarians/veterinarian-profile.repository");
+const { ClinicService } = await import("@api/clinics/clinic.service");
+
+const clinicService = new ClinicService(new ClinicRepository({} as any));
 
 const animalService = new AnimalService(
   new AnimalRepository({} as any),
   new VaccineRepository({} as any),
+  new ClinicService(new ClinicRepository({} as any)),
+  new VeterinarianProfileRepository({} as any),
 );
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -55,7 +73,7 @@ const makeAnimal = (overrides = {}) => ({
   activity: null,
   outdoorAccess: false,
   animalContact: false,
-  attendingVeterinarianId: null,
+  attendingVeterinarianClinicId: null,
   clientId: "client-profile-1",
   raceId: "race-1",
   createdAt: new Date(),
@@ -69,6 +87,7 @@ const makeAnimal = (overrides = {}) => ({
     },
   },
   race: { petId: "pet-1" },
+  attendingVeterinarianClinic: null,
   ...overrides,
 });
 const makeVaccine = (overrides = {}) => ({

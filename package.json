@@ -3,17 +3,24 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "docker:dev": "docker compose -f compose.dev.yaml --env-file .env.dev up --build",
+    "docker:dev:build": "docker compose -f compose.dev.yaml --env-file .env.dev build",
+    "docker:dev:up": "docker compose -f compose.dev.yaml --env-file .env.dev up -d --build",
     "docker:dev:down": "docker compose -f compose.dev.yaml --env-file .env.dev down",
-    "docker:dev:reset": "docker compose -f compose.dev.yaml --env-file .env.dev down -v",
-    "docker:up": "docker compose --env-file .env.dev up -d",
-    "docker:down": "docker compose --env-file .env.dev down",
-    "docker:logs": "docker compose --env-file .env.dev logs -f",
+    "docker:dev:reset": "docker compose -f compose.dev.yaml --env-file .env.dev down && docker volume rm armali-dev_api_node_modules armali-dev_api_workspace_modules armali-dev_web_node_modules armali-dev_web_workspace_modules armali-dev_schemas_node_modules ; docker compose -f compose.dev.yaml --env-file .env.dev up -d --build",
+    "docker:dev:ps": "docker compose -f compose.dev.yaml --env-file .env.dev ps",
+    "docker:dev:logs": "docker compose -f compose.dev.yaml --env-file .env.dev logs -f",
+    "log:api": "pnpm docker:dev:logs api",
+    "log:web": "pnpm docker:dev:logs web",
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
     "dev:schemas": "pnpm --filter schemas dev",
     "db:view": "pnpm --filter api prisma:studio",
     "db:seed": "pnpm --filter api seed",
+    "db:init": "pnpm --filter api prisma:generate && pnpm --filter api prisma:migrate && pnpm db:seed",
+    "add:api": "pnpm --filter api add",
+    "sync:api": "docker compose -f compose.dev.yaml --env-file .env.dev exec api pnpm install",
+    "add:web": "pnpm --filter web add",
+    "sync:web": "docker compose -f compose.dev.yaml --env-file .env.dev exec web pnpm install",
     "dev": "pnpm dev:web & pnpm dev:api & pnpm db:view",
     "build": "pnpm --filter schemas build && pnpm --filter api build && pnpm --filter web build"
   },
@@ -23,5 +30,13 @@
   ],
   "devDependencies": {
     "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/node": "22.18.12"
+    }
   }
 }

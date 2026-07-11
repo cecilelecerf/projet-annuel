@@ -29,6 +29,7 @@ export async function seedOrders(
     data: {
       status: "CONFIRMED",
       pickupAt: new Date("2026-02-25T10:00:00"),
+      pickupCode: "A1B2C3",
       clientId: clientUser1.id,
       clinicId: clinics.clinic1.id,
     },

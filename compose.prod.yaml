@@ -71,6 +71,46 @@ services:
           memory: 256M
       restart_policy:
         condition: on-failure
+  migration:
+    image: ${DOCKER_HUB_USERNAME}/pa-api:latest
+    entrypoint:
+      - /scripts/migrate.sh
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+    networks:
+      - backend
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: none
+      update_config:
+        order: start-first
+        failure_action: continue
+
+  seed:
+    image: ${DOCKER_HUB_USERNAME}/pa-seed:latest
+    entrypoint:
+      - /scripts/seed.sh
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - aws_access_key_id_v2
+      - aws_secret_access_key_v2
+      - s3_bucket
+      - s3_endpoint
+      - aws_region
+    networks:
+      - backend
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: none
+      update_config:
+        order: start-first
+        failure_action: continue
 
   api:
     image: ${DOCKER_HUB_USERNAME}/pa-api:latest
@@ -312,7 +352,7 @@ services:
       - minio_root_user
       - minio_root_password
     configs:
-      - source: minio_init_script
+      - source: minio_init_script_v2
         target: /init.sh
         mode: 0755
     entrypoint: ["/bin/sh", "/init.sh"]
@@ -380,5 +420,5 @@ configs:
     external: true
   grafana_dashboard_express:
     external: true
-  minio_init_script:
+  minio_init_script_v2:
     external: true

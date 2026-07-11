@@ -1,12 +1,30 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import { useAuthStore } from '@/stores/authStore'
 import { productsApi } from '@/features/products/api/products.api'
 import { brandsApi } from '@/features/products/api/brands.api'
-import type { ProductClinicWithProduct, Brand, BrandId, ClinicId } from '@armali/schemas'
+import { productRequestsApi } from '@/features/products/api/product-requests.api'
+import type {
+  ProductClinicWithProduct,
+  ProductWithBrand,
+  Brand,
+  BrandId,
+  ClinicId,
+  ProductId,
+} from '@armali/schemas'
 
 const notify = useNotify()
+const router = useRouter()
+const authStore = useAuthStore()
+
+// La page est partagée référent/directeur — le lien vers Fournisseurs doit
+// pointer vers le bon router selon le rôle connecté.
+const suppliersRouteName = computed(() =>
+  authStore.user?.role === 'DIRECTOR' ? 'DIRECTOR.Suppliers' : 'REFERENT.Suppliers',
+)
 
 interface Clinic {
   id: string
@@ -22,7 +40,12 @@ const loading = ref(false)
 async function loadClinicAndProducts() {
   loading.value = true
   try {
-    const clinic = await http.get<Clinic>('/clinics/me')
+    const clinics = await http.get<Clinic[]>('/clinics/me')
+    const clinic = clinics[0]
+    if (!clinic) {
+      notify.error('Aucune clinique associée à ce compte')
+      return
+    }
     clinicId.value = clinic.id
     clinicProducts.value = await productsApi.getClinicProducts(clinic.id)
   } catch (err: unknown) {
@@ -40,100 +63,52 @@ function isLowStock(item: ProductClinicWithProduct) {
 
 const lowStockCount = computed(() => clinicProducts.value.filter(isLowStock).length)
 
-// ── Ajout d'un nouveau produit ──────────────────────────────────────────
-
-const CREATE_PREFIX = '__create__:'
-
-const brandOptions = ref<Brand[]>([])
-const brandSearchLoading = ref(false)
-const brandCreating = ref(false)
-
-async function searchBrands(query: string) {
-  if (!query) {
-    brandOptions.value = []
-    return
-  }
-  brandSearchLoading.value = true
-  try {
-    brandOptions.value = await brandsApi.search(query)
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la recherche de marque')
-  } finally {
-    brandSearchLoading.value = false
-  }
-}
-
-// true si aucune marque existante ne correspond exactement à la saisie
-const showCreateBrandOption = computed(() => {
-  const query = brandQuery.value.trim()
-  if (!query) return false
-  return !brandOptions.value.some((b) => b.name.toLowerCase() === query.toLowerCase())
-})
-
-const brandQuery = ref('')
-
-// Déclenché quand l'utilisateur sélectionne une marque existante OU l'option "Créer..."
-async function handleBrandSelect(value: string) {
-  if (!value.startsWith(CREATE_PREFIX)) {
-    addForm.brandId = value
-    return
-  }
-  const name = value.slice(CREATE_PREFIX.length)
-  brandCreating.value = true
-  try {
-    const brand = await brandsApi.create(name)
-    brandOptions.value = [brand, ...brandOptions.value]
-    addForm.brandId = brand.id
-    notify.success(`Marque "${brand.name}" créée`)
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la création de la marque')
-    addForm.brandId = ''
-  } finally {
-    brandCreating.value = false
-  }
-}
+// ── Ajout : sélection d'un produit existant du catalogue ─────────────────
 
 const addDialog = ref(false)
+const catalogProducts = ref<ProductWithBrand[]>([])
+const catalogLoading = ref(false)
+
+// IDs déjà présents dans la boutique de la clinique, pour ne pas proposer de doublon
+const alreadyLinkedProductIds = computed(
+  () => new Set(clinicProducts.value.map((cp: ProductClinicWithProduct) => cp.productId)),
+)
+
+async function openAddDialog() {
+  addDialog.value = true
+  addForm.productId = ''
+  addForm.stock = 0
+  addForm.minimumRequired = 1
+  addForm.price = 0
+  catalogLoading.value = true
+  try {
+    catalogProducts.value = await productsApi.getAll()
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : 'Impossible de charger le catalogue')
+  } finally {
+    catalogLoading.value = false
+  }
+}
+
+const availableCatalogProducts = computed(() =>
+  catalogProducts.value.filter((p: ProductWithBrand) => !alreadyLinkedProductIds.value.has(p.id)),
+)
+
 const addForm = reactive({
-  name: '',
-  description: '',
-  brandId: '',
+  productId: '',
   stock: 0,
   minimumRequired: 1,
   price: 0,
 })
 const addLoading = ref(false)
 
-function resetAddForm() {
-  addForm.name = ''
-  addForm.description = ''
-  addForm.brandId = ''
-  addForm.stock = 0
-  addForm.minimumRequired = 1
-  addForm.price = 0
-  brandOptions.value = []
-  brandQuery.value = ''
-}
-
 async function submitAddProduct() {
-  if (!clinicId.value) return
-  if (addForm.brandId.startsWith(CREATE_PREFIX) || brandCreating.value) {
-    notify.error('Merci de patienter, la marque est en cours de création')
-    return
-  }
+  if (!clinicId.value || !addForm.productId) return
   addLoading.value = true
   try {
-    // NOTE : addForm.brandId et clinicId.value sont de simples `string` côté formulaire,
-    // alors que les schémas Zod attendent des ID "brandés" (BrandId, ClinicId).
-    // On caste explicitement à la frontière, la validation réelle a lieu côté serveur.
-    const product = await productsApi.create({
-      name: addForm.name,
-      description: addForm.description || undefined,
-      brandId: addForm.brandId as BrandId,
-    })
     const clinicProduct = await productsApi.createClinicProduct({
       clinicId: clinicId.value as ClinicId,
-      productId: product.id,
+      productId: addForm.productId as ProductId,
       stock: addForm.stock,
       minimumRequired: addForm.minimumRequired,
       price: addForm.price,
@@ -141,7 +116,6 @@ async function submitAddProduct() {
     clinicProducts.value.unshift(clinicProduct)
     notify.success('Produit ajouté avec succès')
     addDialog.value = false
-    resetAddForm()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : "Erreur lors de l'ajout du produit")
   } finally {
@@ -149,120 +123,123 @@ async function submitAddProduct() {
   }
 }
 
-// ── Réapprovisionnement ──────────────────────────────────────────────────
+// ── Demande d'un nouveau produit (absent du catalogue) ────────────────────
 
-const restockDialog = ref(false)
-const restockTarget = ref<ProductClinicWithProduct | null>(null)
-const restockQuantity = ref(1)
-const restockLoading = ref(false)
+const requestDialog = ref(false)
+const requestForm = reactive({
+  name: '',
+  description: '',
+  brandId: '',
+  newBrandName: '',
+  picture: '',
+})
+const requestLoading = ref(false)
 
-function openRestock(item: ProductClinicWithProduct) {
-  restockTarget.value = item
-  restockQuantity.value = 1
-  restockDialog.value = true
-}
+const REQUEST_NEW_BRAND_PREFIX = '__new__:'
 
-async function submitRestock() {
-  if (!restockTarget.value) return
-  restockLoading.value = true
-  try {
-    const updated = await productsApi.restock(restockTarget.value.id, {
-      quantity: restockQuantity.value,
-    })
-    const index = clinicProducts.value.findIndex((p) => p.id === updated.id)
-    if (index !== -1) clinicProducts.value[index] = updated
-    notify.success('Stock mis à jour')
-    restockDialog.value = false
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors du réapprovisionnement')
-  } finally {
-    restockLoading.value = false
+const requestBrandOptions = ref<Brand[]>([])
+const requestBrandQuery = ref('')
+const requestBrandSearchLoading = ref(false)
+
+async function searchRequestBrands(query: string) {
+  requestBrandQuery.value = query
+  if (!query) {
+    requestBrandOptions.value = []
+    return
   }
-}
-
-// ── Modification du minimum requis / prix ───────────────────────────────
-
-const editDialog = ref(false)
-const editTarget = ref<ProductClinicWithProduct | null>(null)
-const editForm = reactive({ name: '', brandId: '', minimumRequired: 0, price: 0 })
-const editLoading = ref(false)
-
-const editBrandOptions = ref<Brand[]>([])
-const editBrandQuery = ref('')
-const editBrandSearchLoading = ref(false)
-const editBrandCreating = ref(false)
-
-async function searchEditBrands(query: string) {
-  if (!query) return
-  editBrandSearchLoading.value = true
+  requestBrandSearchLoading.value = true
   try {
-    editBrandOptions.value = await brandsApi.search(query)
+    requestBrandOptions.value = await brandsApi.search(query)
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur lors de la recherche de marque')
   } finally {
-    editBrandSearchLoading.value = false
+    requestBrandSearchLoading.value = false
   }
 }
 
-const showCreateEditBrandOption = computed(() => {
-  const query = editBrandQuery.value.trim()
+// true si aucune marque existante ne correspond exactement à la saisie
+const showNewBrandOption = computed(() => {
+  const query = requestBrandQuery.value.trim()
   if (!query) return false
-  return !editBrandOptions.value.some((b) => b.name.toLowerCase() === query.toLowerCase())
+  return !requestBrandOptions.value.some((b: Brand) => b.name.toLowerCase() === query.toLowerCase())
 })
 
-async function handleEditBrandSelect(value: string) {
-  if (!value.startsWith(CREATE_PREFIX)) {
-    editForm.brandId = value
-    return
-  }
-  const name = value.slice(CREATE_PREFIX.length)
-  editBrandCreating.value = true
-  try {
-    const brand = await brandsApi.create(name)
-    editBrandOptions.value = [brand, ...editBrandOptions.value]
-    editForm.brandId = brand.id
-    notify.success(`Marque "${brand.name}" créée`)
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la création de la marque')
-  } finally {
-    editBrandCreating.value = false
+// Sélection d'une marque existante OU indication d'un nom de marque libre
+// (aucune création réelle ici : la marque sera résolue par l'admin à l'approbation)
+function handleRequestBrandSelect(value: string) {
+  if (value.startsWith(REQUEST_NEW_BRAND_PREFIX)) {
+    requestForm.brandId = ''
+    requestForm.newBrandName = value.slice(REQUEST_NEW_BRAND_PREFIX.length)
+  } else {
+    requestForm.brandId = value
+    requestForm.newBrandName = ''
   }
 }
+
+function openRequestDialog() {
+  requestForm.name = ''
+  requestForm.description = ''
+  requestForm.brandId = ''
+  requestForm.newBrandName = ''
+  requestForm.picture = ''
+  requestBrandOptions.value = []
+  requestBrandQuery.value = ''
+  addDialog.value = false
+  requestDialog.value = true
+}
+
+async function submitRequest() {
+  if (!requestForm.name.trim()) {
+    notify.error('Le nom du produit est requis')
+    return
+  }
+  if (!requestForm.brandId && !requestForm.newBrandName.trim()) {
+    notify.error('Merci de choisir une marque existante ou d’en indiquer une nouvelle')
+    return
+  }
+  requestLoading.value = true
+  try {
+    await productRequestsApi.create({
+      name: requestForm.name,
+      description: requestForm.description || undefined,
+      picture: requestForm.picture || undefined,
+      brandId: requestForm.brandId ? (requestForm.brandId as BrandId) : undefined,
+      newBrandName: requestForm.newBrandName || undefined,
+    })
+    notify.success('Votre demande a été envoyée à l’administrateur')
+    requestDialog.value = false
+  } catch (err: unknown) {
+    notify.error(err instanceof Error ? err.message : "Erreur lors de l'envoi de la demande")
+  } finally {
+    requestLoading.value = false
+  }
+}
+
+// ── Modification du minimum requis / prix (le nom et la marque du produit ──
+// ── appartiennent au catalogue global, géré par l'admin uniquement) ────────
+
+const editDialog = ref(false)
+const editTarget = ref<ProductClinicWithProduct | null>(null)
+const editForm = reactive({ minimumRequired: 0, price: 0 })
+const editLoading = ref(false)
 
 function openEdit(item: ProductClinicWithProduct) {
   editTarget.value = item
-  editForm.name = item.product.name
-  editForm.brandId = item.product.brandId
   editForm.minimumRequired = item.minimumRequired
   editForm.price = item.price
-  // Préremplit la liste pour que le select affiche déjà le nom de la marque actuelle
-  editBrandOptions.value = [item.product.brand]
-  editBrandQuery.value = ''
   editDialog.value = true
 }
 
 async function submitEdit() {
   if (!editTarget.value) return
-  if (editForm.brandId.startsWith(CREATE_PREFIX) || editBrandCreating.value) {
-    notify.error('Merci de patienter, la marque est en cours de création')
-    return
-  }
   editLoading.value = true
   try {
-    const [updatedProduct, updatedClinicProduct] = await Promise.all([
-      productsApi.update(editTarget.value.productId, {
-        name: editForm.name,
-        brandId: editForm.brandId as BrandId,
-      }),
-      productsApi.updateClinicProduct(editTarget.value.id, {
-        minimumRequired: editForm.minimumRequired,
-        price: editForm.price,
-      }),
-    ])
-    const index = clinicProducts.value.findIndex((p) => p.id === updatedClinicProduct.id)
-    if (index !== -1) {
-      clinicProducts.value[index] = { ...updatedClinicProduct, product: updatedProduct }
-    }
+    const updated = await productsApi.updateClinicProduct(editTarget.value.id, {
+      minimumRequired: editForm.minimumRequired,
+      price: editForm.price,
+    })
+    const index = clinicProducts.value.findIndex((p: ProductClinicWithProduct) => p.id === updated.id)
+    if (index !== -1) clinicProducts.value[index] = updated
     notify.success('Produit mis à jour')
     editDialog.value = false
   } catch (err: unknown) {
@@ -280,17 +257,21 @@ async function submitEdit() {
         <h1>Boutique</h1>
         <p>Gérez le catalogue et le stock de votre clinique</p>
       </div>
-      <el-button type="primary" @click="addDialog = true">Ajouter un produit</el-button>
+      <el-button type="primary" @click="openAddDialog">Ajouter un produit</el-button>
     </div>
 
     <el-alert
       v-if="lowStockCount > 0"
-      :title="`${lowStockCount} produit(s) sous le seuil minimum`"
       type="warning"
       show-icon
       :closable="false"
       style="margin-bottom: 20px"
-    />
+    >
+      <template #title>
+        {{ lowStockCount }} produit(s) sous le seuil minimum —
+        <RouterLink :to="{ name: suppliersRouteName }">passer une commande fournisseur</RouterLink>
+      </template>
+    </el-alert>
 
     <el-table v-loading="loading" :data="clinicProducts" style="width: 100%">
       <el-table-column label="Produit" min-width="200">
@@ -322,50 +303,36 @@ async function submitEdit() {
         </template>
       </el-table-column>
 
-      <el-table-column label="Actions" width="240">
+      <el-table-column label="Actions" width="260">
         <template #default="{ row }: { row: ProductClinicWithProduct }">
-          <el-button size="small" @click="openRestock(row)">Réapprovisionner</el-button>
+          <el-button
+            size="small"
+            :type="isLowStock(row) ? 'warning' : 'default'"
+            @click="router.push({ name: suppliersRouteName })"
+          >
+            Commander
+          </el-button>
           <el-button size="small" @click="openEdit(row)">Modifier</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- Dialog : ajout d'un nouveau produit -->
+    <!-- Dialog : ajouter un produit existant du catalogue -->
     <el-dialog v-model="addDialog" title="Ajouter un produit" width="480px">
       <el-form label-position="top" @submit.prevent="submitAddProduct">
-        <el-form-item label="Nom du produit">
-          <el-input v-model="addForm.name" />
-        </el-form-item>
-        <el-form-item label="Description">
-          <el-input v-model="addForm.description" type="textarea" :rows="2" />
-        </el-form-item>
-        <el-form-item label="Marque">
+        <el-form-item label="Produit du catalogue">
           <el-select
-            v-model="addForm.brandId"
+            v-model="addForm.productId"
             filterable
-            remote
-            :remote-method="
-              (q: string) => {
-                brandQuery = q
-                searchBrands(q)
-              }
-            "
-            :loading="brandSearchLoading || brandCreating"
-            placeholder="Rechercher ou créer une marque..."
+            :loading="catalogLoading"
+            placeholder="Rechercher un produit..."
             style="width: 100%"
-            @change="handleBrandSelect"
           >
             <el-option
-              v-for="brand in brandOptions"
-              :key="brand.id"
-              :label="brand.name"
-              :value="brand.id"
-            />
-            <el-option
-              v-if="showCreateBrandOption"
-              :key="`create-${brandQuery}`"
-              :label="`+ Créer la marque « ${brandQuery} »`"
-              :value="`${CREATE_PREFIX}${brandQuery}`"
+              v-for="product in availableCatalogProducts"
+              :key="product.id"
+              :label="`${product.name} — ${product.brand.name}`"
+              :value="product.id"
             />
           </el-select>
         </el-form-item>
@@ -379,12 +346,16 @@ async function submitEdit() {
           <el-input-number v-model="addForm.price" :min="0" :precision="2" :step="0.5" />
         </el-form-item>
       </el-form>
+      <div class="request-link">
+        Le produit que vous cherchez n'est pas dans le catalogue ?
+        <el-button text type="primary" @click="openRequestDialog">Faire une demande</el-button>
+      </div>
       <template #footer>
         <el-button @click="addDialog = false">Annuler</el-button>
         <el-button
           type="primary"
           :loading="addLoading"
-          :disabled="brandCreating"
+          :disabled="!addForm.productId"
           @click="submitAddProduct"
         >
           Ajouter
@@ -392,58 +363,59 @@ async function submitEdit() {
       </template>
     </el-dialog>
 
-    <!-- Dialog : réapprovisionnement -->
-    <el-dialog v-model="restockDialog" title="Réapprovisionner" width="360px">
-      <p v-if="restockTarget">{{ restockTarget.product.name }}</p>
-      <el-form label-position="top" @submit.prevent="submitRestock">
-        <el-form-item label="Quantité à ajouter">
-          <el-input-number v-model="restockQuantity" :min="1" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="restockDialog = false">Annuler</el-button>
-        <el-button type="primary" :loading="restockLoading" @click="submitRestock">
-          Valider
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Dialog : modification produit + minimum requis / prix -->
-    <el-dialog v-model="editDialog" title="Modifier le produit" width="480px">
-      <el-form label-position="top" @submit.prevent="submitEdit">
+    <!-- Dialog : demande d'un nouveau produit (soumise à validation admin) -->
+    <el-dialog v-model="requestDialog" title="Demander un nouveau produit" width="480px">
+      <p class="request-hint">
+        Votre demande sera envoyée à l'administrateur, qui l'ajoutera au catalogue s'il l'accepte.
+      </p>
+      <el-form label-position="top" @submit.prevent="submitRequest">
         <el-form-item label="Nom du produit">
-          <el-input v-model="editForm.name" />
+          <el-input v-model="requestForm.name" />
+        </el-form-item>
+        <el-form-item label="Description">
+          <el-input v-model="requestForm.description" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item label="Marque">
           <el-select
-            v-model="editForm.brandId"
+            :model-value="requestForm.brandId || (requestForm.newBrandName ? `${REQUEST_NEW_BRAND_PREFIX}${requestForm.newBrandName}` : '')"
             filterable
             remote
-            :remote-method="
-              (q: string) => {
-                editBrandQuery = q
-                searchEditBrands(q)
-              }
-            "
-            :loading="editBrandSearchLoading || editBrandCreating"
-            placeholder="Rechercher ou créer une marque..."
+            :remote-method="searchRequestBrands"
+            :loading="requestBrandSearchLoading"
+            placeholder="Rechercher une marque ou en proposer une nouvelle..."
             style="width: 100%"
-            @change="handleEditBrandSelect"
+            @change="handleRequestBrandSelect"
           >
             <el-option
-              v-for="brand in editBrandOptions"
+              v-for="brand in requestBrandOptions"
               :key="brand.id"
               :label="brand.name"
               :value="brand.id"
             />
             <el-option
-              v-if="showCreateEditBrandOption"
-              :key="`create-${editBrandQuery}`"
-              :label="`+ Créer la marque « ${editBrandQuery} »`"
-              :value="`${CREATE_PREFIX}${editBrandQuery}`"
+              v-if="showNewBrandOption"
+              :key="`new-${requestBrandQuery}`"
+              :label="`+ Proposer la marque « ${requestBrandQuery} »`"
+              :value="`${REQUEST_NEW_BRAND_PREFIX}${requestBrandQuery}`"
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="Photo (URL, optionnel)">
+          <el-input v-model="requestForm.picture" placeholder="https://..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="requestDialog = false">Annuler</el-button>
+        <el-button type="primary" :loading="requestLoading" @click="submitRequest">
+          Envoyer la demande
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Dialog : modification du minimum requis / prix -->
+    <el-dialog v-model="editDialog" title="Modifier le produit" width="360px">
+      <p v-if="editTarget">{{ editTarget.product.name }}</p>
+      <el-form label-position="top" @submit.prevent="submitEdit">
         <el-form-item label="Minimum requis">
           <el-input-number v-model="editForm.minimumRequired" :min="0" />
         </el-form-item>
@@ -453,12 +425,7 @@ async function submitEdit() {
       </el-form>
       <template #footer>
         <el-button @click="editDialog = false">Annuler</el-button>
-        <el-button
-          type="primary"
-          :loading="editLoading"
-          :disabled="editBrandCreating"
-          @click="submitEdit"
-        >
+        <el-button type="primary" :loading="editLoading" @click="submitEdit">
           Enregistrer
         </el-button>
       </template>
@@ -491,5 +458,15 @@ async function submitEdit() {
 .product-cell .brand {
   font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
+}
+.request-link {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  margin-top: var(--spacing-sm);
+}
+.request-hint {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  margin: 0 0 var(--spacing-md);
 }
 </style>

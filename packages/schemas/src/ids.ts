@@ -23,6 +23,7 @@ export const foodIdSchema = z.uuid().brand("FoodId");
 export const productClinicIdSchema = z.uuid().brand("ProductClinicId");
 export const reviewIdSchema = z.uuid().brand("ReviewId");
 export const petFoodIdSchema = z.number().int().brand("PetFoodId");
+export const productRequestIdSchema = z.uuid().brand("ProductRequestId");
 export const clientPetHealthConditionIdSchema = z
   .uuid()
   .brand("ClientPetHealthConditionId");
@@ -56,6 +57,11 @@ export const surgeryIdSchema = z.uuid().brand("SurgeryId");
 export const clinicProductIdSchema = z.uuid().brand("ClinicProductId");
 export const clinicRequestIdSchema = z.uuid().brand("ClinicRequestId");
 export const fileIdSchema = z.uuid().brand("FileId");
+export const budgetTransactionIdSchema = z.uuid().brand("BudgetTransactionId");
+export const supplierIdSchema = z.uuid().brand("SupplierId");
+export const supplierProductIdSchema = z.uuid().brand("SupplierProductId");
+export const supplierOrderIdSchema = z.uuid().brand("SupplierOrderId");
+export const supplierOrderItemIdSchema = z.uuid().brand("SupplierOrderItemId");
 
 export type UserId = z.infer<typeof userIdSchema>;
 export type ClientId = z.infer<typeof clientIdSchema>;
@@ -101,4 +107,11 @@ export type AnalysisId = z.infer<typeof analysisIdSchema>;
 export type SurgeryId = z.infer<typeof surgeryIdSchema>;
 export type ClinicProductId = z.infer<typeof clinicProductIdSchema>;
 export type MeetingRecurringId = z.infer<typeof meetingRecurringIdSchema>;
+export type ProductRequestId = z.infer<typeof productRequestIdSchema>;
 export type ClinicRequestId = z.infer<typeof clinicRequestIdSchema>;
+export type BudgetTransactionId = z.infer<typeof budgetTransactionIdSchema>;
+export type SupplierId = z.infer<typeof supplierIdSchema>;
+export type SupplierProductId = z.infer<typeof supplierProductIdSchema>;
+export type SupplierOrderId = z.infer<typeof supplierOrderIdSchema>;
+export type SupplierOrderItemId = z.infer<typeof supplierOrderItemIdSchema>;
+export type FileId = z.infer<typeof fileIdSchema>;

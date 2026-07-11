@@ -1,0 +1,65 @@
+name: Run Database Seeds
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type YES to run seeds"
+        required: true
+        default: "NO"
+
+jobs:
+  seed:
+    name: Execute production seeds
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check confirmation
+        if: ${{ github.event.inputs.confirm != 'YES' }}
+        run: |
+          echo "Seed cancelled"
+          exit 1
+
+      - name: Run seed on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+
+          script: |
+
+            export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+
+            echo "Pull latest API image"
+
+            docker pull $DOCKER_HUB_USERNAME/pa-api:latest
+
+
+            echo "Starting seed job"
+
+            docker service update \
+              --detach \
+              --force \
+              --replicas 1 \
+              cecoule_seed
+
+
+            echo "Waiting for seed execution"
+
+            sleep 30
+
+
+            echo "Seed logs:"
+
+            docker service logs \
+              --tail 200 \
+              cecoule_seed
+
+
+            echo "Stopping seed service"
+
+            docker service update \
+              --detach \
+              --replicas 0 \
+              cecoule_seed

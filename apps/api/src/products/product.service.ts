@@ -10,6 +10,11 @@ import type {
   UserRole,
 } from "@armali/schemas";
 
+// Le catalogue global (Product) n'est modifiable que par l'admin,
+// désormais via le workflow de demande pour référent/directeur (ProductRequest)
+const CATALOG_MANAGER_ROLES: UserRole[] = ["ADMIN"];
+
+// Le stock par clinique (ClinicProduct), lui, reste géré par le référent/directeur
 const STOCK_MANAGER_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "REFERENT"];
 
 export class ProductService {
@@ -31,19 +36,19 @@ export class ProductService {
   }
 
   async create(data: CreateProduct, role: UserRole) {
-    if (!STOCK_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (!CATALOG_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
     return this.repository.create(data);
   }
 
   async update(id: string, data: UpdateProduct, role: UserRole) {
-    if (!STOCK_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (!CATALOG_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
     const product = await this.repository.findById(id);
     if (!product) throw new NotFoundError("Produit");
     return this.repository.update(id, data);
   }
 
   async delete(id: string, role: UserRole) {
-    if (!STOCK_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
+    if (!CATALOG_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
     const product = await this.repository.findById(id);
     if (!product) throw new NotFoundError("Produit");
     return this.repository.delete(id);
@@ -53,6 +58,11 @@ export class ProductService {
 
   async getClinicProducts(clinicId: string) {
     return this.clinicRepository.findByClinic(clinicId);
+  }
+
+  async getLowStockProducts(clinicId: string) {
+    const products = await this.clinicRepository.findByClinic(clinicId);
+    return products.filter((p) => p.stock <= p.minimumRequired);
   }
 
   async getClinicProductById(id: string) {
@@ -66,7 +76,6 @@ export class ProductService {
     return this.clinicRepository.create(data);
   }
 
-  // Modification du prix et/ou du minimum requis (pas le stock, voir restock)
   async updateClinicProduct(
     id: string,
     data: UpdateProductClinic,
@@ -78,7 +87,6 @@ export class ProductService {
     return this.clinicRepository.update(id, data);
   }
 
-  // Réapprovisionnement : incrémente le stock existant plutôt que de l'écraser
   async restockClinicProduct(
     id: string,
     data: RestockProductClinic,

@@ -21,6 +21,8 @@ import { cleanup } from "./cleanup";
 import { seedClinicRequests } from "./clinic-requests";
 import { seedDirectors } from "./directors";
 import { seedReviews } from "./reviews";
+import { seedBudgetAndSuppliers } from "./budget";
+import { seedAnalyses, seedImaging } from "./files";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -74,12 +76,34 @@ async function main() {
     pets,
     directors,
   });
-  await seedActs(prisma, {
+  const acts = await seedActs(prisma, {
     petCat: pets.petCat,
     petDog: pets.petDog,
     clinics,
     meetings,
   });
+  const imagingActs = acts.allPerformedActs.filter(
+    (act) => act.type === "IMAGING",
+  );
+  const analysisActs = acts.allPerformedActs.filter(
+    (act) => act.type === "ANALYSIS",
+  );
+
+  Promise.all([
+    ...imagingActs.map(async (act, i) => {
+      await seedImaging(prisma, {
+        imagingIds: imagingActs.map((act) => act.id),
+        localImagePath: `assets/imagings/imagings-${i}.jpg`,
+      });
+    }),
+    ...analysisActs.map(async (act, i) => {
+      await seedAnalyses(prisma, {
+        analysisIds: analysisActs.map((act) => act.id),
+        localImagePath: `assets/analysiss/analyse-${i}.pdf`,
+      });
+    }),
+  ]);
+
   const products = await seedProducts(prisma, {
     clinics,
     healthConditions,
@@ -88,6 +112,7 @@ async function main() {
   await seedOrders(prisma, { users, clinics });
   await seedMessaging(prisma, { users, clinics, directors });
   await seedReviews(prisma, { users, veterinarianClinics: vetoClinic });
+  await seedBudgetAndSuppliers(prisma, { clinics });
   console.log("✅ Seed terminé avec succès !");
   console.log("\n📋 Comptes créés :");
   console.log("  Admin      : admin@gmail.com / Password123!");

@@ -2,12 +2,15 @@ import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
 import { createAnimalSchema, updateAnimalSchema } from "@armali/schemas";
-import { animalController, animalMeetingController } from "@api/instances";
+import {
+  animalController,
+  animalMeetingController,
+  medicalHistoryController,
+} from "@api/instances";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
 
 const animalRouter: Router = Router();
 const controller = animalController;
-
 animalRouter.use(authMiddleware);
 animalRouter.use(requireApprovedClinic);
 
@@ -19,10 +22,18 @@ animalRouter.get(
   controller.getVaccines.bind(controller) as RequestHandler,
 );
 animalRouter.get(
-  "/:id/meetings",
+  "/:id/animal-meetings",
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalMeetingController.getByAnimal.bind(
     animalMeetingController,
+  ) as RequestHandler,
+);
+
+animalRouter.get(
+  "/:id/medical-histories",
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  medicalHistoryController.getByAnimal.bind(
+    medicalHistoryController,
   ) as RequestHandler,
 );
 

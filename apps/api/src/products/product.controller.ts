@@ -92,7 +92,7 @@ export class ProductController {
     }
   }
 
-  // ── ProductClinic (stock par clinique) ────────────────────────────────────
+  // ── ProductClinic (stock par clinique) ──────────────────────────────────
 
   async getClinicProducts(
     req: RequestWithParams<{ clinicId: string }>,
@@ -101,6 +101,21 @@ export class ProductController {
   ) {
     try {
       const products = await this.service.getClinicProducts(
+        req.params.clinicId,
+      );
+      res.status(200).json(products);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getLowStockProducts(
+    req: RequestWithParams<{ clinicId: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const products = await this.service.getLowStockProducts(
         req.params.clinicId,
       );
       res.status(200).json(products);

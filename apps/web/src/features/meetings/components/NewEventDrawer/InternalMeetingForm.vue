@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { StaffMember } from '@armali/schemas'
-import SearchSelectMultiple from './SearchSelectMultiple.vue'
+import SearchSelectMultiple from '../../../../components/ui/SearchSelectMultiple.vue'
 
 defineProps<{
   staffs: StaffMember[] | undefined

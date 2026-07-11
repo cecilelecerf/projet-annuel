@@ -1,7 +1,6 @@
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { STAFF_ROLES } from "@api/utils";
 import {
   animalController,
   animalMeetingController,
@@ -15,7 +14,7 @@ const controller = userController;
 userRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(["ADMIN", "DIRECTOR", "REFERENT"]),
+  roleMiddleware(["ADMIN", "SECRETARY", "VETERINARIAN"]),
   controller.getUsers.bind(controller) as RequestHandler,
 );
 userRouter.post(
@@ -30,17 +29,10 @@ userRouter.patch(
 );
 
 userRouter.get(
-  "/roles/:role",
-  authMiddleware,
-  roleMiddleware(STAFF_ROLES),
-  controller.getUsersByRole.bind(controller) as RequestHandler,
-);
-
-userRouter.get(
   "/:id/animals",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getByUser.bind(animalController) as RequestHandler,
+  animalController.getAllByUser.bind(animalController) as RequestHandler,
 );
 
 userRouter.get(

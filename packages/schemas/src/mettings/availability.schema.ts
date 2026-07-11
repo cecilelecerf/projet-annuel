@@ -12,7 +12,7 @@ import {
   meetingRecurringSchema,
   updateRecurringSchema,
 } from "./recurring-meeting.schema";
-import { clinicSchema } from "../clinic.schema";
+import { clinicSchema } from "../clinics/clinic.schema";
 
 export const availabilitySchema = z.object({
   id: availabilityIdSchema,

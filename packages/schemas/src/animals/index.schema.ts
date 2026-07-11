@@ -3,7 +3,7 @@ import {
   clientIdSchema,
   animalIdSchema,
   raceIdSchema,
-  veterinarianIdSchema,
+  veterinarianClinicIdSchema,
 } from "../ids";
 // ── Animal (animal d'un client) ─────────────────────────────────────────────
 export const animalSchema = z.object({
@@ -13,7 +13,7 @@ export const animalSchema = z.object({
   name: z.string().min(1).max(30),
   dateOfBirth: z.coerce.date(),
   description: z.string().max(255).nullable().optional(),
-  attendingVeterinarianId: veterinarianIdSchema.nullable().optional(),
+  attendingVeterinarianClinicId: veterinarianClinicIdSchema.nullable(),
   activity: z.number().int().min(1).max(10).nullable().optional(),
   outdoorAccess: z.boolean(),
   animalContact: z.boolean(),
@@ -24,9 +24,14 @@ export const createAnimalSchema = animalSchema
   .omit({
     id: true,
     clientId: true,
+    attendingVeterinarianClinicId: true,
   })
   .extend({ clientId: clientIdSchema.optional() });
-export const updateAnimalSchema = createAnimalSchema.partial();
+export const updateAnimalSchema = createAnimalSchema
+  .extend({
+    attendingVeterinarianClinicId: veterinarianClinicIdSchema.optional(),
+  })
+  .partial();
 
 export type Animal = z.infer<typeof animalSchema>;
 export type CreateAnimal = z.infer<typeof createAnimalSchema>;

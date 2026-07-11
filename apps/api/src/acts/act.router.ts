@@ -14,7 +14,14 @@ actRouter.use(requireApprovedClinic);
 
 actRouter.get(
   "/",
-  roleMiddleware(["ADMIN", "REFERENT", "DIRECTOR"]),
+  roleMiddleware([
+    "ADMIN",
+    "REFERENT",
+    "DIRECTOR",
+    "CLIENT",
+    "VETERINARIAN",
+    "SECRETARY",
+  ]),
   controller.getAll.bind(controller) as RequestHandler,
 );
 

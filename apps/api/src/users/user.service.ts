@@ -1,75 +1,32 @@
 import { UserRepository } from "@api/users/user.repository";
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { User } from "../../prisma/generated/prisma/client";
 import { flatClinicId, withAvatarUrl } from "./user.utils";
 import { isStaff } from "@api/utils";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { UserId } from "@armali/schemas";
-import { StaffService } from "@api/staffs/staff.service";
 import { FileService } from "@api/files/file.service";
 
 export class UserService {
   constructor(
     private repository: UserRepository,
     private clinicService: ClinicService,
-    private staffService: StaffService,
     private fileService: FileService,
   ) {}
-
-  async getAllUsers(): Promise<Omit<User, "password">[]> {
-    return await this.repository.getAllUsers();
-  }
-
-  async getUsers(userId: string, role: UserRole) {
-    const clinicIds = await this.clinicService.getClinicIdsByUserId({
-      userId,
-      role,
-    });
-    return this.repository.getUsersByClinic({ clinicIds });
-  }
 
   async getUsersByRoles(
     userId: UserId,
     role: UserRole,
-    targetRole: UserRole[],
+    targetRole?: UserRole[],
   ) {
-    if (role === "ADMIN") {
-      const users = await this.repository.getAllUsersByRole({
-        roles: targetRole,
-      });
-      return users.map(flatClinicId);
-    }
-    if (targetRole.includes("ADMIN")) throw new ForbiddenError();
-
-    let clients: User[] = [];
-    if (targetRole.includes("CLIENT")) {
-      clients = await this.repository.getAllUsersByRole({ roles: ["CLIENT"] });
-    }
-
-    const nonClientRoles = targetRole.filter((r) => r !== "CLIENT");
-    let staffs: User[] = [];
-
-    if (nonClientRoles.length > 0) {
-      const clinicIds = await this.clinicService.getClinicIdsByUserId({
-        userId,
-        role,
-      });
-      const staffsByClinic = await Promise.all(
-        clinicIds.flatMap((id) =>
-          this.staffService.getStaffByClinicRole({
-            clinicId: id,
-            role,
-            authorId: userId,
-            targetRoles: nonClientRoles,
-          }),
-        ),
-      );
-
-      staffs = staffsByClinic.flat();
-    }
-
-    return [...clients, ...staffs];
+    if (role !== "ADMIN" && role !== "VETERINARIAN" && role !== "SECRETARY")
+      throw new ForbiddenError();
+    if (targetRole?.includes("ADMIN") && role !== "ADMIN")
+      throw new ForbiddenError();
+    const users = await this.repository.getAllUsersByRole({
+      roles: targetRole,
+    });
+    return users.map(flatClinicId);
   }
 
   async getUserById({
@@ -84,7 +41,7 @@ export class UserService {
     const user = await this.repository.getUserById({ id: targetId });
     if (!user) throw new NotFoundError("Utilisateur");
 
-    if (requesterRole === "ADMIN") return user;
+    if (requesterRole === "ADMIN") return withAvatarUrl(user);
     if (user.role === "ADMIN") throw new ForbiddenError();
 
     if (isStaff(user.role)) {
@@ -100,7 +57,7 @@ export class UserService {
     }
 
     // TODO CLIENT → accessible par tout staff
-    return user;
+    return withAvatarUrl(user);
   }
 
   async fileUpload({
@@ -124,13 +81,14 @@ export class UserService {
       type: "IMAGE",
     });
   }
+
   async confirmAvatarUpload({
     userId,
     fileId,
   }: {
     userId: UserId;
     fileId: string;
-  }): Promise<User> {
+  }) {
     const user = await this.repository.getUserById({ id: userId });
     if (!user) throw new NotFoundError("Utilisateur");
 

@@ -5,7 +5,7 @@ import { prisma } from "@api/lib/prisma";
 import dayjs from "dayjs";
 import { ClinicRepository } from "@api/clinics/clinic.repository";
 import { haversineKm } from "@api/utils/distance";
-import { MeetingService } from "@api/meetings";
+import { AvailabilityService } from "@api/meetings";
 import {
   Availability,
   MeetingBase,
@@ -19,7 +19,7 @@ export class BookingService {
   constructor(
     private repository: BookingRepository,
     private clinicRepository: ClinicRepository,
-    private meetingService: MeetingService,
+    private availabilityService: AvailabilityService,
   ) {}
   // ── Recherche de cliniques ─────────────────────────────────────────────────
   async searchClinics(query: BookingSearchQuery) {
@@ -41,11 +41,12 @@ export class BookingService {
       candidates.map(async (clinic) => {
         const vetsWithAvailability = await Promise.all(
           clinic.veterinarianClinics.map(async (vc) => {
-            const availabilities = await this.meetingService.getAvailabilities({
-              userId: vc.veterinarian.user.id,
-              start: startOfDay,
-              end: endOfDay,
-            });
+            const availabilities =
+              await this.availabilityService.getAvailabilities({
+                userId: vc.veterinarian.user.id,
+                start: startOfDay,
+                end: endOfDay,
+              });
             return availabilities.length > 0 ? vc : null;
           }),
         );
@@ -116,7 +117,6 @@ export class BookingService {
       user: {
         firstname: vc.veterinarian.user.firstname,
         lastname: vc.veterinarian.user.lastname,
-        picture: vc.veterinarian.user.picture ?? null,
         avatarUrl: withAvatarUrl(vc.veterinarian.user).avatarUrl,
       },
       specialities: vc.veterinarian.specialities.map((s) => ({

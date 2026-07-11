@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/authStore'
 import { useVeterinarianForm } from '../../composables/useVeterinarianForm'
-
+import type { ClinicId } from '@armali/schemas'
+const { user } = useAuthStore()
+if (!(user && 'clinicId' in user && typeof user.clinicId === 'string')) throw new Error()
 const {
   form,
   selectedSpecialityIds,
@@ -9,7 +12,7 @@ const {
   loading,
   searchSpecialities,
   submit,
-} = useVeterinarianForm()
+} = useVeterinarianForm(user?.clinicId as ClinicId)
 </script>
 
 <template>

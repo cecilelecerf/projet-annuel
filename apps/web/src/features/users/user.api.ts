@@ -13,7 +13,10 @@ import {
 
 export const usersApi = {
   getUsersByRole: async ({ roles }: { roles: (UserRole | 'STAFF')[] }): Promise<User[]> => {
-    const data = await http.get(`/users/roles/${roles.map((role) => role.toLowerCase()).join('/')}`)
+    const query = new URLSearchParams()
+    roles.forEach((role) => query.append('role', role))
+
+    const data = await http.get(`/users?${query.toString()}`)
     return userSchema.array().parse(data)
   },
   get: async ({ id }: { id: UserId }): Promise<User> => {
@@ -46,7 +49,6 @@ export const usersApi = {
     confirm: async ({ fileId }: { fileId: string }) => {
       const body = confirmUploadSchema.parse({ fileId })
       const data = await http.patch('/users/me/avatar/confirm', body)
-      console.log(data)
       return baseUserSchema.parse(data)
     },
   },

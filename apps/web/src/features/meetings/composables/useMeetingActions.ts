@@ -24,33 +24,36 @@ export function useMeetingActions() {
   async function saveSchedule({
     meetingId,
     parentId,
-    date,
+    originDate,
     startTime,
     endTime,
     scope,
     internal,
     onSuccess,
+    targetDate,
   }: {
     meetingId: MeetingId
     parentId: MeetingRecurringId | null
-    date: Date
+    originDate: Date
     startTime: string
     endTime: string
     scope: 'single' | 'all'
     internal?: InternalFields
     onSuccess: (resultId: string) => void
+    targetDate: Date
   }) {
     saving.value = true
     try {
       if (scope === 'all' && parentId) {
         const result = await meetingApi.internal.update({
+          ...internal,
           meetingId,
           scope: 'all',
-          date: dayjs(date).toISOString(),
+          date: dayjs(originDate).toISOString(),
           meeting: {
+            date: targetDate,
             startTime: timeStringToDate(startTime),
             endTime: timeStringToDate(endTime),
-            ...internal,
           },
         })
         const id = result.meeting?.id ?? result.recurring?.id
@@ -60,11 +63,13 @@ export function useMeetingActions() {
         const result = await meetingApi.internal.update({
           meetingId,
           scope: 'single',
-          date: dayjs(date).toISOString(),
+          date: dayjs(originDate).toISOString(),
           meeting: {
+            ...internal,
+
             startTime: timeStringToDate(startTime),
             endTime: timeStringToDate(endTime),
-            ...internal,
+            date: targetDate,
           },
         })
 

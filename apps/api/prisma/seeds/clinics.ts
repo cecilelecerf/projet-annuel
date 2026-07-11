@@ -64,7 +64,7 @@ export async function seedClinics(
         openingHours: "Lun-Ven 8h-19h · Sam 9h-17h",
         lat: coord1.lat,
         lng: coord1.lng,
-        clinicPet: {
+        pets: {
           connect: [
             { id: pets.petCat.id },
             { id: pets.petDog.id },
@@ -99,7 +99,7 @@ export async function seedClinics(
         lng: coord3.lng,
 
         directorId: directors.directorUser2.id,
-        clinicPet: {
+        pets: {
           connect: [{ id: pets.petDog.id }, { id: pets.petRabbit.id }],
         },
         specialities: {
@@ -129,7 +129,7 @@ export async function seedClinics(
         lat: coord4.lat,
         lng: coord4.lng,
         directorId: directors.directorApproved.id,
-        clinicPet: {
+        pets: {
           connect: [
             { id: pets.petCat.id },
             { id: pets.petDog.id },

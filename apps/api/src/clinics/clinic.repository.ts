@@ -3,6 +3,8 @@ import type {
   UpdateClinic,
   BookingSearchQuery,
   ClinicId,
+  PetId,
+  SpecialityId,
 } from "@armali/schemas";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { Clinic, PrismaClient } from "../../prisma/generated/prisma/client";
@@ -36,9 +38,7 @@ export class ClinicRepository {
       where: {
         animal: {
           some: {
-            attendingVeterinarian: {
-              veterinarianClinics: { some: { clinicId } },
-            },
+            attendingVeterinarianClinic: { clinicId },
           },
         },
       },
@@ -217,5 +217,50 @@ export class ClinicRepository {
 
   deleteClinicById(clinicId: string) {
     return this.prisma.clinic.delete({ where: { id: clinicId } });
+  }
+
+  async getAcceptedPets(clinicId: ClinicId) {
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: { pets: { orderBy: { name: "asc" } } },
+    });
+    return clinic?.pets ?? null;
+  }
+
+  async setAcceptedPets(clinicId: ClinicId, petIds: PetId[]) {
+    const clinic = await this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        pets: {
+          set: petIds.map((id) => ({ id })),
+        },
+      },
+      include: { pets: { orderBy: { name: "asc" } } },
+    });
+    return clinic.pets;
+  }
+
+  async getAcceptedSpecialities(clinicId: ClinicId) {
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: { specialities: { orderBy: { name: "asc" } } },
+    });
+    return clinic?.specialities ?? null;
+  }
+
+  async setAcceptedSpecialities(
+    clinicId: ClinicId,
+    specialityIds: SpecialityId[],
+  ) {
+    const clinic = await this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        specialities: {
+          set: specialityIds.map((id) => ({ id })),
+        },
+      },
+      include: { specialities: { orderBy: { name: "asc" } } },
+    });
+    return clinic.specialities;
   }
 }

@@ -18,7 +18,7 @@ projet-annuel/
 │   └── schemas/         # Schemas Zod partagés
 │       └── README.md
 ├── nginx/                # Configuration nginx
-├── compose.yaml           # Docker Compose — développement
+├── compose.dev.yaml           # Docker Compose — développement
 ├── compose.prod.yaml      # Docker Compose — production
 ├── package.json           # Workspace racine
 ├── README.md               # Ce fichier
@@ -32,7 +32,7 @@ projet-annuel/
 ## 🚀 Prérequis
 
 - [Node.js](https://nodejs.org/) **v22.12+**
-- [pnpm](https://pnpm.io/) **v8+**
+- [pnpm](https://pnpm.io/) (géré via `corepack`, voir `packageManager` dans `package.json`)
 - [Docker](https://www.docker.com/) & Docker Compose
 
 ---
@@ -45,18 +45,38 @@ cd projet-annuel
 pnpm install
 ```
 
+`pnpm install` reste nécessaire sur l'host même si le développement se fait via Docker : c'est ce qui génère/mets à jour le `pnpm-lock.yaml` (voir section [Ajouter une dépendance](#-ajouter-une-dépendance)).
+
 ---
 
 ## 🔧 Configuration
 
 ### Développement
 
-Crée un fichier `.env` (copie depuis `.env.dev.sample`) :
+Crée `.env.dev` à la **racine du projet** (copie depuis `.env.dev.sample`) :
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/mydb"
-JWT_ACCESS_SECRET="changeme"
-JWT_REFRESH_SECRET="changeme"
+# Base de données
+DB_USER=user
+DB_PASSWORD=password
+DB_NAME=mydb
+
+# JWT
+JWT_ACCESS_SECRET=changeme_access_secret
+JWT_REFRESH_SECRET=changeme_refresh_secret
+
+# API
+CORS_ORIGIN=http://localhost:5173
+
+# Email (ENABLE_EMAIL=false pour log console sans envoyer)
+ENABLE_EMAIL=true
+MAIL_USER=...
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_PASS=...
+
+# Web / Vite (préfixe VITE_ obligatoire pour être exposé au navigateur)
+VITE_API_URL=http://localhost:3001/api
 ```
 
 ---

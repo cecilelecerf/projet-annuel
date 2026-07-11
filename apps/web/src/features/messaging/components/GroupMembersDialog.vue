@@ -3,7 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMessagingStore } from '../stores/messagingStore'
 import { useNotify } from '@/composables/useNotify'
-import type { UserId } from '@armali/schemas'
+import type { ConversationContact, UserId } from '@armali/schemas'
+import type { ConversationMember } from '@armali/schemas'
 
 const authStore = useAuthStore()
 const messagingStore = useMessagingStore()
@@ -17,18 +18,22 @@ const loading = ref(false)
 const conversation = computed(() => messagingStore.activeConversation)
 
 const selfMember = computed(() =>
-  conversation.value?.conversationMembers?.find((m) => m.userId === authStore.user?.id),
+  conversation.value?.conversationMembers?.find(
+    (m: ConversationMember) => m.userId === authStore.user?.id,
+  ),
 )
 const isAdmin = computed(() => selfMember.value?.role === 'ADMIN')
-
+ 
 const eligibleContacts = computed(() => {
   if (!conversation.value) return []
   const pool =
     conversation.value.scope === 'DIRECTOR_NETWORK'
       ? (messagingStore.contacts?.directors ?? [])
       : (messagingStore.contacts?.clinic ?? [])
-  const memberIds = new Set(conversation.value.conversationMembers?.map((m) => m.userId) ?? [])
-  return pool.filter((c) => !memberIds.has(c.id))
+  const memberIds = new Set(
+    conversation.value.conversationMembers?.map((m: ConversationMember) => m.userId) ?? [],
+  )
+  return pool.filter((c: ConversationContact) => !memberIds.has(c.id))
 })
 
 async function open() {

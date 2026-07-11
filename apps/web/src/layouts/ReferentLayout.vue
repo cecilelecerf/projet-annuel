@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+import { useAuthStore } from '@/stores/authStore'
 import {
   House,
   UserFilled,
@@ -8,28 +9,92 @@ import {
   User,
   ChatDotRound,
   ShoppingCart,
+  TrendCharts,
+  Wallet,
+  Box,
+  List,
+  Setting,
+  Tickets,
+  Collection,
+  Star,
+  Shop,
 } from '@element-plus/icons-vue'
+const { user } = useAuthStore()
 
-const menuItems: MenuItem[] = [
+if (user?.role !== 'REFERENT') throw new Error()
+
+const menuItems: NavNode[] = [
   {
     index: 'REFERENT.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'REFERENT.Staff',
-    label: 'Personnel',
-    icon: UserFilled,
-  },
-  {
     index: 'REFERENT.Clinic',
     label: 'Clinique',
     icon: OfficeBuilding,
+    children: [
+      {
+        index: 'REFERENT.Clinic',
+        label: 'Général',
+        icon: Setting,
+      },
+      {
+        index: 'REFERENT.Staff',
+        label: 'Personnel',
+        icon: UserFilled,
+      },
+      {
+        index: 'REFERENT.Acts',
+        label: 'Actes',
+        icon: Tickets,
+        params: { id: user.clinicId },
+      },
+      {
+        index: 'REFERENT.Pets',
+        label: 'Animaux',
+        icon: Collection,
+        params: { id: user.clinicId },
+      },
+      {
+        index: 'REFERENT.Specialities',
+        label: 'Spécialités',
+        icon: Star,
+        params: { id: user.clinicId },
+      },
+    ],
   },
   {
-    index: 'REFERENT.Boutique',
-    label: 'Boutique',
-    icon: ShoppingCart,
+    index: 'DIRECTOR.Commerce',
+    label: 'Commerce',
+    icon: Shop,
+    children: [
+      {
+        index: 'REFERENT.Boutique',
+        label: 'Boutique',
+        icon: ShoppingCart,
+      },
+      {
+        index: 'REFERENT.Sales',
+        label: 'Ventes',
+        icon: TrendCharts,
+      },
+      {
+        index: 'REFERENT.Budget',
+        label: 'Budget',
+        icon: Wallet,
+      },
+      {
+        index: 'REFERENT.Suppliers',
+        label: 'Fournisseurs',
+        icon: Box,
+      },
+      {
+        index: 'REFERENT.SupplierOrders',
+        label: 'Commandes Fournisseurs',
+        icon: List,
+      },
+    ],
   },
   {
     index: 'REFERENT.Messagerie',

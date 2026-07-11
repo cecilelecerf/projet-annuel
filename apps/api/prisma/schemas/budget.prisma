@@ -1,0 +1,100 @@
+// ── Budget clinique (solde cumulatif, crédité manuellement) ────────────────
+enum BudgetTransactionType {
+  CREDIT // approvisionnement manuel du budget par le référent/directeur
+  DEBIT // décompté à la commande fournisseur
+  REFUND // remboursé si une commande PENDING est annulée
+}
+
+model BudgetTransaction {
+  id        String                @id @default(uuid())
+  createdAt DateTime              @default(now())
+  type      BudgetTransactionType
+  amount    Decimal               @db.Decimal(10, 2)
+  reason    String? // ex: "Approvisionnement mensuel" ou lié à une commande
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  supplierOrderId String?
+  supplierOrder   SupplierOrder? @relation(fields: [supplierOrderId], references: [id])
+
+  @@map("budget_transactions")
+}
+
+// Le solde actuel = SUM(CREDIT + REFUND) - SUM(DEBIT), calculé à la volée
+// (pas de champ "balance" stocké, pour éviter les incohérences)
+
+// ── Fournisseurs (par clinique) ─────────────────────────────────────────────
+model Supplier {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+
+  supplierProducts SupplierProduct[]
+  supplierOrders   SupplierOrder[]
+
+  @@map("suppliers")
+}
+
+// Prix d'achat d'un produit du catalogue global, chez un fournisseur donné
+model SupplierProduct {
+  id        String  @id @default(uuid())
+  costPrice Decimal @db.Decimal(10, 2)
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@unique([supplierId, productId])
+  @@map("supplier_products")
+}
+
+// ── Commandes fournisseurs ───────────────────────────────────────────────────
+enum SupplierOrderStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+model SupplierOrder {
+  id         String              @id @default(uuid())
+  createdAt  DateTime            @default(now())
+  receivedAt DateTime?
+  status     SupplierOrderStatus @default(PENDING)
+
+  clinicId String
+  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  items              SupplierOrderItem[]
+  budgetTransactions BudgetTransaction[]
+
+  @@map("supplier_orders")
+}
+
+model SupplierOrderItem {
+  id       String  @id @default(uuid())
+  quantity Int
+  unitCost Decimal @db.Decimal(10, 2)
+
+  supplierOrderId String
+  supplierOrder   SupplierOrder @relation(fields: [supplierOrderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("supplier_order_items")
+}

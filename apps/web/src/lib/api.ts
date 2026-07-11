@@ -31,13 +31,17 @@ const refreshAccessToken = async (): Promise<string> => {
   localStorage.setItem('refreshToken', data.refreshToken)
   return data.accessToken
 }
-const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+
+type ApiOptions = RequestInit & {
+  responseType?: 'json' | 'blob' | 'text'
+}
+const api = async <T = unknown>(endpoint: string, options: ApiOptions = {}): Promise<T> => {
   const token = localStorage.getItem('accessToken')
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -83,18 +87,29 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
     }
   }
 
-  const data = await response.json().catch(() => ({}))
-
   if (!response.ok) {
-    throw new Error(data?.error ?? data?.message ?? 'Erreur serveur')
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error?.error ?? error?.message ?? 'Erreur serveur')
   }
 
-  return data as T
+  const responseType = options.responseType ?? 'json'
+
+  switch (responseType) {
+    case 'blob':
+      return (await response.blob()) as T
+
+    case 'text':
+      return (await response.text()) as T
+
+    default:
+      return (await response.json().catch(() => null)) as T
+  }
 }
 
 export const http = {
   get: <T>(endpoint: string) => api<T>(endpoint),
 
+  getBlob: (endpoint: string) => api<Blob>(endpoint, { responseType: 'blob' }),
   post: <T>(endpoint: string, body: unknown) =>
     api<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
 

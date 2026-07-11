@@ -53,7 +53,6 @@ export async function seedMeetings(
     clientUser1,
     clientUser2,
     vetProfile1,
-    vetProfile2,
     secretaryProfile,
     referentUser1,
   } = users;
@@ -69,7 +68,7 @@ export async function seedMeetings(
       activity: 8,
       clientId: clientUser1.id,
       raceId: raceLab.id,
-      attendingVeterinarianId: vetProfile1.id,
+      attendingVeterinarianClinicId: vetoClinic1.id,
     },
   });
   const animal2 = await prisma.animal.create({
@@ -88,7 +87,7 @@ export async function seedMeetings(
       activity: 6,
       clientId: clientUser2.id,
       raceId: raceGolden.id,
-      attendingVeterinarianId: vetProfile2.id,
+      attendingVeterinarianClinicId: vetoClinic2.id,
     },
   });
 
@@ -379,6 +378,16 @@ export async function seedMeetings(
   });
 
   // Occurrence spécifique avec contenu différent
+  await prisma.meetingBase.create({
+    data: {
+      type: "EXCEPTION",
+      kind: "INTERNAL",
+      date: new Date("2026-03-16"),
+      startTime: new Date("1970-01-01T10:00:00Z"),
+      endTime: new Date("1970-01-01T11:00:00Z"),
+      parentId: recurringInternal1.id,
+    },
+  });
   await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",

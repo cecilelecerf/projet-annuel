@@ -4,15 +4,16 @@ import { authMiddleware, roleMiddleware } from "@api/middlewares";
 import { STAFF_ROLES } from "@api/utils";
 import { brandController } from "@api/instances";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
+import { UserRole } from "@armali/schemas";
 
 const brandRouter: Router = Router();
 const controller = brandController;
 
+const CATALOG_MANAGER_ROLES: UserRole[] = ["ADMIN"] as const;
 brandRouter.use(authMiddleware);
 brandRouter.use(requireApprovedClinic);
 
-const STOCK_MANAGER_ROLES = ["ADMIN", "DIRECTOR", "REFERENT"] as const;
-
+// GET /brands?search=xxx — recherche ouverte à tout le staff (utile pour les demandes)
 brandRouter.get(
   "/",
   roleMiddleware(STAFF_ROLES),
@@ -27,19 +28,20 @@ brandRouter.get(
 
 brandRouter.post(
   "/",
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware(CATALOG_MANAGER_ROLES),
+
   controller.create.bind(controller) as RequestHandler,
 );
 
 brandRouter.patch(
   "/:id",
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware(CATALOG_MANAGER_ROLES),
   controller.update.bind(controller) as RequestHandler,
 );
 
 brandRouter.delete(
   "/:id",
-  roleMiddleware([...STOCK_MANAGER_ROLES]),
+  roleMiddleware(CATALOG_MANAGER_ROLES),
   controller.delete.bind(controller) as RequestHandler,
 );
 

@@ -188,7 +188,6 @@ describe("BookingService.getClinicVets", () => {
           user: {
             firstname: "Jean",
             lastname: "Martin",
-            picture: null,
             avatarUrl: null,
           },
           specialities: [{ id: "s1", name: "Cardiologie" }],
@@ -208,7 +207,6 @@ describe("BookingService.getClinicVets", () => {
         user: {
           firstname: "Jean",
           lastname: "Martin",
-          picture: null,
           avatarUrl: null,
         },
         specialities: [{ id: "s1", name: "Cardiologie" }],

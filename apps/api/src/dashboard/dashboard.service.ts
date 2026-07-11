@@ -5,10 +5,10 @@ import { ReviewService } from "@api/reviews/review.service";
 import { ReviewRepository } from "@api/reviews/review.repository";
 import { UserService } from "@api/users";
 import { ClinicService } from "@api/clinics/clinic.service";
-import { MeetingService } from "@api/meetings/meeting.service";
 import { OrderRepository } from "@api/orders/order.repository";
-import { withAvatarUrl } from "@api/users/user.utils";
 import { StaffService } from "@api/clinics/staffs/staff.service";
+import { AnimalRepository } from "@api/animals/animal.repository";
+import { AnimalMeetingService, AvailabilityService } from "@api/meetings";
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
@@ -19,9 +19,11 @@ export class DashboardService {
     private staffService: StaffService,
     private userService: UserService,
     private clinicService: ClinicService,
-    private meetingService: MeetingService,
     private orderRepository: OrderRepository,
     private reviewRepository: ReviewRepository,
+    private animalRepsository: AnimalRepository,
+    private animalMeetingService: AnimalMeetingService,
+    private availabilityService: AvailabilityService,
   ) {}
 
   // ── Dashboard "gestion de clinique" (référent + directeur, contenu identique) ──
@@ -81,13 +83,12 @@ export class DashboardService {
 
     const reviews = await Promise.all(
       vetoIds.map(async (id) => ({
-        veterinarian: withAvatarUrl(
-          await this.userService.getUserById({
-            requesterId: userId,
-            requesterRole: role,
-            targetId: id,
-          }),
-        ),
+        veterinarian: await this.userService.getUserById({
+          requesterId: userId,
+          requesterRole: role,
+          targetId: id,
+        }),
+
         stat: await this.reviewService.getStats({
           veterinarianId: id,
           userId,
@@ -161,7 +162,7 @@ export class DashboardService {
       vetIds,
     ] = await Promise.all([
       this.orderRepository.findPendingPickupByClinic(clinicId),
-      this.meetingService.getAnimalMeetingsByClinic(
+      this.animalMeetingService.getAnimalMeetingsByClinic(
         clinicId,
         startOfDay,
         endOfDay,
@@ -186,7 +187,7 @@ export class DashboardService {
     // ── Vétérinaires présents aujourd'hui (disponibilité, pas juste RDV) ─────
     const presenceChecks = await Promise.all(
       vetIds.map(async (vetId) => {
-        const avails = await this.meetingService.getAvailabilities({
+        const avails = await this.availabilityService.getAvailabilities({
           userId: vetId,
           start: startOfDay,
           end: endOfDay,
@@ -309,7 +310,11 @@ export class DashboardService {
 
     const [weekMeetings, rating, recentReviewsRaw, patientsCount] =
       await Promise.all([
-        this.meetingService.getAnimalMeetingsAsVet(userId, now, inSevenDays),
+        this.animalMeetingService.getAnimalMeetingsAsVet(
+          userId,
+          now,
+          inSevenDays,
+        ),
         this.reviewService.getStats({
           veterinarianId: userId,
           userId,
@@ -318,9 +323,7 @@ export class DashboardService {
         this.reviewRepository.findReviewsByVeterinarian(
           userId as unknown as VeterinarianId,
         ),
-        prisma.animal.count({
-          where: { attendingVeterinarianClinic: { veterinarianId: userId } },
-        }),
+        this.animalRepsository.countByAttendingVeterinarian(userId),
       ]);
 
     const todaysMeetingsCount = weekMeetings.filter(

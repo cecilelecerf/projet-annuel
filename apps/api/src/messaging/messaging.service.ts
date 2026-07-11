@@ -108,9 +108,9 @@ export class MessagingService {
       await this.userRepository.findClinicColleagues(clinicIds, actor.id)
     ).map(withAvatarUrl);
     if (actor.role !== "DIRECTOR") return { clinic };
-    const directors = (
-      await this.userRepository.findDirectors(actor.id)
-    ).map(withAvatarUrl);
+    const directors = (await this.userRepository.findDirectors(actor.id)).map(
+      withAvatarUrl,
+    );
     return { clinic, directors };
   }
 

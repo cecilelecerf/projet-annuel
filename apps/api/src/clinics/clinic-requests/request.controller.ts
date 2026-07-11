@@ -3,8 +3,7 @@ import { ClinicRequestService } from "./request.service";
 import {
   clinicGuardRequest,
   ClinicRequestId,
-  clinicSchema,
-  clinicStatusSchema,
+  clinicRequestSchema,
 } from "@armali/schemas";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { ForbiddenError } from "@api/errors";
@@ -46,25 +45,11 @@ export class ClinicRequestController {
     try {
       if (req.user.role === "ADMIN") {
         const requests = await this.service.getClinicRequests();
-        res
-          .status(200)
-          .json(
-            clinicSchema
-              .extend({ status: clinicStatusSchema })
-              .array()
-              .parse(requests),
-          );
+        res.status(200).json(clinicRequestSchema.array().parse(requests));
         return;
       } else if (req.user.role === "DIRECTOR") {
         const requests = await this.service.getMyRequests(req.user!.id);
-        res
-          .status(200)
-          .json(
-            clinicSchema
-              .extend({ status: clinicStatusSchema })
-              .array()
-              .parse(requests),
-          );
+        res.status(200).json(clinicRequestSchema.array().parse(requests));
         return;
       }
       throw new ForbiddenError();

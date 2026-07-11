@@ -2,7 +2,6 @@
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { NavNode } from '@/components/ui/nav/NaveNode'
 import { useAuthStore } from '@/stores/authStore'
-import { clinicIdSchema } from '@armali/schemas'
 import {
   House,
   UserFilled,
@@ -21,7 +20,8 @@ import {
   Shop,
 } from '@element-plus/icons-vue'
 const { user } = useAuthStore()
-const clinicId = clinicIdSchema.parse(user?.clinicId)
+
+if (user?.role !== 'REFERENT') throw new Error()
 
 const menuItems: NavNode[] = [
   {
@@ -48,19 +48,19 @@ const menuItems: NavNode[] = [
         index: 'REFERENT.Acts',
         label: 'Actes',
         icon: Tickets,
-        params: { id: clinicId },
+        params: { id: user.clinicId },
       },
       {
         index: 'REFERENT.Pets',
         label: 'Animaux',
         icon: Collection,
-        params: { id: clinicId },
+        params: { id: user.clinicId },
       },
       {
         index: 'REFERENT.Specialities',
         label: 'Spécialités',
         icon: Star,
-        params: { id: clinicId },
+        params: { id: user.clinicId },
       },
     ],
   },

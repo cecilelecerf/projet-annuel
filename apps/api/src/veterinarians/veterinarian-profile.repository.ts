@@ -1,8 +1,15 @@
-import { PetId, SpecialityId, UserId } from "@armali/schemas";
+import { PetId, SpecialityId, UserId, VeterinarianId } from "@armali/schemas";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class VeterinarianProfileRepository {
   constructor(private prisma: PrismaClient) {}
+
+  async findById(userId: VeterinarianId) {
+    return this.prisma.veterinarianProfile.findUnique({
+      where: { id: userId },
+      include: { veterinarianClinics: true },
+    });
+  }
 
   async getAcceptedPets(userId: UserId) {
     const veterinarian = await this.prisma.veterinarianProfile.findUnique({

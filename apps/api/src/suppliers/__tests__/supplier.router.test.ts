@@ -95,7 +95,10 @@ describe("Supplier router", () => {
       const res = await request(app)
         .post(`/api/suppliers/${supplierId}/products`)
         .set("Authorization", `Bearer ${referentToken}`)
-        .send({ productId: "00000000-0000-4000-8000-000000000000", costPrice: 5 });
+        .send({
+          productId: "00000000-0000-4000-8000-000000000000",
+          costPrice: 5,
+        });
       expect(res.status).toBe(403);
     });
   });

@@ -13,12 +13,18 @@ supplierOrderRouter.use(
   roleMiddleware([...SUPPLIER_ORDER_MANAGER_ROLES]),
 );
 
-supplierOrderRouter.get("/", controller.getAll.bind(controller) as RequestHandler);
+supplierOrderRouter.get(
+  "/",
+  controller.getAll.bind(controller) as RequestHandler,
+);
 supplierOrderRouter.get(
   "/:id",
   controller.getById.bind(controller) as RequestHandler,
 );
-supplierOrderRouter.post("/", controller.create.bind(controller) as RequestHandler);
+supplierOrderRouter.post(
+  "/",
+  controller.create.bind(controller) as RequestHandler,
+);
 supplierOrderRouter.patch(
   "/:id/receive",
   controller.markReceived.bind(controller) as RequestHandler,

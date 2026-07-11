@@ -1,23 +1,25 @@
-import type { CreateAnimal, UpdateAnimal } from "@armali/schemas";
+import type {
+  ClinicId,
+  CreateAnimal,
+  UpdateAnimal,
+  VeterinarianId,
+} from "@armali/schemas";
 import { Prisma } from "../../prisma/generated/prisma/client";
 import { PrismaClient } from "../../prisma/generated/prisma/client";
 import { vaccineDetailsInclude } from "@api/vaccines/vaccine.repository";
+import { PaginationQueryDto } from "../../../../packages/schemas/src/pagination.schema";
 
-const findAllInclude = {
+// ═══════════════════════════════════════════════════════════════
+// Includes — définis une fois, réutilisés pour typer les retours
+// ═══════════════════════════════════════════════════════════════
+
+const includeMeta = {
   race: { include: { pet: true } },
-  client: true,
+  client: { include: { user: { include: { avatar: true } } } },
 } satisfies Prisma.AnimalInclude;
 
-export type AnimalListItem = Prisma.AnimalGetPayload<{
-  include: typeof findAllInclude;
-}>;
-
-const findByClientIdInclude = {
-  race: { include: { pet: true } },
-} satisfies Prisma.AnimalInclude;
-
-export type AnimalForClient = Prisma.AnimalGetPayload<{
-  include: typeof findByClientIdInclude;
+export type AnimalWithMeta = Prisma.AnimalGetPayload<{
+  include: typeof includeMeta;
 }>;
 
 const findByIdInclude = {
@@ -63,16 +65,16 @@ export type AnimalVaccineWithDetails = Prisma.AnimalVaccineGetPayload<{
 export class AnimalRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async findAll(): Promise<AnimalListItem[]> {
+  async findAll() {
     return this.prisma.animal.findMany({
-      include: findAllInclude,
+      include: includeMeta,
     });
   }
 
-  async findByClientId(clientId: string): Promise<AnimalForClient[]> {
+  async findByClientId(clientId: string): Promise<AnimalWithMeta[]> {
     return this.prisma.animal.findMany({
       where: { clientId },
-      include: findByClientIdInclude,
+      include: includeMeta,
     });
   }
 
@@ -94,7 +96,6 @@ export class AnimalRepository {
         activity: data.activity,
         clientId: data.clientId,
         raceId: data.raceId,
-        attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
       },
       include: createAndUpdateInclude,
     });
@@ -121,7 +122,7 @@ export class AnimalRepository {
   async delete(id: string): Promise<Prisma.AnimalGetPayload<object>> {
     return this.prisma.animal.delete({ where: { id } });
   }
-
+  // TODO PAS AU BON ENDROIT -> repo animal doit renvoyer que des animals
   async findVaccinesByAnimal(
     animalId: string,
   ): Promise<AnimalVaccineWithDetails[]> {
@@ -132,8 +133,40 @@ export class AnimalRepository {
     });
   }
 
-  // ── Boutique client (déplacé depuis shop/shop.repository.ts) ────────────
+  async findPaginatedByAttendingVeterinarian(
+    veterinarianId: VeterinarianId,
+    pagination: PaginationQueryDto,
+  ) {
+    return await this.prisma.animal.findMany({
+      where: { attendingVeterinarianClinic: { veterinarianId } },
+      take: pagination.limit,
+      skip: (pagination.page - 1) * pagination.limit,
+      include: includeMeta,
+      orderBy: { updatedAt: pagination.order },
+    });
+  }
 
+  async countByAttendingVeterinarian(veterinarianId: VeterinarianId) {
+    return this.prisma.animal.count({
+      where: { attendingVeterinarianClinic: { veterinarianId } },
+    });
+  }
+
+  async findPaginatedByAttendingClinic(
+    clinicId: ClinicId,
+    pagination: PaginationQueryDto,
+  ) {
+    return this.prisma.animal.findMany({
+      where: { attendingVeterinarianClinic: { clinicId } },
+      take: pagination.limit,
+      skip: (pagination.page - 1) * pagination.limit,
+      include: includeMeta,
+      orderBy: { updatedAt: pagination.order },
+    });
+  }
+
+  // ── Boutique client (déplacé depuis shop/shop.repository.ts) ────────────
+  // TODO : delete du coup ?
   async findClinicIdsForClient(clientUserId: string): Promise<string[]> {
     const animals = await this.prisma.animal.findMany({
       where: { clientId: clientUserId },

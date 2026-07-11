@@ -11,6 +11,11 @@ const menuItems: NavNode[] = [
     icon: House,
   },
   {
+    index: 'CLIENT.Animals',
+    label: 'Mes animaux',
+    icon: User,
+  },
+  {
     index: 'CLIENT.Meetings',
     label: 'Rendez-vous',
     icon: Calendar,

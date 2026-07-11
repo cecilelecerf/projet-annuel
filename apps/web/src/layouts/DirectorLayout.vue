@@ -24,6 +24,7 @@ import {
 } from '@element-plus/icons-vue'
 
 const { user } = useAuthStore()
+if (user?.role !== 'DIRECTOR') throw new Error()
 const clinicId = clinicIdSchema.parse(user?.clinicId)
 
 const menuItems: NavNode[] = [

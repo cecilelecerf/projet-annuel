@@ -41,9 +41,13 @@ describe("ClientShopService.getProducts", () => {
 
   it("délègue au repository avec les cliniques accessibles", async () => {
     mockAnimalRepository.findClinicIdsForClient.mockResolvedValue(["clinic-1"]);
-    mockProductClinicRepository.findByClinics.mockResolvedValue([{ id: "cp-1" }]);
+    mockProductClinicRepository.findByClinics.mockResolvedValue([
+      { id: "cp-1" },
+    ]);
     const result = await service.getProducts("client-1");
-    expect(mockProductClinicRepository.findByClinics).toHaveBeenCalledWith(["clinic-1"]);
+    expect(mockProductClinicRepository.findByClinics).toHaveBeenCalledWith([
+      "clinic-1",
+    ]);
     expect(result).toHaveLength(1);
   });
 });
@@ -232,7 +236,10 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
     mockAnimalRepository.findOwnershipInfo.mockResolvedValue(makeAnimal());
     mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue(null);
     mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
-      { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
+      {
+        id: "cp-1",
+        product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } },
+      },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
@@ -241,9 +248,14 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
 
   it("dailyGrams null si les calories du produit sont inconnues", async () => {
     mockAnimalRepository.findOwnershipInfo.mockResolvedValue(makeAnimal());
-    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({
+      petWeight: 10,
+    });
     mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
-      { id: "cp-1", product: { Food: { caloriesPer100: null, foodHealthConditions: [] } } },
+      {
+        id: "cp-1",
+        product: { Food: { caloriesPer100: null, foodHealthConditions: [] } },
+      },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
@@ -254,9 +266,14 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
     mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ activity: 3 }),
     );
-    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({
+      petWeight: 10,
+    });
     mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
-      { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
+      {
+        id: "cp-1",
+        product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } },
+      },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
@@ -269,9 +286,14 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
     mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ dateOfBirth: puppyBirthDate, activity: 3 }),
     );
-    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({
+      petWeight: 10,
+    });
     mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
-      { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
+      {
+        id: "cp-1",
+        product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } },
+      },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
@@ -284,9 +306,14 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
     mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ dateOfBirth: seniorBirthDate, activity: 3 }),
     );
-    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({
+      petWeight: 10,
+    });
     mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
-      { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
+      {
+        id: "cp-1",
+        product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } },
+      },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");
@@ -297,9 +324,14 @@ describe("ClientShopService.getFoodRecommendations — calcul du grammage", () =
     mockAnimalRepository.findOwnershipInfo.mockResolvedValue(
       makeAnimal({ activity: null }),
     );
-    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({ petWeight: 10 });
+    mockAnimalMeetingRepository.findLatestWeight.mockResolvedValue({
+      petWeight: 10,
+    });
     mockProductClinicRepository.findFoodProductsByClinics.mockResolvedValue([
-      { id: "cp-1", product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } } },
+      {
+        id: "cp-1",
+        product: { Food: { caloriesPer100: 350, foodHealthConditions: [] } },
+      },
     ]);
 
     const result = await service.getFoodRecommendations("client-1", "animal-1");

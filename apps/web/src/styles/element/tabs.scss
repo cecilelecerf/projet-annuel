@@ -3,6 +3,9 @@
 // Usage : <el-tabs v-model="activeTab">...</el-tabs> — aucune classe supplémentaire requise.
 
 .el-tabs {
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+
   // ── En-tête (barre d'onglets) ────────────────────────────────────────────
   .el-tabs__header {
     margin-bottom: 0; // le content est maintenant rattaché visuellement, pas d'espace entre les deux
@@ -26,6 +29,8 @@
     gap: var(--spacing-2xs, 4px);
     padding: 4px;
     border-radius: var(--radius-full);
+    justify-content: space-evenly;
+    width: 100%;
   }
 
   .el-tabs__active-bar {
@@ -63,6 +68,18 @@
 
       &:hover {
         background: none;
+      }
+    }
+    &:nth-child(2) {
+      padding-left: var(--spacing-md);
+      .tab-label {
+        padding-left: var(--spacing-md);
+      }
+    }
+    &:last-child {
+      padding-right: var(--spacing-md);
+      .tab-label {
+        padding-right: var(--spacing-md);
       }
     }
   }

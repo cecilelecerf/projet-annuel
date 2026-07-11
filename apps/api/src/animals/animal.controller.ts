@@ -2,12 +2,17 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalDetailSchema,
+  AnimalId,
+  animalMetaSchema,
   animalWithRaceMetaSchema,
+  ClinicId,
+  UserId,
   vaccineMetaSchema,
   type CreateAnimal,
   type UpdateAnimal,
 } from "@armali/schemas";
 import { AnimalService } from "./animal.service";
+import { paginationQuerySchema } from "../../../../packages/schemas/src/pagination.schema";
 
 export class AnimalController {
   constructor(private service: AnimalService) {}
@@ -92,7 +97,7 @@ export class AnimalController {
     }
   }
 
-  async getByUser(
+  async getAllByUser(
     req: RequestWithParams<{ id: string }>,
     res: Response,
     next: NextFunction,
@@ -103,14 +108,14 @@ export class AnimalController {
         requesterId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(animalWithRaceMetaSchema.array().parse(pets));
+      res.status(200).json(animalMetaSchema.array().parse(pets));
     } catch (err) {
       next(err);
     }
   }
 
   async getVaccines(
-    req: RequestWithParams<{ id: string }>,
+    req: RequestWithParams<{ id: AnimalId }>,
     res: Response,
     next: NextFunction,
   ) {
@@ -118,6 +123,47 @@ export class AnimalController {
       const vaccines = await this.service.getVaccinesByAnimal(req.params.id);
 
       res.status(200).json(vaccineMetaSchema.array().parse(vaccines));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByClinic(
+    req: RequestWithParams<{ id: ClinicId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const paginations = paginationQuerySchema.parse(req.query);
+
+      const animals = await this.service.getAnimalByClinic(
+        req.user.role,
+        req.user.id,
+        req.params.id,
+        paginations,
+      );
+
+      res.status(200).json(animalMetaSchema.array().parse(animals));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByVeterinarian(
+    req: RequestWithParams<{ id: UserId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const paginations = paginationQuerySchema.parse(req.query);
+
+      const animals = await this.service.getAnimalByVeterinarian(
+        req.params.id ?? req.user.id,
+        req.user.role,
+        req.user.id,
+        paginations,
+      );
+      res.status(200).json(animalMetaSchema.array().parse(animals));
     } catch (err) {
       next(err);
     }

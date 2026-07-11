@@ -50,7 +50,6 @@ const createInternalMeetingBaseFields = internalMeetingSchema
     title: true,
     clinicId: true,
   })
-  .partial({ clinicId: true })
   .extend({ userIds: userIdSchema.array() });
 
 export const createInternalMeetingFields = createMeetingBaseSchema

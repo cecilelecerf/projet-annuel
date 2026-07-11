@@ -81,17 +81,23 @@ export class ClientShopService {
     if (!animal) throw new NotFoundError("Animal");
     if (animal.clientId !== clientUserId) throw new ForbiddenError();
 
-    const [latestWeightMeeting, animalConditions, clinicIds] = await Promise.all([
-      this.animalMeetingRepository.findLatestWeight(animalId),
-      this.animalHealthConditionRepository.findByAnimal(animalId),
-      this.animalRepository.findClinicIdsForClient(clientUserId),
-    ]);
+    const [latestWeightMeeting, animalConditions, clinicIds] =
+      await Promise.all([
+        this.animalMeetingRepository.findLatestWeight(animalId),
+        this.animalHealthConditionRepository.findByAnimal(animalId),
+        this.animalRepository.findClinicIdsForClient(clientUserId),
+      ]);
 
     if (clinicIds.length === 0) return [];
 
-    const conditionIds = new Set(animalConditions.map((c) => c.healthConditionId));
+    const conditionIds = new Set(
+      animalConditions.map((c) => c.healthConditionId),
+    );
     const conditionNames = new Map(
-      animalConditions.map((c) => [c.healthConditionId, c.healthCondition.name]),
+      animalConditions.map((c) => [
+        c.healthConditionId,
+        c.healthCondition.name,
+      ]),
     );
 
     const foodClinicProducts =
@@ -109,8 +115,14 @@ export class ClientShopService {
       );
 
       const hasAvoid = matched.some((m) => m.recommendation === "AVOID");
-      const hasRecommended = matched.some((m) => m.recommendation === "RECOMMENDED");
-      const recommendation = hasAvoid ? "AVOID" : hasRecommended ? "RECOMMENDED" : null;
+      const hasRecommended = matched.some(
+        (m) => m.recommendation === "RECOMMENDED",
+      );
+      const recommendation = hasAvoid
+        ? "AVOID"
+        : hasRecommended
+          ? "RECOMMENDED"
+          : null;
 
       const dailyGrams =
         weightKg && food
@@ -118,7 +130,9 @@ export class ClientShopService {
               weightKg,
               activity: animal.activity,
               ageYears,
-              caloriesPer100: food.caloriesPer100 ? Number(food.caloriesPer100) : null,
+              caloriesPer100: food.caloriesPer100
+                ? Number(food.caloriesPer100)
+                : null,
             })
           : null;
 

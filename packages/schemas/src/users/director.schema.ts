@@ -5,7 +5,7 @@ import { clinicSchema } from "../clinics/clinic.schema";
 
 export const directorProfileSchema = z.object({
   id: directorClinicIdSchema,
-  clinic: clinicSchema,
+  clinicId: clinicIdSchema.nullable().optional(),
 });
 export const clinicRegistrationSchema = z.object({
   name: z.string().min(1, "Nom requis"),

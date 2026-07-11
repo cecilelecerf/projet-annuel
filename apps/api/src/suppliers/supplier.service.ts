@@ -79,10 +79,17 @@ export class SupplierService {
     if (!link || link.supplierId !== supplierId) {
       throw new NotFoundError("Produit du fournisseur");
     }
-    return this.supplierProductRepository.updateCost(productLinkId, data.costPrice);
+    return this.supplierProductRepository.updateCost(
+      productLinkId,
+      data.costPrice,
+    );
   }
 
-  async removeProduct(role: UserRole, supplierId: string, productLinkId: string) {
+  async removeProduct(
+    role: UserRole,
+    supplierId: string,
+    productLinkId: string,
+  ) {
     if (!SUPPLIER_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
     const link = await this.supplierProductRepository.findById(productLinkId);
     if (!link || link.supplierId !== supplierId) {

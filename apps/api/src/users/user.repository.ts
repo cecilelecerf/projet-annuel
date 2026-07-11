@@ -44,23 +44,9 @@ export class UserRepository {
     });
   }
 
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      include: {
-        veterinarianProfile: true,
-        clientProfile: true,
-        secretaryProfile: true,
-        directorClinicProfile: true,
-        referentClinicProfile: true,
-        avatar: true,
-      },
-
-      omit: { password: true },
-    });
-  }
   async getAllUsersByRole({ roles }: { roles?: UserRole[] }) {
     return this.prisma.user.findMany({
-      where: { role: { in: roles } },
+      ...(roles?.length ? { where: { role: { in: roles } } } : {}),
       omit: { password: true },
       include: userWithProfileAndClinicIdInclude,
     });
@@ -128,9 +114,7 @@ export class UserRepository {
       let clinics: { id: string; name: string }[] = [];
       switch (user.role) {
         case "SECRETARY":
-          clinics = user.secretaryProfile
-            ? [user.secretaryProfile.clinic]
-            : [];
+          clinics = user.secretaryProfile ? [user.secretaryProfile.clinic] : [];
           break;
         case "DIRECTOR":
           clinics = user.directorClinicProfile?.clinic

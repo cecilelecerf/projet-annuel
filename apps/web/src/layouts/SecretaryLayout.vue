@@ -22,6 +22,17 @@ const menuItems: NavNode[] = [
     icon: Calendar,
   },
   {
+    index: 'SECRETARY.Animals.List',
+    label: 'Animaux suivis',
+    query: { role: 'VETERINARIAN' },
+    icon: Calendar,
+  },
+  {
+    index: 'SECRETARY.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
+  },
+  {
     index: 'SECRETARY.Avaibality',
     label: 'Disponibilité',
     icon: SetUp,

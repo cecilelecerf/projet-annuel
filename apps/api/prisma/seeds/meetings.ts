@@ -380,6 +380,16 @@ export async function seedMeetings(
   // Occurrence spécifique avec contenu différent
   await prisma.meetingBase.create({
     data: {
+      type: "EXCEPTION",
+      kind: "INTERNAL",
+      date: new Date("2026-03-16"),
+      startTime: new Date("1970-01-01T10:00:00Z"),
+      endTime: new Date("1970-01-01T11:00:00Z"),
+      parentId: recurringInternal1.id,
+    },
+  });
+  await prisma.meetingBase.create({
+    data: {
       type: "SPECIFIED",
       kind: "INTERNAL",
       date: new Date("2026-03-16"),

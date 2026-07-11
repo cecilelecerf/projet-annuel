@@ -38,13 +38,13 @@ const cardDirection = computed(() => (isBelowSm.isAbove.value ? 'row' : 'column'
     />
     <ContactCard
       v-if="user?.role !== 'CLIENT'"
-      :initial="meeting.animal?.client?.firstname?.charAt(0) ?? '?'"
-      :name="`${meeting.animal.client.firstname} ${meeting.animal.client.lastname}`"
+      :initial="meeting.animal.client.user.firstname?.charAt(0) ?? '?'"
+      :name="`${meeting.animal.client.user.firstname} ${meeting.animal.client.user.lastname}`"
       :route="{
         name: `${user?.role.toUpperCase()}.Clients.Detail`,
         params: { id: meeting.animal.clientId },
       }"
-      :avatar-url="meeting.animal.client.avatarUrl"
+      :avatar-url="meeting.animal.client.user.avatarUrl"
       :direction="cardDirection"
     />
     <VetoCard

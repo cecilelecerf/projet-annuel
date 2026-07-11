@@ -5,6 +5,7 @@ import MeetingCard from './AnimalMeetingCard.vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore.ts'
 import { match } from 'ts-pattern'
+import { computed } from 'vue'
 dayjs.locale('fr')
 
 const router = useRouter()
@@ -27,6 +28,9 @@ const onHandleMore = () =>
       )
       .otherwise(() => ({})),
   )
+const sortedMeetings = computed(() =>
+  [...props.meetings].sort((a, b) => a.meeting.startTime.getTime() - b.meeting.endTime.getTime()),
+)
 </script>
 <template>
   <!-- Historique des RDV -->
@@ -40,9 +44,7 @@ const onHandleMore = () =>
     </div>
     <div v-if="meetings?.length" class="meetings-list">
       <MeetingCard
-        v-for="meeting in meetings
-          .sort((a, b) => dayjs(b.meeting?.date).diff(dayjs(a.meeting?.date)))
-          .slice(0, 5)"
+        v-for="meeting in sortedMeetings.slice(0, 5)"
         :animal-meeting="meeting"
         :key="meeting.animalId"
         status="PAST"

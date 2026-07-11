@@ -22,6 +22,7 @@ const MAPPING = {
   'calendar': 'event',
   'bag.fill': 'shopping-bag',
   'shippingbox.fill': 'receipt-long',
+  'pawprint.fill': 'pets',
 } as IconMapping;
 
 /**

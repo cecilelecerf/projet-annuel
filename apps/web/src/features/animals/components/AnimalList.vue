@@ -20,8 +20,6 @@ const metas = (animal: AnimalMeta) => {
   <div>
     <div v-if="animals.length === 0" class="list-empty">Aucun compte créé pour le moment.</div>
     <div v-else class="staff-list">
-      <!-- :metas="[member.email]" -->
-      <!-- :avatar-url="member.avatarUrl" -->
       <ContactCard
         v-for="member in animals"
         direction="column"
@@ -29,6 +27,7 @@ const metas = (animal: AnimalMeta) => {
         :name="member.name"
         :badge="{ label: member.race.name }"
         :metas="metas(member)"
+        :avatar-url="member.photoUrl"
         :route="{
           name: `${user?.role.toUpperCase()}.Animals.Detail`,
           params: { id: member.id },

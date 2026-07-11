@@ -21,6 +21,7 @@ import {
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { prisma } from "@api/lib/prisma";
 import { flatUser, withUserAvatar } from "@api/users/user.utils";
+import { withPhotoUrl } from "@api/animals/animal.utils";
 import { calculateAge, isStaff } from "@api/utils";
 import { EmailService } from "@api/emails/email.service";
 import dayjs from "dayjs";
@@ -151,7 +152,7 @@ export class AnimalMeetingService {
     const animalMeeting = {
       ...meeting,
       animal: {
-        ...meeting.animal,
+        ...withPhotoUrl(meeting.animal),
         client,
       },
       veterinarianClinic: {

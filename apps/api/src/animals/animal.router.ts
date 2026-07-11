@@ -38,6 +38,15 @@ animalRouter.get(
 );
 
 animalRouter.post(
+  "/:id/photo/upload",
+  controller.uploadPhoto.bind(controller) as RequestHandler,
+);
+animalRouter.patch(
+  "/:id/photo/confirm",
+  controller.confirmPhoto.bind(controller) as RequestHandler,
+);
+
+animalRouter.post(
   "/",
   validate(createAnimalSchema),
   controller.create.bind(controller) as RequestHandler,

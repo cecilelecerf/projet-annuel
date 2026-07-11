@@ -37,13 +37,22 @@ export default function RootLayout() {
     <AuthProvider>
       <CartProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: '#ffffff' },
+              headerTintColor: '#111827',
+              headerTitleStyle: { color: '#111827' },
+              headerBackTitle: '',
+              headerShadowVisible: false,
+            }}
+          >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />
             <Stack.Screen name="register" options={{ headerShown: false }} />
             <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
             <Stack.Screen name="reset-password" options={{ headerShown: false }} />
             <Stack.Screen name="product/[id]" options={{ title: '' }} />
+            <Stack.Screen name="animaux/[id]" options={{ title: '' }} />
             <Stack.Screen name="cart" options={{ title: 'Mon panier' }} />
             <Stack.Screen name="booking" options={{ headerShown: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />

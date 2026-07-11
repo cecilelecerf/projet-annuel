@@ -1,12 +1,69 @@
 <script lang="ts" setup>
 import type { AnimalDetail, AnimalMeetingWithMeeting } from '@armali/schemas'
 import dayjs from 'dayjs'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Camera, Loading } from '@element-plus/icons-vue'
+import { animalApi } from '../api'
 
 const { meetings, animal } = defineProps<{
   animal: AnimalDetail
   meetings: AnimalMeetingWithMeeting[]
 }>()
+
+const fileInput = ref<HTMLInputElement | null>(null)
+const previewUrl = ref<string | null>(null)
+const isUploading = ref(false)
+
+const MAX_SIZE_MB = 5
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+function openFilePicker() {
+  if (isUploading.value) return
+  fileInput.value?.click()
+}
+
+function validateFile(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return 'Format non supporté (JPEG, PNG ou WebP uniquement).'
+  }
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    return `L'image ne doit pas dépasser ${MAX_SIZE_MB} Mo.`
+  }
+  return null
+}
+
+async function onFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  const error = validateFile(file)
+  if (error) {
+    ElMessage.error(error)
+    input.value = ''
+    return
+  }
+
+  const localPreview = URL.createObjectURL(file)
+  previewUrl.value = localPreview
+  isUploading.value = true
+
+  try {
+    const { fileId } = await animalApi.picture.upload({ id: animal.id, file })
+    const updated = await animalApi.picture.confirm({ id: animal.id, fileId })
+    previewUrl.value = updated.photoUrl
+    ElMessage.success('Photo mise à jour.')
+  } catch (e) {
+    console.error('Erreur upload photo animal:', e)
+    previewUrl.value = null
+    ElMessage.error("Échec de l'envoi de la photo. Réessaie.")
+  } finally {
+    isUploading.value = false
+    URL.revokeObjectURL(localPreview)
+    input.value = ''
+  }
+}
 const age = computed(() => {
   const years = dayjs().diff(dayjs(animal.dateOfBirth), 'year')
   const months = dayjs().diff(dayjs(animal.dateOfBirth), 'month') % 12
@@ -44,7 +101,33 @@ const lastSize = computed(() => {
 
 <template>
   <div class="profile-card">
-    <div class="pet-avatar">{{ animal.name.charAt(0) }}</div>
+    <button
+      type="button"
+      class="pet-avatar"
+      :class="{ 'is-uploading': isUploading }"
+      :disabled="isUploading"
+      @click="openFilePicker"
+    >
+      <img
+        v-if="previewUrl || animal.photoUrl"
+        :src="previewUrl ?? animal.photoUrl ?? ''"
+        alt="Photo de l'animal"
+        class="pet-avatar-img"
+      />
+      <span v-else>{{ animal.name.charAt(0) }}</span>
+
+      <span class="pet-avatar-overlay">
+        <el-icon v-if="isUploading" class="is-loading"><Loading /></el-icon>
+        <el-icon v-else><Camera /></el-icon>
+      </span>
+    </button>
+    <input
+      ref="fileInput"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      class="pet-avatar-input"
+      @change="onFileChange"
+    />
     <h2 class="profile-name">{{ animal.name }}</h2>
     <span class="profile-breed"> {{ animal.race?.pet?.name }} · {{ animal.race?.name }} </span>
 
@@ -84,6 +167,7 @@ const lastSize = computed(() => {
 }
 
 .pet-avatar {
+  position: relative;
   width: 72px;
   height: 72px;
   border-radius: 50%;
@@ -94,6 +178,45 @@ const lastSize = computed(() => {
   justify-content: center;
   font-size: 28px;
   font-weight: var(--fw-bold);
+  overflow: hidden;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &.is-uploading .pet-avatar-overlay {
+    opacity: 1;
+  }
+}
+
+.pet-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pet-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: var(--fs-lg);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.pet-avatar:hover .pet-avatar-overlay {
+  opacity: 1;
+}
+
+.pet-avatar-input {
+  display: none;
 }
 
 .profile-name {

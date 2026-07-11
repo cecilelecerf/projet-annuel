@@ -1,4 +1,5 @@
 import type { NextFunction, Response } from "express";
+import { z } from "zod";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalDetailSchema,
@@ -6,6 +7,8 @@ import {
   animalMetaSchema,
   animalWithRaceMetaSchema,
   ClinicId,
+  fileIdSchema,
+  uploadResponseSchema,
   UserId,
   vaccineMetaSchema,
   type CreateAnimal,
@@ -144,6 +147,44 @@ export class AnimalController {
       );
 
       res.status(200).json(animalMetaSchema.array().parse(animals));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async uploadPhoto(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { mimeType } = req.body;
+      const result = await this.service.uploadPhoto({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+        mimeType,
+      });
+      res.json(uploadResponseSchema.parse(result));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async confirmPhoto(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { fileId } = z.object({ fileId: fileIdSchema }).parse(req.body);
+      const animal = await this.service.confirmPhotoUpload({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+        fileId,
+      });
+      res.json(animalWithRaceMetaSchema.parse(animal));
     } catch (err) {
       next(err);
     }

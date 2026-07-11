@@ -4,7 +4,6 @@ import {
   animalMetaSchema,
   animalSchema,
   animalWithRaceMetaSchema,
-  baseUserSchema,
   confirmUploadSchema,
   initiateImageUploadSchema,
   uploadResponseSchema,
@@ -53,7 +52,7 @@ export const animalApi = {
   },
 
   picture: {
-    upload: async ({ file }: { file: File }) => {
+    upload: async ({ id, file }: { id: AnimalId; file: File }) => {
       const payload: InitiateImageUploadInput = initiateImageUploadSchema.parse({
         mimeType: file.type,
         size: file.size,
@@ -61,7 +60,7 @@ export const animalApi = {
 
       // 1. Demander une URL S3
       const { uploadUrl, fileId } = await http
-        .post('/users/me/avatar/upload', payload)
+        .post(`/animals/${id}/photo/upload`, payload)
         .then((data) => uploadResponseSchema.parse(data))
 
       // 2. Upload direct vers S3
@@ -74,10 +73,10 @@ export const animalApi = {
       return { fileId }
     },
 
-    confirm: async ({ fileId }: { fileId: string }) => {
+    confirm: async ({ id, fileId }: { id: AnimalId; fileId: string }) => {
       const body = confirmUploadSchema.parse({ fileId })
-      const data = await http.patch('/users/me/avatar/confirm', body)
-      return baseUserSchema.parse(data)
+      const data = await http.patch(`/animals/${id}/photo/confirm`, body)
+      return animalWithRaceMetaSchema.parse(data)
     },
   },
 }

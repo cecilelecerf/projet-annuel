@@ -11,10 +11,12 @@ import { CLINIC_STAFF_ROLES, isStaff } from "@api/utils";
 import dayjs from "dayjs";
 import { VaccineRepository } from "@api/vaccines/vaccine.repository";
 import { withAvatarUrl, withUserAvatar } from "@api/users/user.utils";
+import { withPhotoUrl } from "./animal.utils";
 import { ClinicService } from "@api/clinics/clinic.service";
 import { PaginationQueryDto } from "../../../../packages/schemas/src/pagination.schema";
 import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
 import { Animal } from "../../prisma/generated/prisma/client";
+import { FileService } from "@api/files/file.service";
 
 export class AnimalService {
   constructor(
@@ -22,10 +24,11 @@ export class AnimalService {
     private vaccineRepository: VaccineRepository,
     private clinicService: ClinicService,
     private veterinarianRepository: VeterinarianProfileRepository,
+    private fileService: FileService,
   ) {}
 
   private async formatWithClient(animal: Animal & AnimalWithMeta) {
-    return { ...animal, client: withUserAvatar(animal.client) };
+    return { ...withPhotoUrl(animal), client: withUserAvatar(animal.client) };
   }
 
   private async assertOwner({
@@ -55,8 +58,10 @@ export class AnimalService {
   }
 
   async getAll({ userId, role }: { userId: string; role: UserRole }) {
-    if (isStaff(role)) return this.repository.findAll();
-    return this.repository.findByClientId(userId);
+    const animals = isStaff(role)
+      ? await this.repository.findAll()
+      : await this.repository.findByClientId(userId);
+    return animals.map((a) => withPhotoUrl(a));
   }
 
   async getByUser({
@@ -96,7 +101,7 @@ export class AnimalService {
         }
       : null;
     return {
-      ...pet,
+      ...withPhotoUrl(pet),
       attendingVeterinarianClinic: pet.attendingVeterinarianClinic
         ? {
             ...pet.attendingVeterinarianClinic,
@@ -118,7 +123,8 @@ export class AnimalService {
   }) {
     const clientId: UserId = isStaff(role) ? (data.clientId ?? userId) : userId;
 
-    return this.repository.create({ ...data, clientId });
+    const created = await this.repository.create({ ...data, clientId });
+    return withPhotoUrl(created);
   }
 
   async update({
@@ -135,12 +141,69 @@ export class AnimalService {
     await this.assertAccess({ petId: id, userId, role });
     const pet = await this.repository.findById(id);
     if (!pet) throw new NotFoundError("animal");
-    return this.repository.update(pet.id, data);
+    const updated = await this.repository.update(pet.id, data);
+    return withPhotoUrl(updated);
   }
 
   async delete({ id, userId }: { id: string; userId: string }) {
     await this.assertOwner({ petId: id, userId });
     return this.repository.delete(id);
+  }
+
+  async uploadPhoto({
+    animalId,
+    userId,
+    role,
+    mimeType,
+  }: {
+    animalId: string;
+    userId: string;
+    role: UserRole;
+    mimeType: string;
+  }) {
+    await this.assertAccess({ petId: animalId, userId, role });
+    return this.fileService.createUpload({
+      entityType: "ANIMAL",
+      entityId: animalId,
+      mimeType,
+      type: "IMAGE",
+    });
+  }
+
+  async confirmPhotoUpload({
+    animalId,
+    userId,
+    role,
+    fileId,
+  }: {
+    animalId: string;
+    userId: string;
+    role: UserRole;
+    fileId: string;
+  }) {
+    await this.assertAccess({ petId: animalId, userId, role });
+    const pet = await this.repository.findById(animalId);
+    if (!pet) throw new NotFoundError("Animal");
+
+    const confirmedFile = await this.fileService.confirmUpload({
+      fileId,
+      expectedEntityType: "ANIMAL",
+      expectedEntityId: animalId,
+    });
+
+    const previousPhotoId = pet.photoId;
+
+    const updated = await this.repository.updatePhoto({
+      animalId,
+      photoId: confirmedFile.id,
+    });
+
+    // Nettoyage de l'ancienne photo, best-effort après le succès du swap
+    if (previousPhotoId) {
+      await this.fileService.deleteFile(previousPhotoId).catch(() => {});
+    }
+
+    return withPhotoUrl(updated);
   }
 
   async getVaccinesByAnimal(animalId: string) {

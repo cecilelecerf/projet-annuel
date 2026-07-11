@@ -43,6 +43,11 @@ const menuItems: NavNode[] = [
     icon: Box,
   },
   {
+    index: 'SECRETARY.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
+  },
+  {
     index: 'SECRETARY.Profil',
     label: 'Profil',
     icon: User,

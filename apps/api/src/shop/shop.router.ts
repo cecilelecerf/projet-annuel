@@ -6,6 +6,23 @@ import { clientShopController } from "@api/instances";
 const clientShopRouter: Router = Router();
 const controller = clientShopController;
 
+// ── Routes spécifiques AVANT /:id, sinon Express interprète "animals" comme
+// un id de produit ──────────────────────────────────────────────────────────
+
+clientShopRouter.get(
+  "/animals",
+  authMiddleware,
+  roleMiddleware(["CLIENT"]),
+  controller.getAnimals.bind(controller) as RequestHandler,
+);
+
+clientShopRouter.get(
+  "/recommendations/:animalId",
+  authMiddleware,
+  roleMiddleware(["CLIENT"]),
+  controller.getFoodRecommendations.bind(controller) as RequestHandler,
+);
+
 clientShopRouter.get(
   "/",
   authMiddleware,

@@ -14,6 +14,9 @@ import { AnimalRepository } from "./animals/animal.repository";
 // ── Medical histories ─────────────────────────────────────────
 import { AnimalMedicalHistoryRepository } from "./medical-histories/medical-history.repository";
 
+// ── Health condition ─────────────────────────────────────────
+import { AnimalHealthConditionRepository } from "./health-conditions/health-condition.repository";
+
 // ── Meetings ──────────────────────────────────────────────────
 import { MeetingRepository } from "./meetings/meeting.repository";
 import { AnimalMeetingRepository } from "./meetings/animal-meeting/animal-meeting.repository";
@@ -46,7 +49,6 @@ import { SpecialityRepository } from "./specialities/speciality.repository";
 import { ClinicRequestRepository } from "./clinics/clinic-requests/request.repository";
 
 // Chat
-import { ContactsRepository } from "./messaging/contacts.repository";
 import { MessageRepository } from "./messaging/message.repository";
 import { ConversationRepository } from "./messaging/conversation.repository";
 
@@ -57,6 +59,7 @@ import { StaffRepository } from "./clinics/staffs/staff.repository";
 import { BudgetRepository } from "./budget/budget.repository";
 import { SupplierRepository } from "./suppliers/supplier.repository";
 import { SupplierOrderRepository } from "./supplier-orders/supplier-order.repository";
+import { SupplierProductRepository } from "./suppliers/supplier-product.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // Services
@@ -178,7 +181,6 @@ const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
 const messageRepository = new MessageRepository(prisma);
-const contactsRepository = new ContactsRepository(prisma);
 const conversationRepository = new ConversationRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const staffRepository = new StaffRepository(prisma);
@@ -186,10 +188,13 @@ const clinicRequestRepository = new ClinicRequestRepository(prisma);
 const budgetRepository = new BudgetRepository(prisma);
 const supplierRepository = new SupplierRepository(prisma);
 const supplierOrderRepository = new SupplierOrderRepository(prisma);
+const supplierProductRepository = new SupplierProductRepository(prisma);
 const raceRepository = new RaceRepository(prisma);
 const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
 const internalMeetingParticipantRepository =
   new InternalMeetingParticipantRepository(prisma);
+
+const animalHealthConditionRepository = new AnimalHealthConditionRepository(prisma);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
@@ -286,7 +291,8 @@ const specialityService = new SpecialityService(specialityRepository);
 export const messagingService = new MessagingService(
   messageRepository,
   conversationRepository,
-  contactsRepository,
+  userRepository,
+  veterinarianProfileRepository,
 );
 const clinicRequestService = new ClinicRequestService(clinicRequestRepository);
 const raceService = new RaceService(raceRepository, petRepository);
@@ -302,9 +308,14 @@ const productRequestService = new ProductRequestService(
   brandRepository,
 );
 
-const clientShopService = new ClientShopService();
+const clientShopService = new ClientShopService(
+  animalRepository,
+  animalMeetingRepository,
+  productClinicRepository,
+  animalHealthConditionRepository,
+);
 
-export const orderService = new OrderService(orderRepository, emailService);
+export const orderService = new OrderService(orderRepository, emailService, animalRepository);
 export const salesService = new SalesService();
 
 export const dashboardService = new DashboardService(
@@ -320,12 +331,17 @@ export const dashboardService = new DashboardService(
 );
 
 export const budgetService = new BudgetService(budgetRepository, clinicService);
-export const supplierService = new SupplierService(supplierRepository);
+
+export const supplierService = new SupplierService(
+  supplierRepository,
+  supplierProductRepository, 
+);
 export const supplierOrderService = new SupplierOrderService(
   supplierOrderRepository,
   supplierRepository,
   budgetRepository,
   clinicService,
+  productClinicRepository,
 );
 
 const veterinarianPetService = new VeterinarianPetService(

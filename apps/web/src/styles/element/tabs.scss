@@ -25,7 +25,7 @@
   }
 
   .el-tabs__nav {
-    display: flex;
+    display: inline-flex;
     gap: var(--spacing-2xs, 4px);
     padding: 4px;
     border-radius: var(--radius-full);

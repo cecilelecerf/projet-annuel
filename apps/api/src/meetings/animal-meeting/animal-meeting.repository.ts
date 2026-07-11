@@ -42,10 +42,6 @@ export type AnimalMeetingForUser = Prisma.AnimalMeetingGetPayload<{
   include: typeof findByUserInclude;
 }>;
 
-// ═══════════════════════════════════════════════════════════════
-// Repository
-// ═══════════════════════════════════════════════════════════════
-
 export class AnimalMeetingRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -216,6 +212,13 @@ export class AnimalMeetingRepository {
           },
         },
       },
+    });
+  } // ── Boutique client  ────────────
+  async findLatestWeight(animalId: string) {
+    return this.prisma.animalMeeting.findFirst({
+      where: { animalId, petWeight: { not: null } },
+      orderBy: { meeting: { date: "desc" } },
+      select: { petWeight: true },
     });
   }
 }

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { clientShopApi } from '@/features/shop/api/shop.api'
 import { useCartStore } from '@/features/shop/stores/cartStore'
-import type { ProductClinicWithClinic } from '@armali/schemas'
+import type { ProductClinicWithClinic, AnimalOption, ProductRecommendation } from '@armali/schemas'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,12 +26,70 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadRecommendationsForAllAnimals()
+})
+
+// Recharge les recommandations si on navigue d'une fiche produit à une autre
+// (même composant réutilisé par Vue Router)
+watch(() => route.params.id, load)
 
 function addToCart() {
   if (!product.value) return
   cart.addItem(product.value, quantity.value)
   notify.success(`${quantity.value} × ${product.value.product.name} ajouté(s) au panier`)
+}
+
+// ── Recommandations automatiques pour tous les animaux du client ───────────
+
+interface AnimalRecommendation {
+  animalName: string
+  recommendation: 'RECOMMENDED' | 'AVOID'
+  matchedConditions: string[]
+  dailyGrams: number | null
+}
+
+const animalRecommendations = ref<AnimalRecommendation[]>([])
+const recommendationsLoading = ref(false)
+
+async function loadRecommendationsForAllAnimals() {
+  recommendationsLoading.value = true
+  try {
+    let animals: AnimalOption[] = []
+    try {
+      animals = await clientShopApi.getAnimals()
+    } catch {
+      return
+    }
+    if (animals.length === 0) return
+
+    const results: AnimalRecommendation[] = []
+
+    await Promise.all(
+      animals.map(async (animal: AnimalOption) => {
+        let list: ProductRecommendation[] = []
+        try {
+          list = await clientShopApi.getRecommendations(animal.id)
+        } catch {
+          return
+        }
+        const match = list.find((r: ProductRecommendation) => r.clinicProductId === route.params.id)
+        if (match && match.recommendation) {
+          results.push({
+            animalName: animal.name,
+            recommendation: match.recommendation,
+            matchedConditions: match.matchedConditions,
+            dailyGrams: match.dailyGrams,
+          })
+        }
+      }),
+    )
+
+    animalRecommendations.value = results
+  } finally {
+    recommendationsLoading.value = false
+  }
 }
 </script>
 
@@ -68,6 +126,40 @@ function addToCart() {
         <el-button type="primary" :disabled="product.stock <= 0" @click="addToCart">
           Ajouter au panier
         </el-button>
+      </div>
+
+      <!-- Recommandations automatiques, une par animal concerné -->
+      <div v-if="!recommendationsLoading && animalRecommendations.length > 0" class="nutrition-panel">
+        <div
+          v-for="(rec, i) in animalRecommendations"
+          :key="i"
+          class="nutrition-alert"
+          :class="rec.recommendation === 'AVOID' ? 'nutrition-alert--avoid' : 'nutrition-alert--recommended'"
+        >
+          <strong>
+            {{ rec.recommendation === 'AVOID' ? 'À éviter' : 'Recommandé' }} pour {{ rec.animalName }}
+          </strong>
+          <p v-if="rec.matchedConditions.length > 0">
+            En lien avec : {{ rec.matchedConditions.join(', ') }}
+          </p>
+
+          <div class="grammage-box">
+            <h3>Ration journalière estimée</h3>
+            <template v-if="rec.dailyGrams !== null">
+              <span class="grammage-value">{{ rec.dailyGrams }} g / jour</span>
+            </template>
+            <template v-else>
+              <span class="grammage-unavailable">
+                Poids de {{ rec.animalName }} non renseigné — enregistrez-le lors d'une prochaine
+                consultation pour obtenir une estimation.
+              </span>
+            </template>
+          </div>
+        </div>
+        <p class="grammage-disclaimer">
+          Estimation indicative basée sur une formule vétérinaire standard. Ne remplace pas l'avis
+          de votre vétérinaire pour un besoin nutritionnel précis.
+        </p>
       </div>
     </div>
   </div>
@@ -140,6 +232,61 @@ function addToCart() {
 .add-to-cart {
   display: flex;
   gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.nutrition-panel {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+.nutrition-alert {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+}
+.nutrition-alert p {
+  margin: 4px 0 var(--spacing-sm);
+  font-size: 12px;
+}
+.nutrition-alert--avoid {
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+}
+.nutrition-alert--recommended {
+  background: var(--el-color-success-light-9);
+  color: var(--el-color-success);
+}
+
+.grammage-box {
+  background: var(--el-bg-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+.grammage-box h3 {
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  color: var(--el-text-color-secondary);
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+.grammage-value {
+  font-size: 18px;
+  font-weight: var(--fw-bold);
+  color: var(--el-text-color-primary);
+}
+.grammage-unavailable {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.grammage-disclaimer {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  margin: 0;
+  line-height: 1.4;
 }
 
 @media (max-width: 768px) {

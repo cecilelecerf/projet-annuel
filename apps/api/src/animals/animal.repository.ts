@@ -62,10 +62,6 @@ export type AnimalVaccineWithDetails = Prisma.AnimalVaccineGetPayload<{
   include: typeof findVaccinesByAnimalInclude;
 }>;
 
-// ═══════════════════════════════════════════════════════════════
-// Repository
-// ═══════════════════════════════════════════════════════════════
-
 export class AnimalRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -166,6 +162,50 @@ export class AnimalRepository {
       skip: (pagination.page - 1) * pagination.limit,
       include: includeMeta,
       orderBy: { updatedAt: pagination.order },
+    });
+  }
+
+  // ── Boutique client (déplacé depuis shop/shop.repository.ts) ────────────
+  // TODO : delete du coup ?
+  async findClinicIdsForClient(clientUserId: string): Promise<string[]> {
+    const animals = await this.prisma.animal.findMany({
+      where: { clientId: clientUserId },
+      select: {
+        attendingVeterinarianClinic: { select: { clinicId: true } },
+        animalMeeting: {
+          select: {
+            veterinarianClinic: { select: { clinicId: true } },
+          },
+        },
+      },
+    });
+
+    const clinicIds = new Set<string>();
+    for (const animal of animals) {
+      if (animal.attendingVeterinarianClinic) {
+        clinicIds.add(animal.attendingVeterinarianClinic.clinicId);
+      }
+      for (const meeting of animal.animalMeeting) {
+        if (meeting.veterinarianClinic?.clinicId) {
+          clinicIds.add(meeting.veterinarianClinic.clinicId);
+        }
+      }
+    }
+    return [...clinicIds];
+  }
+
+  async findNamesByClientId(clientId: string) {
+    return this.prisma.animal.findMany({
+      where: { clientId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  async findOwnershipInfo(animalId: string) {
+    return this.prisma.animal.findUnique({
+      where: { id: animalId },
+      select: { id: true, clientId: true, dateOfBirth: true, activity: true },
     });
   }
 }

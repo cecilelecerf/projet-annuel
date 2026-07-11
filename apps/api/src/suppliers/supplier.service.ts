@@ -1,5 +1,6 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { SupplierRepository } from "./supplier.repository";
+import { SupplierProductRepository } from "./supplier-product.repository";
 import type {
   CreateSupplier,
   UpdateSupplier,
@@ -8,14 +9,14 @@ import type {
   UserRole,
 } from "@armali/schemas";
 
-// Comme pour Product/Brand : le catalogue fournisseurs est un référentiel
-// global géré par l'admin. Référent/directeur ne font que le consulter pour
-// passer leurs commandes.
 const SUPPLIER_READ_ROLES: UserRole[] = ["ADMIN", "REFERENT", "DIRECTOR"];
 const SUPPLIER_MANAGER_ROLES: UserRole[] = ["ADMIN"];
 
 export class SupplierService {
-  constructor(private repository: SupplierRepository) {}
+  constructor(
+    private repository: SupplierRepository,
+    private supplierProductRepository: SupplierProductRepository,
+  ) {}
 
   // ── Supplier ──────────────────────────────────────────────────────────────
 
@@ -60,7 +61,11 @@ export class SupplierService {
     if (!SUPPLIER_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
     const supplier = await this.repository.findById(supplierId);
     if (!supplier) throw new NotFoundError("Fournisseur");
-    return this.repository.addProduct(supplierId, data.productId, data.costPrice);
+    return this.supplierProductRepository.upsert(
+      supplierId,
+      data.productId,
+      data.costPrice,
+    );
   }
 
   async updateProduct(
@@ -70,19 +75,19 @@ export class SupplierService {
     data: UpdateSupplierProduct,
   ) {
     if (!SUPPLIER_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
-    const link = await this.repository.findProductLink(productLinkId);
+    const link = await this.supplierProductRepository.findById(productLinkId);
     if (!link || link.supplierId !== supplierId) {
       throw new NotFoundError("Produit du fournisseur");
     }
-    return this.repository.updateProductCost(productLinkId, data.costPrice);
+    return this.supplierProductRepository.updateCost(productLinkId, data.costPrice);
   }
 
   async removeProduct(role: UserRole, supplierId: string, productLinkId: string) {
     if (!SUPPLIER_MANAGER_ROLES.includes(role)) throw new ForbiddenError();
-    const link = await this.repository.findProductLink(productLinkId);
+    const link = await this.supplierProductRepository.findById(productLinkId);
     if (!link || link.supplierId !== supplierId) {
       throw new NotFoundError("Produit du fournisseur");
     }
-    return this.repository.removeProduct(productLinkId);
+    return this.supplierProductRepository.delete(productLinkId);
   }
 }

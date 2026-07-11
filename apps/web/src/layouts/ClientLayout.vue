@@ -30,6 +30,11 @@ const menuItems: NavNode[] = [
     label: 'Mes commandes',
     icon: Box,
   },
+  {
+    index: 'CLIENT.Profil',
+    label: 'Profil',
+    icon: User,
+  },
 ]
 </script>
 

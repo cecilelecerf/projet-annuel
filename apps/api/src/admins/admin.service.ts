@@ -119,4 +119,85 @@ export class AdminService {
     await prisma.clinic.delete({ where: { id: clinicId } });
     return { message: "Clinique supprimée" };
   }
+
+  async getUsers() {
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        firstname: true,
+        lastname: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async deleteUser(userId: string, requestingAdminId: string) {
+    if (userId === requestingAdminId) {
+      throw new BadRequestError(
+        "Vous ne pouvez pas supprimer votre propre compte depuis cette page. Utilisez la suppression de compte depuis votre profil.",
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { veterinarianProfile: true },
+    });
+    if (!user) throw new NotFoundError("Utilisateur");
+
+    const [
+      healthConditionCount,
+      conversationMemberCount,
+      internalParticipantCount,
+      organizedMeetingCount,
+      appointmentCount,
+    ] = await Promise.all([
+      prisma.animalHealthCondition.count({ where: { addedById: userId } }),
+      prisma.conversationMember.count({ where: { userId } }),
+      prisma.internalMeetingParticipant.count({ where: { userId } }),
+      prisma.internalMeeting.count({ where: { adminId: userId } }),
+      user.veterinarianProfile
+        ? prisma.animalMeeting.count({
+            where: {
+              veterinarianClinic: {
+                veterinarianId: user.veterinarianProfile.id,
+              },
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+    const reasons: string[] = [];
+    if (appointmentCount > 0)
+      reasons.push(
+        `${appointmentCount} rendez-vous vétérinaire${appointmentCount > 1 ? "s" : ""}`,
+      );
+    if (healthConditionCount > 0)
+      reasons.push(
+        `${healthConditionCount} entrée${healthConditionCount > 1 ? "s" : ""} d'historique médical renseignée${healthConditionCount > 1 ? "s" : ""}`,
+      );
+    if (organizedMeetingCount > 0)
+      reasons.push(
+        `${organizedMeetingCount} réunion${organizedMeetingCount > 1 ? "s" : ""} interne${organizedMeetingCount > 1 ? "s" : ""} organisée${organizedMeetingCount > 1 ? "s" : ""}`,
+      );
+    if (internalParticipantCount > 0)
+      reasons.push(
+        `${internalParticipantCount} participation${internalParticipantCount > 1 ? "s" : ""} à une réunion interne`,
+      );
+    if (conversationMemberCount > 0)
+      reasons.push(
+        `${conversationMemberCount} conversation${conversationMemberCount > 1 ? "s" : ""}`,
+      );
+
+    if (reasons.length > 0) {
+      throw new BadRequestError(
+        `Impossible de supprimer le compte de ${user.firstname} ${user.lastname} car il est encore lié à : ${reasons.join(", ")}. Veuillez d'abord supprimer ou transférer ces éléments.`,
+      );
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+    return { message: "Compte supprimé" };
+  }
 }

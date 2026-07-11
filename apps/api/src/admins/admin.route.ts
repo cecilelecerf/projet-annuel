@@ -42,4 +42,18 @@ adminRouter.delete(
   controller.deleteClinic.bind(controller),
 );
 
+adminRouter.get(
+  "/users",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.getUsers.bind(controller),
+);
+
+adminRouter.delete(
+  "/users/:id",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.deleteUser.bind(controller),
+);
+
 export default adminRouter;

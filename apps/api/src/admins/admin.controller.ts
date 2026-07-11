@@ -15,7 +15,7 @@ export class AdminController {
 
   async approveClinicRequest(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await adminService.approveClinicRequest(req.params.id);
+      const result = await adminService.approveClinicRequest(req.params.id as string);
       res.status(200).json(result);
     } catch (err) {
       next(err);
@@ -24,7 +24,7 @@ export class AdminController {
 
   async rejectClinicRequest(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await adminService.rejectClinicRequest(req.params.id);
+      const result = await adminService.rejectClinicRequest(req.params.id as string);
       res.status(200).json(result);
     } catch (err) {
       next(err);
@@ -42,7 +42,28 @@ export class AdminController {
 
   async deleteClinic(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await adminService.deleteClinic(req.params.id);
+      const result = await adminService.deleteClinic(req.params.id as string);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const users = await adminService.getUsers();
+      res.status(200).json(users);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await adminService.deleteUser(
+        req.params.id as string,
+        req.user!.id,
+      );
       res.status(200).json(result);
     } catch (err) {
       next(err);

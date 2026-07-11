@@ -47,6 +47,12 @@ export function errorHandler(
     if (err.code === "P2025") {
       return res.status(404).json({ error: "Ressource introuvable" });
     }
+    if (err.code === "P2003") {
+      return res.status(409).json({
+        error:
+          "Impossible d'effectuer cette action : cette ressource est encore liée à d'autres données",
+      });
+    }
   }
 
   console.error(err);

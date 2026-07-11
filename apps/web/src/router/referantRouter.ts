@@ -8,6 +8,10 @@ export const referantRouter: RouteRecordRaw[] = [
     beforeEnter: requireRole('REFERANT'),
     children: [
       {
+        path: '',
+        redirect: { name: 'REFERENT.Staff' },
+      },
+      {
         path: 'profil',
         name: 'REFERENT.Profil',
         component: () => import('@/features/users/views/referent/ProfilView.vue'),

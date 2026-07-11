@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 import { RouterLink, useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
+import { roleHomeMap } from '@/router'
 
 const router = useRouter()
 const notify = useNotify()
@@ -13,7 +14,6 @@ interface Role {
   emoji: string
   description: string
   email: string
-  path: string
 }
 
 const roles: Role[] = [
@@ -23,7 +23,6 @@ const roles: Role[] = [
     emoji: '👤',
     description: "Propriétaire d'animaux, gestion des RDV",
     email: 'client@gmail.com',
-    path: 'Client',
   },
   {
     key: 'veterinaire',
@@ -31,7 +30,6 @@ const roles: Role[] = [
     emoji: '🩺',
     description: 'Consultation, agenda et dossiers patients',
     email: 'veto@gmail.com',
-    path: 'Veto',
   },
   {
     key: 'secretaire',
@@ -39,7 +37,6 @@ const roles: Role[] = [
     emoji: '📋',
     description: 'Gestion des plannings et accueil',
     email: 'secretaire@gmail.com',
-    path: 'Secretary',
   },
   {
     key: 'directeur',
@@ -47,7 +44,6 @@ const roles: Role[] = [
     emoji: '🏥',
     description: 'Supervision de la clinique et équipes',
     email: 'directeur@gmail.com',
-    path: 'Director',
   },
   {
     key: 'referent',
@@ -55,7 +51,6 @@ const roles: Role[] = [
     emoji: '⭐',
     description: 'Coordination inter-cliniques et spécialités',
     email: 'referent@gmail.com',
-    path: 'Referant',
   },
   // {
   //   key: 'superadmin',
@@ -75,7 +70,8 @@ const handleLogin = async ({ email }: { email: string }) => {
 const loginAs = async (role: Role) => {
   await handleLogin({ email: role.email })
   notify.success(`Connexion en tant que ${role.label}`)
-  router.push({ name: `${role.path}.Home` })
+  const userRole = authStore.user?.role
+  if (userRole) router.push(roleHomeMap[userRole])
 }
 </script>
 
@@ -92,7 +88,9 @@ const loginAs = async (role: Role) => {
       <p class="dev-section__subtitle">Connectez-vous directement avec un compte de test</p>
     </div>
     <div v-if="isAuthenticated" class="dev-section__grid">
-      <RouterLink :to="{ name: 'Client.Home' }"> Allez sur mon espace</RouterLink>
+      <RouterLink v-if="authStore.user" :to="roleHomeMap[authStore.user.role]">
+        Allez sur mon espace
+      </RouterLink>
       <el-button @click="authStore.logout()">Déconnexion</el-button>
     </div>
     <div v-else class="dev-section__grid">

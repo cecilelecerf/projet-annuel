@@ -2,7 +2,7 @@
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
+import { House, Calendar, User, SetUp } from '@element-plus/icons-vue'
 
 const menuItems: MenuItem[] = [
   {
@@ -19,11 +19,6 @@ const menuItems: MenuItem[] = [
     index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
     icon: Calendar,
-  },
-  {
-    index: 'SECRETARY.Messagerie',
-    label: 'Messagerie',
-    icon: ChatDotRound,
   },
   {
     index: 'SECRETARY.Avaibality',

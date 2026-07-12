@@ -19,6 +19,10 @@ L'infrastructure repose sur un cluster Swarm composé de **3 nœuds** (1 Manager
 - **PostgreSQL (Base de données) :** Isolée sur le Manager, avec volume persistant. (1 réplicas).
 - **Prometheus :** Collecte des métriques (1 réplicas).
 - **Grafana :** Visualisation des métriques (1 réplicas).
+- **Minio :** Stockage des images (1 réplicas).
+- **Minio Init :** Inititalisation de minio.
+- **Api - Seed :** Pas up, utile seulement pour le workflow de seeds.
+- **Api - Migration :** Pas up, utile seulement pour le workflow de migration.
 
 ---
 
@@ -51,6 +55,16 @@ echo "mydb" | docker secret create db_name -
 echo "SECRET_JWT_ACCESS" | docker secret create jwt_access_secret -
 echo "SECRET_JWT_REFRESH" | docker secret create jwt_refresh_secret -
 echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create grafana_admin_password -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create stripe_webhook_secret_v2 -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create stripe_secret_key -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create s3_endpoint -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create s3_bucket -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create resend_api_key -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create minio_root_user -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create minio_root_password -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create aws_access_key_id_v2 -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create aws_region -
+echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create aws_secret_access_key_v2 -
 ```
 
 ## Étape 2.3 : Docker Configs (Configurations Swarm)
@@ -61,12 +75,16 @@ Création des configs requises sur le Manager :
 
 ```bash
 # Prometheus
-docker config create prometheus_config /app/monitoring/prometheus.yml
+docker config create prometheus_config_v2 /app/monitoring/prometheus.yml
 
 # Grafana
 docker config create grafana_datasources /app/monitoring/grafana/provisioning/datasources/prometheus.yml
 docker config create grafana_dashboards_provider /app/monitoring/grafana/provisioning/dashboards/dashboards.yml
 docker config create grafana_dashboard_express /app/monitoring/grafana/dashboards/express-backend-overview.json
+
+# Minio
+docker config create minio_init_script_v2 /app/packages/minio/minio-init.sh
+
 ```
 
 > ⚠️ Les Docker configs sont **immuables**. Pour mettre à jour une config, il faut créer une nouvelle version avec un nom différent (ex: `prometheus_config_v2`) et mettre à jour le `compose.prod.yaml` en conséquence.

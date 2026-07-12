@@ -25,13 +25,12 @@ apps/api/
 │   │           └── <feature>.service.test.ts  # Tests des services de la feature
 │   └── lib/
 │       └── prisma.ts             # Instance Prisma
-│       └── mailer.ts             # Instance Prisma
+│       └── mailer.ts             # Instance Mailer
 ├── prisma/
 │   ├── schemas/                  # Schémas Prisma (multi-fichiers)
-│   ├── seeds/                  # Données de test
+│   ├── seeds/                    # Données de test
 │   └── migrations/                # Migrations générées
 ├── prisma.config.ts               # Configuration Prisma
-├── .env.dev                       # Variables d'environnement (dev)
 └── package.json
 ```
 
@@ -52,17 +51,6 @@ Les controllers/services/repositories sont instanciés une seule fois dans `src/
 
 > 💡 Règle à respecter : un service ne doit jamais appeler Prisma directement, il passe toujours par son repository. Ça garde les services testables indépendamment de la base.
 
-### 📐 Convention repository : un repo = un domaine
-
-Un repository est le seul point d'accès à **une entité/agrégat**. Règles à respecter :
-
-- ✅ **Autorisé** : retourner l'entité elle-même (`findById`, `findMany`, `findFirst`), un `count`/`aggregate` sur cette entité, ou l'entité enrichie de ses **relations Prisma propres** (ex. `ClinicRepository.findById` qui `include` ses `veterinarians` ou son `director`, car ces relations sont définies dans le schéma `Clinic`).
-- ❌ **Interdit** : requêter/joindre une table qui n'a pas de lien direct avec l'entité du repo juste par commodité (ex. `ClinicRepository` qui va chercher des `Meeting` d'un autre domaine sans relation Prisma vers `Clinic`). Si deux domaines doivent être combinés, c'est le **service** qui appelle les deux repositories concernés et compose le résultat.
-- ❌ **Interdit** : mettre de la logique métier dans le repo (vérification de rôle, formatage de réponse, calcul dérivé) — le repo ne fait que traduire une intention en requête Prisma et retourner de la donnée brute/typée Prisma.
-- 💡 Si un repo a besoin de plusieurs "vues" du même modèle (légère vs détaillée), préfère plusieurs méthodes explicites (`findByIdBasic`, `findByIdWithDetails`) plutôt qu'une seule méthode qui `include` systématiquement tout — ça évite le sur-fetch et rend l'usage explicite côté service.
-
-Un `count` est donc parfaitement légitime dans `ClinicRepository` (ex. `countByCity`), tant que la donnée comptée reste des `Clinic`.
-
 ---
 
 ## 🔐 Authentification & autorisation
@@ -70,8 +58,6 @@ Un `count` est donc parfaitement légitime dans `ClinicRepository` (ex. `countBy
 - Authentification par **JWT** (access token + refresh token), voir `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` dans `.env`.
 - Autorisation basée sur les **rôles utilisateur** (`UserRole`), vérifiée au niveau service (ex. `isStaff(role)`) plutôt qu'au niveau route, pour permettre des règles fines (ex. un `CLIENT` ne peut accéder qu'à ses propres ressources).
 - Erreurs métier typées (ex. `NotFoundError`, `ForbiddenError`) levées dans les services et catchées globalement pour produire les codes HTTP correspondants.
-
-<!-- À compléter si besoin : middleware d'auth, endpoint de refresh, expiration des tokens -->
 
 ---
 
@@ -238,18 +224,4 @@ Deux types de tests par feature, dans `__tests__/` :
 - Un test de route = un scénario métier nommé explicitement (ex. `"200 — CLIENT accède à son propre animal"`, `"403 — CLIENT accède à l'animal d'un autre client"`), pour que le rapport de test serve de documentation fonctionnelle.
 - Ne pas dupliquer en test de service ce qui est déjà couvert en test de route : le test de service sert surtout à couvrir les branches difficiles à atteindre via HTTP (erreurs internes, cas limites).
 - Réinitialiser/isoler l'état entre les tests de route (fixtures rejouées) pour éviter les tests dépendants les uns des autres.
-- Viser la couverture minimale de **75 %** exigée par la CI pour merger sur `main` (voir [README racine](../../README.md#-sécurité--cicd)).
-
----
-
-## 🌱 Variables d'environnement
-
-| Variable             | Description                            |
-| -------------------- | -------------------------------------- |
-| `DATABASE_URL`       | URL de connexion PostgreSQL            |
-| `JWT_ACCESS_SECRET`  | Secret de signature des access tokens  |
-| `JWT_REFRESH_SECRET` | Secret de signature des refresh tokens |
-
-<!-- Compléter avec les variables MinIO/S3, SMTP (Mailhog), et toute autre variable spécifique à l'API -->
-
-<!-- Ajouter dans le readme la partie websocket avec io  -->
+- Viser la couverture minimale de **80 %** exigée par la CI pour merger sur `main` (voir [README racine](../../README.md#-sécurité--cicd)).

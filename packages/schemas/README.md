@@ -21,8 +21,6 @@ packages/schemas/
 └── tsup.config.ts                # Build (ESM/CJS + types)
 ```
 
-> ⚠️ Cette structure est une proposition alignée sur l'organisation par feature de `apps/api` — à corriger si l'arborescence réelle du package diffère.
-
 ---
 
 ## 🎯 Rôle du package

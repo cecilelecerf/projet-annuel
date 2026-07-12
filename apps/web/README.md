@@ -16,6 +16,7 @@ apps/web/
 │   ├── stores/                 # Pinia stores globaux (auth, session, etc.)
 │   ├── layouts/                # Layouts par rôle (ClientLayout, VetLayout, ...)
 │   ├── components/             # Composants réutilisables transverses (design system, UI générique)
+│   ├── views/                  # Pages transverses
 │   └── features/                # Organisation par feature (feature-based)
 │       └── <feature>/
 │           ├── api.ts               # Appels API de la feature

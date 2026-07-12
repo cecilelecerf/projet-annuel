@@ -29,7 +29,7 @@ CREATE TYPE "ClinicRequestStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 CREATE TYPE "ConversationType" AS ENUM ('DIRECT', 'GROUP');
 
 -- CreateEnum
-CREATE TYPE "ConversationScope" AS ENUM ('CLINIC', 'DIRECTOR_NETWORK');
+CREATE TYPE "ConversationScope" AS ENUM ('CLINIC', 'DIRECTOR_NETWORK', 'VETERINARIAN_NETWORK');
 
 -- CreateEnum
 CREATE TYPE "ConversationMemberRole" AS ENUM ('ADMIN', 'MEMBER');
@@ -54,6 +54,12 @@ CREATE TYPE "ScheduleType" AS ENUM ('SPECIFIED', 'EXCEPTION');
 
 -- CreateEnum
 CREATE TYPE "MeetingStatus" AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED');
+
+-- CreateEnum
+CREATE TYPE "AnimalMeetingStatus" AS ENUM ('SCHEDULED', 'COMPLETED', 'CANCELLED');
+
+-- CreateEnum
+CREATE TYPE "AnimalStatus" AS ENUM ('ALIVE', 'DECEASED');
 
 -- CreateEnum
 CREATE TYPE "VaccineRuleType" AS ENUM ('MANDATORY', 'RECOMMENDED');
@@ -287,14 +293,18 @@ CREATE TABLE "clinics" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "name" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
+    "street" TEXT NOT NULL,
+    "postalCode" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "country" TEXT NOT NULL DEFAULT 'FR',
     "siret" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "description" TEXT,
     "website" TEXT NOT NULL,
-    "openingHours" TEXT,
-    "lat" DOUBLE PRECISION NOT NULL,
-    "lng" DOUBLE PRECISION NOT NULL,
+    "openingHours" JSONB,
+    "image" TEXT,
+    "lat" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "lng" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "directorId" TEXT NOT NULL,
 
     CONSTRAINT "clinics_pkey" PRIMARY KEY ("id")
@@ -307,7 +317,10 @@ CREATE TABLE "clinic_requests" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" "ClinicRequestStatus" NOT NULL DEFAULT 'PENDING',
     "name" TEXT NOT NULL,
-    "address" TEXT NOT NULL,
+    "street" TEXT NOT NULL,
+    "postalCode" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "country" TEXT NOT NULL DEFAULT 'FR',
     "siret" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "website" TEXT NOT NULL,
@@ -348,7 +361,7 @@ CREATE TABLE "conversations" (
     "scope" "ConversationScope" NOT NULL,
     "name" TEXT,
     "lastMessageAt" TIMESTAMP(3),
-    "createdById" TEXT NOT NULL,
+    "createdById" TEXT,
     "clinicId" TEXT,
 
     CONSTRAINT "conversations_pkey" PRIMARY KEY ("id")
@@ -417,7 +430,7 @@ CREATE TABLE "owned_pet_health_conditions" (
     "healthConditionId" TEXT NOT NULL,
     "animalId" TEXT NOT NULL,
     "meetingId" TEXT,
-    "addedById" TEXT NOT NULL,
+    "addedById" TEXT,
 
     CONSTRAINT "owned_pet_health_conditions_pkey" PRIMARY KEY ("id")
 );
@@ -508,6 +521,8 @@ CREATE TABLE "animal_meetings" (
     "petWeight" DECIMAL(5,2),
     "petSize" DECIMAL(5,2),
     "report" TEXT,
+    "reminderSentAt" TIMESTAMP(3),
+    "status" "AnimalMeetingStatus" NOT NULL DEFAULT 'SCHEDULED',
     "meetingId" TEXT,
     "specialityId" TEXT,
     "animalId" TEXT NOT NULL,
@@ -525,8 +540,13 @@ CREATE TABLE "animals" (
     "dateOfBirth" TIMESTAMP(3) NOT NULL,
     "description" TEXT,
     "activity" INTEGER,
+    "status" "AnimalStatus" NOT NULL DEFAULT 'ALIVE',
     "outdoorAccess" BOOLEAN NOT NULL DEFAULT false,
     "animalContact" BOOLEAN NOT NULL DEFAULT false,
+    "hasInsurance" BOOLEAN NOT NULL DEFAULT false,
+    "insuranceProvider" TEXT,
+    "insurancePolicyNumber" TEXT,
+    "emergencyToken" TEXT NOT NULL,
     "attendingVeterinarianClinicId" TEXT,
     "clientId" TEXT NOT NULL,
     "raceId" TEXT NOT NULL,
@@ -911,7 +931,7 @@ CREATE UNIQUE INDEX "clinics_directorId_key" ON "clinics"("directorId");
 CREATE UNIQUE INDEX "specialities_name_key" ON "specialities"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "veterinarian_clinics_id_clinicId_key" ON "veterinarian_clinics"("id", "clinicId");
+CREATE UNIQUE INDEX "veterinarian_clinics_veterinarianId_clinicId_key" ON "veterinarian_clinics"("veterinarianId", "clinicId");
 
 -- CreateIndex
 CREATE INDEX "conversations_lastMessageAt_idx" ON "conversations"("lastMessageAt");
@@ -935,6 +955,9 @@ CREATE UNIQUE INDEX "availabilities_recurringId_key" ON "availabilities"("recurr
 CREATE UNIQUE INDEX "availabilities_meetingId_key" ON "availabilities"("meetingId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "internal_meeting_participants_userId_meetingId_key" ON "internal_meeting_participants"("userId", "meetingId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "internal_meetings_recurringId_key" ON "internal_meetings"("recurringId");
 
 -- CreateIndex
@@ -942,6 +965,9 @@ CREATE UNIQUE INDEX "internal_meetings_meetingId_key" ON "internal_meetings"("me
 
 -- CreateIndex
 CREATE UNIQUE INDEX "animal_meetings_meetingId_key" ON "animal_meetings"("meetingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "animals_emergencyToken_key" ON "animals"("emergencyToken");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "animals_photoId_key" ON "animals"("photoId");
@@ -1121,7 +1147,7 @@ ALTER TABLE "veterinarian_clinics" ADD CONSTRAINT "veterinarian_clinics_veterina
 ALTER TABLE "veterinarian_clinics" ADD CONSTRAINT "veterinarian_clinics_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "conversations" ADD CONSTRAINT "conversations_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "conversations" ADD CONSTRAINT "conversations_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "conversations" ADD CONSTRAINT "conversations_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -1151,7 +1177,7 @@ ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_condi
 ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "animal_meetings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_addedById_fkey" FOREIGN KEY ("addedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "owned_pet_health_conditions" ADD CONSTRAINT "owned_pet_health_conditions_addedById_fkey" FOREIGN KEY ("addedById") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "food_health_conditions" ADD CONSTRAINT "food_health_conditions_foodId_fkey" FOREIGN KEY ("foodId") REFERENCES "foods"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -1169,7 +1195,7 @@ ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_recurringId_fkey" FO
 ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "meeting_base"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1178,7 +1204,7 @@ ALTER TABLE "availabilities" ADD CONSTRAINT "availabilities_clinicId_fkey" FOREI
 ALTER TABLE "internal_meeting_participants" ADD CONSTRAINT "internal_meeting_participants_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "internal_meetings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "internal_meeting_participants" ADD CONSTRAINT "internal_meeting_participants_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "internal_meeting_participants" ADD CONSTRAINT "internal_meeting_participants_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_recurringId_fkey" FOREIGN KEY ("recurringId") REFERENCES "meeting_recurring"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1187,7 +1213,7 @@ ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_recurringId_fk
 ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "meeting_base"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "internal_meetings" ADD CONSTRAINT "internal_meetings_clinicId_fkey" FOREIGN KEY ("clinicId") REFERENCES "clinics"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

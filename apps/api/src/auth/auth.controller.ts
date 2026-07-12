@@ -113,4 +113,34 @@ export class AuthController {
       next(err);
     }
   }
+
+  async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+      const result = await this.service.forgotPassword({ email });
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, code, newPassword } = req.body;
+      await this.service.resetPassword({ email, code, newPassword });
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async verifyLoginTwoFactor(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, code } = req.body;
+      const result = await this.service.verifyLoginTwoFactor({ email, code });
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

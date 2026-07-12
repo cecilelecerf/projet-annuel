@@ -146,13 +146,13 @@ export class ClinicRepository {
     return prisma.clinic.findMany({
       where: {
         ...(petId && {
-          clinicPet: { some: { id: petId } },
+          pets: { some: { id: petId } },
         }),
         veterinarianClinics: {
           some: {
             veterinarian: {
               ...(petId && {
-                pet: { some: { id: petId } },
+                pets: { some: { id: petId } },
               }),
               ...(specialityId && {
                 specialities: { some: { id: specialityId } },

@@ -7,6 +7,11 @@ import {
   UpdateAccount,
   RegisterDirectorSchema,
 } from "@armali/schemas";
+import type {
+  ForgotPassword,
+  ResetPassword,
+  VerifyLoginTwoFactor,
+} from "@armali/schemas";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -14,6 +19,7 @@ import {
   verifyRefreshToken,
 } from "@api/utils";
 import { prisma } from "@api/lib/prisma";
+import { Prisma } from "../../prisma/generated/prisma/client";
 import {
   BadRequestError,
   ConflictError,
@@ -30,7 +36,49 @@ function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+const isTwoFactorEnabled = process.env.NODE_ENV === "production";
+
+const loginUserInclude = {
+  avatar: true,
+  secretaryProfile: true,
+  directorClinicProfile: {
+    select: { clinic: { select: { id: true } } },
+  },
+  referentClinicProfile: true,
+  veterinarianProfile: {
+    include: {
+      veterinarianClinics: true,
+    },
+  },
+} satisfies Prisma.UserInclude;
+
+type LoginUser = Prisma.UserGetPayload<{ include: typeof loginUserInclude }>;
+
 export class AuthService {
+  private async issueLoginSession(user: LoginUser) {
+    const clinicId = this.getClinicId(user);
+    const withAvatar = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(withAvatar);
+    const accessToken = generateAccessToken({
+      ...parsedUser,
+      clinicId: clinicId ?? undefined,
+    });
+    const refreshToken = generateRefreshToken({
+      ...parsedUser,
+      clinicId: clinicId ?? undefined,
+    });
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return { user: { ...parsedUser, clinicId }, accessToken, refreshToken };
+  }
+
   private getClinicId(user: {
     role: string;
     secretaryProfile?: { clinicId: string } | null;
@@ -166,45 +214,55 @@ export class AuthService {
   async login(data: Login) {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
-      include: {
-        avatar: true,
-        secretaryProfile: true,
-        directorClinicProfile: {
-          select: { clinic: { select: { id: true } } },
-        },
-        referentClinicProfile: true,
-        veterinarianProfile: {
-          include: {
-            veterinarianClinics: true,
-          },
-        },
-      },
+      include: loginUserInclude,
     });
     if (!user) throw new UnauthorizedError("Email ou mot de passe incorrect");
 
     const isPasswordValid = await compare(data.password, user.password);
     if (!isPasswordValid)
       throw new UnauthorizedError("Email ou mot de passe incorrect");
-    const clinicId = this.getClinicId(user);
-    const withAvatar = withAvatarUrl(user);
-    const parsedUser = baseUserSchema.parse(withAvatar);
-    const accessToken = generateAccessToken({
-      ...parsedUser,
-      clinicId: clinicId ?? undefined,
-    });
-    const refreshToken = generateRefreshToken({
-      ...parsedUser,
-      clinicId: clinicId ?? undefined,
+
+    if (!isTwoFactorEnabled) return this.issueLoginSession(user);
+
+    await prisma.otpCode.deleteMany({
+      where: { userId: user.id, action: "LOGIN_2FA" },
     });
 
-    await prisma.refreshToken.create({
+    const code = generateOtp();
+    await prisma.otpCode.create({
       data: {
-        token: refreshToken,
+        code,
+        action: "LOGIN_2FA",
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       },
     });
-    return { user: { ...parsedUser, clinicId }, accessToken, refreshToken };
+
+    await emailService.sendLoginTwoFactorCode(user.email, code);
+
+    return { twoFactorRequired: true as const, email: user.email };
+  }
+
+  async verifyLoginTwoFactor(data: VerifyLoginTwoFactor) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+      include: loginUserInclude,
+    });
+    if (!user) throw new UnauthorizedError("Code invalide");
+
+    const otp = await prisma.otpCode.findFirst({
+      where: { userId: user.id, action: "LOGIN_2FA", code: data.code },
+    });
+    if (!otp) throw new UnauthorizedError("Code invalide");
+
+    if (otp.expiresAt < new Date()) {
+      await prisma.otpCode.delete({ where: { id: otp.id } });
+      throw new UnauthorizedError("Code expiré");
+    }
+
+    await prisma.otpCode.delete({ where: { id: otp.id } });
+
+    return this.issueLoginSession(user);
   }
 
   async refresh(refreshToken: string) {
@@ -356,5 +414,59 @@ export class AuthService {
     }
 
     await prisma.user.delete({ where: { id: userId } });
+  }
+
+  async forgotPassword(data: ForgotPassword) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (user) {
+      await prisma.otpCode.deleteMany({
+        where: { userId: user.id, action: "RESET_PASSWORD" },
+      });
+
+      const code = generateOtp();
+      await prisma.otpCode.create({
+        data: {
+          code,
+          action: "RESET_PASSWORD",
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+      });
+
+      await emailService.sendResetPassword(user.email, code);
+    }
+
+    return { message: "Si un compte existe, un email a été envoyé" };
+  }
+
+  async resetPassword(data: ResetPassword) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (!user) throw new UnauthorizedError("Code invalide");
+
+    const otp = await prisma.otpCode.findFirst({
+      where: { userId: user.id, action: "RESET_PASSWORD", code: data.code },
+    });
+    if (!otp) throw new UnauthorizedError("Code invalide");
+
+    if (otp.expiresAt < new Date()) {
+      await prisma.otpCode.delete({ where: { id: otp.id } });
+      throw new UnauthorizedError("Code expiré");
+    }
+
+    const hashedPassword = await hash(data.newPassword, 10);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      }),
+      prisma.otpCode.delete({ where: { id: otp.id } }),
+      prisma.refreshToken.deleteMany({ where: { userId: user.id } }),
+    ]);
   }
 }

@@ -15,6 +15,7 @@ dashboardRouter.get(
     "SECRETARY",
     "VETERINARIAN",
     "ADMIN",
+    "CLIENT",
   ]),
   controller.getDashboard.bind(controller) as RequestHandler,
 );

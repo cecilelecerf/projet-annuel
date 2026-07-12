@@ -22,6 +22,7 @@ const findByUserInclude = {
           user: { omit: { password: true }, include: { avatar: true } },
         },
       },
+      photo: true,
     },
   },
   meeting: true,
@@ -58,6 +59,7 @@ export class AnimalMeetingRepository {
               },
             },
             race: { include: { pet: true } },
+            photo: true,
           },
         },
         speciality: true,
@@ -236,6 +238,26 @@ export class AnimalMeetingRepository {
       where: { animalId, petWeight: { not: null } },
       orderBy: { meeting: { date: "desc" } },
       select: { petWeight: true },
+    });
+  }
+
+  async findReminderCandidates(rangeStart: Date, rangeEnd: Date) {
+    return this.prisma.animalMeeting.findMany({
+      where: {
+        reminderSentAt: null,
+        meeting: { date: { gte: rangeStart, lte: rangeEnd }, kind: "ANIMAL" },
+      },
+      include: {
+        meeting: true,
+        animal: { include: { client: { include: { user: true } } } },
+      },
+    });
+  }
+
+  async markReminderSent(id: string) {
+    return this.prisma.animalMeeting.update({
+      where: { id },
+      data: { reminderSentAt: new Date() },
     });
   }
 }

@@ -19,6 +19,7 @@ export class DashboardController {
           this.service.getVeterinarianDashboard(userId),
         )
         .with("ADMIN", () => this.service.getAdminDashboard())
+        .with("CLIENT", () => this.service.getClientDashboard(userId))
         .otherwise(() => {
           throw new ForbiddenError();
         });

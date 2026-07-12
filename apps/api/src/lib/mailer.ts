@@ -23,8 +23,8 @@ if (isEmailEnabled) {
   transporter = nodemailer.createTransport({
     host: isProd ? "smtp.resend.com" : process.env.MAIL_HOST,
     port: isProd ? 465 : Number(process.env.MAIL_PORT),
-    secure: isProd ? true : false, // 465 = TLS direct en prod, Mailhog reste en clair + STARTTLS
-    requireTLS: !isProd, // requireTLS redondant avec secure:true, utile seulement pour Mailhog
+    secure: isProd ? true : false, // 465 = TLS direct en prod, Mailhog reste en clair
+    requireTLS: !isProd && process.env.MAIL_REQUIRE_TLS === "true",
     auth: {
       user: isProd ? "resend" : process.env.MAIL_USER,
       pass: isProd ? process.env.RESEND_API_KEY : process.env.MAIL_PASS,

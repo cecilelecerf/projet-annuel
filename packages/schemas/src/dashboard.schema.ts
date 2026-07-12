@@ -121,12 +121,40 @@ export const adminDashboardSchema = z.object({
   pendingProductRequestsCount: z.number().int().nonnegative(),
 })
 
+
+const clientUpcomingMeetingSchema = z.object({
+  date: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  animalName: z.string(),
+  veterinarianName: z.string().nullable(),
+  clinicName: z.string().nullable(),
+})
+
+const clientOrderPreviewSchema = z.object({
+  id: z.string(),
+  status: z.enum(['PENDING', 'CONFIRMED', 'READY', 'PICKED_UP', 'CANCELLED']),
+  items: z.string(),
+  total: z.number(),
+  createdAt: z.string(),
+})
+
+export const clientDashboardSchema = z.object({
+  role: z.literal('CLIENT'),
+  animalsCount: z.number().int().nonnegative(),
+  upcomingMeetingsCount: z.number().int().nonnegative(),
+  upcomingMeetings: z.array(clientUpcomingMeetingSchema),
+  ordersInProgressCount: z.number().int().nonnegative(),
+  recentOrders: z.array(clientOrderPreviewSchema),
+})
+
 export const dashboardSchema = z.discriminatedUnion('role', [
   referentDashboardSchema,
   directorDashboardSchema,
   secretaryDashboardSchema,
   veterinarianDashboardSchema,
   adminDashboardSchema,
+  clientDashboardSchema,
 ])
 
 export type ReferentDashboard = z.infer<typeof referentDashboardSchema>
@@ -134,4 +162,5 @@ export type DirectorDashboard = z.infer<typeof directorDashboardSchema>
 export type SecretaryDashboard = z.infer<typeof secretaryDashboardSchema>
 export type VeterinarianDashboard = z.infer<typeof veterinarianDashboardSchema>
 export type AdminDashboard = z.infer<typeof adminDashboardSchema>
+export type ClientDashboard = z.infer<typeof clientDashboardSchema>
 export type Dashboard = z.infer<typeof dashboardSchema>

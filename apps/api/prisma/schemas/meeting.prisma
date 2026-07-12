@@ -133,12 +133,13 @@ enum AnimalMeetingStatus {
 }
 
 model AnimalMeeting {
-  id          String              @id @default(uuid())
-  description String?
-  petWeight   Decimal?            @db.Decimal(5, 2)
-  petSize     Decimal?            @db.Decimal(5, 2)
-  report      String?
-  status      AnimalMeetingStatus @default(SCHEDULED)
+  id             String              @id @default(uuid())
+  description    String?
+  petWeight      Decimal?            @db.Decimal(5, 2)
+  petSize        Decimal?            @db.Decimal(5, 2)
+  report         String?
+  reminderSentAt DateTime?
+  status         AnimalMeetingStatus @default(SCHEDULED)
 
   meetingId String?      @unique
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)

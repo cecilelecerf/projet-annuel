@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, Warning } from '@element-plus/icons-vue'
 import type { AnimalId } from '@armali/schemas'
 import { animalApi } from '../api'
 import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
@@ -16,18 +16,79 @@ import AnimalHealthConditionItem from '@/features/animal-health-conditions/compo
 import NotebookVaccingTable from '@/features/vaccines/components/notebook/NotebookVaccingTable.vue'
 import MeetingListByAnimal from '@/features/meetings/components/animal-meeting/MeetingListByAnimal.vue'
 import AnimalDetailCard from '../components/AnimalDetailCard.vue'
+import DeleteAnimalDialog from '../components/DeleteAnimalDialog.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
 const router = useRouter()
 const { user } = useAuthStore()
-const animal = await animalApi.get(route.params.id as AnimalId)
-const [meetings, vaccinesStatus, medicalHistories] = await Promise.all([
-  meetingApi.animal.getAllByAnimal(animal.id),
-  animalApi.getVaccines(route.params.id as AnimalId),
-  medicalHistoriesApi.getByAnimal(animal.id),
-])
+const deleteDialog = ref<InstanceType<typeof DeleteAnimalDialog> | null>(null)
 const activeTab = ref('acts')
+
+let animal: Awaited<ReturnType<typeof animalApi.get>> | undefined
+let meetings: Awaited<ReturnType<typeof meetingApi.animal.getAllByAnimal>> = []
+let vaccinesStatus: Awaited<ReturnType<typeof animalApi.getVaccines>> = []
+let medicalHistories: Awaited<ReturnType<typeof medicalHistoriesApi.getByAnimal>> = []
+
+try {
+  animal = await animalApi.get(route.params.id as AnimalId)
+  ;[meetings, vaccinesStatus, medicalHistories] = await Promise.all([
+    meetingApi.animal.getAllByAnimal(animal.id),
+    animalApi.getVaccines(route.params.id as AnimalId),
+    medicalHistoriesApi.getByAnimal(animal.id),
+  ])
+} catch {
+  router.replace({ name: 'CLIENT.Animals' })
+}
+
+const emergencyDialogVisible = ref(false)
+const emergencyQr = ref<Awaited<ReturnType<typeof animalApi.getEmergencyQr>> | null>(null)
+async function openEmergencyCard() {
+  if (!animal) return
+  emergencyDialogVisible.value = true
+  if (!emergencyQr.value) {
+    emergencyQr.value = await animalApi.getEmergencyQr(animal.id)
+  }
+}
+function copyEmergencyLink() {
+  if (emergencyQr.value) navigator.clipboard.writeText(emergencyQr.value.url)
+}
+
+function escapeHtml(value: string) {
+  return value.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
+  )
+}
+
+function printEmergencyQr() {
+  if (!emergencyQr.value || !animal) return
+  const printWindow = window.open('', '_blank', 'width=420,height=560')
+  if (!printWindow) return
+
+  const name = escapeHtml(animal.name)
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Carte d'urgence — ${name}</title>
+        <style>
+          body { font-family: sans-serif; text-align: center; padding: 32px; }
+          img { width: 240px; height: 240px; }
+          h1 { font-size: 18px; margin: 16px 0 4px; }
+          p { font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <img src="${emergencyQr.value.qrCodeDataUrl}" alt="QR code" />
+        <h1>${name}</h1>
+        <p>Carte d'urgence Armali — à coller sur le collier</p>
+      </body>
+    </html>
+  `)
+  printWindow.document.close()
+  printWindow.focus()
+  printWindow.print()
+}
 
 const weightData = computed(
   () =>
@@ -42,11 +103,22 @@ const weightData = computed(
 </script>
 
 <template>
+  <template v-if="animal">
   <div class="page-header">
     <el-button text @click="router.back()">
       <el-icon><ArrowLeft /></el-icon>
       Retour
     </el-button>
+    <div v-if="user?.role === 'CLIENT'" class="header-actions">
+      <el-button text @click="openEmergencyCard">
+        <el-icon><Warning /></el-icon>
+        Carte d'urgence
+      </el-button>
+      <el-button text type="danger" @click="deleteDialog?.open()">
+        <el-icon><Delete /></el-icon>
+        Supprimer cet animal
+      </el-button>
+    </div>
   </div>
 
   <div class="animal-content">
@@ -152,9 +224,33 @@ const weightData = computed(
       />
     </div>
   </div>
+
+  <DeleteAnimalDialog ref="deleteDialog" :animal-id="animal.id" :animal-name="animal.name" />
+
+  <el-dialog v-model="emergencyDialogVisible" title="Carte d'urgence" width="360px">
+    <div v-if="emergencyQr" class="emergency-qr">
+      <img :src="emergencyQr.qrCodeDataUrl" alt="QR code de la carte d'urgence" />
+      <p class="emergency-hint">
+        Scannez ce code ou imprimez-le sur le collier de {{ animal.name }}. Il ouvre une fiche
+        publique avec ses infos de santé et vos coordonnées si jamais il ou elle se perd.
+      </p>
+      <div class="emergency-actions">
+        <el-button type="primary" @click="printEmergencyQr">Imprimer</el-button>
+        <el-button text @click="copyEmergencyLink">Copier le lien</el-button>
+      </div>
+    </div>
+    <el-skeleton v-else :rows="4" animated />
+  </el-dialog>
+  </template>
 </template>
 
 <style lang="scss" scoped>
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
 .animal-content {
   display: flex;
   flex-direction: column;
@@ -259,6 +355,30 @@ const weightData = computed(
   font-size: 13px;
   color: var(--el-text-color-placeholder);
   font-style: italic;
+  margin: 0;
+}
+
+// ── Carte d'urgence ───────────────────────────────────────────────────────────
+
+.emergency-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-align: center;
+}
+.emergency-qr img {
+  width: 220px;
+  height: 220px;
+}
+.emergency-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+.emergency-hint {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
   margin: 0;
 }
 </style>

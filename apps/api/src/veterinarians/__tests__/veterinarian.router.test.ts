@@ -319,8 +319,11 @@ describe("Vetrinarian router", () => {
 
     it("200 — VETERINARIAN met à jour ses spécialités acceptées", async () => {
       const token = await loginAs("veto@gmail.com");
-      const vetoProfile = await getPrisma().veterinarianProfile.findFirst({
-        where: { veterinarianClinics: { some: {} } },
+      const vetoUser = await getPrisma().user.findUnique({
+        where: { email: "veto@gmail.com" },
+      });
+      const vetoProfile = await getPrisma().veterinarianProfile.findUnique({
+        where: { id: vetoUser!.id },
       });
       const speciality = await getPrisma().speciality.findFirst();
 
@@ -390,8 +393,11 @@ describe("Vetrinarian router", () => {
 
     it("200 — VETERINARIAN met à jour ses espèces acceptées", async () => {
       const token = await loginAs("veto@gmail.com");
-      const vetoProfile = await getPrisma().veterinarianProfile.findFirst({
-        where: { veterinarianClinics: { some: {} } },
+      const vetoUser = await getPrisma().user.findUnique({
+        where: { email: "veto@gmail.com" },
+      });
+      const vetoProfile = await getPrisma().veterinarianProfile.findUnique({
+        where: { id: vetoUser!.id },
       });
       const pet = await getPrisma().pet.findFirst();
 

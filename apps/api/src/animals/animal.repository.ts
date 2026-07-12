@@ -16,6 +16,7 @@ import { PaginationQueryDto } from "../../../../packages/schemas/src/pagination.
 const includeMeta = {
   race: { include: { pet: true } },
   client: { include: { user: { include: { avatar: true } } } },
+  photo: true,
 } satisfies Prisma.AnimalInclude;
 
 export type AnimalWithMeta = Prisma.AnimalGetPayload<{
@@ -35,6 +36,7 @@ const findByIdInclude = {
     },
   },
   animalVaccine: true,
+  photo: true,
 } satisfies Prisma.AnimalInclude;
 
 export type AnimalWithDetails = Prisma.AnimalGetPayload<{
@@ -43,6 +45,7 @@ export type AnimalWithDetails = Prisma.AnimalGetPayload<{
 
 const createAndUpdateInclude = {
   race: { include: { pet: true } },
+  photo: true,
 } satisfies Prisma.AnimalInclude;
 
 export type CreatedOrUpdatedAnimal = Prisma.AnimalGetPayload<{
@@ -96,6 +99,9 @@ export class AnimalRepository {
         activity: data.activity,
         clientId: data.clientId,
         raceId: data.raceId,
+        hasInsurance: data.hasInsurance,
+        insuranceProvider: data.insuranceProvider,
+        insurancePolicyNumber: data.insurancePolicyNumber,
       },
       include: createAndUpdateInclude,
     });
@@ -114,6 +120,9 @@ export class AnimalRepository {
         activity: data.activity,
         raceId: data.raceId,
         attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
+        hasInsurance: data.hasInsurance,
+        insuranceProvider: data.insuranceProvider,
+        insurancePolicyNumber: data.insurancePolicyNumber,
       },
       include: createAndUpdateInclude,
     });
@@ -121,6 +130,28 @@ export class AnimalRepository {
 
   async delete(id: string): Promise<Prisma.AnimalGetPayload<object>> {
     return this.prisma.animal.delete({ where: { id } });
+  }
+
+  /** Marque l'animal comme décédé au lieu de le supprimer, pour conserver son historique médical. */
+  async markDeceased(id: string): Promise<Prisma.AnimalGetPayload<object>> {
+    return this.prisma.animal.update({
+      where: { id },
+      data: { status: "DECEASED" },
+    });
+  }
+
+  async updatePhoto({
+    animalId,
+    photoId,
+  }: {
+    animalId: string;
+    photoId: string;
+  }): Promise<CreatedOrUpdatedAnimal> {
+    return this.prisma.animal.update({
+      where: { id: animalId },
+      data: { photoId },
+      include: createAndUpdateInclude,
+    });
   }
   // TODO PAS AU BON ENDROIT -> repo animal doit renvoyer que des animals
   async findVaccinesByAnimal(
@@ -206,6 +237,19 @@ export class AnimalRepository {
     return this.prisma.animal.findUnique({
       where: { id: animalId },
       select: { id: true, clientId: true, dateOfBirth: true, activity: true },
+    });
+  }
+
+  async findByEmergencyToken(token: string) {
+    return this.prisma.animal.findUnique({
+      where: { emergencyToken: token },
+      include: {
+        race: { include: { pet: true } },
+        client: { include: { user: true } },
+        animalConditionHealths: { include: { healthCondition: true } },
+        attendingVeterinarianClinic: { include: { clinic: true } },
+        photo: true,
+      },
     });
   }
 }

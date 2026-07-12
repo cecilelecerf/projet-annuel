@@ -6,7 +6,7 @@ import {
 import { emailLayout } from "./templates/layout";
 
 export class EmailService {
-  private from = process.env.MAIL_USER || "noreply@armali.fr";
+  private from = process.env.MAIL_FROM || "noreply@armali.fr";
 
   async sendOtpDeleteAccount(email: string, code: string) {
     await transporter.sendMail({
@@ -17,6 +17,27 @@ export class EmailService {
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px;">
           <h2 style="color:#e74c3c;">Suppression de compte</h2>
           <p>Vous avez demandé la suppression de votre compte Armali.</p>
+          <p>Votre code de confirmation :</p>
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center;
+                      padding: 16px; background: #f4f4f4; border-radius: 8px; margin: 16px 0;">
+            ${code}
+          </div>
+          <p style="color: #888; font-size: 13px;">Ce code expire dans <strong>15 minutes</strong>.</p>
+          <p style="color: #888; font-size: 13px;">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendResetPassword(email: string, code: string) {
+    await transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: "Réinitialisation de votre mot de passe Armali",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+          <h2 style="color:#409eff;">Mot de passe oublié</h2>
+          <p>Vous avez demandé la réinitialisation de votre mot de passe Armali.</p>
           <p>Votre code de confirmation :</p>
           <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center;
                       padding: 16px; background: #f4f4f4; border-radius: 8px; margin: 16px 0;">
@@ -50,6 +71,26 @@ export class EmailService {
             ${temporaryPassword}
           </div>
           <p>Connectez-vous avec votre email (<strong>${email}</strong>) et ce mot de passe, puis pensez à le modifier depuis votre profil.</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendLoginTwoFactorCode(email: string, code: string) {
+    await transporter.sendMail({
+      from: this.from,
+      to: email,
+      subject: "Votre code de connexion Armali",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+          <h2 style="color:#409eff;">Vérification en deux étapes</h2>
+          <p>Voici votre code de connexion Armali :</p>
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center;
+                      padding: 16px; background: #f4f4f4; border-radius: 8px; margin: 16px 0;">
+            ${code}
+          </div>
+          <p style="color: #888; font-size: 13px;">Ce code expire dans <strong>10 minutes</strong>.</p>
+          <p style="color: #888; font-size: 13px;">Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe immédiatement.</p>
         </div>
       `,
     });

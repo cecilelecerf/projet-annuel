@@ -2,6 +2,8 @@
 
 Monorepo fullstack composé d'une application web (Vue), d'une API REST (Express + Prisma) et d'une application mobile.
 
+-> [Liste des fonctionnalités (PDF)](./docs/description.pdf)
+
 ---
 
 ## 📁 Structure du projet
@@ -13,7 +15,7 @@ projet-annuel/
 │   │   └── README.md
 │   ├── web/             # Frontend — Vue.js
 │   │   └── README.md
-│   └── mobile/          # Application mobile
+│   └── mobile/          # Application mobile (Seulement pour les clients)
 ├── packages/
 │   └── schemas/         # Schemas Zod partagés
 │       └── README.md
@@ -237,7 +239,3 @@ Le flux recommandé reste Docker (`pnpm docker:dev:up`) pour garantir la cohére
 - Tous les packages doivent build.
 
 ---
-
-## 📌 Notes
-
-- Node **24** à valider/documenter (cible future ?).

@@ -24,7 +24,7 @@ import { seedReviews } from "./reviews";
 import { seedBudgetAndSuppliers } from "./budget";
 import { seedAnalyses, seedImaging } from "./files";
 
-config({ path: resolve(process.cwd(), ".env") });
+config({ path: resolve(process.cwd(), ".env.dev") });
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 export const prisma = new PrismaClient({ adapter });

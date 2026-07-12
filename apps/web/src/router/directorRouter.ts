@@ -33,6 +33,11 @@ export const directorRouter: RouteRecordRaw[] = [
         component: () => import('@/features/staffs/views/StaffListView.vue'),
       },
       {
+        path: 'statistiques',
+        name: 'DIRECTOR.Analytics',
+        component: () => import('@/features/dashboard/views/AnalyticsView.vue'),
+      },
+      {
         path: 'staff/new',
         name: 'DIRECTOR.Staff.Create',
         component: () => import('@/features/staffs/views/StaffCreateView.vue'),

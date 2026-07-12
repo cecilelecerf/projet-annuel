@@ -101,7 +101,10 @@ export class ClinicRequestRepository {
     request: {
       id: string;
       name: string;
-      address: string;
+      street: string;
+      postalCode: string;
+      city: string;
+      country: string;
       siret: string;
       phone: string;
       website: string;
@@ -114,7 +117,10 @@ export class ClinicRequestRepository {
       await tx.clinic.create({
         data: {
           name: request.name,
-          address: request.address,
+          street: request.street,
+          postalCode: request.postalCode,
+          city: request.city,
+          country: request.country,
           siret: request.siret,
           phone: request.phone,
           website: request.website,

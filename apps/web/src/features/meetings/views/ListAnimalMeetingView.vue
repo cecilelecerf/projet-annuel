@@ -39,11 +39,11 @@ const filtered = computed(() => {
       return {
         ...m,
         meetingDateTime,
-        status: (meetingDateTime > new Date() ? 'UPCOMING' : 'PAST') as MeetingStatus,
+        visitStatus: (meetingDateTime > new Date() ? 'UPCOMING' : 'PAST') as MeetingStatus,
       }
     })
     .filter((m) => {
-      if (filterStatus.value !== 'ALL' && m.status !== filterStatus.value) return false
+      if (filterStatus.value !== 'ALL' && m.visitStatus !== filterStatus.value) return false
       if (filterAnimal.value && m.animal.name !== filterAnimal.value) return false
       if (search.value) {
         const q = search.value.toLowerCase()
@@ -59,14 +59,14 @@ const filtered = computed(() => {
       return true
     })
     .sort((a, b) => {
-      if (a.status === 'UPCOMING' && b.status === 'PAST') return -1
-      if (a.status === 'PAST' && b.status === 'UPCOMING') return 1
+      if (a.visitStatus === 'UPCOMING' && b.visitStatus === 'PAST') return -1
+      if (a.visitStatus === 'PAST' && b.visitStatus === 'UPCOMING') return 1
       return a.meetingDateTime.getTime() - b.meetingDateTime.getTime()
     })
 })
 
-const upcoming = computed(() => filtered.value.filter((m) => m.status === 'UPCOMING'))
-const past = computed(() => filtered.value.filter((m) => m.status === 'PAST'))
+const upcoming = computed(() => filtered.value.filter((m) => m.visitStatus === 'UPCOMING'))
+const past = computed(() => filtered.value.filter((m) => m.visitStatus === 'PAST'))
 </script>
 <template>
   <!-- Header -->
@@ -120,7 +120,7 @@ const past = computed(() => filtered.value.filter((m) => m.status === 'PAST'))
           v-for="m in upcoming"
           :animalMeeting="m"
           :key="m.meeting.id"
-          :status="m.status"
+          :status="m.visitStatus"
         />
       </div>
     </section>
@@ -132,7 +132,7 @@ const past = computed(() => filtered.value.filter((m) => m.status === 'PAST'))
         <span class="section-count">{{ past.length }}</span>
       </h2>
       <div class="meetings-list">
-        <MeetingCard v-for="m in past" :animalMeeting="m" :key="m.meeting.id" :status="m.status" />
+        <MeetingCard v-for="m in past" :animalMeeting="m" :key="m.meeting.id" :status="m.visitStatus" />
       </div>
     </section>
   </template>

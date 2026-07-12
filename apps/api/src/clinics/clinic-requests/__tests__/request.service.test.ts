@@ -38,7 +38,10 @@ const REQUEST_ID = "22222222-2222-4222-8222-222222222222";
 const makeRequest = (overrides = {}) => ({
   id: REQUEST_ID,
   name: "Clinique Test",
-  address: "1 rue de Paris",
+  street: "1 rue de Paris",
+  postalCode: "75001",
+  city: "Paris",
+  country: "FR",
   siret: "12345678901234",
   phone: "0123456789",
   website: "https://clinique.fr",
@@ -160,7 +163,10 @@ describe("ClinicRequestService.getClinicStatus", () => {
 describe("ClinicRequestService.createRequestClinic", () => {
   const payload = {
     name: "Nouvelle clinique",
-    address: "5 rue du Test",
+    street: "5 rue du Test",
+    postalCode: "75001",
+    city: "Paris",
+    country: "FR",
     siret: "98765432109876",
     phone: "0102030405",
     website: "https://nouvelle-clinique.fr",

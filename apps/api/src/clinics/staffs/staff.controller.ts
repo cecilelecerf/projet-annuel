@@ -61,6 +61,57 @@ export class StaffController {
     }
   }
 
+  async searchVeterinarian(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const query = typeof req.query.q === "string" ? req.query.q : "";
+      const results = await this.service.searchVeterinarian({
+        authorId: req.user.id,
+        query,
+      });
+      res.status(200).json(results);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async linkVeterinarian(
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const linked = await this.service.linkVeterinarian({
+        authorId: req.user.id,
+        authorRole: req.user.role,
+        veterinarianId: req.body.veterinarianId,
+      });
+      res.status(201).json(linked);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteStaffMember(
+    req: RequestWithParams<{ id: UserId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const result = await this.service.deleteStaffMember({
+        authorId: req.user.id,
+        authorRole: req.user.role,
+        memberId: req.params.id,
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async createVeterinarian(
     req: AuthenticatedRequest,
     res: Response,

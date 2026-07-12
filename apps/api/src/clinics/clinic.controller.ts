@@ -1,5 +1,7 @@
-import type { Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { ClinicService } from "./clinic.service";
+import { BadRequestError } from "@api/errors";
+import { clinicImagePublicPath } from "@api/middlewares/upload.middleware";
 import {
   baseUserSchema,
   clientProfileSchema,
@@ -85,6 +87,23 @@ export class ClinicController {
     try {
       const result = await this.service.deleteClinic(req.params.id);
       res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async uploadImage(
+    req: AuthenticatedRequest & Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      if (!req.file) throw new BadRequestError("Aucune image fournie");
+      const clinic = await this.service.updateClinicImage(
+        req.user!.id,
+        clinicImagePublicPath(req.file.filename),
+      );
+      res.status(200).json(clinic);
     } catch (err) {
       next(err);
     }

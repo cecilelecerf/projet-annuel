@@ -1,4 +1,5 @@
 import type { PrismaClient } from "../generated/prisma/client";
+
 async function geocodeAddress(address: string) {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
@@ -15,6 +16,13 @@ async function geocodeAddress(address: string) {
   console.log(`✅ ${address} → ${result.lat}, ${result.lon}`);
   return { lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
 }
+
+const defaultOpeningHours = [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+  dayOfWeek,
+  openTime: dayOfWeek === 0 ? "00:00" : "09:00",
+  closeTime: dayOfWeek === 0 ? "00:00" : dayOfWeek === 6 ? "13:00" : "19:00",
+  closed: dayOfWeek === 0,
+}));
 
 export async function seedClinics(
   prisma: PrismaClient,
@@ -53,7 +61,10 @@ export async function seedClinics(
       update: {},
       create: {
         name: "Clinique Vétérinaire du Parc",
-        address: address1,
+        street: "15 Rue de la Convention",
+        postalCode: "75015",
+        city: "Paris",
+        country: "FR",
         siret: "12345678901234",
         phone: "01 23 45 67 89",
         website: "https://vetparc.fr",
@@ -61,7 +72,7 @@ export async function seedClinics(
           "Clinique généraliste et spécialisée en cardiologie et neurologie",
         directorId: directors.directorUser1.id,
 
-        openingHours: "Lun-Ven 8h-19h · Sam 9h-17h",
+        openingHours: defaultOpeningHours,
         lat: coord1.lat,
         lng: coord1.lng,
         pets: {
@@ -88,13 +99,16 @@ export async function seedClinics(
       update: {},
       create: {
         name: "Centre Vétérinaire Montparnasse",
-        address: address3,
+        street: "40 Avenue du Maine",
+        postalCode: "75014",
+        city: "Paris",
+        country: "FR",
         siret: "11122233344455",
         phone: "01 44 55 66 77",
         website: "https://vetmontparnasse.fr",
         description:
           "Centre pluridisciplinaire spécialisé en oncologie, chirurgie et médecine interne",
-        openingHours: "Lun-Ven 8h-20h · Sam-Dim 9h-18h (urgences)",
+        openingHours: defaultOpeningHours,
         lat: coord3.lat,
         lng: coord3.lng,
 
@@ -119,13 +133,16 @@ export async function seedClinics(
       update: {},
       create: {
         name: "Clinique des NAC & Exotiques",
-        address: address4,
+        street: "18 Rue de la République",
+        postalCode: "69002",
+        city: "Lyon",
+        country: "FR",
         siret: "55566677788899",
         phone: "04 72 33 44 55",
         website: "https://vetnac-lyon.fr",
         description:
           "Spécialisée dans les nouveaux animaux de compagnie et animaux exotiques",
-        openingHours: "Mar-Sam 9h-18h",
+        openingHours: defaultOpeningHours,
         lat: coord4.lat,
         lng: coord4.lng,
         directorId: directors.directorApproved.id,

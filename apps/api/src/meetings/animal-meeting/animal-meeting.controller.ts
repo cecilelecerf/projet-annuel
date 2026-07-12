@@ -7,6 +7,7 @@ import {
   CreateAnimalMeeting,
   AnimalId,
   UpdateAnimalMeeting,
+  meetingBaseSchema,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
 
@@ -114,6 +115,38 @@ export class AnimalMeetingController {
       res
         .status(200)
         .json(animalMeetigWithMeetingSchema.array().parse(meetings));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getLastByAnimal(
+    req: RequestWithParams<{ id: AnimalId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const meeting = await this.service.getLastByAnimal({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      if (!meeting) {
+        res.status(200).json(null);
+        return;
+      }
+      const { veterinarianClinic, ...rest } = meeting;
+      res.status(200).json({
+        ...animalMeetingFieldSchema
+          .extend({ meeting: meetingBaseSchema })
+          .parse(rest),
+        veterinarian: veterinarianClinic
+          ? {
+              firstname: veterinarianClinic.veterinarian.user.firstname,
+              lastname: veterinarianClinic.veterinarian.user.lastname,
+            }
+          : null,
+      });
     } catch (err) {
       next(err);
     }

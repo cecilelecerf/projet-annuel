@@ -83,7 +83,10 @@ export class BookingService {
         return {
           id: clinic.id,
           name: clinic.name,
-          address: clinic.address,
+          street: clinic.street,
+          postalCode: clinic.postalCode,
+          city: clinic.city,
+          country: clinic.country,
           phone: clinic.phone,
           description: clinic.description,
           openingHours: clinic.openingHours,
@@ -205,7 +208,10 @@ export class BookingService {
       clinic: {
         id: am.veterinarianClinic?.clinic.id,
         name: am.veterinarianClinic?.clinic.name,
-        address: am.veterinarianClinic?.clinic.address,
+        street: am.veterinarianClinic?.clinic.street,
+        postalCode: am.veterinarianClinic?.clinic.postalCode,
+        city: am.veterinarianClinic?.clinic.city,
+        country: am.veterinarianClinic?.clinic.country,
       },
       vet: {
         id: am.veterinarianClinic?.veterinarian.id,

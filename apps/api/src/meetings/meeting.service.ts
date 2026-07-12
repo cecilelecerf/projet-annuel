@@ -66,6 +66,8 @@ export class MeetingService {
     return flattenBase(base);
   }
 
+  // ── Calendrier agrégé ──────────────────────────────────────────────────────
+
   async getCalendar({
     userId,
     role,

@@ -109,7 +109,9 @@ export class ClinicRequestService {
       );
     }
 
-    const geo = await this.geocodeAddress(request.address);
+    const geo = await this.geocodeAddress(
+      `${request.street}, ${request.postalCode} ${request.city}`,
+    );
 
     await this.repository.approveRequest(request, geo);
 

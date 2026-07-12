@@ -2,6 +2,9 @@ node_modules
 # Keep environment variables out of version control
 .env
 
+# Fichiers uploadés par les utilisateurs (images de clinique, etc.)
+/uploads
+
 /generated/prisma
 
 /generated/prisma

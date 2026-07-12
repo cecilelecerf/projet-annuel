@@ -21,7 +21,7 @@ const store = useFormErrorStore()
   transform: translateX(-50%);
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--el-color-danger-light-9);
@@ -31,11 +31,16 @@ const store = useFormErrorStore()
   font-size: 13px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
+  max-width: min(90vw, 520px);
+
+  span {
+    white-space: pre-line;
+  }
 
   .close {
     margin-left: var(--spacing-xs);
     opacity: 0.6;
+    flex-shrink: 0;
   }
 }
 

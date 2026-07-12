@@ -476,4 +476,16 @@ export class AnimalMeetingService {
       await this.repository.markReminderSent(candidate.id);
     }
   }
+
+  async getLastByAnimal({
+    animalId,
+    userId,
+    role,
+  }: {
+    animalId: AnimalId;
+    userId: string;
+    role: UserRole;
+  }) {
+    return this.repository.findLastByAnimal(animalId);
+  }
 }

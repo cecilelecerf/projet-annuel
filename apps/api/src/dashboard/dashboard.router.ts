@@ -20,4 +20,18 @@ dashboardRouter.get(
   controller.getDashboard.bind(controller) as RequestHandler,
 );
 
+dashboardRouter.get(
+  "/visits-forecast",
+  authMiddleware,
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  controller.getVisitsForecast.bind(controller) as RequestHandler,
+);
+
+dashboardRouter.get(
+  "/analytics-overview",
+  authMiddleware,
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  controller.getAnalyticsOverview.bind(controller) as RequestHandler,
+);
+
 export default dashboardRouter;

@@ -38,6 +38,16 @@ export const adminRouter: RouteRecordRaw[] = [
         component: () => import('@/features/suppliers/views/SupplierListView.vue'),
       },
       {
+        path: 'specialities',
+        name: 'Admin.Specialities',
+        component: () => import('@/features/users/views/admin/SpecialitiesView.vue'),
+      },
+      {
+        path: 'users',
+        name: 'Admin.Users',
+        component: () => import('@/features/users/views/admin/UsersView.vue'),
+      },
+      {
         path: 'profil',
         name: 'ADMIN.Profil',
         component: () => import('@/features/profile/views/ProfileView.vue'),

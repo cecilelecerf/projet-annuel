@@ -167,6 +167,36 @@ export class UserRepository {
     });
   }
 
+  async countUserDependencies(userId: string) {
+    const [
+      conversationCount,
+      internalMeetingParticipationCount,
+      organizedMeetingCount,
+      healthConditionCount,
+      appointmentCount,
+    ] = await Promise.all([
+      this.prisma.conversationMember.count({ where: { userId } }),
+      this.prisma.internalMeetingParticipant.count({ where: { userId } }),
+      this.prisma.internalMeeting.count({ where: { adminId: userId } }),
+      this.prisma.animalHealthCondition.count({ where: { addedById: userId } }),
+      this.prisma.animalMeeting.count({
+        where: { veterinarianClinic: { veterinarian: { id: userId } } },
+      }),
+    ]);
+
+    return {
+      conversationCount,
+      internalMeetingParticipationCount,
+      organizedMeetingCount,
+      healthConditionCount,
+      appointmentCount,
+    };
+  }
+
+  deleteUserById(userId: string) {
+    return this.prisma.user.delete({ where: { id: userId } });
+  }
+
   async findWithClinicIds(userIds: string[]) {
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },

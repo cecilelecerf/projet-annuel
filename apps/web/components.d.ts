@@ -11,6 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddressFields: typeof import('./src/components/AddressFields.vue')['default']
+    ClinicSpecialities: typeof import('./src/components/ClinicSpecialities.vue')['default']
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
     ContactCard: typeof import('./src/components/ContactCard.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
@@ -65,6 +67,7 @@ declare module 'vue' {
     NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']
     NotificationMessageItem: typeof import('./src/components/ui/nav/clocks/NotificationMessageItem.vue')['default']
     NotificationStockItem: typeof import('./src/components/ui/nav/clocks/NotificationStockItem.vue')['default']
+    OpeningHoursEditor: typeof import('./src/components/OpeningHoursEditor.vue')['default']
     RecursiveSideBarItem: typeof import('./src/components/ui/nav/RecursiveSideBarItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

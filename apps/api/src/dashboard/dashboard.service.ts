@@ -10,11 +10,14 @@ import { StaffService } from "@api/clinics/staffs/staff.service";
 import { AnimalRepository } from "@api/animals/animal.repository";
 import { AnimalMeetingService, AvailabilityService } from "@api/meetings";
 import { combineDateTime } from "@api/meetings/animal-meeting/animal-meeting.service";
+import { computeVisitsForecast } from "./visits-forecast.util";
 
 const ORDER_IN_PROGRESS_STATUSES = ["PENDING", "CONFIRMED", "READY"] as const;
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
+const VISITS_WEEKS_HISTORY = 16;
+const VISITS_WEEKS_FORECAST = 4;
 
 export class DashboardService {
   constructor(
@@ -446,6 +449,106 @@ export class DashboardService {
       upcomingMeetings,
       ordersInProgressCount: ordersInProgress.length,
       recentOrders: orders.slice(0, 3).map(mapOrder),
+    };
+  }
+
+  async getVisitsForecast(userId: UserId, role: "REFERENT" | "DIRECTOR") {
+    const clinicId = await this.clinicService.getClinicIdByUserId({
+      userId,
+      role,
+    });
+
+    const now = new Date();
+    const start = new Date(now);
+    start.setUTCDate(start.getUTCDate() - VISITS_WEEKS_HISTORY * 7);
+
+    const meetings = await this.animalMeetingService.getAnimalMeetingsByClinic(
+      clinicId,
+      start,
+      now,
+    );
+
+    return computeVisitsForecast(
+      meetings.map((m) => new Date(m.date)),
+      VISITS_WEEKS_HISTORY,
+      VISITS_WEEKS_FORECAST,
+    );
+  }
+
+  async getAnalyticsOverview(userId: UserId, role: "REFERENT" | "DIRECTOR") {
+    const clinicId = await this.clinicService.getClinicIdByUserId({
+      userId,
+      role,
+    });
+
+    const meetings = await prisma.animalMeeting.findMany({
+      where: { veterinarianClinic: { clinicId } },
+      select: { animal: { select: { clientId: true } } },
+    });
+
+    const visitCountByClient = new Map<string, number>();
+    for (const m of meetings) {
+      visitCountByClient.set(
+        m.animal.clientId,
+        (visitCountByClient.get(m.animal.clientId) ?? 0) + 1,
+      );
+    }
+    const totalClients = visitCountByClient.size;
+    const returningClients = Array.from(visitCountByClient.values()).filter(
+      (count) => count >= 2,
+    ).length;
+    const retentionRate =
+      totalClients > 0 ? (returningClients / totalClients) * 100 : 0;
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setUTCMonth(twelveMonthsAgo.getUTCMonth() - 12);
+
+    const [vets, histories] = await Promise.all([
+      prisma.veterinarianClinic.findMany({
+        where: { clinicId },
+        include: {
+          veterinarian: {
+            include: {
+              user: { select: { firstname: true, lastname: true } },
+            },
+          },
+        },
+      }),
+      prisma.animalMedicalHistory.findMany({
+        where: {
+          performedAt: { gte: twelveMonthsAgo },
+          performedById: { not: null },
+          clinicAct: { clinicId },
+        },
+        select: {
+          priceApplied: true,
+          performedById: true,
+        },
+      }),
+    ]);
+
+    const revenueByVet = new Map<string, number>();
+    for (const h of histories) {
+      const price = h.priceApplied ? Number(h.priceApplied) : 0;
+      if (!h.performedById) continue;
+      revenueByVet.set(
+        h.performedById,
+        (revenueByVet.get(h.performedById) ?? 0) + price,
+      );
+    }
+
+    const profitabilityByVeterinarian = vets
+      .map((vc) => ({
+        veterinarianId: vc.veterinarianId,
+        firstname: vc.veterinarian.user.firstname,
+        lastname: vc.veterinarian.user.lastname,
+        revenue: revenueByVet.get(vc.veterinarianId) ?? 0,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+
+    return {
+      retention: { totalClients, returningClients, retentionRate },
+      profitabilityByVeterinarian,
     };
   }
 

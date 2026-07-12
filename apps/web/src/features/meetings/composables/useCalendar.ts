@@ -34,6 +34,7 @@ export function useCalendar() {
     date: Date
     kind: Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>
   } | null>(null)
+  const lastRange = ref<{ startStr: string; endStr: string } | null>(null)
 
   // Filtre multi-cliniques : vide = toutes les cliniques affichées
   const selectedClinicIds = ref<string[]>([])
@@ -73,6 +74,13 @@ export function useCalendar() {
   // Recalcule l'affichage localement quand le filtre change,
   // sans refetch réseau (les données sont déjà toutes en mémoire)
   watch(selectedClinicIds, refreshDisplayedEvents)
+
+  const refetchEvents = async () => {
+    if (!lastRange.value) return
+    const meetings = await fetchMeetings(lastRange.value.startStr, lastRange.value.endStr)
+    calendarData.value = meetings
+    refreshDisplayedEvents()
+  }
 
   const calendarOptions = ref<CalendarOptions>({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -122,6 +130,7 @@ export function useCalendar() {
       }
     },
     datesSet: async (info: DatesSetArg) => {
+      lastRange.value = { startStr: info.startStr, endStr: info.endStr }
       const meetings = await fetchMeetings(info.startStr, info.endStr)
       calendarData.value = meetings
       refreshDisplayedEvents()
@@ -135,5 +144,6 @@ export function useCalendar() {
     selectedMeeting,
     selectedClinicIds,
     availableClinics,
+    refetchEvents,
   }
 }

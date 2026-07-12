@@ -21,6 +21,7 @@ import {
   Tickets,
   Collection,
   Star,
+  DataAnalysis,
 } from '@element-plus/icons-vue'
 
 const { user } = useAuthStore()
@@ -72,6 +73,11 @@ const menuItems: NavNode[] = [
         params: { id: clinicId },
       },
     ],
+  },
+  {
+    index: 'DIRECTOR.Analytics',
+    label: 'Statistiques',
+    icon: DataAnalysis,
   },
   {
     index: 'DIRECTOR.Commerce',

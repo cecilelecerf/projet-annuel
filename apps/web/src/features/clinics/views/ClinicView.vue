@@ -3,10 +3,16 @@ import { reactive, ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessageBox } from 'element-plus'
 import { useNotify } from '@/composables/useNotify'
-import { http } from '@/lib/api'
-import type { Clinic } from '@armali/schemas'
+import type { Clinic, ClinicRequestBase } from '@armali/schemas'
 import { clinicApi } from '../clinic.api'
 import { useAuthStore } from '@/stores/authStore'
+import {
+  formatAddress,
+  formatOpeningHours,
+  defaultOpeningHours,
+  type OpeningHoursDay,
+} from '@/utils/clinic.utils'
+import OpeningHoursEditor from '@/components/OpeningHoursEditor.vue'
 
 const notify = useNotify()
 
@@ -25,13 +31,16 @@ const directorStatus = ref<DirectorPageStatus>('loading')
 const staffLoading = ref(false)
 
 const clinic = ref<Clinic | null>(null)
-const request = ref<Clinic | null>(null)
+const request = ref<ClinicRequestBase | null>(null)
 
 // ── Formulaire de demande de création (statut NONE / REJECTED) ─────────
 
 const requestForm = reactive({
   name: '',
-  address: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
   siret: '',
   phone: '',
   website: '',
@@ -79,7 +88,8 @@ async function loadStatus() {
 
 async function submitRequest() {
   if (!requestForm.name.trim()) return notify.error('Le nom est requis')
-  if (!requestForm.address.trim()) return notify.error("L'adresse est requise")
+  if (!requestForm.street.trim() || !requestForm.postalCode.trim() || !requestForm.city.trim())
+    return notify.error("L'adresse est requise")
   if (requestForm.siret.replace(/\s/g, '').length !== 14)
     return notify.error('Le SIRET doit contenir 14 chiffres')
   if (requestForm.phone.replace(/\s/g, '').length < 10) return notify.error('Téléphone invalide')
@@ -87,11 +97,13 @@ async function submitRequest() {
 
   submittingRequest.value = true
   try {
-    await http.post('/director/clinics/request', {
-      ...requestForm,
-      siret: requestForm.siret.replace(/\s/g, ''),
-      phone: requestForm.phone.replace(/\s/g, ''),
-      description: requestForm.description || undefined,
+    await clinicApi.request.create({
+      payload: {
+        ...requestForm,
+        siret: requestForm.siret.replace(/\s/g, ''),
+        phone: requestForm.phone.replace(/\s/g, ''),
+        description: requestForm.description || undefined,
+      },
     })
     notify.success('Demande envoyée, en attente de validation')
     await loadStatus()
@@ -109,21 +121,29 @@ const saving = ref(false)
 
 const form = reactive({
   name: '',
-  address: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
   phone: '',
   website: '',
   description: '',
-  openingHours: '',
+  openingHours: defaultOpeningHours() as OpeningHoursDay[],
 })
 
 function populateFormFromClinic() {
   if (!clinic.value) return
   form.name = clinic.value.name ?? ''
-  form.address = clinic.value.address ?? ''
+  form.street = clinic.value.street ?? ''
+  form.postalCode = clinic.value.postalCode ?? ''
+  form.city = clinic.value.city ?? ''
+  form.country = clinic.value.country ?? 'FR'
   form.phone = clinic.value.phone ?? ''
   form.website = clinic.value.website ?? ''
   form.description = clinic.value.description ?? ''
-  form.openingHours = clinic.value.openingHours ?? ''
+  form.openingHours = clinic.value.openingHours?.length
+    ? (clinic.value.openingHours as OpeningHoursDay[])
+    : defaultOpeningHours()
 }
 
 function startEdit() {
@@ -142,11 +162,14 @@ async function save() {
     const updated = await clinicApi.update({
       payload: {
         name: form.name,
-        address: form.address,
+        street: form.street,
+        postalCode: form.postalCode,
+        city: form.city,
+        country: form.country,
         phone: form.phone,
         website: form.website,
         description: form.description || undefined,
-        openingHours: form.openingHours || undefined,
+        openingHours: form.openingHours,
       },
     })
     clinic.value = updated
@@ -225,7 +248,7 @@ onMounted(loadStatus)
         </div>
         <div class="info-row">
           <span class="info-label">Adresse</span
-          ><span class="info-value">{{ request.address }}</span>
+          ><span class="info-value">{{ formatAddress(request) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">SIRET</span><span class="info-value">{{ request.siret }}</span>
@@ -289,9 +312,21 @@ onMounted(loadStatus)
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="Adresse">
-            <el-input v-model="requestForm.address" placeholder="12 rue de la Paix, 75001 Paris" />
+          <el-form-item label="Rue">
+            <el-input v-model="requestForm.street" placeholder="12 rue de la Paix" />
           </el-form-item>
+          <el-row :gutter="16">
+            <el-col :span="12">
+              <el-form-item label="Code postal">
+                <el-input v-model="requestForm.postalCode" placeholder="75001" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="Ville">
+                <el-input v-model="requestForm.city" placeholder="Paris" />
+              </el-form-item>
+            </el-col>
+          </el-row>
           <el-row :gutter="16">
             <el-col :span="12">
               <el-form-item label="Téléphone">
@@ -357,12 +392,12 @@ onMounted(loadStatus)
           </div>
           <div class="info-item info-item--wide">
             <span class="info-label">Adresse</span>
-            <span class="info-value">{{ clinic.address }}</span>
+            <span class="info-value">{{ formatAddress(clinic) }}</span>
           </div>
           <div class="info-item info-item--wide">
             <span class="info-label">Horaires</span>
             <span class="info-value" style="white-space: pre-line">
-              {{ clinic.openingHours || 'Aucun horaire renseigné' }}
+              {{ formatOpeningHours(clinic.openingHours) || 'Aucun horaire renseigné' }}
             </span>
           </div>
           <div class="info-item info-item--wide">
@@ -399,24 +434,27 @@ onMounted(loadStatus)
           <div class="form-card">
             <h2>Adresse</h2>
             <el-form label-position="top">
-              <el-form-item label="Adresse">
-                <el-input v-model="form.address" placeholder="12 rue de la Paix, 75001 Paris" />
+              <el-form-item label="Rue">
+                <el-input v-model="form.street" placeholder="12 rue de la Paix" />
               </el-form-item>
+              <el-row :gutter="16">
+                <el-col :span="12">
+                  <el-form-item label="Code postal">
+                    <el-input v-model="form.postalCode" placeholder="75001" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="Ville">
+                    <el-input v-model="form.city" placeholder="Paris" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
             </el-form>
           </div>
 
           <div class="form-card">
             <h2>Horaires d'ouverture</h2>
-            <el-form label-position="top">
-              <el-form-item label="Horaires">
-                <el-input
-                  v-model="form.openingHours"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="Lundi - Vendredi : 9h00 - 19h00&#10;Samedi : 9h00 - 13h00&#10;Dimanche : Fermé"
-                />
-              </el-form-item>
-            </el-form>
+            <OpeningHoursEditor v-model="form.openingHours" />
           </div>
 
           <div class="form-card form-card--wide">

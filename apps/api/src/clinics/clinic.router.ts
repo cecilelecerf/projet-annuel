@@ -16,6 +16,7 @@ import {
 } from "@api/instances";
 import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
+import { uploadClinicImage } from "@api/middlewares/upload.middleware";
 import clinicRequestRouter from "./clinic-requests/request.router";
 import staffRouter from "./staffs/staff.router";
 import clinicActRouter from "./clinic-acts/clinic-act.router";
@@ -105,6 +106,14 @@ clinicRouter.delete(
   roleMiddleware(["ADMIN", "DIRECTOR"]),
   controller.deleteClinic.bind(controller) as RequestHandler,
 );
+
+clinicRouter.post(
+  "/me/image",
+  roleMiddleware(["DIRECTOR", "REFERENT"]),
+  uploadClinicImage,
+  controller.uploadImage.bind(controller) as RequestHandler,
+);
+
 clinicRouter.use("/:clinicId/staffs", staffRouter);
 clinicRouter.use("/:clinicId/acts", clinicActRouter);
 export default clinicRouter;

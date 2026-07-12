@@ -19,8 +19,8 @@ model Conversation {
   name          String?
   lastMessageAt DateTime?
 
-  createdById String
-  createdBy   User   @relation("CreatedConversations", fields: [createdById], references: [id])
+  createdById String?
+  createdBy   User?   @relation("CreatedConversations", fields: [createdById], references: [id], onDelete: SetNull)
 
   clinicId String?
   clinic   Clinic? @relation(fields: [clinicId], references: [id])

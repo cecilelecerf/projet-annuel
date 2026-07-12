@@ -4,6 +4,17 @@ import { baseUserSchema } from "./base-user.schema";
 import { specialitySchema } from "../specilities.schema";
 import { veterinarianClinicSchema } from "../clinics/veterinarian-clinic.schema";
 
+// Numéro de licence/ordre vétérinaire : lettres, chiffres et tirets uniquement.
+export const licenseNumberSchema = z
+  .string()
+  .trim()
+  .min(4, "Numéro de licence trop court (4 caractères minimum)")
+  .max(50)
+  .regex(
+    /^[A-Za-z0-9-]+$/,
+    "Le numéro de licence ne doit contenir que des lettres, chiffres et tirets",
+  );
+
 export const veterinarianProfileSchema = z.object({
   id: veterinarianIdSchema,
   licenseNumber: z.string().max(50),
@@ -41,6 +52,13 @@ export const updateVeterinarianSchema = createVeterinarianSchema.partial();
 
 export type VeterinarianIdentityInput = z.infer<
   typeof veterinarianIdentityInputSchema
+>;
+
+export const linkVeterinarianStaffSchema = z.object({
+  veterinarianId: veterinarianIdSchema,
+});
+export type LinkVeterinarianStaff = z.infer<
+  typeof linkVeterinarianStaffSchema
 >;
 
 export type VeterinarianProfile = z.infer<typeof veterinarianProfileSchema>;

@@ -31,6 +31,7 @@ const [acts, prescriptions] = await Promise.all([
 const localActs = ref(acts)
 const localPrescriptions = ref(prescriptions)
 const isEditing = ref(false)
+const status = ref(meeting.status)
 
 const edit = ref<UpdateAnimalMeeting>({
   description: meeting.description ?? '',
@@ -52,6 +53,15 @@ const onSave = async () => {
     isEditing.value = false
   } catch (err) {
     console.log(err)
+    handle(err)
+  }
+}
+
+const onMarkDone = async () => {
+  try {
+    await meetingApi.animal.update(meeting.id, { status: 'COMPLETED' })
+    status.value = 'COMPLETED'
+  } catch (err) {
     handle(err)
   }
 }
@@ -94,6 +104,14 @@ const onPrescriptionSaved = async () => {
   <div class="meeting-content">
     <div class="meeting-left">
       <MeetingPets :meeting="meeting" />
+      <el-button
+        v-if="status !== 'COMPLETED' && (user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN')"
+        type="success"
+        plain
+        @click="onMarkDone"
+      >
+        Marquer comme terminé
+      </el-button>
     </div>
 
     <div class="meeting-right">
@@ -101,6 +119,7 @@ const onPrescriptionSaved = async () => {
         :meeting="meeting"
         :edit="edit"
         :is-editing="isEditing"
+        :status="status"
         :is-staff="user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN'"
       />
       <MedicalHistorySection

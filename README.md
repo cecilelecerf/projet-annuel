@@ -106,6 +106,7 @@ Le développement se fait via Docker Compose — chaque service (`api`, `web`) t
 
 ```bash
 pnpm docker:dev:up
+pnpm db:init
 ```
 
 Démarre en arrière-plan :

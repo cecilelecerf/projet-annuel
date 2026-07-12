@@ -61,6 +61,7 @@ const animalService = new AnimalService(
   new VaccineRepository({} as any),
   new ClinicService(new ClinicRepository({} as any)),
   new VeterinarianProfileRepository({} as any),
+  {} as any,
 );
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -88,6 +89,7 @@ const makeAnimal = (overrides = {}) => ({
   },
   race: { petId: "pet-1" },
   attendingVeterinarianClinic: null,
+  photoUrl: null,
   ...overrides,
 });
 const makeVaccine = (overrides = {}) => ({
@@ -399,6 +401,7 @@ describe("AnimalService.delete", () => {
     await animalService.delete({
       id: "animal-1",
       userId: "client-profile-1",
+      reasons: ["OTHER"],
     });
 
     expect(mockAnimalRepository.delete).toHaveBeenCalledWith("animal-1");

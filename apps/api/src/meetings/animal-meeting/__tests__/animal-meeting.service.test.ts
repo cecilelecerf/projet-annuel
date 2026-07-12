@@ -63,7 +63,10 @@ const service = new AnimalMeetingService(
   new EmailService(),
 );
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockEmailService.sendAppointmentEmail.mockResolvedValue(undefined);
+});
 
 const CLIENT_ID = "client-1";
 const VET_PROFILE_ID = "vet-profile-1";
@@ -535,13 +538,14 @@ describe("AnimalMeetingService.delete", () => {
 
   it("client annule à moins de 48h — ForbiddenError", async () => {
     const soonDate = new Date(Date.now() + 60 * 60 * 1000);
+    const soonEnd = new Date(Date.now() + 90 * 60 * 1000);
     mockRepository.findById.mockResolvedValue(
       makeMeetingWithAnimal({
         meeting: {
           id: "base-1",
           date: soonDate,
           startTime: soonDate,
-          endTime: new Date(soonDate.getTime() + 30 * 60 * 1000),
+          endTime: soonEnd,
         },
       }),
     );

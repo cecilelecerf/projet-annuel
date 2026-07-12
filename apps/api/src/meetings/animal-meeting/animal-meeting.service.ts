@@ -21,6 +21,7 @@ import {
 import { UserRole } from "../../../prisma/generated/prisma/enums";
 import { prisma } from "@api/lib/prisma";
 import { flatUser, withUserAvatar } from "@api/users/user.utils";
+import { withPhotoUrl } from "@api/animals/animal.utils";
 import { calculateAge, isStaff } from "@api/utils";
 import { EmailService } from "@api/emails/email.service";
 import dayjs from "dayjs";
@@ -28,8 +29,7 @@ import { UserRepository } from "@api/users/user.repository";
 import { expandAll } from "../utils";
 import { MeetingBaseWithSpecific } from "../type";
 
-// ── Combine une date (jour) avec une heure (time) en un seul instant ──────────
-function combineDateTime(date: Date, time: Date) {
+export function combineDateTime(date: Date, time: Date) {
   return dayjs(date)
     .hour(dayjs(time).hour())
     .minute(dayjs(time).minute())
@@ -151,7 +151,7 @@ export class AnimalMeetingService {
     const animalMeeting = {
       ...meeting,
       animal: {
-        ...meeting.animal,
+        ...withPhotoUrl(meeting.animal),
         client,
       },
       veterinarianClinic: {
@@ -193,16 +193,14 @@ export class AnimalMeetingService {
     });
     if (!animalMeeting) throw new ConflictError("not created");
 
-    await this.emailService.sendAppointmentEmail(
-      "created",
-      animal.client.user.email,
-      {
+    this.emailService
+      .sendAppointmentEmail("created", animal.client.user.email, {
         firstname: animal.client.user.firstname,
         animalName: animal.name,
         date: data.date,
         startTime: data.startTime,
-      },
-    );
+      })
+      .catch(() => {});
     return animalMeeting;
   }
 
@@ -235,7 +233,7 @@ export class AnimalMeetingService {
           }
         : null,
       animal: {
-        ...meeting.animal,
+        ...withPhotoUrl(meeting.animal),
         client: user,
         age: calculateAge(meeting.animal.dateOfBirth),
       },
@@ -315,12 +313,14 @@ export class AnimalMeetingService {
     if (isRescheduling) {
       const clientUser = meeting.animal.client.user;
       const type = isOwner ? "updatedConfirmation" : "rescheduled";
-      await this.emailService.sendAppointmentEmail(type, clientUser.email, {
-        firstname: clientUser.firstname,
-        animalName: meeting.animal.name,
-        date: updated.meeting!.date,
-        startTime: updated.meeting!.startTime,
-      });
+      this.emailService
+        .sendAppointmentEmail(type, clientUser.email, {
+          firstname: clientUser.firstname,
+          animalName: meeting.animal.name,
+          date: updated.meeting!.date,
+          startTime: updated.meeting!.startTime,
+        })
+        .catch(() => {});
     }
 
     return updated;
@@ -364,16 +364,14 @@ export class AnimalMeetingService {
 
     // ── Notification email ───────────────────────────────────────────────────────
     const clientUser = meeting.animal.client.user;
-    await this.emailService.sendAppointmentEmail(
-      "cancelled",
-      clientUser.email,
-      {
+    this.emailService
+      .sendAppointmentEmail("cancelled", clientUser.email, {
         firstname: clientUser.firstname,
         animalName: meeting.animal.name,
         date: meetingDate,
         startTime: meetingStartTime,
-      },
-    );
+      })
+      .catch(() => {});
 
     return deleted;
   }
@@ -445,6 +443,38 @@ export class AnimalMeetingService {
       return [meeting as MeetingBaseWithSpecific];
     });
     return expandAll(flat, start, end);
+  }
+
+  async sendDueReminders() {
+    const now = dayjs();
+    const rangeStart = now.startOf("day").toDate();
+    const rangeEnd = now.add(2, "day").endOf("day").toDate();
+    const candidates = await this.repository.findReminderCandidates(
+      rangeStart,
+      rangeEnd,
+    );
+
+    for (const candidate of candidates) {
+      if (!candidate.meeting) continue;
+
+      const meetingDateTime = combineDateTime(
+        candidate.meeting.date,
+        candidate.meeting.startTime,
+      );
+      const hoursUntil = meetingDateTime.diff(now, "hour", true);
+      if (hoursUntil > 24 || hoursUntil <= 0) continue;
+
+      const clientUser = candidate.animal.client.user;
+      await this.emailService
+        .sendAppointmentEmail("reminder", clientUser.email, {
+          firstname: clientUser.firstname,
+          animalName: candidate.animal.name,
+          date: candidate.meeting.date,
+          startTime: candidate.meeting.startTime,
+        })
+        .catch(() => {});
+      await this.repository.markReminderSent(candidate.id);
+    }
   }
 
   async getLastByAnimal({

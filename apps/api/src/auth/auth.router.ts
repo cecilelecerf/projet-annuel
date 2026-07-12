@@ -7,6 +7,9 @@ import {
   registerDirectorSchema,
   deleteAccountConfirmSchema,
   updateAccountSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyLoginTwoFactorSchema,
 } from "@armali/schemas";
 import { authController } from "@api/instances";
 
@@ -33,6 +36,21 @@ authRouter.post(
   controller.logout.bind(controller) as RequestHandler,
 );
 authRouter.post("/refresh", controller.refresh.bind(controller));
+authRouter.post(
+  "/login/verify-2fa",
+  validate(verifyLoginTwoFactorSchema),
+  controller.verifyLoginTwoFactor.bind(controller),
+);
+authRouter.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  controller.forgotPassword.bind(controller),
+);
+authRouter.post(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  controller.resetPassword.bind(controller),
+);
 authRouter.get("/me", authMiddleware, controller.me.bind(controller));
 authRouter.patch(
   "/me",

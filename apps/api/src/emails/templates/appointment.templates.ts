@@ -72,6 +72,20 @@ export const appointmentTemplates = {
     };
   },
 
+  reminder: (data: AppointmentEmailData) => {
+    const { dateLabel, timeLabel } = formatDateTime(data.date, data.startTime);
+    return {
+      subject: "Rappel : rendez-vous demain",
+      titleColor: "#256cab",
+      title: "Rappel de rendez-vous",
+      body: `
+        <p>Bonjour ${data.firstname},</p>
+        <p>Petit rappel : le rendez-vous pour <strong>${data.animalName}</strong> a lieu demain.</p>
+        ${appointmentCard(dateLabel, timeLabel)}
+      `,
+    };
+  },
+
   cancelled: (data: AppointmentEmailData) => {
     const { dateLabel, timeLabel } = formatDateTime(data.date, data.startTime);
     return {

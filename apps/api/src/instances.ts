@@ -230,6 +230,7 @@ const animalService = new AnimalService(
   vaccineRepository,
   clinicService,
   veterinarianProfileRepository,
+  fileService,
 );
 const clinicPetService = new ClinicPetService(
   clinicRepository,
@@ -264,7 +265,7 @@ const internalMeetingService = new InternalMeetingService(
   recurringService,
   clinicService,
 );
-const animalMeetingService = new AnimalMeetingService(
+export const animalMeetingService = new AnimalMeetingService(
   animalMeetingRepository,
   userRepository,
   emailService,

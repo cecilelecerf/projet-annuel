@@ -535,13 +535,14 @@ describe("AnimalMeetingService.delete", () => {
 
   it("client annule à moins de 48h — ForbiddenError", async () => {
     const soonDate = new Date(Date.now() + 60 * 60 * 1000);
+    const soonEnd = new Date(Date.now() + 90 * 60 * 1000);
     mockRepository.findById.mockResolvedValue(
       makeMeetingWithAnimal({
         meeting: {
           id: "base-1",
           date: soonDate,
-          startTime: FAR_FUTURE_START,
-          endTime: FAR_FUTURE_END,
+          startTime: soonDate,
+          endTime: soonEnd,
         },
       }),
     );

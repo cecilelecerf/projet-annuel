@@ -19,6 +19,10 @@ L'infrastructure repose sur un cluster Swarm composé de **3 nœuds** (1 Manager
 - **PostgreSQL (Base de données) :** Isolée sur le Manager, avec volume persistant. (1 réplicas).
 - **Prometheus :** Collecte des métriques (1 réplicas).
 - **Grafana :** Visualisation des métriques (1 réplicas).
+- **Minio :** Stockage des images (1 réplicas).
+- **Minio Init :** Inititalisation de minio.
+- **Api - Seed :** Pas up, utile seulement pour le workflow de seeds.
+- **Api - Migration :** Pas up, utile seulement pour le workflow de migration.
 
 ---
 

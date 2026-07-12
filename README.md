@@ -68,6 +68,10 @@ JWT_REFRESH_SECRET=changeme_refresh_secret
 # API
 CORS_ORIGIN=http://localhost:5173
 
+#STRIPE
+STRIPE_SECRET_KEY=change-me
+STRIPE_WEBHOOK_SECRET=change-me
+
 # Email (ENABLE_EMAIL=false pour log console sans envoyer)
 ENABLE_EMAIL=true
 MAIL_USER=...
@@ -77,6 +81,17 @@ MAIL_PASS=...
 
 # Web / Vite (préfixe VITE_ obligatoire pour être exposé au navigateur)
 VITE_API_URL=http://localhost:3001/api
+
+# MINIO + S3
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin123
+S3_BUCKET=armali-files
+S3_ENDPOINT=http://minio:9000
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin123
+ASSETS_BASE_URL=http://localhost:9000/armali-files
+S3_PUBLIC_ENDPOINT=http://localhost:9000
 ```
 
 ---
@@ -98,6 +113,7 @@ Démarre en arrière-plan :
 | API          | http://localhost:3001 |
 | Web          | http://localhost:5173 |
 | Mailhog (UI) | http://localhost:8025 |
+| Minio (UI)   | http://localhost:9001 |
 | Postgres     | —                     |
 | Devcontainer | —                     |
 
@@ -211,7 +227,7 @@ Le flux recommandé reste Docker (`pnpm docker:dev:up`) pour garantir la cohére
 
 - Branches protégées.
 - Un merge sur `main` = une mise en production.
-- 75 % du code de l'API doit être testé pour pouvoir merger sur `main`.
+- 82 % du code de l'API doit être testé pour pouvoir merger sur `main`.
 
 **Pour merger sur `dev` :**
 
@@ -219,11 +235,6 @@ Le flux recommandé reste Docker (`pnpm docker:dev:up`) pour garantir la cohére
 - Les linters `api` et `web` doivent passer.
 - Pas de dépendances trop récentes (non stabilisées).
 - Tous les packages doivent build.
-- La version des packages est fixée en dur (pas d'incrémentation automatique).
-
-### À faire
-
-- [ ] Vérifier automatiquement les failles critiques des dépendances (audit).
 
 ---
 

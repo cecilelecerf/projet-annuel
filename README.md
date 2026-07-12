@@ -42,7 +42,7 @@ projet-annuel/
 ## ⚙️ Installation
 
 ```bash
-git clone <url-du-repo>
+git clone git@github.com:cecilelecerf/projet-annuel.git
 cd projet-annuel
 pnpm install
 ```

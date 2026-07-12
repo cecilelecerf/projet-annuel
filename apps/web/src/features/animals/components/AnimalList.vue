@@ -14,6 +14,10 @@ const metas = (animal: AnimalMeta) => {
   const client = animal.client
   return [`${client.user.firstname} ${client.user.lastname}`, client.user.email]
 }
+const badge = (animal: AnimalMeta) =>
+  animal.status === 'DECEASED'
+    ? { label: 'Décédé', color: 'var(--el-color-info)' }
+    : { label: animal.race.name }
 </script>
 
 <template>
@@ -27,7 +31,8 @@ const metas = (animal: AnimalMeta) => {
         direction="column"
         :key="member.id"
         :name="member.name"
-        :badge="{ label: member.race.name }"
+        :badge="badge(member)"
+        :muted="member.status === 'DECEASED'"
         :metas="metas(member)"
         :route="{
           name: `${user?.role.toUpperCase()}.Animals.Detail`,

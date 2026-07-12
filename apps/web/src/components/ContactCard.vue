@@ -14,6 +14,7 @@ const props = withDefaults(
     badge?: { label: string; color?: string }
     color?: Color
     avatarUrl?: string | null
+    muted?: boolean
   }>(),
   {
     actionLabel: 'Voir plus',
@@ -51,7 +52,7 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
 <template>
   <div
     class="contact-card"
-    :class="`contact-card--${direction} contact-card-selectable-${!!route}`"
+    :class="[`contact-card--${direction}`, `contact-card-selectable-${!!route}`, { 'contact-card--muted': muted }]"
     role="button"
     tabindex="0"
     @click="route && router.push(route)"
@@ -142,6 +143,14 @@ const badgeColor = computed(() => props.badge?.color ?? 'var(--el-color-primary)
   font-weight: var(--fw-semibold);
   white-space: nowrap;
   line-height: 1.4;
+}
+
+.contact-card--muted {
+  opacity: 0.6;
+
+  .contact-avatar {
+    filter: grayscale(1);
+  }
 }
 
 .contact-card--row {

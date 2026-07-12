@@ -47,6 +47,9 @@ const lastSize = computed(() => {
     <div class="pet-avatar">{{ animal.name.charAt(0) }}</div>
     <h2 class="profile-name">{{ animal.name }}</h2>
     <span class="profile-breed"> {{ animal.race?.pet?.name }} · {{ animal.race?.name }} </span>
+    <el-tag v-if="animal.status === 'DECEASED'" type="info" size="small" style="margin-top: 4px">
+      Décédé
+    </el-tag>
 
     <div class="profile-details">
       <div class="detail-row">
@@ -64,6 +67,12 @@ const lastSize = computed(() => {
       <div v-if="animal.activity" class="detail-row">
         <span class="detail-label">Activité</span>
         <el-rate :model-value="animal.activity / 2" disabled :max="5" />
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Assurance santé</span>
+        <span class="detail-value">
+          {{ animal.hasInsurance ? (animal.insuranceProvider ?? 'Oui') : 'Non' }}
+        </span>
       </div>
     </div>
   </div>

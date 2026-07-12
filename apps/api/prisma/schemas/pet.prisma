@@ -1,14 +1,26 @@
+enum AnimalStatus {
+  ALIVE
+  DECEASED
+}
+
 model Animal {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt
+  id          String       @id @default(uuid())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
   name        String
   dateOfBirth DateTime
   description String?
   activity    Int?
+  status      AnimalStatus @default(ALIVE)
 
   outdoorAccess Boolean @default(false)
   animalContact Boolean @default(false)
+
+  // Informatif uniquement : la clinique facture toujours le prix plein,
+  // le propriétaire se fait rembourser après coup par son assureur.
+  hasInsurance          Boolean @default(false)
+  insuranceProvider     String?
+  insurancePolicyNumber String?
 
   attendingVeterinarianClinicId String?
   attendingVeterinarianClinic   VeterinarianClinic? @relation(fields: [attendingVeterinarianClinicId], references: [id])

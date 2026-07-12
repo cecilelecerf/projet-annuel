@@ -90,6 +90,7 @@ export class AnimalController {
       await this.service.delete({
         id: req.params.id,
         userId: req.user.id,
+        reasons: req.body.reasons,
       });
       res.status(204).send();
     } catch (err) {

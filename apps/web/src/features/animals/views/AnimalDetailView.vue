@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete } from '@element-plus/icons-vue'
 import type { AnimalId } from '@armali/schemas'
 import { animalApi } from '../api'
 import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
@@ -16,18 +16,30 @@ import AnimalHealthConditionItem from '@/features/animal-health-conditions/compo
 import NotebookVaccingTable from '@/features/vaccines/components/notebook/NotebookVaccingTable.vue'
 import MeetingListByAnimal from '@/features/meetings/components/animal-meeting/MeetingListByAnimal.vue'
 import AnimalDetailCard from '../components/AnimalDetailCard.vue'
+import DeleteAnimalDialog from '../components/DeleteAnimalDialog.vue'
 dayjs.locale('fr')
 
 const route = useRoute()
 const router = useRouter()
 const { user } = useAuthStore()
-const animal = await animalApi.get(route.params.id as AnimalId)
-const [meetings, vaccinesStatus, medicalHistories] = await Promise.all([
-  meetingApi.animal.getAllByAnimal(animal.id),
-  animalApi.getVaccines(route.params.id as AnimalId),
-  medicalHistoriesApi.getByAnimal(animal.id),
-])
+const deleteDialog = ref<InstanceType<typeof DeleteAnimalDialog> | null>(null)
 const activeTab = ref('acts')
+
+let animal: Awaited<ReturnType<typeof animalApi.get>> | undefined
+let meetings: Awaited<ReturnType<typeof meetingApi.animal.getAllByAnimal>> = []
+let vaccinesStatus: Awaited<ReturnType<typeof animalApi.getVaccines>> = []
+let medicalHistories: Awaited<ReturnType<typeof medicalHistoriesApi.getByAnimal>> = []
+
+try {
+  animal = await animalApi.get(route.params.id as AnimalId)
+  ;[meetings, vaccinesStatus, medicalHistories] = await Promise.all([
+    meetingApi.animal.getAllByAnimal(animal.id),
+    animalApi.getVaccines(route.params.id as AnimalId),
+    medicalHistoriesApi.getByAnimal(animal.id),
+  ])
+} catch {
+  router.replace({ name: 'CLIENT.Animals' })
+}
 
 const weightData = computed(
   () =>
@@ -42,10 +54,15 @@ const weightData = computed(
 </script>
 
 <template>
+  <template v-if="animal">
   <div class="page-header">
     <el-button text @click="router.back()">
       <el-icon><ArrowLeft /></el-icon>
       Retour
+    </el-button>
+    <el-button v-if="user?.role === 'CLIENT'" text type="danger" @click="deleteDialog?.open()">
+      <el-icon><Delete /></el-icon>
+      Supprimer cet animal
     </el-button>
   </div>
 
@@ -152,6 +169,9 @@ const weightData = computed(
       />
     </div>
   </div>
+
+  <DeleteAnimalDialog ref="deleteDialog" :animal-id="animal.id" :animal-name="animal.name" />
+  </template>
 </template>
 
 <style lang="scss" scoped>

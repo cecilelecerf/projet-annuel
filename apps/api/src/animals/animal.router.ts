@@ -1,7 +1,11 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
-import { createAnimalSchema, updateAnimalSchema } from "@armali/schemas";
+import {
+  createAnimalSchema,
+  updateAnimalSchema,
+  deleteAnimalSchema,
+} from "@armali/schemas";
 import {
   animalController,
   animalMeetingController,
@@ -52,6 +56,7 @@ animalRouter.patch(
 animalRouter.delete(
   "/:id",
   roleMiddleware(["CLIENT"]),
+  validate(deleteAnimalSchema),
   controller.delete.bind(controller) as RequestHandler,
 );
 

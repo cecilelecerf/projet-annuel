@@ -96,6 +96,9 @@ export class AnimalRepository {
         activity: data.activity,
         clientId: data.clientId,
         raceId: data.raceId,
+        hasInsurance: data.hasInsurance,
+        insuranceProvider: data.insuranceProvider,
+        insurancePolicyNumber: data.insurancePolicyNumber,
       },
       include: createAndUpdateInclude,
     });
@@ -114,6 +117,9 @@ export class AnimalRepository {
         activity: data.activity,
         raceId: data.raceId,
         attendingVeterinarianClinicId: data.attendingVeterinarianClinicId,
+        hasInsurance: data.hasInsurance,
+        insuranceProvider: data.insuranceProvider,
+        insurancePolicyNumber: data.insurancePolicyNumber,
       },
       include: createAndUpdateInclude,
     });
@@ -121,6 +127,14 @@ export class AnimalRepository {
 
   async delete(id: string): Promise<Prisma.AnimalGetPayload<object>> {
     return this.prisma.animal.delete({ where: { id } });
+  }
+
+  /** Marque l'animal comme décédé au lieu de le supprimer, pour conserver son historique médical. */
+  async markDeceased(id: string): Promise<Prisma.AnimalGetPayload<object>> {
+    return this.prisma.animal.update({
+      where: { id },
+      data: { status: "DECEASED" },
+    });
   }
   // TODO PAS AU BON ENDROIT -> repo animal doit renvoyer que des animals
   async findVaccinesByAnimal(

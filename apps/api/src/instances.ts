@@ -255,7 +255,7 @@ const internalMeetingService = new InternalMeetingService(
   recurringService,
   clinicService,
 );
-const animalMeetingService = new AnimalMeetingService(
+export const animalMeetingService = new AnimalMeetingService(
   animalMeetingRepository,
   userRepository,
   emailService,

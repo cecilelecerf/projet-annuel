@@ -127,11 +127,12 @@ model InternalMeeting {
 }
 
 model AnimalMeeting {
-  id          String   @id @default(uuid())
-  description String?
-  petWeight   Decimal? @db.Decimal(5, 2)
-  petSize     Decimal? @db.Decimal(5, 2)
-  report      String?
+  id             String    @id @default(uuid())
+  description    String?
+  petWeight      Decimal?  @db.Decimal(5, 2)
+  petSize        Decimal?  @db.Decimal(5, 2)
+  report         String?
+  reminderSentAt DateTime?
 
   meetingId String?      @unique
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)

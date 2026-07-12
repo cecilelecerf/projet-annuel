@@ -48,6 +48,9 @@ const form = reactive<CreateAnimal & { petId: PetId }>({
   activity: 3,
   outdoorAccess: false,
   animalContact: false,
+  hasInsurance: false,
+  insuranceProvider: undefined,
+  insurancePolicyNumber: undefined,
 })
 
 function onPetChange() {
@@ -204,6 +207,34 @@ const activityLabels: Record<number, string> = {
           </div>
           <el-switch v-model="form.animalContact" />
         </div>
+      </div>
+    </section>
+
+    <div class="aa-divider" />
+
+    <section class="aa-section">
+      <div class="aa-section-label">Assurance santé</div>
+
+      <div class="aa-switch-row">
+        <div class="aa-switch-item">
+          <div class="aa-switch-text">
+            <span class="aa-field-label">Animal assuré</span>
+            <span class="aa-field-hint">
+              Informatif : la clinique facture toujours le prix plein, le remboursement se fait
+              directement auprès de l'assureur.
+            </span>
+          </div>
+          <el-switch v-model="form.hasInsurance" />
+        </div>
+      </div>
+
+      <div v-if="form.hasInsurance" class="aa-grid">
+        <el-form-item label="Assureur">
+          <el-input v-model="form.insuranceProvider" placeholder="Ex. SantéVet" maxlength="100" />
+        </el-form-item>
+        <el-form-item label="Numéro de contrat">
+          <el-input v-model="form.insurancePolicyNumber" placeholder="Ex. AB123456" maxlength="100" />
+        </el-form-item>
       </div>
     </section>
 

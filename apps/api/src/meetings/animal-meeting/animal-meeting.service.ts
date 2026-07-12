@@ -233,7 +233,7 @@ export class AnimalMeetingService {
           }
         : null,
       animal: {
-        ...meeting.animal,
+        ...withPhotoUrl(meeting.animal),
         client: user,
         age: calculateAge(meeting.animal.dateOfBirth),
       },

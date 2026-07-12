@@ -63,7 +63,10 @@ const service = new AnimalMeetingService(
   new EmailService(),
 );
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockEmailService.sendAppointmentEmail.mockResolvedValue(undefined);
+});
 
 const CLIENT_ID = "client-1";
 const VET_PROFILE_ID = "vet-profile-1";

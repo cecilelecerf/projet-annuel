@@ -138,7 +138,7 @@ describe("GET /api/meetings/:id", () => {
       include: { animalMeeting: { include: { meeting: true } } },
     });
 
-    const meetingId = animal![1].animalMeeting[0].meeting!.id;
+    const meetingId = animal![0].animalMeeting[0].meeting!.id;
     const res = await request(app)
       .get(`/api/meetings/${meetingId}`)
       .set("Authorization", `Bearer ${token}`);

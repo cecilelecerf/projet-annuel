@@ -289,7 +289,8 @@ describe("Animal router", () => {
       const token = await loginAs("client@gmail.com");
       const res = await request(app)
         .delete("/api/animals/non-existent-id")
-        .set("Authorization", `Bearer ${token}`);
+        .set("Authorization", `Bearer ${token}`)
+        .send({ reasons: ["OTHER"] });
       expect(res.status).toBe(404);
     });
 
@@ -305,7 +306,8 @@ describe("Animal router", () => {
 
       const res = await request(app)
         .delete(`/api/animals/${otherAnimal!.id}`)
-        .set("Authorization", `Bearer ${token}`);
+        .set("Authorization", `Bearer ${token}`)
+        .send({ reasons: ["OTHER"] });
       expect(res.status).toBe(403);
     });
 
@@ -329,7 +331,8 @@ describe("Animal router", () => {
         });
       const res = await request(app)
         .delete(`/api/animals/${created.body.id}`)
-        .set("Authorization", `Bearer ${token}`);
+        .set("Authorization", `Bearer ${token}`)
+        .send({ reasons: ["OTHER"] });
       expect(res.status).toBe(204);
     });
 

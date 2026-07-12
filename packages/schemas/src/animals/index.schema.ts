@@ -21,7 +21,7 @@ export const animalSchema = z.object({
   outdoorAccess: z.boolean(),
   animalContact: z.boolean(),
   status: animalStatusSchema,
-  hasInsurance: z.boolean(),
+  hasInsurance: z.boolean().optional(),
   insuranceProvider: z.string().max(100).nullable().optional(),
   insurancePolicyNumber: z.string().max(100).nullable().optional(),
   photoId: fileIdSchema.nullable(),

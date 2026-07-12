@@ -59,6 +59,7 @@ export class AnimalMeetingRepository {
               },
             },
             race: { include: { pet: true } },
+            photo: true,
           },
         },
         speciality: true,

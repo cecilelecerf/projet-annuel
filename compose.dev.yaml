@@ -30,7 +30,7 @@ services:
     working_dir: /app
     command: >
       sh -c "
-        cd /app &&
+        cd /app && pnpm --filter schemas build;
         pnpm dev:schemas &
         pnpm db:init && pnpm dev:api
       "
@@ -69,7 +69,7 @@ services:
     working_dir: /app
     command: >
       sh -c "
-        cd /app &&
+        cd /app && pnpm --filter schemas build;
         pnpm dev:schemas & pnpm dev:web
       "
     volumes:

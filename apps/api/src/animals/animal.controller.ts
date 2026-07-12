@@ -4,6 +4,8 @@ import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalDetailSchema,
   AnimalId,
+  animalEmergencyCardSchema,
+  animalEmergencyQrSchema,
   animalMetaSchema,
   animalWithRaceMetaSchema,
   ClinicId,
@@ -185,6 +187,36 @@ export class AnimalController {
         fileId,
       });
       res.json(animalWithRaceMetaSchema.parse(animal));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getEmergencyCard(
+    req: RequestWithParams<{ token: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const card = await this.service.getEmergencyCard(req.params.token);
+      res.status(200).json(animalEmergencyCardSchema.parse(card));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getEmergencyQr(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const qr = await this.service.getEmergencyQr({
+        id: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res.status(200).json(animalEmergencyQrSchema.parse(qr));
     } catch (err) {
       next(err);
     }

@@ -17,6 +17,7 @@ import { PaginationQueryDto } from "../../../../packages/schemas/src/pagination.
 import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
 import { Animal } from "../../prisma/generated/prisma/client";
 import { FileService } from "@api/files/file.service";
+import QRCode from "qrcode";
 
 export class AnimalService {
   constructor(
@@ -291,6 +292,59 @@ export class AnimalService {
       pagination,
     );
     return Promise.all(animals.map((a) => this.formatWithClient(a)));
+  }
+
+  async getEmergencyCard(token: string) {
+    const animal = await this.repository.findByEmergencyToken(token);
+    if (!animal) throw new NotFoundError("Animal");
+
+    const withPhoto = withPhotoUrl(animal);
+    return {
+      name: animal.name,
+      photoUrl: withPhoto.photoUrl,
+      species: animal.race.pet.name,
+      breed: animal.race.name,
+      dateOfBirth: animal.dateOfBirth,
+      healthConditions: animal.animalConditionHealths.map((c) => ({
+        name: c.healthCondition.name,
+        notes: c.notes,
+      })),
+      owner: {
+        name: `${animal.client.user.firstname} ${animal.client.user.lastname}`,
+        phone: animal.client.phone,
+      },
+      clinic: animal.attendingVeterinarianClinic
+        ? {
+            name: animal.attendingVeterinarianClinic.clinic.name,
+            phone: animal.attendingVeterinarianClinic.clinic.phone,
+            address: animal.attendingVeterinarianClinic.clinic.address,
+          }
+        : null,
+    };
+  }
+
+  // ── QR code de la carte d'urgence (propriétaire uniquement) ──────────────────
+  async getEmergencyQr({
+    id,
+    userId,
+    role,
+  }: {
+    id: string;
+    userId: string;
+    role: UserRole;
+  }) {
+    await this.assertAccess({ petId: id, userId, role });
+    const pet = await this.repository.findById(id);
+    if (!pet) throw new NotFoundError("Animal");
+
+    const base = (process.env.CORS_ORIGIN || "http://localhost:5173").replace(
+      /\/$/,
+      "",
+    );
+    const url = `${base}/urgence/${pet.emergencyToken}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(url);
+
+    return { url, qrCodeDataUrl };
   }
 
   async getAnimalByClinic(

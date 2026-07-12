@@ -1,6 +1,8 @@
 import { http } from '@/lib/api'
 import {
   animalDetailSchema,
+  animalEmergencyCardSchema,
+  animalEmergencyQrSchema,
   animalMetaSchema,
   animalSchema,
   animalWithRaceMetaSchema,
@@ -43,6 +45,14 @@ export const animalApi = {
   getVaccines: async (id: AnimalId) => {
     const data = await http.get(`/animals/${id}/vaccines`)
     return vaccineMetaSchema.array().parse(data)
+  },
+  getEmergencyQr: async (id: AnimalId) => {
+    const data = await http.get(`/animals/${id}/emergency-qr`)
+    return animalEmergencyQrSchema.parse(data)
+  },
+  getEmergencyCard: async (token: string) => {
+    const data = await http.get(`/emergency/${token}`)
+    return animalEmergencyCardSchema.parse(data)
   },
   create: async (payload: CreateAnimal) => {
     return http.post(`/animals`, payload).then((data) => animalWithRaceMetaSchema.parse(data))

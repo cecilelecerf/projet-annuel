@@ -10,6 +10,8 @@ model Animal {
   outdoorAccess Boolean @default(false)
   animalContact Boolean @default(false)
 
+  emergencyToken String @unique @default(uuid())
+
   attendingVeterinarianClinicId String?
   attendingVeterinarianClinic   VeterinarianClinic? @relation(fields: [attendingVeterinarianClinicId], references: [id])
 

@@ -22,6 +22,10 @@ animalRouter.get(
   controller.getVaccines.bind(controller) as RequestHandler,
 );
 animalRouter.get(
+  "/:id/emergency-qr",
+  controller.getEmergencyQr.bind(controller) as RequestHandler,
+);
+animalRouter.get(
   "/:id/animal-meetings",
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalMeetingController.getByAnimal.bind(

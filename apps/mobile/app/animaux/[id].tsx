@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Modal, ScrollView, Share, Text, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import type {
   AnimalDetail,
+  AnimalEmergencyQr,
   AnimalMeetingWithMeeting,
   MedicalHistoryMeta,
   VaccineMeta,
@@ -56,6 +58,9 @@ export default function AnimalDetailScreen() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("acts");
   const [uploading, setUploading] = useState(false);
+  const [emergencyVisible, setEmergencyVisible] = useState(false);
+  const [emergencyQr, setEmergencyQr] = useState<AnimalEmergencyQr | null>(null);
+  const [emergencyLoading, setEmergencyLoading] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -121,6 +126,24 @@ export default function AnimalDetailScreen() {
     }
   }
 
+  async function openEmergencyCard() {
+    setEmergencyVisible(true);
+    if (emergencyQr) return;
+    setEmergencyLoading(true);
+    try {
+      const qr = await http.get<AnimalEmergencyQr>(`/animals/${id}/emergency-qr`);
+      setEmergencyQr(qr);
+    } catch {
+      // reste vide, la modale affichera juste le chargement figé
+    } finally {
+      setEmergencyLoading(false);
+    }
+  }
+
+  function shareEmergencyLink() {
+    if (emergencyQr) Share.share({ message: emergencyQr.url });
+  }
+
   if (!animal) {
     return (
       <View className="flex-1 items-center justify-center bg-white px-6">
@@ -149,6 +172,7 @@ export default function AnimalDetailScreen() {
   const minWeight = Math.min(...weightPoints.map((p) => p.weight), 0);
 
   return (
+    <>
     <ScrollView className="flex-1 bg-white" contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 16 }}>
       {/* Profile card */}
       <View className="items-center bg-gray-50 border border-gray-100 rounded-2xl p-6 gap-1">
@@ -195,6 +219,15 @@ export default function AnimalDetailScreen() {
           ) : null}
         </View>
       </View>
+
+      {/* Carte d'urgence */}
+      <TouchableOpacity
+        onPress={openEmergencyCard}
+        className="flex-row items-center justify-center gap-2 bg-red-50 border border-red-100 rounded-2xl py-3"
+      >
+        <MaterialIcons name="qr-code-2" size={18} color="#dc2626" />
+        <Text className="text-danger text-sm font-semibold">Carte d'urgence</Text>
+      </TouchableOpacity>
 
       {/* Owner / referring vet */}
       {animal.client ? (
@@ -408,5 +441,35 @@ export default function AnimalDetailScreen() {
         )}
       </View>
     </ScrollView>
+
+    <Modal visible={emergencyVisible} animationType="slide" transparent onRequestClose={() => setEmergencyVisible(false)}>
+      <View className="flex-1 bg-black/40 items-center justify-center px-6">
+        <View className="w-full bg-white rounded-2xl p-6 items-center gap-3">
+          <Text className="text-lg font-bold text-gray-900">Carte d'urgence</Text>
+          {emergencyLoading || !emergencyQr ? (
+            <ActivityIndicator color="#4873a2" />
+          ) : (
+            <>
+              <Image source={{ uri: emergencyQr.qrCodeDataUrl }} className="w-56 h-56" />
+              <Text className="text-gray-500 text-xs text-center">
+                Scannez ce code ou imprimez-le sur le collier de {animal.name}. Il ouvre une fiche
+                publique avec ses infos de santé et vos coordonnées si jamais il ou elle se perd.
+              </Text>
+              <TouchableOpacity
+                onPress={shareEmergencyLink}
+                className="flex-row items-center gap-2 bg-primary rounded-full px-4 py-2"
+              >
+                <MaterialIcons name="share" size={16} color="white" />
+                <Text className="text-white text-xs font-semibold">Partager le lien</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          <TouchableOpacity onPress={() => setEmergencyVisible(false)} className="mt-1">
+            <Text className="text-gray-500 text-xs">Fermer</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }

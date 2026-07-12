@@ -20,6 +20,7 @@ export const animalSchema = z.object({
   animalContact: z.boolean(),
   photoId: fileIdSchema.nullable(),
   photoUrl: z.url().max(255).nullable(),
+  emergencyToken: z.string(),
 });
 
 export const createAnimalSchema = animalSchema
@@ -29,6 +30,7 @@ export const createAnimalSchema = animalSchema
     attendingVeterinarianClinicId: true,
     photoId: true,
     photoUrl: true,
+    emergencyToken: true,
   })
   .extend({ clientId: clientIdSchema.optional() });
 export const updateAnimalSchema = createAnimalSchema

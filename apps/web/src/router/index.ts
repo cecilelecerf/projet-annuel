@@ -33,6 +33,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/DesignSystem.vue'),
     meta: { public: true },
   },
+  {
+    path: '/urgence/:token',
+    name: 'EmergencyCard',
+    component: () => import('@/features/animals/views/EmergencyCardView.vue'),
+    meta: { public: true },
+  },
   ...clientRouter,
   ...veterinarianRouter,
   ...directorRouter,

@@ -225,4 +225,17 @@ export class AnimalRepository {
       select: { id: true, clientId: true, dateOfBirth: true, activity: true },
     });
   }
+
+  async findByEmergencyToken(token: string) {
+    return this.prisma.animal.findUnique({
+      where: { emergencyToken: token },
+      include: {
+        race: { include: { pet: true } },
+        client: { include: { user: true } },
+        animalConditionHealths: { include: { healthCondition: true } },
+        attendingVeterinarianClinic: { include: { clinic: true } },
+        photo: true,
+      },
+    });
+  }
 }

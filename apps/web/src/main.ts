@@ -4,11 +4,15 @@ import App from './App.vue'
 import './styles/fonts.scss'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import './styles/meeting.scss'
+// ElMessageBox est appelé de façon impérative (JS), donc jamais détecté par le résolveur
+// d'auto-import de composants — son style doit être importé manuellement.
+import 'element-plus/theme-chalk/src/message-box.scss'
 import './styles/layout.scss'
 import router from './router/index'
 import { useAuthStore } from './stores/authStore'
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
+import { clickOutside } from './directives/clickOutside'
 import 'element-plus/es/components/message/style/css'
 import 'element-plus/es/components/message-box/style/css'
 import 'element-plus/es/components/notification/style/css'
@@ -18,6 +22,7 @@ import 'leaflet/dist/leaflet.css'
 
 const app = createApp(App)
 app.use(createPinia())
+app.directive('click-outside', clickOutside)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }

@@ -17,6 +17,7 @@ const {
   selectedMeeting,
   availableClinics,
   selectedClinicIds,
+  refetchEvents,
 } = useCalendar()
 const newEventDate = ref<Date | null>(null)
 
@@ -30,6 +31,12 @@ const isDateDrawerOpen = computed({
 const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
+  refetchEvents()
+}
+
+const onMeetingPopupClose = () => {
+  selectedMeeting.value = null
+  refetchEvents()
 }
 const onDowload = async () => {
   await meetingApi.download()
@@ -93,7 +100,7 @@ const onDowload = async () => {
     v-if="selectedMeeting"
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
-    @close="selectedMeeting = null"
+    @close="onMeetingPopupClose"
     :kind="selectedMeeting.kind"
   />
 </template>
@@ -236,6 +243,13 @@ const onDowload = async () => {
   }
   & .fc-event-title {
     color: var(--el-color-#{meeting-color('internal')}-dark-5);
+  }
+}
+:deep(.kind-AVAILABILITY) {
+  background: color-mix(in srgb, var(--el-color-amber-light) 25%, transparent) !important;
+  backdrop-filter: blur(1px);
+  & .fc-event-title {
+    color: var(--el-color-amber-dark);
   }
 }
 

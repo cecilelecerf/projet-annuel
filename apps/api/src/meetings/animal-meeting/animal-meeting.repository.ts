@@ -114,6 +114,7 @@ export class AnimalMeetingRepository {
         ...(data.petWeight !== undefined && { petWeight: data.petWeight }),
         ...(data.petSize !== undefined && { petSize: data.petSize }),
         ...(data.report !== undefined && { report: data.report }),
+        ...(data.status !== undefined && { status: data.status }),
         ...(data.specialityId !== undefined && {
           speciality: data.specialityId
             ? { connect: { id: data.specialityId } }
@@ -197,6 +198,22 @@ export class AnimalMeetingRepository {
           },
         },
       },
+    });
+  }
+
+  async findLastByAnimal(animalId: AnimalId) {
+    return this.prisma.animalMeeting.findFirst({
+      where: { animalId, meetingId: { not: null } },
+      include: {
+        meeting: true,
+        veterinarianClinic: {
+          include: { veterinarian: { include: { user: true } } },
+        },
+      },
+      orderBy: [
+        { meeting: { date: "desc" } },
+        { meeting: { startTime: "desc" } },
+      ],
     });
   }
 

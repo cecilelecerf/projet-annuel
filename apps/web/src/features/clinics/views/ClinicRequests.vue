@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useNotify } from '@/composables/useNotify'
+import { formatAddress } from '@/utils/clinic.utils'
 import type { ClinicRequest, ClinicStatus } from '@armali/schemas'
 import { clinicApi } from '@/features/clinics/clinic.api'
 
@@ -75,7 +76,9 @@ onMounted(load)
         </template>
       </el-table-column>
       <el-table-column prop="name" label="Clinique" min-width="160" />
-      <el-table-column prop="address" label="Adresse" min-width="180" />
+      <el-table-column label="Adresse" min-width="180">
+        <template #default="{ row }">{{ formatAddress(row) }}</template>
+      </el-table-column>
       <el-table-column prop="siret" label="SIRET" width="150" />
       <el-table-column label="Statut" width="120">
         <template #default="scope">

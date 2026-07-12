@@ -1,20 +1,21 @@
 import { z } from "zod";
 import { directorClinicIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema, registerSchema } from "./base-user.schema";
-import { clinicSchema } from "../clinics/clinic.schema";
+import { clinicAddressSchema, siretSchema } from "../clinics/clinic.schema";
 
 export const directorProfileSchema = z.object({
   id: directorClinicIdSchema,
   clinicId: clinicIdSchema.nullable().optional(),
 });
-export const clinicRegistrationSchema = z.object({
-  name: z.string().min(1, "Nom requis"),
-  address: z.string().min(1, "Adresse requise"),
-  siret: z.string().length(14, "SIRET doit contenir 14 chiffres"),
-  phone: z.string().min(10, "Téléphone invalide"),
-  website: z.string().min(1, "Site web requis"),
-  description: z.string().max(500).optional(),
-});
+export const clinicRegistrationSchema = z
+  .object({
+    name: z.string().min(1, "Nom requis"),
+    siret: siretSchema,
+    phone: z.string().min(10, "Téléphone invalide"),
+    website: z.string().min(1, "Site web requis"),
+    description: z.string().max(500).optional(),
+  })
+  .extend(clinicAddressSchema.shape);
 export type ClinicRegistration = z.infer<typeof clinicRegistrationSchema>;
 export const registerDirectorSchema = registerSchema.extend({
   clinic: clinicRegistrationSchema,

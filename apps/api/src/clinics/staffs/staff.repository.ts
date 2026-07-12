@@ -125,6 +125,44 @@ export class StaffRepository {
     return director + referents + vets + secretaries;
   }
 
+  // ── Recherche d'un vétérinaire existant (email ou n° de licence) ──────────
+  async searchVeterinarian(query: string, excludeClinicId: string) {
+    const profiles = await this.prisma.veterinarianProfile.findMany({
+      where: {
+        OR: [
+          { licenseNumber: { equals: query, mode: "insensitive" } },
+          { user: { email: { equals: query, mode: "insensitive" } } },
+        ],
+      },
+      include: {
+        user: {
+          select: { id: true, firstname: true, lastname: true, email: true },
+        },
+        veterinarianClinics: { select: { clinicId: true } },
+      },
+      take: 10,
+    });
+
+    return profiles
+      .filter(
+        (p) => !p.veterinarianClinics.some((vc) => vc.clinicId === excludeClinicId),
+      )
+      .map((p) => ({
+        id: p.user.id,
+        firstname: p.user.firstname,
+        lastname: p.user.lastname,
+        email: p.user.email,
+        licenseNumber: p.licenseNumber,
+      }));
+  }
+
+  async findVeterinarianProfile(veterinarianId: string) {
+    return this.prisma.veterinarianProfile.findUnique({
+      where: { id: veterinarianId },
+      include: { user: { select: { firstname: true, email: true } } },
+    });
+  }
+
   // ── Détail d'un membre du staff ──────────────────────────────────────────
   async findMemberDetailById(memberId: string) {
     return this.prisma.user.findUnique({
@@ -146,6 +184,31 @@ export class StaffRepository {
         referentClinicProfile: true,
       },
     });
+  }
+
+  // ── Suppression / retrait d'un membre du staff ────────────────────────────
+  async findVeterinarianClinicLink(veterinarianId: string, clinicId: string) {
+    return this.prisma.veterinarianClinic.findFirst({
+      where: { veterinarianId, clinicId },
+    });
+  }
+
+  async unlinkVeterinarian(linkId: string) {
+    return this.prisma.veterinarianClinic.delete({ where: { id: linkId } });
+  }
+
+  async findReferentClinicId(memberId: string) {
+    return this.prisma.referentClinicProfile.findUnique({
+      where: { id: memberId },
+    });
+  }
+
+  async findSecretaryClinicId(memberId: string) {
+    return this.prisma.secretaryProfile.findUnique({ where: { id: memberId } });
+  }
+
+  async deleteMember(memberId: string) {
+    return this.prisma.user.delete({ where: { id: memberId } });
   }
 
   // ── Création d'un vétérinaire ─────────────────────────────────────────────

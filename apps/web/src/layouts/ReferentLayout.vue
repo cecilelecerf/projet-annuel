@@ -65,6 +65,11 @@ const menuItems: NavNode[] = [
     ],
   },
   {
+    index: 'REFERENT.VisitsForecast',
+    label: 'Prévisions',
+    icon: TrendCharts,
+  },
+  {
     index: 'DIRECTOR.Commerce',
     label: 'Commerce',
     icon: Shop,

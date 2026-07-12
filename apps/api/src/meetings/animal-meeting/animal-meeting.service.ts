@@ -446,4 +446,16 @@ export class AnimalMeetingService {
     });
     return expandAll(flat, start, end);
   }
+
+  async getLastByAnimal({
+    animalId,
+    userId,
+    role,
+  }: {
+    animalId: AnimalId;
+    userId: string;
+    role: UserRole;
+  }) {
+    return this.repository.findLastByAnimal(animalId);
+  }
 }

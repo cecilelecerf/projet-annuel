@@ -2,6 +2,7 @@
 import type { Clinic } from '@armali/schemas'
 import { computed } from 'vue'
 import ProfileInfoRows from './ProfileInfoRows.vue'
+import { formatAddress, formatOpeningHours } from '@/utils/clinic.utils'
 
 const props = defineProps<{
   clinic: Clinic
@@ -10,7 +11,7 @@ const props = defineProps<{
 const rows = computed(() => {
   const r = [
     { label: 'Nom', value: props.clinic.name },
-    { label: 'Adresse', value: props.clinic.address },
+    { label: 'Adresse', value: formatAddress(props.clinic) },
     { label: 'Téléphone', value: props.clinic.phone },
     { label: 'Site web', value: props.clinic.website, isLink: true },
   ]
@@ -18,7 +19,7 @@ const rows = computed(() => {
     r.push({ label: 'Description', value: props.clinic.description })
   }
   if (props.clinic.openingHours) {
-    r.push({ label: 'Horaires', value: props.clinic.openingHours })
+    r.push({ label: 'Horaires', value: formatOpeningHours(props.clinic.openingHours) })
   }
   return r
 })

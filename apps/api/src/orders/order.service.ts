@@ -195,9 +195,8 @@ export class OrderService {
         clientProfile.user.firstname,
         {
           clinicName: clinic.name,
-          clinicAddress: clinic.address,
+          clinicAddress: `${clinic.street}, ${clinic.postalCode} ${clinic.city}`,
           clinicPhone: clinic.phone ?? undefined,
-          openingHours: clinic.openingHours ?? undefined,
           pickupCode: order.pickupCode,
           items: order.orderItems.map((i) => ({
             name: i.productClinic.product.name,

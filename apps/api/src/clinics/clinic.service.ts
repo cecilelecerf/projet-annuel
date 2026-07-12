@@ -11,6 +11,7 @@ import {
   NotFoundError,
 } from "@api/errors";
 import { ClinicRepository } from "./clinic.repository";
+import { prisma } from "@api/lib/prisma";
 import { UserRole } from "../../prisma/generated/prisma/enums";
 import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { Clinic } from "../../prisma/generated/prisma/client";
@@ -133,5 +134,31 @@ export class ClinicService {
 
     await this.repository.deleteClinicById(clinicId);
     return { message: "Clinique supprimée" };
+  }
+
+  private async getClinicIdForDirectorOrReferent(
+    userId: string,
+  ): Promise<string> {
+    const director = await prisma.directorClinicProfile.findUnique({
+      where: { id: userId },
+      include: { clinic: true },
+    });
+    if (director?.clinic) return director.clinic.id;
+
+    const referent = await prisma.referentClinicProfile.findUnique({
+      where: { id: userId },
+    });
+    if (referent) return referent.clinicId;
+
+    throw new BadRequestError("Aucune clinique associée à ce compte");
+  }
+
+  async updateClinicImage(userId: string, imagePath: string) {
+    const clinicId = await this.getClinicIdForDirectorOrReferent(userId);
+
+    return prisma.clinic.update({
+      where: { id: clinicId },
+      data: { image: imagePath },
+    });
   }
 }

@@ -29,8 +29,8 @@ model AnimalHealthCondition {
   animal            Animal          @relation(fields: [animalId], references: [id], onDelete: Cascade)
   meetingId         String?
   animalMeeting     AnimalMeeting?  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  addedById         String
-  addedBy           User            @relation(fields: [addedById], references: [id])
+  addedById         String?
+  addedBy           User?           @relation(fields: [addedById], references: [id], onDelete: SetNull)
 
   @@map("owned_pet_health_conditions")
 }

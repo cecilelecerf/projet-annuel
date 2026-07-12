@@ -57,6 +57,11 @@ export const referentRouter: RouteRecordRaw[] = [
         name: 'REFERENT.Specialities',
         component: () => import('@/features/specialities/views/LinkSpecialitiesView.vue'),
       },
+      {
+        path: 'previsions',
+        name: 'REFERENT.VisitsForecast',
+        component: () => import('@/features/dashboard/views/VisitsForecastView.vue'),
+      },
 
       // ── Messagerie ────────────────────────────────────────────
 

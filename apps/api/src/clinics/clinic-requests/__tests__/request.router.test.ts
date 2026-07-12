@@ -45,7 +45,10 @@ async function createDisposableRequest(
   return prisma.clinicRequest.create({
     data: {
       name: "Clinique jetable",
-      address: "1 rue du Test",
+      street: "1 rue du Test",
+      postalCode: "75001",
+      city: "Paris",
+      country: "FR",
       siret: overrides.siret ?? makeSiret(),
       phone: "0102030405",
       website: "https://jetable.fr",
@@ -156,7 +159,10 @@ describe("GET /api/clinics/requests/status", () => {
 describe("POST /api/clinics/requests/", () => {
   const validPayload = {
     name: "Nouvelle clinique",
-    address: "5 rue du Test, Paris",
+    street: "5 rue du Test",
+    postalCode: "75001",
+    city: "Paris",
+    country: "FR",
     siret: "",
     phone: "0102030405",
     website: "https://nouvelle-clinique.fr",

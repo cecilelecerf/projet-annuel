@@ -36,6 +36,7 @@ import { VaccineRepository } from "./vaccines/vaccine.repository";
 
 // ── Veterinarian-clinics ──────────────────────────────────────
 import { VeterinarianClinicRepository } from "./clinics/veterinarian-clinics/veterinarian-clinic.repository";
+import { VeterinarianClinicService } from "./clinics/veterinarian-clinics/veterinarian-clinic.service";
 
 // ── Product ──────────────────────────────────────
 import { ProductRepository } from "./products/product.repository";
@@ -204,7 +205,15 @@ const animalHealthConditionRepository = new AnimalHealthConditionRepository(
 
 const emailService = new EmailService();
 const clinicService = new ClinicService(clinicRepository);
-const staffService = new StaffService(staffRepository, clinicService);
+const veterinarianClinicService = new VeterinarianClinicService(
+  veterinarianClinicRepository,
+);
+const staffService = new StaffService(
+  staffRepository,
+  clinicService,
+  veterinarianClinicService,
+  emailService,
+);
 const fileService = new FileService(fileRepository);
 const userService = new UserService(userRepository, clinicService, fileService);
 

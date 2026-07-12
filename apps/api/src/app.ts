@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import { resolve } from "path";
 import { handleStripeWebhook } from "./orders/order-webhook.controller";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
@@ -63,6 +64,7 @@ app.post(
 );
 
 app.use(express.json());
+app.use("/uploads", express.static(resolve(process.cwd(), "uploads")));
 
 app.get("/api/test", async (req, res) => {
   const users = await prisma.user.findMany({

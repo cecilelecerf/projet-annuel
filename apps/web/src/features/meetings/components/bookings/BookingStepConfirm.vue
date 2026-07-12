@@ -14,6 +14,7 @@ import type {
 import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
 import { formatDate, subtractTime } from '../utils'
+import { formatAddress } from '@/utils/clinic.utils'
 
 dayjs.locale('fr')
 
@@ -93,7 +94,7 @@ async function confirm() {
           <span class="summary-label">Clinique</span>
           <div class="summary-value">
             <span class="summary-main">{{ clinic.name }}</span>
-            <span class="summary-sub">{{ clinic.address }}</span>
+            <span class="summary-sub">{{ formatAddress(clinic) }}</span>
           </div>
         </div>
         <div class="summary-divider" />

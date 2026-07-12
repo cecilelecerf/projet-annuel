@@ -294,9 +294,10 @@ describe("OrderService.markOrderReady", () => {
     });
     mockPrisma.clinic.findUnique.mockResolvedValue({
       name: "Clinique du Parc",
-      address: "1 rue Test",
+      street: "1 rue Test",
+      postalCode: "75001",
+      city: "Paris",
       phone: "0102030405",
-      openingHours: "9h-18h",
     });
 
     await service.markOrderReady("secretary-1", "order-1");
@@ -306,7 +307,7 @@ describe("OrderService.markOrderReady", () => {
       "Bob",
       expect.objectContaining({
         clinicName: "Clinique du Parc",
-        clinicAddress: "1 rue Test",
+        clinicAddress: "1 rue Test, 75001 Paris",
         pickupCode: "ABC123",
         total: 30,
       }),

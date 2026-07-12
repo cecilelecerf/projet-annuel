@@ -6,16 +6,27 @@ import type {
   CreateReferentStaff,
   UserRole,
 } from "@armali/schemas";
-import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@api/errors";
 import { StaffRepository } from "./staff.repository";
 import { CLINIC_STAFF_ROLES, STAFF_ROLES } from "@api/utils";
 import { ClinicService } from "@api/clinics/clinic.service";
+import { VeterinarianClinicService } from "@api/clinics/veterinarian-clinics/veterinarian-clinic.service";
+import { EmailService } from "@api/emails/email.service";
 import { withAvatarUrl } from "@api/users/user.utils";
+
+const DELETABLE_ROLES: UserRole[] = ["VETERINARIAN", "REFERENT", "SECRETARY"];
 
 export class StaffService {
   constructor(
     private repository: StaffRepository,
     private clinicService: ClinicService,
+    private veterinarianClinicService: VeterinarianClinicService,
+    private emailService: EmailService,
   ) {}
 
   // Vérifie que l'acteur a bien accès à cette clinique, sinon ForbiddenError
@@ -151,6 +162,112 @@ export class StaffService {
         hashedPassword,
       }),
     );
+  }
+
+  // ── Recherche + rattachement d'un vétérinaire existant ────────────────────
+  async searchVeterinarian({
+    authorId,
+    query,
+  }: {
+    authorId: UserId;
+    query: string;
+  }) {
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
+    if (!clinics) throw new NotFoundError("clinic");
+    if (clinics.length !== 1)
+      throw new ConflictError("Multiple clinics associated with the user");
+
+    const q = query.trim();
+    if (!q)
+      throw new BadRequestError(
+        "Veuillez indiquer un email ou un numéro de licence",
+      );
+
+    return this.repository.searchVeterinarian(q, clinics[0].id);
+  }
+
+  async linkVeterinarian({
+    authorId,
+    authorRole,
+    veterinarianId,
+  }: {
+    authorId: UserId;
+    authorRole: UserRole;
+    veterinarianId: string;
+  }) {
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
+    if (!clinics) throw new NotFoundError("clinic");
+    if (clinics.length !== 1)
+      throw new ConflictError("Multiple clinics associated with the user");
+    const clinic = clinics[0];
+
+    const vetProfile =
+      await this.repository.findVeterinarianProfile(veterinarianId);
+    if (!vetProfile) throw new NotFoundError("Vétérinaire");
+
+    const linked = await this.veterinarianClinicService.create({
+      veterinarianId,
+      clinicId: clinic.id,
+      role: authorRole,
+    });
+
+    this.emailService
+      .sendClinicLinked(vetProfile.user.email, vetProfile.user.firstname, clinic.name)
+      .catch(() => {});
+
+    return linked;
+  }
+
+  // ── Suppression / retrait d'un membre du staff ────────────────────────────
+  async deleteStaffMember({
+    authorId,
+    authorRole,
+    memberId,
+  }: {
+    authorId: UserId;
+    authorRole: UserRole;
+    memberId: UserId;
+  }) {
+    const clinics = await this.clinicService.getClinicsByUser(authorId);
+    if (!clinics) throw new NotFoundError("clinic");
+    if (clinics.length !== 1)
+      throw new ConflictError("Multiple clinics associated with the user");
+    const clinicId = clinics[0].id;
+
+    const target = await this.repository.findMemberDetailById(memberId);
+    if (!target) throw new NotFoundError("Utilisateur");
+    if (!DELETABLE_ROLES.includes(target.role)) throw new ForbiddenError();
+    // Un référent ne peut pas retirer un autre référent, seul un directeur le peut.
+    if (target.role === "REFERENT" && authorRole !== "DIRECTOR")
+      throw new ForbiddenError();
+
+    // Un vétérinaire peut travailler dans plusieurs cliniques : on ne
+    // supprime que son rattachement à celle-ci, jamais son compte ni son
+    // historique de rendez-vous/dossiers médicaux.
+    if (target.role === "VETERINARIAN") {
+      const link = await this.repository.findVeterinarianClinicLink(
+        memberId,
+        clinicId,
+      );
+      if (!link) throw new NotFoundError("Utilisateur");
+      await this.repository.unlinkVeterinarian(link.id);
+      return { message: "Vétérinaire retiré de la clinique" };
+    }
+
+    let targetClinicId: string | undefined;
+    if (target.role === "REFERENT") {
+      targetClinicId = (
+        await this.repository.findReferentClinicId(memberId)
+      )?.clinicId;
+    } else if (target.role === "SECRETARY") {
+      targetClinicId = (
+        await this.repository.findSecretaryClinicId(memberId)
+      )?.clinicId;
+    }
+    if (targetClinicId !== clinicId) throw new NotFoundError("Utilisateur");
+
+    await this.repository.deleteMember(memberId);
+    return { message: "Compte supprimé" };
   }
 
   async getStaffIdsByUser({

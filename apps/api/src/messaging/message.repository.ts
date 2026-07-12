@@ -32,10 +32,15 @@ export class MessageRepository {
     });
   }
 
-  async countUnread(conversationId: string, since: Date | null) {
+  async countUnread(
+    conversationId: string,
+    userId: string,
+    since: Date | null,
+  ) {
     return this.prisma.message.count({
       where: {
         conversationId,
+        senderId: { not: userId },
         ...(since ? { createdAt: { gt: since } } : {}),
       },
     });

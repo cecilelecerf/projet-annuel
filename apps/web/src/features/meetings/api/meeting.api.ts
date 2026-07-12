@@ -38,7 +38,12 @@ import {
 import dayjs from 'dayjs'
 
 export const meetingApi = {
-  getCalendar: async ({
+  getCalendar: async ({ start, end }: { start: string; end: string }): Promise<Calendar> => {
+    const data = await http.get(`/meetings/calendar?startDate=${start}&endDate=${end}`)
+    return calendarSchema.parse(data)
+  },
+
+  getVeterinarianCalendar: async ({
     start,
     end,
     userId,
@@ -48,7 +53,7 @@ export const meetingApi = {
     userId?: UserId
   }): Promise<Calendar> => {
     const data = await http.get(
-      `/meetings/calendar${userId ? '/' + userId : ''}?startDate=${start}&endDate=${end}`,
+      `/veterinarians/${userId}/calendar?startDate=${start}&endDate=${end}`,
     )
     return calendarSchema.parse(data)
   },
@@ -77,8 +82,20 @@ export const meetingApi = {
     const params = new URLSearchParams({ date, clinicId })
 
     return await http
-      .get(`/meetings/veterinarians/${veterinarianId}/slots?${params}`)
+      .get(`/veterinarians/${veterinarianId}/meetings/slots?${params}`)
       .then((d) => bookingSlotSchema.array().parse(d))
+  },
+  download: async () => {
+    const blob = await http.getBlob('/meetings/calendar/download')
+
+    const url = window.URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'calendar.ics'
+    link.click()
+
+    URL.revokeObjectURL(url)
   },
 
   internal: {

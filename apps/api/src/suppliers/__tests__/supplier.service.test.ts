@@ -2,25 +2,34 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import type { UserRole } from "@armali/schemas";
 
-const mockRepository = vi.hoisted(() => ({
+const mockSupplierRepository = vi.hoisted(() => ({
   findAll: vi.fn(),
   findById: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
-  findProductLink: vi.fn(),
-  addProduct: vi.fn(),
-  updateProductCost: vi.fn(),
-  removeProduct: vi.fn(),
+}));
+const mockSupplierProductRepository = vi.hoisted(() => ({
+  findById: vi.fn(),
+  upsert: vi.fn(),
+  updateCost: vi.fn(),
+  delete: vi.fn(),
 }));
 
 const { SupplierService } = await import("../supplier.service");
 
-const service = new SupplierService(mockRepository as any);
+const service = new SupplierService(
+  mockSupplierRepository as any,
+  mockSupplierProductRepository as any,
+);
 
 beforeEach(() => vi.clearAllMocks());
 
-const READ_FORBIDDEN_ROLES: UserRole[] = ["SECRETARY", "VETERINARIAN", "CLIENT"];
+const READ_FORBIDDEN_ROLES: UserRole[] = [
+  "SECRETARY",
+  "VETERINARIAN",
+  "CLIENT",
+];
 const WRITE_FORBIDDEN_ROLES: UserRole[] = [
   "REFERENT",
   "DIRECTOR",
@@ -46,7 +55,7 @@ describe("SupplierService.getAll", () => {
   it.each<UserRole>(["ADMIN", "REFERENT", "DIRECTOR"])(
     "%s — délègue au repository",
     async (role) => {
-      mockRepository.findAll.mockResolvedValue([makeSupplier()]);
+      mockSupplierRepository.findAll.mockResolvedValue([makeSupplier()]);
       const result = await service.getAll(role);
       expect(result).toHaveLength(1);
     },
@@ -61,20 +70,20 @@ describe("SupplierService.getById", () => {
   });
 
   it("NotFoundError si absent", async () => {
-    mockRepository.findById.mockResolvedValue(null);
+    mockSupplierRepository.findById.mockResolvedValue(null);
     await expect(service.getById("REFERENT", "unknown")).rejects.toThrow(
       NotFoundError,
     );
   });
 
   it("retourne le fournisseur trouvé", async () => {
-    mockRepository.findById.mockResolvedValue(makeSupplier());
+    mockSupplierRepository.findById.mockResolvedValue(makeSupplier());
     const result = await service.getById("DIRECTOR", "supplier-1");
     expect(result.id).toBe("supplier-1");
   });
 });
 
-// ── Écriture : admin uniquement ──────────────────────────────────────────────
+// ── Écriture Supplier : admin uniquement ─────────────────────────────────────
 
 describe("SupplierService.create", () => {
   const data = { name: "Virbac" } as any;
@@ -83,14 +92,16 @@ describe("SupplierService.create", () => {
     "%s — ForbiddenError, catalogue admin-only",
     async (role) => {
       await expect(service.create(role, data)).rejects.toThrow(ForbiddenError);
-      expect(mockRepository.create).not.toHaveBeenCalled();
+      expect(mockSupplierRepository.create).not.toHaveBeenCalled();
     },
   );
 
   it("ADMIN — crée le fournisseur", async () => {
-    mockRepository.create.mockResolvedValue(makeSupplier({ name: "Virbac" }));
+    mockSupplierRepository.create.mockResolvedValue(
+      makeSupplier({ name: "Virbac" }),
+    );
     const result = await service.create("ADMIN", data);
-    expect(mockRepository.create).toHaveBeenCalledWith(data);
+    expect(mockSupplierRepository.create).toHaveBeenCalledWith(data);
     expect(result.name).toBe("Virbac");
   });
 });
@@ -102,20 +113,22 @@ describe("SupplierService.update / delete", () => {
       await expect(
         service.update(role, "supplier-1", { name: "X" } as any),
       ).rejects.toThrow(ForbiddenError);
-      expect(mockRepository.findById).not.toHaveBeenCalled();
+      expect(mockSupplierRepository.findById).not.toHaveBeenCalled();
     },
   );
 
   it("ADMIN — update — NotFoundError si absent", async () => {
-    mockRepository.findById.mockResolvedValue(null);
+    mockSupplierRepository.findById.mockResolvedValue(null);
     await expect(
       service.update("ADMIN", "unknown", { name: "X" } as any),
     ).rejects.toThrow(NotFoundError);
   });
 
   it("ADMIN — update — modifie le fournisseur", async () => {
-    mockRepository.findById.mockResolvedValue(makeSupplier());
-    mockRepository.update.mockResolvedValue(makeSupplier({ name: "Nouveau" }));
+    mockSupplierRepository.findById.mockResolvedValue(makeSupplier());
+    mockSupplierRepository.update.mockResolvedValue(
+      makeSupplier({ name: "Nouveau" }),
+    );
     const result = await service.update("ADMIN", "supplier-1", {
       name: "Nouveau",
     } as any);
@@ -128,22 +141,22 @@ describe("SupplierService.update / delete", () => {
       await expect(service.delete(role, "supplier-1")).rejects.toThrow(
         ForbiddenError,
       );
-      expect(mockRepository.findById).not.toHaveBeenCalled();
+      expect(mockSupplierRepository.findById).not.toHaveBeenCalled();
     },
   );
 
   it("ADMIN — delete — NotFoundError si absent", async () => {
-    mockRepository.findById.mockResolvedValue(null);
+    mockSupplierRepository.findById.mockResolvedValue(null);
     await expect(service.delete("ADMIN", "unknown")).rejects.toThrow(
       NotFoundError,
     );
   });
 
   it("ADMIN — delete — supprime le fournisseur", async () => {
-    mockRepository.findById.mockResolvedValue(makeSupplier());
-    mockRepository.delete.mockResolvedValue(undefined);
+    mockSupplierRepository.findById.mockResolvedValue(makeSupplier());
+    mockSupplierRepository.delete.mockResolvedValue(undefined);
     await service.delete("ADMIN", "supplier-1");
-    expect(mockRepository.delete).toHaveBeenCalledWith("supplier-1");
+    expect(mockSupplierRepository.delete).toHaveBeenCalledWith("supplier-1");
   });
 });
 
@@ -153,23 +166,23 @@ describe("SupplierService.addProduct", () => {
   const data = { productId: "product-1", costPrice: 12.5 } as any;
 
   it.each(WRITE_FORBIDDEN_ROLES)("%s — ForbiddenError", async (role) => {
-    await expect(
-      service.addProduct(role, "supplier-1", data),
-    ).rejects.toThrow(ForbiddenError);
+    await expect(service.addProduct(role, "supplier-1", data)).rejects.toThrow(
+      ForbiddenError,
+    );
   });
 
   it("ADMIN — NotFoundError si le fournisseur n'existe pas", async () => {
-    mockRepository.findById.mockResolvedValue(null);
-    await expect(
-      service.addProduct("ADMIN", "unknown", data),
-    ).rejects.toThrow(NotFoundError);
+    mockSupplierRepository.findById.mockResolvedValue(null);
+    await expect(service.addProduct("ADMIN", "unknown", data)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
-  it("ADMIN — ajoute le produit au catalogue", async () => {
-    mockRepository.findById.mockResolvedValue(makeSupplier());
-    mockRepository.addProduct.mockResolvedValue({ id: "sp-1" });
+  it("ADMIN — ajoute le produit au catalogue (upsert)", async () => {
+    mockSupplierRepository.findById.mockResolvedValue(makeSupplier());
+    mockSupplierProductRepository.upsert.mockResolvedValue({ id: "sp-1" });
     await service.addProduct("ADMIN", "supplier-1", data);
-    expect(mockRepository.addProduct).toHaveBeenCalledWith(
+    expect(mockSupplierProductRepository.upsert).toHaveBeenCalledWith(
       "supplier-1",
       "product-1",
       12.5,
@@ -179,7 +192,7 @@ describe("SupplierService.addProduct", () => {
 
 describe("SupplierService.updateProduct / removeProduct", () => {
   it("ADMIN — NotFoundError si le lien n'appartient pas à ce fournisseur", async () => {
-    mockRepository.findProductLink.mockResolvedValue({
+    mockSupplierProductRepository.findById.mockResolvedValue({
       id: "sp-1",
       supplierId: "supplier-AUTRE",
     });
@@ -191,11 +204,11 @@ describe("SupplierService.updateProduct / removeProduct", () => {
   });
 
   it("ADMIN — met à jour le prix d'achat", async () => {
-    mockRepository.findProductLink.mockResolvedValue({
+    mockSupplierProductRepository.findById.mockResolvedValue({
       id: "sp-1",
       supplierId: "supplier-1",
     });
-    mockRepository.updateProductCost.mockResolvedValue({
+    mockSupplierProductRepository.updateCost.mockResolvedValue({
       id: "sp-1",
       costPrice: 15,
     });
@@ -206,12 +219,12 @@ describe("SupplierService.updateProduct / removeProduct", () => {
   });
 
   it("ADMIN — retire le produit du catalogue", async () => {
-    mockRepository.findProductLink.mockResolvedValue({
+    mockSupplierProductRepository.findById.mockResolvedValue({
       id: "sp-1",
       supplierId: "supplier-1",
     });
-    mockRepository.removeProduct.mockResolvedValue(undefined);
+    mockSupplierProductRepository.delete.mockResolvedValue(undefined);
     await service.removeProduct("ADMIN", "supplier-1", "sp-1");
-    expect(mockRepository.removeProduct).toHaveBeenCalledWith("sp-1");
+    expect(mockSupplierProductRepository.delete).toHaveBeenCalledWith("sp-1");
   });
 });

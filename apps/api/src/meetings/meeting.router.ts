@@ -19,16 +19,9 @@ meetingRouter.get(
   meetingController.getMyCalendar.bind(meetingController) as RequestHandler,
 );
 meetingRouter.get(
-  "/veterinarians/:veterinarianId/slots",
-  roleMiddleware(["CLIENT"]),
-  meetingController.getVetSlots.bind(meetingController) as RequestHandler,
-);
-meetingRouter.get(
-  "/calendar/:veterinarianId",
-  roleMiddleware(["SECRETARY"]),
-  meetingController.getVeterinarianCalendar.bind(
-    meetingController,
-  ) as RequestHandler,
+  "/calendar/download",
+  roleMiddleware(STAFF_ROLES),
+  meetingController.exportMyCalendar.bind(meetingController) as RequestHandler,
 );
 
 meetingRouter.use("/recurrings", recurringMeetingRouter);

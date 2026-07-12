@@ -47,6 +47,15 @@ const makeRequest = (overrides = {}) => ({
   directorId: DIRECTOR_ID,
   createdAt: new Date(),
   updatedAt: new Date(),
+  director: {
+    id: DIRECTOR_ID,
+    user: {
+      firstname: "Paul",
+      lastname: "Martin",
+      email: "directeur@gmail.com",
+      avatarUrl: null,
+    },
+  },
   ...overrides,
 });
 

@@ -3,6 +3,8 @@ import { useAuthStore } from '@/stores/authStore'
 import { useReferentForm } from '../../composables/useReferentForm'
 import type { ClinicId } from '@armali/schemas'
 const { user } = useAuthStore()
+if (!(user && 'clinicId' in user && typeof user.clinicId === 'string')) throw new Error()
+
 const { form, loading, submit } = useReferentForm(user?.clinicId as ClinicId)
 </script>
 

@@ -2,11 +2,65 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { http } from '../lib/api'
 import { type ClinicId, type User } from '@armali/schemas'
-export type UserStore = Pick<
-  User,
-  'id' | 'email' | 'firstname' | 'lastname' | 'role' | 'avatarUrl'
-> & {
-  clinicId?: ClinicId
+import { match } from 'ts-pattern'
+type StaffRole = Exclude<User['role'], 'CLIENT' | 'ADMIN' | 'VETERINARIAN'>
+
+type ClientStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'avatarUrl'> & {
+  role: 'CLIENT'
+}
+
+type StaffStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'avatarUrl'> & {
+  clinicId: ClinicId
+  role: StaffRole
+}
+
+type VeterinarianStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'avatarUrl'> & {
+  role: 'VETERINARIAN'
+  clinicIds: ClinicId[]
+}
+
+type AdminStore = Pick<User, 'id' | 'email' | 'firstname' | 'lastname' | 'avatarUrl'> & {
+  role: 'ADMIN'
+}
+
+export type UserStore = ClientStore | StaffStore | AdminStore | VeterinarianStore
+
+function toUserStore(data: UserStore): UserStore {
+  return match(data)
+    .with({ role: 'CLIENT' }, (d) => ({
+      id: d.id,
+      email: d.email,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      role: d.role,
+      avatarUrl: d.avatarUrl,
+    }))
+    .with({ role: 'ADMIN' }, (d) => ({
+      id: d.id,
+      email: d.email,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      role: d.role,
+      avatarUrl: d.avatarUrl,
+    }))
+    .with({ role: 'VETERINARIAN' }, (d) => ({
+      id: d.id,
+      email: d.email,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      role: d.role,
+      avatarUrl: d.avatarUrl,
+      clinicIds: d.clinicIds,
+    }))
+    .otherwise((d) => ({
+      id: d.id,
+      email: d.email,
+      firstname: d.firstname,
+      lastname: d.lastname,
+      role: d.role,
+      avatarUrl: d.avatarUrl,
+      clinicId: d.clinicId,
+    }))
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -14,6 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem('accessToken'))
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
   const isAuthenticated = computed(() => !!accessToken.value)
+
   const clearAuth = () => {
     user.value = null
     accessToken.value = null
@@ -33,16 +88,8 @@ export const useAuthStore = defineStore('auth', () => {
   const init = async () => {
     if (!isAuthenticated.value) return
     try {
-      const data = await http.get<UserStore>('/auth/me').then()
-      user.value = {
-        id: data.id,
-        email: data.email,
-        firstname: data.firstname,
-        lastname: data.lastname,
-        role: data.role,
-        avatarUrl: data.avatarUrl,
-        clinicId: data.clinicId,
-      }
+      const data = await http.get<UserStore>('/auth/me')
+      user.value = toUserStore(data)
     } catch {
       clearAuth()
     }
@@ -75,14 +122,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    await http.post('/auth/logout', { refreshToken: refreshToken.value })
-    user.value = null
-    accessToken.value = null
-    refreshToken.value = null
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-
-    clearAuth()
+    try {
+      await http.post('/auth/logout', { refreshToken: refreshToken.value })
+    } finally {
+      clearAuth()
+    }
   }
 
   const forgotPassword = async (email: string) => {
@@ -96,6 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     accessToken,
+    refreshToken,
     isAuthenticated,
     login,
     verifyTwoFactor,

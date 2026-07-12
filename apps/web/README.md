@@ -1,73 +1,89 @@
-# web
+# 📂 Web
 
-This template should help get you started developing with Vue 3 in Vite.
+Frontend du projet — **Vue 3** (`<script setup>`), **Vue Router**, **Pinia**, **Element Plus**.
 
-## Recommended IDE Setup
+📎 Voir aussi : [README racine](../../README.md) · [`apps/api/README.md`](../api/README.md) · [`packages/schemas/README.md`](../../packages/schemas/README.md)
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+## 📁 Structure
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+```
+apps/web/
+├── src/
+│   ├── main.ts                # Point d'entrée Vue
+│   ├── router/                 # Vue Router — déclaration des routes globales
+│   ├── stores/                 # Pinia stores globaux (auth, session, etc.)
+│   ├── layouts/                # Layouts par rôle (ClientLayout, VetLayout, ...)
+│   ├── components/             # Composants réutilisables transverses (design system, UI générique)
+│   └── features/                # Organisation par feature (feature-based)
+│       └── <feature>/
+│           ├── api.ts               # Appels API de la feature
+│           ├── utils.ts             # Fonctions utilitaires de la feature
+│           ├── views/               # Pages de la feature
+│           ├── components/          # Composants spécifiques à la feature
+│           └── composables/          # Composables (logique réactive réutilisable)
+├── nginx.conf                  # Config nginx (prod)
+└── package.json
+```
 
-## Type Support for `.vue` Imports in TS
+> 💡 Un composant/composable ne monte dans `src/components` ou `src/composables` (racine) que s'il est réellement **transverse** (utilisé par au moins deux features). Sinon il reste dans `features/<feature>/`.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+---
 
-## Customize configuration
+## 🏷️ Conventions de nommage
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Fichiers `.vue`
 
-## Project Setup
+| Type       | Convention                                                                                                  | Exemple                                      |
+| ---------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Composant  | `PascalCase`, nom **multi-mots** (jamais un seul mot, pour éviter tout conflit avec une balise HTML native) | `AnimalCard.vue`, `VaccineList.vue`          |
+| Page / vue | `PascalCase`, suffixe `View`                                                                                | `AnimalDetailView.vue`, `ClinicListView.vue` |
+| Layout     | `PascalCase`, suffixe `Layout`                                                                              | `ClientLayout.vue`, `VeterinarianLayout.vue` |
+
+### Fichiers `.ts`
+
+| Type          | Convention                                                                      | Exemple                                       |
+| ------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
+| Composable    | `camelCase`, préfixe `use`                                                      | `useAnimal.ts`, `useClinicSearch.ts`          |
+| Store (Pinia) | `camelCase`, nommé par domaine ; le store exporté suit `useXStore`              | `auth.ts` → `export const useAuthStore = ...` |
+| Utilitaire    | `camelCase`, verbe ou nom explicite de l'action                                 | `formatDate.ts`, `withAvatarUrl.ts`           |
+| Appels API    | regroupés dans `api.ts` par feature, une fonction par endpoint, verbe explicite | `getAnimalById`, `updateClinicInfo`           |
+
+### Dossiers
+
+- `kebab-case` ou nom de domaine au singulier pour les dossiers de feature : `features/animal/`, `features/clinic/` (pas `features/animals/`).
+- Un dossier de feature reflète une entité/domaine métier, pas une page isolée — regrouper toutes les vues/composants liés à cette entité au même endroit.
+
+### Composants — bonnes pratiques
+
+- **Props** : `camelCase` dans le `<script setup>`, `kebab-case` à l'usage dans le template (`:date-of-birth="..."`).
+- **Un composant = une responsabilité claire.** S'il dépasse ~150-200 lignes ou mélange plusieurs préoccupations, le découper.
+- Préférer la composition (`composables/`) à la duplication de logique entre composants.
+- Ne pas préfixer les composants par le nom du framework ou de la lib (`VueAnimalCard` ❌) — le multi-mot suffit à éviter les collisions.
+
+---
+
+## 🚀 Installation & scripts
 
 ```sh
 pnpm install
 ```
 
-### Compile and Hot-Reload for Development
+| Commande         | Description                                     |
+| ---------------- | ----------------------------------------------- |
+| `pnpm dev`       | Démarre en mode watch avec hot-reload           |
+| `pnpm build`     | Type-check + build de production                |
+| `pnpm test:unit` | Tests unitaires ([Vitest](https://vitest.dev/)) |
+| `pnpm lint`      | Lint ([ESLint](https://eslint.org/))            |
 
-```sh
-pnpm dev
-```
+> Depuis la racine, privilégie `pnpm dev:web` (voir [README racine](../../README.md)).
 
-### Type-Check, Compile and Minify for Production
+---
 
-```sh
-pnpm build
-```
+## 🛠️ Setup recommandé
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-pnpm test:unit
-```
-
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
-
-```sh
-# Install browsers for the first run
-npx playwright install
-
-# When testing on CI, must build the project first
-pnpm build
-
-# Runs the end-to-end tests
-pnpm test:e2e
-# Runs the tests only on Chromium
-pnpm test:e2e --project=chromium
-# Runs the tests of a specific file
-pnpm test:e2e tests/example.spec.ts
-# Runs the tests in debug mode
-pnpm test:e2e --debug
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-pnpm lint
-```
+- **Éditeur** : [VS Code](https://code.visualstudio.com/) + extension [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) — désactiver Vetur si installé (conflit avec Volar).
+- **Type-check des `.vue`** : TypeScript ne gère pas nativement les imports `.vue`, d'où l'usage de `vue-tsc` pour le check de types (à la place de `tsc`) et de Volar côté éditeur.
+- **DevTools navigateur** : extension [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) (Chromium) ou [équivalent Firefox](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/), avec le _Custom Object Formatter_ activé dans les DevTools pour un affichage lisible des objets réactifs Vue.
+- **Config build** : voir la [référence Vite](https://vite.dev/config/) pour personnaliser `vite.config.ts`.

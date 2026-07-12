@@ -51,31 +51,6 @@ export class SupplierOrderRepository {
     });
   }
 
-  // Trouve (ou signale l'absence d') un ClinicProduct pour incrémenter le
-  // stock à la réception — un produit commandé chez un fournisseur peut ne
-  // pas encore exister dans la boutique de la clinique.
-  async findClinicProduct(clinicId: string, productId: string) {
-    return this.prisma.clinicProduct.findFirst({
-      where: { clinicId, productId },
-    });
-  }
-
-  async incrementClinicProductStock(clinicProductId: string, quantity: number) {
-    return this.prisma.clinicProduct.update({
-      where: { id: clinicProductId },
-      data: { stock: { increment: quantity } },
-    });
-  }
-
-  // Crée l'entrée ClinicProduct si le produit reçu n'était pas encore au
-  // catalogue de la clinique (stock initial = quantité reçue, prix de vente
-  // et seuil minimum à 0 : à ajuster manuellement ensuite par le référent).
-  async createClinicProduct(clinicId: string, productId: string, stock: number) {
-    return this.prisma.clinicProduct.create({
-      data: { clinicId, productId, stock, minimumRequired: 0, price: 0 },
-    });
-  }
-
   async markReceived(id: string) {
     return this.prisma.supplierOrder.update({
       where: { id },

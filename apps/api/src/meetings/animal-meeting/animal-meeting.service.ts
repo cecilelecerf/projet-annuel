@@ -10,6 +10,9 @@ import {
   type UpdateAnimalMeeting,
   type AnimalMeetingWithMeeting,
   animalMeetigWithMeetingSchema,
+  ClinicId,
+  VeterinarianId,
+  UserId,
 } from "@armali/schemas";
 import {
   AnimalMeetingForUser,
@@ -22,6 +25,8 @@ import { calculateAge, isStaff } from "@api/utils";
 import { EmailService } from "@api/emails/email.service";
 import dayjs from "dayjs";
 import { UserRepository } from "@api/users/user.repository";
+import { expandAll } from "../utils";
+import { MeetingBaseWithSpecific } from "../type";
 
 // ── Combine une date (jour) avec une heure (time) en un seul instant ──────────
 function combineDateTime(date: Date, time: Date) {
@@ -139,7 +144,7 @@ export class AnimalMeetingService {
   private animalMeetignWithFlatUser(
     meeting: AnimalMeetingForUser,
   ): AnimalMeetingWithMeeting {
-    const client = flatUser(meeting.animal.client);
+    const client = withUserAvatar(meeting.animal.client);
     const veterinarian = meeting.veterinarianClinic
       ? flatUser(meeting.veterinarianClinic?.veterinarian)
       : undefined;
@@ -212,13 +217,12 @@ export class AnimalMeetingService {
   }) {
     const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
-
     if (!isStaff(role)) {
       const isOwner = meeting.animal.client.id === userId;
       if (!isOwner) throw new ForbiddenError();
     }
 
-    const user = flatUser(meeting.animal.client);
+    const user = withUserAvatar(meeting.animal.client);
     return {
       ...meeting,
 
@@ -374,12 +378,12 @@ export class AnimalMeetingService {
     return deleted;
   }
 
-  async getByUser({
+  async getAllByClient({
     id,
     userId,
     role,
   }: {
-    id: string;
+    id: UserId;
     userId: string;
     role: UserRole;
   }) {
@@ -411,5 +415,35 @@ export class AnimalMeetingService {
       throw new ForbiddenError();
     const animalMeetings = await this.repository.findByAnimal(animalId);
     return animalMeetings.map(this.animalMeetignWithFlatUser);
+  }
+  async getAllByVet(vetProfileId: VeterinarianId) {
+    return await this.repository.findByVeterinarian(vetProfileId);
+  }
+  async getAnimalMeetingsAsVet(
+    vetProfileId: VeterinarianId,
+    start: Date,
+    end: Date,
+    clinicIds: ClinicId[] = [],
+  ) {
+    const meetings = await this.repository.findByVeterinarianAndClinic(
+      vetProfileId,
+      start,
+      end,
+      clinicIds,
+    );
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (!meeting) return [];
+      return [meeting as MeetingBaseWithSpecific];
+    });
+    return expandAll(flat, start, end);
+  }
+
+  async getAnimalMeetingsByClinic(clinicId: string, start: Date, end: Date) {
+    const meetings = await this.repository.findByClinic(clinicId, start, end);
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (!meeting) return [];
+      return [meeting as MeetingBaseWithSpecific];
+    });
+    return expandAll(flat, start, end);
   }
 }

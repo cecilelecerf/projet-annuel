@@ -9,13 +9,14 @@ import {
   updateClinicSpecialitiesSchema,
 } from "@armali/schemas";
 import {
+  animalController,
   clinicController,
   clinicPetController,
   clinicSpecialityController,
 } from "@api/instances";
 import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
-import clinicRequestRouter from "./requests/request.router";
+import clinicRequestRouter from "./clinic-requests/request.router";
 import staffRouter from "./staffs/staff.router";
 import clinicActRouter from "./clinic-acts/clinic-act.router";
 
@@ -40,6 +41,13 @@ clinicRouter.get(
 );
 
 clinicRouter.get(
+  "/:id/animals",
+  requireApprovedClinic,
+  roleMiddleware(["SECRETARY"]),
+  animalController.getByClinic.bind(animalController) as RequestHandler,
+);
+
+clinicRouter.get(
   "/:id/specialities",
   requireApprovedClinic,
   clinicSpecialityController.getAcceptedSpecialities.bind(
@@ -56,6 +64,7 @@ clinicRouter.patch(
     clinicSpecialityController,
   ) as RequestHandler,
 );
+
 clinicRouter.get(
   "/:id/pets",
   requireApprovedClinic,
@@ -64,6 +73,7 @@ clinicRouter.get(
     clinicPetController,
   ) as RequestHandler,
 );
+
 clinicRouter.patch(
   "/:id/pets",
   requireApprovedClinic,

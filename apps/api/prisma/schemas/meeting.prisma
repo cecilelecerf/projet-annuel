@@ -99,7 +99,7 @@ model InternalMeetingParticipant {
   user   User   @relation(fields: [userId], references: [id])
 
   status MeetingStatus
-
+@@unique([userId, meetingId])
   @@map("internal_meeting_participants")
 }
 

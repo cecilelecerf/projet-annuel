@@ -7,6 +7,8 @@ import type { Client } from '@armali/schemas'
 import { animalApi } from '@/features/animals/api'
 import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { useAuthStore } from '@/stores/authStore'
+import ContactCard from '@/components/ContactCard.vue'
+import MeetingListByAnimal from '@/features/meetings/components/animal-meeting/MeetingListByAnimal.vue'
 
 const { client } = defineProps<{ client: Client }>()
 dayjs.locale('fr')
@@ -69,64 +71,40 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
         </h3>
 
         <div v-if="animals.length" class="pets-grid">
-          <div
+          <ContactCard
             v-for="pet in animals"
             :key="pet.id"
-            class="pet-card"
-            @click="
-              router.push({
-                name: `${user?.role.toUpperCase()}.Animals.Detail`,
-                params: { id: pet.id },
-              })
-            "
-          >
-            <div class="pet-avatar">{{ pet.name.charAt(0) }}</div>
-            <div class="pet-info">
-              <span class="pet-name">{{ pet.name }}</span>
-              <span class="pet-meta"> {{ pet.race?.pet?.name }} · {{ pet.race?.name }} </span>
-              <span class="pet-meta"> {{ dayjs().diff(dayjs(pet.dateOfBirth), 'year') }} ans </span>
-            </div>
-            <el-icon class="pet-arrow"><ArrowRight /></el-icon>
-          </div>
+            :name="pet.name"
+            :metas="[
+              `${pet.race.pet.name} ${pet.race.name}`,
+              `${dayjs().diff(dayjs(pet.dateOfBirth), 'year')} ans`,
+            ]"
+            :route="{
+              name: `${user?.role.toUpperCase()}.Animals.Detail`,
+              params: { id: pet.id },
+            }"
+          />
         </div>
         <p v-else class="empty-text">Aucun animal enregistré</p>
       </div>
 
-      <div class="section">
+      <MeetingListByAnimal :meetings="meetings" :client-id="client.id" />
+      <!-- <div class="section">
         <h3 class="section-label">
           <el-icon><Calendar /></el-icon>
           Derniers rendez-vous
         </h3>
 
         <div v-if="meetings.length" class="meetings-list">
-          <div
+          <AnimalMeetingCard
             v-for="meeting in meetings.slice(0, 5)"
             :key="meeting.meeting.id"
-            class="meeting-row"
-            @click="
-              router.push({
-                name: `${user?.role.toUpperCase()}.Meetings.Detail`,
-                params: { id: meeting.meeting.id },
-              })
-            "
-          >
-            <div class="meeting-date">
-              <span class="meeting-day">
-                {{ dayjs(meeting.meeting?.date).format('D MMM') }}
-              </span>
-              <span class="meeting-year">
-                {{ dayjs(meeting.meeting?.date).format('YYYY') }}
-              </span>
-            </div>
-            <div class="meeting-info">
-              <span class="meeting-pet">{{ meeting.animal.name }}</span>
-              <span class="meeting-desc">{{ meeting.description ?? 'Consultation' }}</span>
-            </div>
-            <el-icon><ArrowRight /></el-icon>
-          </div>
+            :animal-meeting="meeting"
+            status="PAST"
+          />
         </div>
         <p v-else class="empty-text">Aucun rendez-vous</p>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -199,6 +177,8 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 .profile-details {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: var(--spacing-xs);
   width: 100%;
   margin-top: var(--spacing-sm);

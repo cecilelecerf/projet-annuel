@@ -45,6 +45,17 @@ export class ClinicRequestRepository {
   findRequestsByDirector(directorUserId: string) {
     return this.prisma.clinicRequest.findMany({
       where: { directorId: directorUserId },
+      include: {
+        director: {
+          include: {
+            user: {
+              include: {
+                avatar: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -55,13 +66,10 @@ export class ClinicRequestRepository {
     return this.prisma.clinicRequest.findMany({
       include: {
         director: {
-          select: {
+          include: {
             user: {
-              select: {
-                id: true,
-                firstname: true,
-                lastname: true,
-                email: true,
+              include: {
+                avatar: true,
               },
             },
           },

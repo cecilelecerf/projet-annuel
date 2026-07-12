@@ -2,7 +2,6 @@
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 import type { NavNode } from '@/components/ui/nav/NaveNode'
 import { useAuthStore } from '@/stores/authStore'
-import { clinicIdSchema } from '@armali/schemas'
 import {
   House,
   UserFilled,
@@ -14,9 +13,15 @@ import {
   Wallet,
   Box,
   List,
+  Setting,
+  Tickets,
+  Collection,
+  Star,
+  Shop,
 } from '@element-plus/icons-vue'
 const { user } = useAuthStore()
-const clinicId = clinicIdSchema.parse(user?.clinicId)
+
+if (user?.role !== 'REFERENT') throw new Error()
 
 const menuItems: NavNode[] = [
   {
@@ -32,6 +37,7 @@ const menuItems: NavNode[] = [
       {
         index: 'REFERENT.Clinic',
         label: 'Général',
+        icon: Setting,
       },
       {
         index: 'REFERENT.Staff',
@@ -40,45 +46,55 @@ const menuItems: NavNode[] = [
       },
       {
         index: 'REFERENT.Acts',
-        label: 'Acts',
-        params: { id: clinicId },
+        label: 'Actes',
+        icon: Tickets,
+        params: { id: user.clinicId },
       },
       {
         index: 'REFERENT.Pets',
-        label: 'Pets',
-        params: { id: clinicId },
+        label: 'Animaux',
+        icon: Collection,
+        params: { id: user.clinicId },
       },
       {
         index: 'REFERENT.Specialities',
         label: 'Spécialités',
-        params: { id: clinicId },
+        icon: Star,
+        params: { id: user.clinicId },
       },
     ],
   },
   {
-    index: 'REFERENT.Boutique',
-    label: 'Boutique',
-    icon: ShoppingCart,
-  },
-  {
-    index: 'REFERENT.Sales',
-    label: 'Ventes',
-    icon: TrendCharts,
-  },
-  {
-    index: 'REFERENT.Budget',
-    label: 'Budget',
-    icon: Wallet,
-  },
-  {
-    index: 'REFERENT.Suppliers',
-    label: 'Fournisseurs',
-    icon: Box,
-  },
-  {
-    index: 'REFERENT.SupplierOrders',
-    label: 'Commandes Fournisseurs',
-    icon: List,
+    index: 'DIRECTOR.Commerce',
+    label: 'Commerce',
+    icon: Shop,
+    children: [
+      {
+        index: 'REFERENT.Boutique',
+        label: 'Boutique',
+        icon: ShoppingCart,
+      },
+      {
+        index: 'REFERENT.Sales',
+        label: 'Ventes',
+        icon: TrendCharts,
+      },
+      {
+        index: 'REFERENT.Budget',
+        label: 'Budget',
+        icon: Wallet,
+      },
+      {
+        index: 'REFERENT.Suppliers',
+        label: 'Fournisseurs',
+        icon: Box,
+      },
+      {
+        index: 'REFERENT.SupplierOrders',
+        label: 'Commandes Fournisseurs',
+        icon: List,
+      },
+    ],
   },
   {
     index: 'REFERENT.Messagerie',

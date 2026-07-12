@@ -87,6 +87,6 @@ model VeterinarianClinic {
   hospitalizationReports HospitalizationReport[]
   animals                Animal[]
 
-  @@unique([id, clinicId])
+  @@unique([veterinarianId, clinicId])
   @@map("veterinarian_clinics")
 }

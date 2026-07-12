@@ -5,9 +5,6 @@ const mockRepository = vi.hoisted(() => ({
   create: vi.fn(),
   findByClinic: vi.fn(),
   findById: vi.fn(),
-  findClinicProduct: vi.fn(),
-  incrementClinicProductStock: vi.fn(),
-  createClinicProduct: vi.fn(),
   markReceived: vi.fn(),
   markCancelled: vi.fn(),
 }));
@@ -17,6 +14,11 @@ const mockBudgetRepository = vi.hoisted(() => ({
   create: vi.fn(),
 }));
 const mockClinicService = vi.hoisted(() => ({ getClinicIdByUserId: vi.fn() }));
+const mockProductClinicRepository = vi.hoisted(() => ({
+  findByClinicAndProduct: vi.fn(),
+  incrementStock: vi.fn(),
+  create: vi.fn(),
+}));
 
 const { SupplierOrderService } = await import("../supplier-order.service");
 
@@ -25,6 +27,7 @@ const service = new SupplierOrderService(
   mockSupplierRepository as any,
   mockBudgetRepository as any,
   mockClinicService as any,
+  mockProductClinicRepository as any,
 );
 
 beforeEach(() => vi.clearAllMocks());
@@ -77,7 +80,7 @@ describe("SupplierOrderService.create", () => {
 
   it("BadRequestError si le budget est insuffisant", async () => {
     mockSupplierRepository.findById.mockResolvedValue(makeSupplier());
-    mockBudgetRepository.getBalance.mockResolvedValue(50); // total attendu = 125
+    mockBudgetRepository.getBalance.mockResolvedValue(50);
     await expect(service.create("user-1" as any, "REFERENT", data)).rejects.toThrow(
       BadRequestError,
     );
@@ -141,35 +144,40 @@ describe("SupplierOrderService.markReceived", () => {
 
   it("incrémente le stock existant du ClinicProduct pour chaque ligne", async () => {
     mockRepository.findById.mockResolvedValue(makeOrder());
-    mockRepository.findClinicProduct.mockResolvedValue({ id: "cp-1", stock: 5 });
+    mockProductClinicRepository.findByClinicAndProduct.mockResolvedValue({
+      id: "cp-1",
+      stock: 5,
+    });
     mockRepository.markReceived.mockResolvedValue(makeOrder({ status: "RECEIVED" }));
 
     await service.markReceived("user-1" as any, "REFERENT", "order-1");
 
-    expect(mockRepository.incrementClinicProductStock).toHaveBeenCalledWith(
+    expect(mockProductClinicRepository.incrementStock).toHaveBeenCalledWith(
       "cp-1",
       10,
     );
-    expect(mockRepository.createClinicProduct).not.toHaveBeenCalled();
+    expect(mockProductClinicRepository.create).not.toHaveBeenCalled();
   });
 
   it("crée le ClinicProduct si le produit n'était pas encore dans la boutique", async () => {
     mockRepository.findById.mockResolvedValue(makeOrder());
-    mockRepository.findClinicProduct.mockResolvedValue(null);
+    mockProductClinicRepository.findByClinicAndProduct.mockResolvedValue(null);
     mockRepository.markReceived.mockResolvedValue(makeOrder({ status: "RECEIVED" }));
 
     await service.markReceived("user-1" as any, "REFERENT", "order-1");
 
-    expect(mockRepository.createClinicProduct).toHaveBeenCalledWith(
-      "clinic-1",
-      "product-1",
-      10,
+    expect(mockProductClinicRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clinicId: "clinic-1",
+        productId: "product-1",
+        stock: 10,
+      }),
     );
   });
 
   it("passe le statut à RECEIVED", async () => {
     mockRepository.findById.mockResolvedValue(makeOrder());
-    mockRepository.findClinicProduct.mockResolvedValue({ id: "cp-1" });
+    mockProductClinicRepository.findByClinicAndProduct.mockResolvedValue({ id: "cp-1" });
     mockRepository.markReceived.mockResolvedValue(makeOrder({ status: "RECEIVED" }));
 
     const result = await service.markReceived("user-1" as any, "REFERENT", "order-1");

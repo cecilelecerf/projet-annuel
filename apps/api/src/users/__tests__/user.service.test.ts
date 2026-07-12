@@ -68,6 +68,7 @@ const mockUser = {
   role: "VETERINARIAN",
   createdAt: new Date(),
   updatedAt: new Date(),
+  avatarUrl: null,
 };
 
 const { UserRepository } = await import("@api/users/user.repository");

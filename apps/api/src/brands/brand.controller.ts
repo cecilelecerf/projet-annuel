@@ -1,8 +1,5 @@
 import type { NextFunction, Response } from "express";
-import type {
-  AuthenticatedRequest,
-  RequestWithParams,
-} from "@api/middlewares";
+import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
   createBrandSchema,
@@ -48,10 +45,7 @@ export class BrandController {
     try {
       const result = createBrandSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const brand = await this.service.findOrCreate(
-        result.data,
-        req.user.role,
-      );
+      const brand = await this.service.findOrCreate(result.data, req.user.role);
       res.status(201).json(brand);
     } catch (err) {
       next(err);

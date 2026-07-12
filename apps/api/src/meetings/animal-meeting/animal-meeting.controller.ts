@@ -86,7 +86,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await this.service.getByUser({
+      const meetings = await this.service.getAllByClient({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,

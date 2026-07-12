@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotify } from '@/composables/useNotify'
 import { clientShopApi } from '@/features/shop/api/shop.api'
-import type { ProductClinicWithClinic } from '@armali/schemas'
+import type { ProductClinicWithClinic, AnimalOption, ProductRecommendation } from '@armali/schemas'
 
 const router = useRouter()
 const notify = useNotify()
@@ -23,7 +23,10 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  loadRecommendationsForAllAnimals()
+})
 
 // ── Cliniques distinctes + couleur d'accent par clinique ──────────────────
 const CLINIC_COLORS = ['purple', 'teal', 'pink', 'yellow'] as const
@@ -41,14 +44,17 @@ const clinics = computed(() => {
 })
 
 function clinicColor(clinicId: string) {
-  return clinics.value.find((c) => c.id === clinicId)?.color ?? 'purple'
+  return clinics.value.find(
+    (c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] | undefined }) =>
+      c.id === clinicId,
+  )?.color ?? 'purple'
 }
 
 const selectedClinicId = ref<string | 'all'>('all')
 
 const filteredProducts = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
-  return products.value.filter((p) => {
+  return products.value.filter((p: ProductClinicWithClinic) => {
     const matchesClinic =
       selectedClinicId.value === 'all' || p.clinic.id === selectedClinicId.value
     const matchesQuery =
@@ -61,7 +67,15 @@ const filteredProducts = computed(() => {
 
 const groupedByClinic = computed(() => {
   if (selectedClinicId.value !== 'all') {
-    return [{ clinic: clinics.value.find((c) => c.id === filteredProducts.value[0]?.clinic.id), items: filteredProducts.value }]
+    return [
+      {
+        clinic: clinics.value.find(
+          (c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] | undefined }) =>
+            c.id === filteredProducts.value[0]?.clinic.id,
+        ),
+        items: filteredProducts.value,
+      },
+    ]
   }
   const groups = new Map<string, ProductClinicWithClinic[]>()
   for (const item of filteredProducts.value) {
@@ -69,13 +83,81 @@ const groupedByClinic = computed(() => {
     groups.get(item.clinic.id)!.push(item)
   }
   return [...groups.entries()].map(([clinicId, items]) => ({
-    clinic: clinics.value.find((c) => c.id === clinicId),
+    clinic: clinics.value.find((c: { id: string; name: string; color: (typeof CLINIC_COLORS)[number] | undefined }) => c.id === clinicId),
     items,
   }))
 })
 
 function openDetail(product: ProductClinicWithClinic) {
   router.push({ name: 'CLIENT.Shop.Detail', params: { id: product.id } })
+}
+
+// ── Badges de recommandation, calculés automatiquement pour tous les animaux ─
+
+interface RecommendationMatch {
+  animalName: string
+  recommendation: 'RECOMMENDED' | 'AVOID'
+  matchedConditions: string[]
+}
+
+const recommendationsByProduct = ref<Map<string, RecommendationMatch[]>>(new Map())
+
+async function loadRecommendationsForAllAnimals() {
+  let animals: AnimalOption[] = []
+  try {
+    animals = await clientShopApi.getAnimals()
+  } catch {
+    return
+  }
+  if (animals.length === 0) return
+
+  const map = new Map<string, RecommendationMatch[]>()
+
+  await Promise.all(
+    animals.map(async (animal: AnimalOption) => {
+      let list: ProductRecommendation[] = []
+      try {
+        list = await clientShopApi.getRecommendations(animal.id)
+      } catch {
+        return
+      }
+      for (const rec of list) {
+        if (!rec.recommendation) continue
+        const existing = map.get(rec.clinicProductId) ?? []
+        existing.push({
+          animalName: animal.name,
+          recommendation: rec.recommendation,
+          matchedConditions: rec.matchedConditions,
+        })
+        map.set(rec.clinicProductId, existing)
+      }
+    }),
+  )
+
+  recommendationsByProduct.value = map
+}
+
+function badgeFor(productId: string) {
+  const matches = recommendationsByProduct.value.get(productId) ?? []
+  const recommended = matches.filter((m: RecommendationMatch) => m.recommendation === 'RECOMMENDED')
+  const avoid = matches.filter((m: RecommendationMatch) => m.recommendation === 'AVOID')
+
+  if (recommended.length > 0) {
+    return {
+      type: 'success' as const,
+      text: `Recommandé pour ${recommended.map((m: RecommendationMatch) => m.animalName).join(', ')}`,
+      tooltip: null,
+    }
+  }
+  if (avoid.length > 0) {
+    const conditions = [...new Set(avoid.flatMap((m: RecommendationMatch) => m.matchedConditions))]
+    return {
+      type: 'danger' as const,
+      text: `À éviter pour ${avoid.map((m: RecommendationMatch) => m.animalName).join(', ')}`,
+      tooltip: conditions.length > 0 ? conditions.join(', ') : null,
+    }
+  }
+  return null
 }
 </script>
 
@@ -136,6 +218,24 @@ function openDetail(product: ProductClinicWithClinic) {
           :class="`product-card--${clinicColor(item.clinic.id)}`"
           @click="openDetail(item)"
         >
+          <el-tooltip
+            v-if="badgeFor(item.id)?.tooltip"
+            :content="badgeFor(item.id)!.tooltip!"
+            placement="top"
+          >
+            <el-tag :type="badgeFor(item.id)!.type" class="recommend-badge" size="small">
+              {{ badgeFor(item.id)!.text }}
+            </el-tag>
+          </el-tooltip>
+          <el-tag
+            v-else-if="badgeFor(item.id)"
+            :type="badgeFor(item.id)!.type"
+            class="recommend-badge"
+            size="small"
+          >
+            {{ badgeFor(item.id)!.text }}
+          </el-tag>
+
           <div class="product-card__image">
             <img v-if="item.product.picture" :src="item.product.picture" :alt="item.product.name" />
             <el-icon v-else><Goods /></el-icon>
@@ -168,7 +268,6 @@ function openDetail(product: ProductClinicWithClinic) {
   font-size: 14px;
 }
 
-// ── Filtres cliniques ────────────────────────────────────────────────────
 .clinic-filters {
   display: flex;
   flex-wrap: wrap;
@@ -206,7 +305,6 @@ function openDetail(product: ProductClinicWithClinic) {
   flex-shrink: 0;
 }
 
-// ── Sections par clinique ────────────────────────────────────────────────
 .clinic-section {
   margin-bottom: var(--spacing-md);
 }
@@ -243,6 +341,7 @@ function openDetail(product: ProductClinicWithClinic) {
   padding: 0;
   overflow: hidden;
   border-top: 3px solid transparent;
+  position: relative;
 }
 .product-card:hover {
   transform: translateY(-2px);
@@ -252,6 +351,18 @@ function openDetail(product: ProductClinicWithClinic) {
 .product-card--teal { border-top-color: var(--el-color-teal); }
 .product-card--pink { border-top-color: var(--el-color-pink); }
 .product-card--yellow { border-top-color: var(--el-color-yellow); }
+
+.recommend-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  white-space: normal;
+  height: auto;
+  line-height: 1.3;
+  padding: 3px 8px;
+}
 
 .product-card__image {
   height: 140px;

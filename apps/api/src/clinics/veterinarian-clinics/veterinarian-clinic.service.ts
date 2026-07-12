@@ -37,10 +37,7 @@ export class VeterinarianClinicService {
     if (!isStaff(role)) throw new ForbiddenError();
 
     // Vérifie que l'association n'existe pas déjà
-    const existing = await this.repository.findByVeterinarianAndClinic(
-      veterinarianId,
-      clinicId,
-    );
+    const existing = await this.repository.findByKeys(veterinarianId, clinicId);
     if (existing)
       throw new ConflictError(
         "Ce vétérinaire est déjà associé à cette clinique",

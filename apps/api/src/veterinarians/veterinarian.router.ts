@@ -3,6 +3,8 @@ import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware, validate } from "@api/middlewares";
 import { STAFF_ROLES } from "@api/utils";
 import {
+  animalController,
+  availabilityController,
   meetingController,
   reviewController,
   veterinarianPetController,
@@ -20,8 +22,8 @@ veterinarianRouter.use(requireApprovedClinic);
 veterinarianRouter.get(
   "/:id/availabilities/timeline",
   roleMiddleware(STAFF_ROLES),
-  meetingController.getAvailabilityTimeline.bind(
-    meetingController,
+  availabilityController.getAvailabilityTimeline.bind(
+    availabilityController,
   ) as RequestHandler,
 );
 
@@ -29,6 +31,25 @@ veterinarianRouter.get(
   "/:id/reviews/stats",
   roleMiddleware(["REFERENT", "DIRECTOR"]),
   reviewController.getStats.bind(reviewController) as RequestHandler,
+);
+veterinarianRouter.get(
+  "/:id/calendar",
+  roleMiddleware(["SECRETARY"]),
+  meetingController.getVeterinarianCalendar.bind(
+    meetingController,
+  ) as RequestHandler,
+);
+
+veterinarianRouter.get(
+  "/:id/meetings/slots",
+  roleMiddleware(["CLIENT"]),
+  meetingController.getVetSlots.bind(meetingController) as RequestHandler,
+);
+
+veterinarianRouter.get(
+  "/:id/animals",
+  roleMiddleware(["VETERINARIAN", "SECRETARY"]),
+  animalController.getByVeterinarian.bind(animalController) as RequestHandler,
 );
 
 veterinarianRouter.get(

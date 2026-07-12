@@ -30,12 +30,12 @@ export const secretaryRouter: RouteRecordRaw[] = [
         component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
-        path: 'veterinarian',
+        path: 'staffs/veterinarians',
         name: 'SECRETARY.Veto.List',
         component: () => import('@/features/staffs/views/StaffListView.vue'),
       },
       {
-        path: 'veterinarian/calendar/:id',
+        path: 'staffs/veterinarian/calendar/:id',
         name: 'SECRETARY.Veto.Calendar',
         component: () => import('@/features/meetings/views/UserCalendarView.vue'),
       },
@@ -43,20 +43,26 @@ export const secretaryRouter: RouteRecordRaw[] = [
         path: 'meetings/:id',
         name: 'SECRETARY.Meetings.Detail',
         component: () => import('@/features/meetings/views/MeetingView.vue'),
-        // Horaires, Infos résumé de l'animal (Nom, Type),
-        // Type de RDV (chirurgies, castration…)
-        // Actions : Modification | Suppression | Création
       },
-
       {
-        path: 'users/:id',
+        path: 'clients/:id',
         name: 'SECRETARY.Clients.Detail',
         component: () => import('@/features/users/views/client/ClientView.vue'),
       },
       {
+        path: 'clients/:id/meetings',
+        name: 'SECRETARY.Clients.Meetings.List',
+        component: () => import('@/features/users/views/client/ClientView.vue'),
+      },
+      {
+        path: 'animals',
+        name: 'SECRETARY.Animals.List',
+        component: () => import('@/features/animals/views/AnimalsListView.vue'),
+      },
+      {
         path: 'animals/:id',
         name: 'SECRETARY.Animals.Detail',
-        component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
+        component: () => import('@/features/animals/views/AnimalDetailView.vue'),
       },
 
       // // ── Boutique ─────────────────────────────────────────────

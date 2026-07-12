@@ -31,7 +31,10 @@ export class SupplierController {
     next: NextFunction,
   ) {
     try {
-      const supplier = await this.service.getById(req.user!.role, req.params.id);
+      const supplier = await this.service.getById(
+        req.user!.role,
+        req.params.id,
+      );
       res.status(200).json(supplier);
     } catch (err) {
       next(err);

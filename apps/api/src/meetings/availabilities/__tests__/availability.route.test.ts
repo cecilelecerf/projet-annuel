@@ -253,7 +253,7 @@ describe("Availability router", () => {
         .send({
           kind: "AVAILABILITY",
           type: "SPECIFIED",
-          date: "2027-10-01",
+          date: "2029-10-01",
           startTime: "1970-01-01T09:00:00.000Z",
           endTime: "1970-01-01T10:00:00.000Z",
         });

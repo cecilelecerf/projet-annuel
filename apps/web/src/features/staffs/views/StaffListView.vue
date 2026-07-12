@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/authStore'
+import { useFormErrorStore } from '@/stores/formErrorStore'
 import StaffList from '../components/StaffList.vue'
-import { type StaffMember, type UserRole } from '@armali/schemas'
+import { type ClinicId, type StaffMember, type UserRole } from '@armali/schemas'
 import { staffApi } from '../staff.api.ts'
 import { getStaffPageTexts } from '../utils.ts'
 
@@ -11,40 +13,64 @@ const ROLES: UserRole[] = ['DIRECTOR', 'REFERENT', 'SECRETARY', 'VETERINARIAN']
 
 const router = useRouter()
 const route = useRoute()
-const role = computed(() => {
-  const value = route.query.role
+const formError = useFormErrorStore()
 
-  const r = typeof value === 'string' && ROLES.includes(value as UserRole) ? value : undefined
-  return r ? (r as UserRole) : undefined
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
+
+const role = computed<UserRole | undefined>(() => {
+  if (route.name?.toString() === 'SECRETARY.Veto.List') return 'VETERINARIAN'
+  const value = route.query.role
+  return typeof value === 'string' && ROLES.includes(value as UserRole)
+    ? (value as UserRole)
+    : undefined
 })
-const staffs = ref<StaffMember[]>()
-const { user } = useAuthStore()
+const clinicIds = computed(() => {
+  if (user.value?.role === 'ADMIN' || user.value?.role === 'CLIENT') return []
+  return user.value?.role === 'VETERINARIAN' ? user.value.clinicIds : [user.value?.clinicId]
+})
+const staffByClinic = ref<Record<ClinicId, StaffMember[]>>({})
 const loading = ref(false)
 
 async function loadStaff() {
+  if (!user.value || user.value?.role === 'CLIENT' || user.value?.role === 'ADMIN') return
+
   loading.value = true
-  if (user?.clinicId)
-    try {
-      staffs.value = await staffApi.getAllByClinic({
-        clinicId: user.clinicId,
-        roles: role.value ? [role.value] : [],
-      })
-    } catch {
-      /* silencieux */
-    } finally {
-      loading.value = false
-    }
+  formError.clear()
+  try {
+    if (clinicIds.value.some((c) => c === undefined)) return
+    const results = await Promise.all(
+      clinicIds.value.map((c) =>
+        staffApi.getAllByClinic({ clinicId: c! }).then((staff) => [c, staff] as const),
+      ),
+    )
+    staffByClinic.value = Object.fromEntries(results)
+  } catch (err) {
+    formError.handle(err)
+  } finally {
+    loading.value = false
+  }
 }
 
-onMounted(loadStaff)
+// Redirige si l'utilisateur n'a pas accès à cette page, sans casser le rendu
+onMounted(() => {
+  loadStaff()
+})
+
+watch(role, () => {
+  if (user.value && ROLES.includes(user.value.role)) loadStaff()
+})
+
 const pageTexts = computed(() => getStaffPageTexts(role.value))
+
 function goToCreate() {
-  router.push({ name: `${user?.role.toUpperCase()}.Staff.Create` })
+  if (!user.value) return
+  router.push({ name: `${user.value.role.toUpperCase()}.Staff.Create` })
 }
 </script>
 
 <template>
-  <div class="staff-page">
+  <div class="staff-page" v-if="clinicIds">
     <div class="page-header">
       <div>
         <h1>{{ pageTexts.title }}</h1>
@@ -58,7 +84,9 @@ function goToCreate() {
       >
     </div>
     <!-- TODO : fetch le nom de la clinique -->
-    <StaffList v-if="staffs" :staffs="staffs" clinic-name="fefe" :with-go-to-detail="true" />
+    <template v-for="id in clinicIds" :key="id">
+      <StaffList v-if="id && staffByClinic[id]" clinic-name="e" :staffs="staffByClinic[id] ?? []" />
+    </template>
   </div>
 </template>
 

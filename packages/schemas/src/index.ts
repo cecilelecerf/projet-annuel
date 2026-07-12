@@ -13,6 +13,7 @@ export * from "./dashboard.schema";
 export * from "./budget.schema";
 export * from "./supplier.schema";
 export * from "./supplier-order.schema";
+export * from "./product-recommendation.schema";
 
 export * from "./requests";
 export * from "./acts";

@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
-import type { Clinic, ClinicStatus } from '@armali/schemas'
+import type { ClinicRequest, ClinicStatus } from '@armali/schemas'
 import { clinicApi } from '@/features/clinics/clinic.api'
 
 const notify = useNotify()
-type ClinicRequest = Clinic & { status: ClinicStatus }
 const requests = ref<ClinicRequest[]>([])
 const loading = ref(false)
 
@@ -47,10 +45,8 @@ async function confirm() {
   actionLoading.value = true
   const { type, row } = dialog.value
   try {
-    await http.patch(
-      `/admin/clinic-requests/${row.id}/${type === 'approve' ? 'approve' : 'reject'}`,
-      {},
-    )
+    if (type === 'approve') clinicApi.request.approve({ id: row.id })
+    else if (type === 'reject') clinicApi.request.reject({ id: row.id })
     notify.success(type === 'approve' ? 'Clinique créée avec succès' : 'Demande refusée')
     dialog.value.visible = false
     await load()
@@ -74,8 +70,8 @@ onMounted(load)
     <el-table v-loading="loading" :data="requests" stripe empty-text="Aucune demande">
       <el-table-column label="Directeur" min-width="160">
         <template #default="{ row }">
-          {{ row.director.firstname }} {{ row.director.lastname }}<br />
-          <small style="color: #6b7280">{{ row.director.email }}</small>
+          {{ row.director.user.firstname }} {{ row.director.user.lastname }}<br />
+          <small style="color: #6b7280">{{ row.director.user.email }}</small>
         </template>
       </el-table-column>
       <el-table-column prop="name" label="Clinique" min-width="160" />

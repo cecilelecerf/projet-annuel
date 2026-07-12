@@ -9,7 +9,7 @@ export const clinicStatusSchema = z.enum([
   "REJECTED",
   "APPROVED",
 ]);
-const clinicRequestBaseSchema = clinicSchema
+export const clinicRequestBaseSchema = clinicSchema
   .omit({ id: true, lat: true, lng: true, openingHours: true, image: true })
   .extend({
     id: clinicRequestIdSchema,
@@ -27,4 +27,5 @@ export const clinicRequestSchema = clinicRequestBaseSchema.extend({
 });
 
 export type ClinicRequest = z.infer<typeof clinicRequestSchema>;
+export type ClinicRequestBase = z.infer<typeof clinicRequestBaseSchema>;
 export type ClinicStatus = z.infer<typeof clinicStatusSchema>;

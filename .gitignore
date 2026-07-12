@@ -74,3 +74,8 @@ temp/
 *.tmp
 /Epics
 .npmrc
+
+# Ai ban
+/.claude
+CLAUDE.md
+AGEMTS.md

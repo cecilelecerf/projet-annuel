@@ -3,7 +3,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ElMessageBox } from 'element-plus'
 import { useNotify } from '@/composables/useNotify'
-import type { Clinic } from '@armali/schemas'
+import type { Clinic, ClinicRequestBase } from '@armali/schemas'
 import { clinicApi } from '../clinic.api'
 import { useAuthStore } from '@/stores/authStore'
 import {
@@ -31,7 +31,7 @@ const directorStatus = ref<DirectorPageStatus>('loading')
 const staffLoading = ref(false)
 
 const clinic = ref<Clinic | null>(null)
-const request = ref<Clinic | null>(null)
+const request = ref<ClinicRequestBase | null>(null)
 
 // ── Formulaire de demande de création (statut NONE / REJECTED) ─────────
 

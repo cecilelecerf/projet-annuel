@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotify } from '@/composables/useNotify'
 import DevLoginSection from '../components/DevLoginSection.vue'
+import { roleHomeMap } from '@/router'
 
 const notify = useNotify()
 
@@ -20,7 +21,7 @@ async function handleLogin() {
     await authStore.login(email.value, password.value)
     notify.success('Connexion réussie !')
     const role = authStore.user?.role
-    router.push({ name: role?.toUpperCase() })
+    router.push(role && roleHomeMap[role] ? roleHomeMap[role] : '/')
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Erreur de connexion')
   } finally {

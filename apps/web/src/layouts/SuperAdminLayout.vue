@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-
 import {
   Box,
   DocumentChecked,
@@ -10,6 +9,7 @@ import {
   Setting,
   Star,
   User,
+  UserFilled,
   Van,
 } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
@@ -35,6 +35,11 @@ const menuItems: NavNode[] = [
     index: 'Admin.Specialities',
     label: 'Spécialités',
     icon: Star,
+  },
+  {
+    index: 'Admin.Users',
+    label: 'Comptes',
+    icon: UserFilled,
   },
   {
     index: '',

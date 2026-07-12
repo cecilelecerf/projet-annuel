@@ -67,6 +67,19 @@ export class UserController {
       next(err);
     }
   }
+  async deleteUser(
+    req: RequestWithParams<{ id: UserId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const result = await this.service.deleteUser(req.user.id, req.params.id);
+      res.status(200).json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async uploadAvatar(
     req: AuthenticatedRequest,
     res: Response,

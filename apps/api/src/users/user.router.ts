@@ -50,4 +50,11 @@ userRouter.get(
   controller.getUserById.bind(controller) as RequestHandler,
 );
 
+userRouter.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.deleteUser.bind(controller) as RequestHandler,
+);
+
 export default userRouter;

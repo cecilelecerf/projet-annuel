@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { userIdSchema } from "../ids";
+import { fileIdSchema, userIdSchema } from "../ids";
 
 export const userRoleSchema = z.enum([
   "CLIENT",
   "SECRETARY",
   "DIRECTOR",
-  "REFERANT",
+  "REFERENT",
   "VETERINARIAN",
   "ADMIN",
 ]);
@@ -18,8 +18,9 @@ export const baseUserSchema = z.object({
   email: z.email("Email invalide").max(255),
   lastname: z.string().min(1).max(255),
   firstname: z.string().min(1).max(255),
-  picture: z.url().max(255).nullable().optional(),
   role: userRoleSchema,
+  avatarId: fileIdSchema.nullable(),
+  avatarUrl: z.url().max(255).nullable(),
 });
 
 export type BaseUser = z.infer<typeof baseUserSchema>;
@@ -53,3 +54,11 @@ export const updateAccountSchema = baseUserSchema
     path: ["currentPassword"],
   });
 export type UpdateAccount = z.infer<typeof updateAccountSchema>;
+
+export const bankingInfoInputSchema = z.object({
+  iban: z.string().optional(),
+  bic: z.string().optional(),
+  domiciliation: z.string().optional(),
+  beneficiary: z.string().optional(),
+});
+export type BankingInfoInput = z.infer<typeof bankingInfoInputSchema>;

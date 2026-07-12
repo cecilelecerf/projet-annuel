@@ -1,13 +1,27 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedOrders(
   prisma: PrismaClient,
-  { users, clinic1 }: { users: any; clinic1: Clinic },
+  {
+    users,
+    clinics,
+  }: {
+    users: ReturnType<typeof import("./users").seedUsers> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
+  },
 ) {
   const { clientUser1 } = users;
 
   const cp1 = await prisma.clinicProduct.findFirst({
-    where: { clinicId: clinic1.id },
+    where: { clinicId: clinics.clinic1.id },
   });
   if (!cp1) return;
 
@@ -15,8 +29,9 @@ export async function seedOrders(
     data: {
       status: "CONFIRMED",
       pickupAt: new Date("2026-02-25T10:00:00"),
+      pickupCode: "A1B2C3",
       clientId: clientUser1.id,
-      clinicId: clinic1.id,
+      clinicId: clinics.clinic1.id,
     },
   });
 

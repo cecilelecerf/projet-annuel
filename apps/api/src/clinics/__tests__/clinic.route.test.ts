@@ -63,7 +63,7 @@ describe("POST /api/clinics/me/image", () => {
       where: { email: "directeur@gmail.com" },
       include: { directorClinicProfile: { include: { clinic: true } } },
     });
-    expect(director!.directorClinicProfile!.clinic.image).toBe(
+    expect(director!.directorClinicProfile!.clinic!.image).toBe(
       res.body.image,
     );
   });

@@ -4,16 +4,16 @@ export const STAFF_ROLES: UserRole[] = [
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",
-  "REFERANT",
+  "REFERENT",
   "ADMIN",
-];
+] as const;
 
 export const CLINIC_STAFF_ROLES: UserRole[] = [
   "VETERINARIAN",
   "SECRETARY",
   "DIRECTOR",
-  "REFERANT",
-];
+  "REFERENT",
+] as const;
 
 export const isStaff = (role: UserRole) => STAFF_ROLES.includes(role);
 

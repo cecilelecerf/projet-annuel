@@ -2,26 +2,33 @@ import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { BadRequestError } from "@api/errors";
 import {
+  actSchema,
+  actTypeSchema,
   createActSchema,
   updateActSchema,
-  createClinicActSchema,
-  updateClinicActSchema,
   type CreateAct,
   type UpdateAct,
-  type CreateClinicAct,
-  type UpdateClinicAct,
 } from "@armali/schemas";
 import { ActService } from "./act.service";
 
-const actService = new ActService();
-
 export class ActController {
+  constructor(private service: ActService) {}
+
   // ── Acts ──────────────────────────────────────────────────────────────────
 
   async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const acts = await actService.getAll();
-      res.status(200).json(acts);
+      const types = req.query.type
+        ? Array.isArray(req.query.type)
+          ? req.query.type
+          : [req.query.type]
+        : undefined;
+
+      const result = actTypeSchema.array().optional().safeParse(types);
+      if (!result.success) throw new BadRequestError("Type d'acte invalide");
+
+      const acts = await this.service.getAll({ actType: result.data });
+      res.status(200).json(actSchema.array().parse(acts));
     } catch (err) {
       next(err);
     }
@@ -33,8 +40,8 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      const act = await actService.getById(req.params.id);
-      res.status(200).json(act);
+      const act = await this.service.getById(req.params.id);
+      res.status(200).json(actSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -48,8 +55,8 @@ export class ActController {
     try {
       const result = createActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.create(result.data, req.user.role);
-      res.status(201).json(act);
+      const act = await this.service.create(result.data, req.user.role);
+      res.status(201).json(actSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -63,12 +70,12 @@ export class ActController {
     try {
       const result = updateActSchema.safeParse(req.body);
       if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.update(
+      const act = await this.service.update(
         req.params.id,
         result.data,
         req.user.role,
       );
-      res.status(200).json(act);
+      res.status(200).json(actSchema.parse(act));
     } catch (err) {
       next(err);
     }
@@ -80,93 +87,7 @@ export class ActController {
     next: NextFunction,
   ) {
     try {
-      await actService.delete(req.params.id, req.user.role);
-      res.status(204).send();
-    } catch (err) {
-      next(err);
-    }
-  }
-  async getByMeeting(
-    req: RequestWithParams<{ meetingId: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const acts = await actService.getByMeeting(req.params.meetingId);
-      res.status(200).json(acts);
-    } catch (err) {
-      next(err);
-    }
-  }
-  // ── ClinicActs ────────────────────────────────────────────────────────────
-
-  async getClinicActs(
-    req: RequestWithParams<{ clinicId: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const acts = await actService.getClinicActs(req.params.clinicId);
-      res.status(200).json(acts);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async getClinicActById(
-    req: RequestWithParams<{ id: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const act = await actService.getClinicActById(req.params.id);
-      res.status(200).json(act);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async createClinicAct(
-    req: AuthenticatedRequest & { body: CreateClinicAct },
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const result = createClinicActSchema.safeParse(req.body);
-      if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.createClinicAct(result.data, req.user.role);
-      res.status(201).json(act);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async updateClinicAct(
-    req: RequestWithParams<{ id: string }> & { body: UpdateClinicAct },
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      const result = updateClinicActSchema.safeParse(req.body);
-      if (!result.success) throw new BadRequestError(result.error.message);
-      const act = await actService.updateClinicAct(
-        req.params.id,
-        result.data,
-        req.user.role,
-      );
-      res.status(200).json(act);
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  async deleteClinicAct(
-    req: RequestWithParams<{ id: string }>,
-    res: Response,
-    next: NextFunction,
-  ) {
-    try {
-      await actService.deleteClinicAct(req.params.id, req.user.role);
+      await this.service.delete(req.params.id, req.user.role);
       res.status(204).send();
     } catch (err) {
       next(err);

@@ -1,0 +1,67 @@
+@use 'sass:color';
+@use 'sass:map';
+
+$custom-colors: (
+  'purple': #9f6de0,
+  'pink': #e06d84,
+  'teal': #4d884e,
+  'yellow': #caab43,
+  'orange': #dc8137,
+  'indigo': #3d7cd4,
+);
+
+:root {
+  @each $name, $base in $custom-colors {
+    --el-color-#{$name}: #{$base};
+    --el-color-#{$name}-light-1: #{color.mix(white, $base, 10%)};
+    --el-color-#{$name}-light-2: #{color.mix(white, $base, 20%)};
+    --el-color-#{$name}-light-3: #{color.mix(white, $base, 30%)};
+    --el-color-#{$name}-light-5: #{color.mix(white, $base, 50%)};
+    --el-color-#{$name}-light-7: #{color.mix(white, $base, 70%)};
+    --el-color-#{$name}-light-9: #{color.mix(white, $base, 90%)};
+    --el-color-#{$name}-dark-0_5: #{color.mix(black, $base, 5%)};
+    --el-color-#{$name}-dark-1: #{color.mix(black, $base, 10%)};
+    --el-color-#{$name}-dark-2: #{color.mix(black, $base, 20%)};
+    --el-color-#{$name}-dark-3: #{color.mix(black, $base, 30%)};
+    --el-color-#{$name}-dark-5: #{color.mix(black, $base, 50%)};
+    --el-color-#{$name}-dark-9: #{color.mix(black, $base, 90%)};
+  }
+}
+
+@each $name in map.keys($custom-colors) {
+  // ── Button ──────────────────────────────────────────────────────────────────
+  .el-button.el-button--#{$name} {
+    --el-button-text-color: white;
+    --el-button-bg-color: var(--el-color-#{$name});
+    --el-button-border-color: var(--el-color-#{$name});
+    --el-button-hover-text-color: white;
+    --el-button-hover-bg-color: var(--el-color-#{$name}-light-3);
+    --el-button-hover-border-color: var(--el-color-#{$name}-light-3);
+    --el-button-active-bg-color: var(--el-color-#{$name}-dark-2);
+    --el-button-active-border-color: var(--el-color-#{$name}-dark-2);
+  }
+
+  .el-button.el-button--#{$name}.is-plain {
+    --el-button-text-color: var(--el-color-#{$name});
+    --el-button-bg-color: var(--el-color-#{$name}-light-9);
+    --el-button-border-color: var(--el-color-#{$name}-light-5);
+    --el-button-hover-text-color: white;
+    --el-button-hover-bg-color: var(--el-color-#{$name});
+    --el-button-hover-border-color: var(--el-color-#{$name});
+  }
+
+  // ── Tag ─────────────────────────────────────────────────────────────────────
+  .el-tag.el-tag--#{$name} {
+    --el-tag-text-color: var(--el-color-#{$name}-dark-2);
+    --el-tag-bg-color: var(--el-color-#{$name}-light-9);
+    --el-tag-border-color: var(--el-color-#{$name}-light-5);
+  }
+
+  // ── Alert ───────────────────────────────────────────────────────────────────
+  .el-alert.el-alert--#{$name} {
+    --el-alert-bg-color: var(--el-color-#{$name}-light-9);
+    --el-alert-title-color: var(--el-color-#{$name}-dark-2);
+    --el-alert-icon-color: var(--el-color-#{$name});
+    --el-alert-description-color: var(--el-color-#{$name}-dark-2);
+  }
+}

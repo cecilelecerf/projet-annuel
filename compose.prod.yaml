@@ -71,18 +71,75 @@ services:
           memory: 256M
       restart_policy:
         condition: on-failure
+  migration:
+    image: ${DOCKER_HUB_USERNAME}/pa-api:latest
+    entrypoint:
+      - /scripts/migrate.sh
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+    networks:
+      - backend
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: none
+      update_config:
+        order: start-first
+        failure_action: continue
+
+  seed:
+    image: ${DOCKER_HUB_USERNAME}/pa-seed:latest
+    entrypoint:
+      - /scripts/seed.sh
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - aws_access_key_id_v2
+      - aws_secret_access_key_v2
+      - s3_bucket
+      - s3_endpoint
+      - aws_region
+    networks:
+      - backend
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: none
+      update_config:
+        order: start-first
+        failure_action: continue
 
   api:
     image: ${DOCKER_HUB_USERNAME}/pa-api:latest
     environment:
       NODE_ENV: production
       CORS_ORIGIN: https://armali.online
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: https://s3.armali.online
+      S3_BUCKET: armali-files
+      AWS_REGION: us-east-1
+      ASSETS_BASE_URL: https://s3.armali.online/armali-files
+      ENABLE_EMAIL: "true"
+      MAIL_FROM: "Armali <contact@armali.online>"
     secrets:
       - db_user
       - db_password
       - db_name
       - jwt_access_secret
       - jwt_refresh_secret
+      - minio_root_user
+      - minio_root_password
+      - s3_bucket
+      - s3_endpoint
+      - aws_region
+      - aws_access_key_id_v2
+      - aws_secret_access_key_v2
+      - stripe_secret_key
+      - stripe_webhook_secret_v2
+      - resend_api_key
     networks:
       - backend
       - frontend
@@ -247,6 +304,61 @@ services:
       timeout: 10s
       retries: 3
 
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+      MINIO_API_CORS_ALLOW_ORIGIN: "https://armali.online"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    networks:
+      - backend
+      - frontend
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=cecoule_frontend"
+        - "traefik.http.routers.minio_s3.rule=Host(`s3.armali.online`)"
+        - "traefik.http.routers.minio_s3.entrypoints=websecure"
+        - "traefik.http.routers.minio_s3.tls.certresolver=myresolver"
+        - "traefik.http.services.minio_s3.loadbalancer.server.port=9000"
+
+  minio-init:
+    image: minio/mc:latest
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    configs:
+      - source: minio_init_script_v2
+        target: /init.sh
+        mode: 0755
+    entrypoint: ["/bin/sh", "/init.sh"]
+    networks:
+      - backend
+
 volumes:
   prometheus-data:
     driver: local
@@ -255,6 +367,8 @@ volumes:
   postgres_data:
     driver: local
   grafana-data:
+    driver: local
+  minio_data:
     driver: local
 
 networks:
@@ -276,6 +390,26 @@ secrets:
     external: true
   grafana_admin_password:
     external: true
+  minio_root_user:
+    external: true
+  minio_root_password:
+    external: true
+  s3_bucket:
+    external: true
+  s3_endpoint:
+    external: true
+  aws_region:
+    external: true
+  aws_access_key_id_v2:
+    external: true
+  aws_secret_access_key_v2:
+    external: true
+  stripe_secret_key:
+    external: true
+  stripe_webhook_secret_v2:
+    external: true
+  resend_api_key:
+    external: true
 
 configs:
   prometheus_config_v2:
@@ -285,4 +419,6 @@ configs:
   grafana_dashboards_provider:
     external: true
   grafana_dashboard_express:
+    external: true
+  minio_init_script_v2:
     external: true

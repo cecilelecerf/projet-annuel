@@ -1,0 +1,205 @@
+// styles/element/buttons.scss
+
+// ── Variable globale ──────────────────────────────────────────────────────────
+:root {
+  --el-button-border-radius: 9999px;
+}
+
+// ── Base ──────────────────────────────────────────────────────────────────────
+.el-button {
+  border-radius: 9999px !important;
+  border: none !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: var(--fw-medium) !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: none !important;
+  transition:
+    background 0.15s,
+    transform 0.1s !important;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.is-disabled,
+  &.is-disabled:hover {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+  }
+
+  &.is-loading {
+    opacity: 0.75 !important;
+    cursor: wait !important;
+  }
+
+  &.is-circle {
+    border-radius: 50% !important;
+  }
+}
+
+// ── Default ───────────────────────────────────────────────────────────────────
+.el-button:not([class*='el-button--']),
+.el-button.el-button--default {
+  background: var(--el-fill-color) !important;
+  border-color: transparent !important;
+  color: var(--el-text-color-regular) !important;
+
+  &:hover {
+    background: var(--el-fill-color-dark) !important;
+    color: var(--el-text-color-primary) !important;
+  }
+}
+
+// ── Primary ───────────────────────────────────────────────────────────────────
+.el-button--primary {
+  background: var(--el-color-primary) !important;
+  border-color: var(--el-color-primary) !important;
+  color: white !important;
+
+  &:hover {
+    background: var(--el-color-primary-dark-2) !important;
+    border-color: var(--el-color-primary-dark-2) !important;
+  }
+
+  &.is-plain {
+    background: var(--el-color-primary-light-9) !important;
+    color: var(--el-color-primary) !important;
+
+    &:hover {
+      background: var(--el-color-primary-light-5) !important;
+      color: white !important;
+    }
+  }
+  &.is-dashed {
+    background: white !important;
+    border: 1px solid var(--el-color-primary) !important;
+    color: var(--el-color-primary) !important;
+
+    &:hover {
+      background: white !important;
+      border: 1px solid var(--el-color-primary-dark-2) !important;
+      background: var(--el-color-primary-light-9) !important;
+    }
+  }
+}
+
+// ── Success ───────────────────────────────────────────────────────────────────
+.el-button--success {
+  background: var(--el-color-success) !important;
+  border-color: var(--el-color-success) !important;
+  color: white !important;
+
+  &:hover {
+    background: var(--el-color-success-dark-2) !important;
+    border-color: var(--el-color-success-dark-2) !important;
+  }
+
+  &.is-plain {
+    background: var(--el-color-success-light-9) !important;
+    color: var(--el-color-success) !important;
+
+    &:hover {
+      background: var(--el-color-success-light-5) !important;
+      color: white !important;
+    }
+  }
+  &.is-dashed {
+    background: white !important;
+    border: 1px solid var(--el-color-success) !important;
+    color: var(--el-color-success) !important;
+
+    &:hover {
+      background: white !important;
+      border: 1px solid var(--el-color-success-dark-2) !important;
+      background: var(--el-color-success-light-9) !important;
+    }
+  }
+}
+
+// ── Danger ────────────────────────────────────────────────────────────────────
+.el-button--danger {
+  background: var(--el-color-danger) !important;
+  border-color: var(--el-color-danger) !important;
+  color: white !important;
+
+  &:hover {
+    background: var(--el-color-danger-dark-2) !important;
+    border-color: var(--el-color-danger-dark-2) !important;
+  }
+
+  &.is-plain {
+    background: var(--el-color-danger-light-9) !important;
+    color: var(--el-color-danger) !important;
+
+    &:hover {
+      background: var(--el-color-danger-light-5) !important;
+      color: white !important;
+    }
+  }
+  &.is-dashed {
+    background: white !important;
+    border: 1px solid var(--el-color-danger) !important;
+    color: var(--el-color-danger) !important;
+
+    &:hover {
+      background: white !important;
+      border: 1px solid var(--el-color-danger-dark-2) !important;
+      background: var(--el-color-danger-light-9) !important;
+    }
+  }
+}
+
+// ── Warning ───────────────────────────────────────────────────────────────────
+.el-button--warning {
+  background: var(--el-color-warning) !important;
+  border-color: var(--el-color-warning) !important;
+  color: white !important;
+
+  &:hover {
+    background: var(--el-color-warning-dark-2) !important;
+    border-color: var(--el-color-warning-dark-2) !important;
+  }
+
+  &.is-plain {
+    background: var(--el-color-warning-light-9) !important;
+    color: var(--el-color-warning-dark-2) !important;
+
+    &:hover {
+      background: var(--el-color-warning-light-5) !important;
+      color: white !important;
+    }
+  }
+  &.is-dashed {
+    background: white !important;
+    border: 1px solid var(--el-color-warning) !important;
+    color: var(--el-color-warning) !important;
+
+    &:hover {
+      background: white !important;
+      border: 1px solid var(--el-color-warning-dark-2) !important;
+      background: var(--el-color-warning-light-9) !important;
+    }
+  }
+}
+
+// ── Info ──────────────────────────────────────────────────────────────────────
+.el-button--info {
+  background: var(--el-fill-color-dark) !important;
+  border-color: transparent !important;
+  color: var(--el-text-color-regular) !important;
+
+  &:hover {
+    background: var(--el-fill-color-darker) !important;
+    color: var(--el-text-color-primary) !important;
+  }
+
+  &.is-plain {
+    background: var(--el-fill-color) !important;
+    color: var(--el-text-color-secondary) !important;
+
+    &:hover {
+      background: var(--el-fill-color-dark) !important;
+    }
+  }
+}

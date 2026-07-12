@@ -1,0 +1,53 @@
+name: Run Database Migration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run migration on VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+
+          script: |
+
+            export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+
+            echo "Pull latest API image"
+
+            docker pull $DOCKER_HUB_USERNAME/pa-api:latest
+
+
+            echo "Starting migration job"
+
+            docker service update \
+              --detach \
+              --force \
+              --replicas 1 \
+              cecoule_migration
+
+
+            echo "Waiting for migration execution"
+
+            sleep 20
+
+
+            echo "Migration logs:"
+
+            docker service logs \
+              --tail 200 \
+              cecoule_migration
+
+
+            echo "Stopping migration service"
+
+            docker service update \
+              --detach \
+              --replicas 0 \
+              cecoule_migration

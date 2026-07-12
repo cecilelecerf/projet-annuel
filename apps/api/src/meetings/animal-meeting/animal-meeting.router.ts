@@ -5,39 +5,39 @@ import {
   createAnimalMeetingSchema,
   updateAnimalMeetingSchema,
 } from "@armali/schemas";
-import { AnimalMeetingController } from "./animal-meeting.controller";
-import { AnimalMedicalHistoryController } from "@api/medicalHistories/medical-history.controller";
-import { STAFF_ROLES } from "@api/utils";
+import {
+  animalMeetingController,
+  medicalHistoryController,
+  prescriptionController,
+} from "@api/instances";
 
 const animalMeetingRouter: RouterType = Router();
-
-const animalController = new AnimalMeetingController();
-const animalMedicalHistory = new AnimalMedicalHistoryController();
+const animalMedicalHistory = medicalHistoryController;
 
 animalMeetingRouter.post(
   "/",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   validate(createAnimalMeetingSchema),
-  animalController.create.bind(animalController) as RequestHandler,
+  animalMeetingController.create.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 animalMeetingRouter.get(
-  "/:id/user",
+  "/",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getByClient.bind(animalController) as RequestHandler,
-);
-animalMeetingRouter.get(
-  "/:id/animal",
-  authMiddleware,
-  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getByAnimal.bind(animalController) as RequestHandler,
+  animalMeetingController.getByClient.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 animalMeetingRouter.get(
   "/:id/animal/last",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getLastByAnimal.bind(animalController) as RequestHandler,
+  animalMeetingController.getLastByAnimal.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 animalMeetingRouter.get(
   "/:id/medical-histories",
@@ -47,22 +47,36 @@ animalMeetingRouter.get(
   ) as RequestHandler,
 );
 animalMeetingRouter.get(
+  "/:id/prescriptions",
+  authMiddleware,
+  roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
+  prescriptionController.getByMeeting.bind(
+    prescriptionController,
+  ) as RequestHandler,
+);
+animalMeetingRouter.get(
   "/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getById.bind(animalController) as RequestHandler,
+  animalMeetingController.getById.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 animalMeetingRouter.patch(
   "/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY"]),
   validate(updateAnimalMeetingSchema),
-  animalController.update.bind(animalController) as RequestHandler,
+  animalMeetingController.update.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 animalMeetingRouter.delete(
   "/:id",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY"]),
-  animalController.delete.bind(animalController) as RequestHandler,
+  animalMeetingController.delete.bind(
+    animalMeetingController,
+  ) as RequestHandler,
 );
 export default animalMeetingRouter;

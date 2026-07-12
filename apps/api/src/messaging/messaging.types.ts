@@ -4,8 +4,8 @@ export const conversationMemberUserSelect = {
   id: true,
   firstname: true,
   lastname: true,
-  picture: true,
   role: true,
+  avatar: true,
 } satisfies Prisma.UserSelect;
 
 export const messageInclude = {

@@ -144,6 +144,9 @@ describe("POST /api/auth/logout", () => {
 // -------------------------------------------------------------------
 describe("POST /api/auth/register-director", () => {
   const directorEmail = "nouveau-directeur@test.com";
+  // Directeur "propriétaire" de la clinique existante, utilisé uniquement
+  // par le test de conflit de SIRET ci-dessous.
+  const existingDirectorEmail = "directeur-existant-siret@test.com";
   const siret = "98765432109876";
 
   const validPayload = {
@@ -165,12 +168,21 @@ describe("POST /api/auth/register-director", () => {
 
   beforeEach(async () => {
     await getPrisma().clinicAct.deleteMany({ where: { clinic: { siret } } });
-    await getPrisma().clinicCreationRequest.deleteMany({ where: { siret } });
+    await getPrisma().clinicRequest.deleteMany({ where: { siret } });
     await getPrisma().refreshToken.deleteMany({
       where: { user: { email: directorEmail } },
     });
-    await getPrisma().user.deleteMany({ where: { email: directorEmail } });
+
+    // La Clinic doit être supprimée AVANT le directeur qui la possède :
+    // Clinic.directorId est une FK obligatoire vers DirectorClinicProfile.id,
+    // donc supprimer le directeur en premier violerait la contrainte FK.
     await getPrisma().clinic.deleteMany({ where: { siret } });
+
+    await getPrisma().user.deleteMany({ where: { email: directorEmail } });
+    // Cascade automatiquement vers son DirectorClinicProfile (onDelete: Cascade)
+    await getPrisma().user.deleteMany({
+      where: { email: existingDirectorEmail },
+    });
   });
 
   it("201 — crée un directeur avec sa demande de clinique", async () => {
@@ -182,7 +194,7 @@ describe("POST /api/auth/register-director", () => {
     expect(res.body).toHaveProperty("accessToken");
     expect(res.body.user).not.toHaveProperty("password");
 
-    const request_ = await getPrisma().clinicCreationRequest.findFirst({
+    const request_ = await getPrisma().clinicRequest.findFirst({
       where: { siret },
     });
     expect(request_).not.toBeNull();
@@ -220,6 +232,22 @@ describe("POST /api/auth/register-director", () => {
   });
 
   it("409 — siret déjà utilisé par une clinique existante", async () => {
+    // Clinic.directorId référence désormais DirectorClinicProfile.id
+    // (lui-même = User.id, clé partagée) : il faut donc un vrai directeur
+    // en base avant de pouvoir créer la clinique existante ci-dessous.
+    const existingDirector = await getPrisma().user.create({
+      data: {
+        email: existingDirectorEmail,
+        firstname: "Paul",
+        lastname: "Existant",
+        password: "not-used-in-this-test",
+        role: "DIRECTOR",
+      },
+    });
+    await getPrisma().directorClinicProfile.create({
+      data: { id: existingDirector.id },
+    });
+
     await getPrisma().clinic.create({
       data: {
         name: "Clinique existante",
@@ -230,6 +258,9 @@ describe("POST /api/auth/register-director", () => {
         phone: "0102030405",
         website: "https://existant.fr",
         description: null,
+        lat: 42,
+        lng: 2,
+        directorId: existingDirector.id,
       },
     });
 

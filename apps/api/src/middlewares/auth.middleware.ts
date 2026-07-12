@@ -3,14 +3,6 @@ import { verifyAccessToken } from "../utils/jwt";
 import type { JwtPayload } from "../utils/jwt";
 export type AuthenticatedRequest = Request & { user: JwtPayload };
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload;
-    }
-  }
-}
-
 export const authMiddleware = (
   req: Request,
   res: Response,

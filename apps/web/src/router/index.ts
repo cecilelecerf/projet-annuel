@@ -4,14 +4,15 @@ import { clientRouter } from './clientRouter'
 import { veterinarianRouter } from './veterinarianRouter'
 import { directorRouter } from './directorRouter'
 import { secretaryRouter } from './secretaryRouter'
-import { referantRouter } from './referantRouter'
+import { referentRouter } from './referentRouter'
 import { adminRouter } from './adminRouter'
+import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
   DIRECTOR: '/director',
   VETERINARIAN: '/veterinarian',
   SECRETARY: '/secretary',
-  REFERANT: '/referent',
+  REFERENT: '/referent',
   CLIENT: '/mon-espace',
   ADMIN: '/admin',
 } as const
@@ -26,11 +27,17 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LandingPageView.vue'),
     meta: { public: true },
   },
+  {
+    path: '/design-system',
+    name: 'DesignSystem',
+    component: () => import('@/views/DesignSystem.vue'),
+    meta: { public: true },
+  },
   ...clientRouter,
   ...veterinarianRouter,
   ...directorRouter,
   ...secretaryRouter,
-  ...referantRouter,
+  ...referentRouter,
   ...adminRouter,
   {
     path: '/login',
@@ -61,6 +68,7 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
+registerClinicStatusGuard(router)
 
 let authInitialized = false
 

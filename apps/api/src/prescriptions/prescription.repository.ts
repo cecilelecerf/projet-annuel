@@ -1,5 +1,5 @@
-import { prisma } from "@api/lib/prisma";
 import type { CreatePrescription, UpdatePrescription } from "@armali/schemas";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 const prescriptionInclude = {
   items: {
@@ -11,8 +11,10 @@ const prescriptionInclude = {
 } as const;
 
 export class PrescriptionRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findByMeeting(meetingId: string) {
-    return prisma.prescription.findMany({
+    return this.prisma.prescription.findMany({
       where: { animalMeeting: { meetingId } },
       include: prescriptionInclude,
       orderBy: { createdAt: "desc" },
@@ -20,14 +22,14 @@ export class PrescriptionRepository {
   }
 
   async findById(id: string) {
-    return prisma.prescription.findUnique({
+    return this.prisma.prescription.findUnique({
       where: { id },
       include: prescriptionInclude,
     });
   }
 
   async create(data: CreatePrescription) {
-    return prisma.prescription.create({
+    return this.prisma.prescription.create({
       data: {
         startDate: data.startDate,
         endDate: data.endDate,
@@ -51,7 +53,7 @@ export class PrescriptionRepository {
   }
 
   async update(id: string, data: UpdatePrescription) {
-    return prisma.prescription.update({
+    return this.prisma.prescription.update({
       where: { id },
       data: {
         startDate: data.startDate,
@@ -77,6 +79,6 @@ export class PrescriptionRepository {
   }
 
   async delete(id: string) {
-    return prisma.prescription.delete({ where: { id } });
+    return this.prisma.prescription.delete({ where: { id } });
   }
 }

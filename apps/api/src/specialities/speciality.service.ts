@@ -1,40 +1,47 @@
-import { prisma } from "@api/lib/prisma";
-import { ConflictError, NotFoundError } from "@api/errors";
-import type { CreateSpeciality, UpdateSpeciality } from "@armali/schemas";
+import { NotFoundError, ForbiddenError, BadRequestError } from "@api/errors";
+import { SpecialityRepository } from "./speciality.repository";
+import type {
+  CreateSpeciality,
+  UpdateSpeciality,
+  UserRole,
+} from "@armali/schemas";
 
 export class SpecialityService {
-  async getAll() {
-    return prisma.speciality.findMany({ orderBy: { name: "asc" } });
+  constructor(private repository: SpecialityRepository) {}
+
+  async getAll(search?: string) {
+    return this.repository.findAll(search);
   }
 
-  async create(data: CreateSpeciality) {
-    const existing = await prisma.speciality.findUnique({
-      where: { name: data.name },
-    });
-    if (existing) throw new ConflictError("Cette spécialité existe déjà");
-
-    return prisma.speciality.create({ data });
-  }
-
-  async update(id: string, data: UpdateSpeciality) {
-    const speciality = await prisma.speciality.findUnique({ where: { id } });
+  async getById(id: string) {
+    const speciality = await this.repository.findById(id);
     if (!speciality) throw new NotFoundError("Spécialité");
+    return speciality;
+  }
 
-    if (data.name && data.name !== speciality.name) {
-      const existing = await prisma.speciality.findUnique({
-        where: { name: data.name },
-      });
-      if (existing) throw new ConflictError("Cette spécialité existe déjà");
+  async create(data: CreateSpeciality, role: UserRole) {
+    if (role !== "ADMIN") throw new ForbiddenError();
+    if (!data.description) {
+      throw new BadRequestError(
+        "La description est requise pour créer une spécialité",
+      );
     }
-
-    return prisma.speciality.update({ where: { id }, data });
+    const existing = await this.repository.findByExactName(data.name);
+    if (existing) return existing;
+    return this.repository.create(data);
   }
 
-  async delete(id: string) {
-    const speciality = await prisma.speciality.findUnique({ where: { id } });
+  async update(id: string, data: UpdateSpeciality, role: UserRole) {
+    if (role !== "ADMIN") throw new ForbiddenError();
+    const speciality = await this.repository.findById(id);
     if (!speciality) throw new NotFoundError("Spécialité");
+    return this.repository.update(id, data);
+  }
 
-    await prisma.speciality.delete({ where: { id } });
-    return { message: "Spécialité supprimée" };
+  async delete(id: string, role: UserRole) {
+    if (role !== "ADMIN") throw new ForbiddenError();
+    const speciality = await this.repository.findById(id);
+    if (!speciality) throw new NotFoundError("Spécialité");
+    return this.repository.delete(id);
   }
 }

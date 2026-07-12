@@ -1,45 +1,40 @@
 @forward 'element-plus/theme-chalk/src/common/var.scss' with (
   $colors: (
     'primary': (
-      'base': #256cab,
+      'base': #4873a2,
+    ),
+    'success': (
+      'base': #4d884e,
+    ),
+    'danger': (
+      'base': #ac5050,
     ),
   )
 );
+@use './custom-colors.scss';
+@use './token.scss';
+@use './button.scss';
+@use './alert.scss';
+@use './tag.scss';
+@use './dialog.scss';
+@use './input.scss';
+@use './tabs.scss';
+@use './collapse.scss';
+
 .el-button--primary {
   color: var(--el-color-primary-light-9);
   letter-spacing: 0.1em;
 }
 :root {
-  --el-color-pink: #e06d84;
-  --el-color-purple: #9f6de0;
-  --el-color-purple-light: #dbc2fb;
-  --el-color-purple-dark: #654590;
-  --el-color-teal: #5aa95b;
-  --el-color-teal-dark: #457f46;
-  --el-color-teal-light: #b3f0b4;
   --el-color-amber: #d99a2b;
   --el-color-amber-dark: #a06f16;
   --el-color-amber-light: #f5dfae;
   --el-color-primary-dark-9: #0d2438;
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --spacing-3xl: 64px;
-  --spacing-4xl: 96px;
+}
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
-
-  --fw-regular: 400;
-  --fw-medium: 500;
-  --fw-semibold: 600;
-  --fw-bold: 700;
-  --el-menu-item-height: 47px;
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }

@@ -2,32 +2,26 @@ import type { NextFunction, Response } from "express";
 import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalMeetigWithMeetingSchema,
-  medicalHistorySchema,
   animalMeetingFieldSchema,
-  animalMeetingSchema,
   ClientId,
-  clinicActSchema,
   CreateAnimalMeeting,
-  meetingBaseSchema,
   AnimalId,
-  animalWithRaceMeta,
   UpdateAnimalMeeting,
+  meetingBaseSchema,
 } from "@armali/schemas";
 import { AnimalMeetingService } from "./animal-meeting.service";
-import { ForbiddenError } from "@api/errors";
 
-const animalMeetingService = new AnimalMeetingService();
 export class AnimalMeetingController {
+  constructor(private service: AnimalMeetingService) {}
+
   async create(
     req: AuthenticatedRequest & { body: CreateAnimalMeeting },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      if (!req.user.clinicId) throw new ForbiddenError();
-      const meeting = await animalMeetingService.create({
+      const meeting = await this.service.create({
         data: req.body,
-        clinicId: req.user.clinicId,
       });
       res.status(201).json(meeting);
     } catch (err) {
@@ -41,7 +35,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await animalMeetingService.getById({
+      const meeting = await this.service.getById({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -58,12 +52,13 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await animalMeetingService.update({
+      const meeting = await this.service.update({
         id: req.params.id,
         data: req.body,
         userId: req.user.id,
+        role: req.user.role,
       });
-      res.status(200).json(animalMeetigWithMeetingSchema.parse(meeting));
+      res.status(200).json(animalMeetingFieldSchema.parse(meeting));
     } catch (err) {
       next(err);
     }
@@ -75,7 +70,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      await animalMeetingService.delete({
+      await this.service.delete({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -92,19 +87,15 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await animalMeetingService.getByClient({
+      const meetings = await this.service.getAllByClient({
         id: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
+
       res
         .status(200)
-        .json(
-          animalMeetigWithMeetingSchema
-            .extend({ animal: animalWithRaceMeta })
-            .array()
-            .parse(meetings),
-        );
+        .json(animalMeetigWithMeetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }
@@ -116,20 +107,14 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meetings = await animalMeetingService.getByAnimal({
+      const meetings = await this.service.getByAnimal({
         animalId: req.params.id,
         userId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(
-        animalMeetingFieldSchema
-          .extend({
-            meeting: meetingBaseSchema,
-            animalMedicalHistories: medicalHistorySchema.array(),
-          })
-          .array()
-          .parse(meetings),
-      );
+      res
+        .status(200)
+        .json(animalMeetigWithMeetingSchema.array().parse(meetings));
     } catch (err) {
       next(err);
     }
@@ -141,7 +126,7 @@ export class AnimalMeetingController {
     next: NextFunction,
   ) {
     try {
-      const meeting = await animalMeetingService.getLastByAnimal({
+      const meeting = await this.service.getLastByAnimal({
         animalId: req.params.id,
         userId: req.user.id,
         role: req.user.role,
@@ -155,10 +140,12 @@ export class AnimalMeetingController {
         ...animalMeetingFieldSchema
           .extend({ meeting: meetingBaseSchema })
           .parse(rest),
-        veterinarian: {
-          firstname: veterinarianClinic.veterinarian.user.firstname,
-          lastname: veterinarianClinic.veterinarian.user.lastname,
-        },
+        veterinarian: veterinarianClinic
+          ? {
+              firstname: veterinarianClinic.veterinarian.user.firstname,
+              lastname: veterinarianClinic.veterinarian.user.lastname,
+            }
+          : null,
       });
     } catch (err) {
       next(err);

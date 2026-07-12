@@ -1,144 +1,139 @@
+import {
+  ClinicId,
+  clinicIdSchema,
+  UpdateClinic,
+  UserId,
+} from "@armali/schemas";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@api/errors";
+import { ClinicRepository } from "./clinic.repository";
 import { prisma } from "@api/lib/prisma";
-import { UpdateClinic } from "@armali/schemas";
-import { BadRequestError, NotFoundError } from "@api/errors";
+import { UserRole } from "../../prisma/generated/prisma/enums";
+import { CLINIC_STAFF_ROLES } from "@api/utils";
+import { Clinic } from "../../prisma/generated/prisma/client";
+import { withUserAvatar } from "@api/users/user.utils";
 
 export class ClinicService {
-  async getMyClinic(userId: string) {
-    const clinicInclude = { speciality: true } as const;
+  constructor(private repository: ClinicRepository) {}
 
-    const director = await prisma.directorClinicProfile.findUnique({
-      where: { id: userId },
-      include: { clinic: { include: clinicInclude } },
-    });
-    if (director) return director.clinic;
-
-    const referent = await prisma.referentClinicProfile.findUnique({
-      where: { id: userId },
-      include: { clinic: { include: clinicInclude } },
-    });
-    if (referent) return referent.clinic;
-
-    const vetClinic = await prisma.veterinarianClinic.findFirst({
-      where: { veterinarianId: userId },
-      include: { clinic: { include: clinicInclude } },
-    });
-    if (vetClinic) return vetClinic.clinic;
-
-    const secretary = await prisma.secretaryProfile.findUnique({
-      where: { id: userId },
-      include: { clinic: { include: clinicInclude } },
-    });
-    if (secretary) return secretary.clinic;
-
-    throw new NotFoundError("Clinique");
+  async getClinicsByUser(userId: string): Promise<Clinic[]> {
+    const clinics = await this.repository.findClinicByUserId(userId);
+    if (!clinics) throw new NotFoundError("Clinique");
+    if (clinics.some((clinic) => !clinic)) throw new NotFoundError("Clinique");
+    return clinics as Clinic[];
   }
 
-  async getClinicStaff(userId: string, role: string) {
-    let clinicId: string | null = null;
+  async getClientsByClinic({
+    role,
+    clinicId,
+    authorId,
+  }: {
+    clinicId: ClinicId;
+    authorId: UserId;
+    role: UserRole;
+  }) {
+    if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
 
-    if (role === "VETERINARIAN") {
-      const vc = await prisma.veterinarianClinic.findFirst({
-        where: { veterinarianId: userId },
-      });
-      clinicId = vc?.clinicId ?? null;
-    } else if (role === "SECRETARY") {
-      const sp = await prisma.secretaryProfile.findUnique({
-        where: { id: userId },
-      });
-      clinicId = sp?.clinicId ?? null;
-    } else if (role === "DIRECTOR") {
-      const dp = await prisma.directorClinicProfile.findUnique({
-        where: { id: userId },
-      });
-      clinicId = dp?.clinicId ?? null;
-    } else if (role === "REFERANT") {
-      const rp = await prisma.referentClinicProfile.findUnique({
-        where: { id: userId },
-      });
-      clinicId = rp?.clinicId ?? null;
+    const clinics = await this.getClinicsByUser(authorId);
+    if (!clinics.some(({ id }) => id === clinicId)) {
+      throw new ForbiddenError();
     }
-
-    if (!clinicId) throw new NotFoundError("Clinique");
-
-    const [directorProfile, referents, vets, secretaries] = await Promise.all([
-      prisma.directorClinicProfile.findFirst({
-        where: { clinicId },
-        include: {
-          user: {
-            select: { id: true, firstname: true, lastname: true, email: true },
-          },
-        },
-      }),
-      prisma.referentClinicProfile.findMany({
-        where: { clinicId },
-        include: {
-          user: {
-            select: { id: true, firstname: true, lastname: true, email: true },
-          },
-        },
-      }),
-      prisma.veterinarianClinic.findMany({
-        where: { clinicId },
-        include: {
-          veterinarian: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstname: true,
-                  lastname: true,
-                  email: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-      prisma.secretaryProfile.findMany({
-        where: { clinicId },
-        include: {
-          user: {
-            select: { id: true, firstname: true, lastname: true, email: true },
-          },
-        },
-      }),
-    ]);
-
-    return {
-      director: directorProfile
-        ? { ...directorProfile.user, role: "DIRECTOR" as const }
-        : null,
-      referents: referents.map((r) => ({
-        ...r.user,
-        role: "REFERANT" as const,
-      })),
-      veterinarians: vets.map((v) => ({
-        ...v.veterinarian.user,
-        role: "VETERINARIAN" as const,
-        licenseNumber: v.veterinarian.licenseNumber,
-      })),
-      secretaries: secretaries.map((s) => ({
-        ...s.user,
-        role: "SECRETARY" as const,
-      })),
-    };
+    return (await this.repository.findClientsById(clinicId)).map(
+      withUserAvatar,
+    );
+  }
+  async getClinicIdsByUserId({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<ClinicId[]> {
+    const clinicIds = await this.repository.findClinicIdByUser({
+      userId,
+      role,
+    });
+    if (!clinicIds) throw new ForbiddenError();
+    return clinicIdSchema.array().parse(clinicIds);
   }
 
-  async updateClinic(userId: string, data: UpdateClinic) {
-    const profile = await prisma.directorClinicProfile.findUnique({
-      where: { id: userId },
+  async getClinicIdByUserId({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<ClinicId> {
+    if (role !== "DIRECTOR" && role !== "REFERENT" && role !== "SECRETARY")
+      throw new ForbiddenError();
+    const clinicIds = await this.repository.findClinicIdByUser({
+      userId,
+      role,
     });
-    if (!profile)
-      throw new BadRequestError(
-        "Aucune clinique associée à ce compte directeur",
+    if (!clinicIds) throw new ForbiddenError();
+    if (clinicIds.length !== 1)
+      throw new ConflictError("Number of clinicId is not valid");
+    return clinicIdSchema.parse(clinicIds[0]);
+  }
+  async updateClinic({
+    userId,
+    role,
+    data,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    data: UpdateClinic;
+  }) {
+    const clinicIds = await this.getClinicIdsByUserId({ userId, role });
+
+    if (!clinicIds) throw new NotFoundError("clinic");
+    if (clinicIds.length !== 1)
+      throw new ConflictError("Multiple clinics associated with the user");
+
+    return this.repository.update(clinicIds[0], data);
+  }
+
+  async getClinics() {
+    return this.repository.findAll();
+  }
+
+  async deleteClinic(clinicId: string) {
+    const clinic = await this.repository.findClinicById(clinicId);
+    if (!clinic) throw new NotFoundError("Clinique");
+
+    const { orderCount, meetingCount, appointmentCount, medicalHistoryCount } =
+      await this.repository.countClinicDependencies(clinicId);
+
+    const reasons: string[] = [];
+    if (orderCount > 0)
+      reasons.push(
+        `${orderCount} commande${orderCount > 1 ? "s" : ""} en cours ou passée${orderCount > 1 ? "s" : ""}`,
+      );
+    if (meetingCount > 0)
+      reasons.push(
+        `${meetingCount} réunion${meetingCount > 1 ? "s" : ""} interne${meetingCount > 1 ? "s" : ""}`,
+      );
+    if (appointmentCount > 0)
+      reasons.push(
+        `${appointmentCount} rendez-vous vétérinaire${appointmentCount > 1 ? "s" : ""}`,
+      );
+    if (medicalHistoryCount > 0)
+      reasons.push(
+        `${medicalHistoryCount} entrée${medicalHistoryCount > 1 ? "s" : ""} d'historique médical`,
       );
 
-    const clinic = await prisma.clinic.update({
-      where: { id: profile.clinicId },
-      data,
-    });
+    if (reasons.length > 0) {
+      throw new BadRequestError(
+        `Impossible de supprimer la clinique « ${clinic.name} » car elle a encore : ${reasons.join(", ")}. Veuillez d'abord supprimer ou transférer ces éléments.`,
+      );
+    }
 
-    return clinic;
+    await this.repository.deleteClinicById(clinicId);
+    return { message: "Clinique supprimée" };
   }
 
   private async getClinicIdForDirectorOrReferent(
@@ -146,8 +141,9 @@ export class ClinicService {
   ): Promise<string> {
     const director = await prisma.directorClinicProfile.findUnique({
       where: { id: userId },
+      include: { clinic: true },
     });
-    if (director) return director.clinicId;
+    if (director?.clinic) return director.clinic.id;
 
     const referent = await prisma.referentClinicProfile.findUnique({
       where: { id: userId },

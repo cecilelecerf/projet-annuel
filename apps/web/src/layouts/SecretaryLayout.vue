@@ -1,32 +1,54 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, Calendar, ChatDotRound, User } from '@element-plus/icons-vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+import { House, Calendar, ChatDotRound, User, SetUp, Box } from '@element-plus/icons-vue'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
-    index: 'Secretary.Home',
+    index: 'SECRETARY.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Secretary.Calendar',
+    index: 'SECRETARY.Calendar',
     label: 'Agenda',
     icon: Calendar,
   },
   {
-    index: 'Secretary.Veto.List',
+    index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
+    query: { role: 'VETERINARIAN' },
     icon: Calendar,
   },
   {
-    index: 'Secretary.Messagerie',
+    index: 'SECRETARY.Animals.List',
+    label: 'Animaux suivis',
+    query: { role: 'VETERINARIAN' },
+    icon: Calendar,
+  },
+  {
+    index: 'SECRETARY.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
   },
   {
-    index: 'Secretary.Profil',
+    index: 'SECRETARY.Avaibality',
+    label: 'Disponibilité',
+    icon: SetUp,
+  },
+  {
+    index: 'SECRETARY.Orders',
+    label: 'Retrait commandes',
+    icon: Box,
+  },
+  {
+    index: 'SECRETARY.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
+  },
+  {
+    index: 'SECRETARY.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -37,15 +59,15 @@ const menuItems: MenuItem[] = [
   <div class="layout">
     <FormError />
     <Navbar :menu-items="menuItems" />
-    <Suspense>
-      <main class="main">
+    <main class="main">
+      <Suspense>
         <router-view />
-      </main>
 
-      <template #fallback>
-        <div class="loading">Chargement...</div>
-      </template>
-    </Suspense>
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
+    </main>
   </div>
 </template>
 

@@ -3,7 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useMessagingStore } from '../stores/messagingStore'
 import { useNotify } from '@/composables/useNotify'
-import type { UserId } from '@armali/schemas'
+import type { ConversationContact, UserId } from '@armali/schemas'
+import type { ConversationMember } from '@armali/schemas'
 
 const authStore = useAuthStore()
 const messagingStore = useMessagingStore()
@@ -17,18 +18,22 @@ const loading = ref(false)
 const conversation = computed(() => messagingStore.activeConversation)
 
 const selfMember = computed(() =>
-  conversation.value?.conversationMembers?.find((m) => m.userId === authStore.user?.id),
+  conversation.value?.conversationMembers?.find(
+    (m: ConversationMember) => m.userId === authStore.user?.id,
+  ),
 )
 const isAdmin = computed(() => selfMember.value?.role === 'ADMIN')
-
+ 
 const eligibleContacts = computed(() => {
   if (!conversation.value) return []
   const pool =
     conversation.value.scope === 'DIRECTOR_NETWORK'
       ? (messagingStore.contacts?.directors ?? [])
       : (messagingStore.contacts?.clinic ?? [])
-  const memberIds = new Set(conversation.value.conversationMembers?.map((m) => m.userId) ?? [])
-  return pool.filter((c) => !memberIds.has(c.id))
+  const memberIds = new Set(
+    conversation.value.conversationMembers?.map((m: ConversationMember) => m.userId) ?? [],
+  )
+  return pool.filter((c: ConversationContact) => !memberIds.has(c.id))
 })
 
 async function open() {
@@ -130,12 +135,11 @@ defineExpose({ open })
               {{ member.user?.firstname }} {{ member.user?.lastname }}
               <el-tag v-if="member.role === 'ADMIN'" size="small" type="warning">Admin</el-tag>
             </span>
-            <div class="member-list__actions" v-if="isAdmin && member.userId !== authStore.user?.id">
-              <el-button
-                size="small"
-                text
-                @click="handleToggleAdmin(member.userId, member.role)"
-              >
+            <div
+              class="member-list__actions"
+              v-if="isAdmin && member.userId !== authStore.user?.id"
+            >
+              <el-button size="small" text @click="handleToggleAdmin(member.userId, member.role)">
                 {{ member.role === 'ADMIN' ? 'Rétrograder' : 'Promouvoir admin' }}
               </el-button>
               <el-button size="small" text type="danger" @click="handleRemove(member.userId)">
@@ -178,24 +182,24 @@ defineExpose({ open })
   </el-dialog>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .section {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-lg);
 }
 .section h4 {
-  margin: 0 0 8px;
+  margin: 0 0 var(--spacing-sm);
 }
 .inline-form {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 .member-list {
   list-style: none;
-  margin: 0 0 12px;
+  margin: 0 0 var(--spacing-md);
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 .member-list li {
   display: flex;
@@ -204,7 +208,7 @@ defineExpose({ open })
 }
 .member-list__actions {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-xs);
 }
 .member-checkbox {
   display: block;

@@ -1,18 +1,20 @@
-import type { PrismaClient, Clinic, Pet } from "../generated/prisma/client";
+import type { PrismaClient, Pet } from "../generated/prisma/client";
 
 export async function seedActs(
   prisma: PrismaClient,
   {
-    clinic1,
     petCat,
     petDog,
-    clinic2,
+    clinics,
     meetings,
   }: {
     petDog: Pet;
     petCat: Pet;
-    clinic1: Clinic;
-    clinic2: Clinic;
+    clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
     meetings: ReturnType<
       typeof import("./meetings").seedMeetings
     > extends Promise<infer T>
@@ -144,50 +146,56 @@ export async function seedActs(
   });
 
   // ── Prix par clinique ───────────────────────────────────────────────────────
-  const caCardioClinic1 = await prisma.clinicAct.create({
-    data: { actId: actCardio.id, clinicId: clinic1.id, price: 70 },
+  await prisma.clinicAct.create({
+    data: { actId: actCardio.id, clinicId: clinics.clinic1.id, price: 70 },
   });
   const caEchoClinic1 = await prisma.clinicAct.create({
-    data: { actId: actEcho.id, clinicId: clinic1.id, price: 95 },
+    data: { actId: actEcho.id, clinicId: clinics.clinic1.id, price: 95 },
   });
   const caBloodClinic1 = await prisma.clinicAct.create({
-    data: { actId: actBlood.id, clinicId: clinic1.id, price: 50 },
+    data: { actId: actBlood.id, clinicId: clinics.clinic1.id, price: 50 },
   });
   const caXrayClinic1 = await prisma.clinicAct.create({
-    data: { actId: actXray.id, clinicId: clinic1.id, price: 80 },
+    data: { actId: actXray.id, clinicId: clinics.clinic1.id, price: 80 },
   });
-  const caSurgeryClinic1 = await prisma.clinicAct.create({
-    data: { actId: actSurgery.id, clinicId: clinic1.id, price: 195 },
+  await prisma.clinicAct.create({
+    data: { actId: actSurgery.id, clinicId: clinics.clinic1.id, price: 195 },
   });
-  const caHospClinic1 = await prisma.clinicAct.create({
-    data: { actId: actHospitalization.id, clinicId: clinic1.id, price: 65 },
+  await prisma.clinicAct.create({
+    data: {
+      actId: actHospitalization.id,
+      clinicId: clinics.clinic1.id,
+      price: 65,
+    },
   });
   const caNursingClinic1 = await prisma.clinicAct.create({
-    data: { actId: actNursing.id, clinicId: clinic1.id, price: 28 },
+    data: { actId: actNursing.id, clinicId: clinics.clinic1.id, price: 28 },
   });
   const caVaccClinic1 = await prisma.clinicAct.create({
-    data: { actId: actCHPPRIVaccination.id, clinicId: clinic1.id, price: 32 },
+    data: {
+      actId: actCHPPRIVaccination.id,
+      clinicId: clinics.clinic1.id,
+      price: 32,
+    },
     include: { act: true },
   });
 
   await prisma.clinicAct.createMany({
     data: [
-      { actId: actConsultation.id, clinicId: clinic2.id, price: 38 },
-      { actId: actEcho.id, clinicId: clinic2.id, price: 88 },
-      { actId: actBlood.id, clinicId: clinic2.id, price: 42 },
+      { actId: actConsultation.id, clinicId: clinics.clinic2.id, price: 38 },
+      { actId: actEcho.id, clinicId: clinics.clinic2.id, price: 88 },
+      { actId: actBlood.id, clinicId: clinics.clinic2.id, price: 42 },
     ],
   });
 
   // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
 
-  await prisma.animalMedicalHistory.create({
+  const actVaccinationRexPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting1.date,
-      animalMeetingId: animalMeeting1.animalMeeting?.id!,
+      animalMeetingId: animalMeeting1.animalMeeting!.id!,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
-      },
+      performedById: animalMeeting1.animalMeeting!.veterinarianClinicId,
       priceApplied: 70,
       type: "VACCINATION",
       clinicActId: caVaccClinic1.id,
@@ -201,8 +209,6 @@ export async function seedActs(
     },
   });
 
-  // ── Actes réalisés sur RDV 1 (Rex — cardiologie) ───────────────────────────
-
   // Échographie cardiaque
   const actEchoPerformed = await prisma.animalMedicalHistory.create({
     data: {
@@ -214,15 +220,12 @@ export async function seedActs(
       clinicActId: caEchoClinic1.id,
       animalMeetingId: animalMeeting1.animalMeeting!.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
-      },
+      performedById: animalMeeting1.animalMeeting!.veterinarianClinicId!,
       imaging: {
         create: {
           imagingType: "ULTRASOUND",
           bodyPart: "Cœur",
           findings: "Dilatation ventriculaire gauche légère, FEVG conservée",
-          fileUrl: "https://storage.vetparc.fr/echo-rex-20260210.pdf",
         },
       },
     },
@@ -238,15 +241,12 @@ export async function seedActs(
       clinicActId: caBloodClinic1.id,
       animalMeetingId: animalMeeting1.animalMeeting!.id,
       animalId: animalMeeting1.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting1.animalMeeting!.veterinarianClinicId }],
-      },
+      performedById: animalMeeting1.animalMeeting!.veterinarianClinicId!,
       analysis: {
         create: {
           analysisType: "BLOOD",
           status: "RECEIVED",
           receivedAt: new Date("2026-02-11T14:00:00Z"),
-          fileUrl: "https://storage.vetparc.fr/blood-rex-20260210.pdf",
           interpretation:
             "Légère élévation des troponines cardiaques. Surveillance recommandée.",
         },
@@ -255,7 +255,7 @@ export async function seedActs(
   });
 
   // Vaccination Rage (historique externe — sans clinicAct, sans meeting)
-  await prisma.animalMedicalHistory.create({
+  const actRageRexPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: new Date("2025-03-15"),
       type: "VACCINATION",
@@ -274,7 +274,7 @@ export async function seedActs(
   // ── Actes réalisés sur RDV 2 (Luna — dermatologie) ─────────────────────────
 
   // Radiographie thoracique
-  await prisma.animalMedicalHistory.create({
+  const actXrayPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting2.date,
       priceApplied: 80,
@@ -284,22 +284,19 @@ export async function seedActs(
       clinicActId: caXrayClinic1.id,
       animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId }],
-      },
+      performedById: animalMeeting2.animalMeeting!.veterinarianClinicId!,
       imaging: {
         create: {
           imagingType: "XRAY",
           bodyPart: "Thorax",
           findings: "Pas d'anomalie visible",
-          fileUrl: "https://storage.vetparc.fr/xray-luna-20260305.pdf",
         },
       },
     },
   });
 
   // Soins infirmiers
-  await prisma.animalMedicalHistory.create({
+  const actNursingPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: animalMeeting2.date,
       priceApplied: 28,
@@ -308,15 +305,13 @@ export async function seedActs(
       clinicActId: caNursingClinic1.id,
       animalMeetingId: animalMeeting2.animalMeeting!.id,
       animalId: animalMeeting2.animalMeeting!.animalId,
-      performedBy: {
-        connect: [{ id: animalMeeting2.animalMeeting!.veterinarianClinicId }],
-      },
+      performedById: animalMeeting2.animalMeeting!.veterinarianClinicId!,
       notes: "Nettoyage et désinfection des plaies cutanées",
     },
   });
 
   // Vaccination Typhus (historique Luna)
-  await prisma.animalMedicalHistory.create({
+  const actTyphusLunaPerformed = await prisma.animalMedicalHistory.create({
     data: {
       performedAt: new Date("2024-06-10"),
       type: "VACCINATION",
@@ -332,5 +327,15 @@ export async function seedActs(
     },
   });
 
-  return { actEchoPerformed, actBloodPerformed };
+  const allPerformedActs = [
+    actVaccinationRexPerformed,
+    actEchoPerformed,
+    actBloodPerformed,
+    actRageRexPerformed,
+    actXrayPerformed,
+    actNursingPerformed,
+    actTyphusLunaPerformed,
+  ];
+
+  return { actEchoPerformed, actBloodPerformed, allPerformedActs };
 }

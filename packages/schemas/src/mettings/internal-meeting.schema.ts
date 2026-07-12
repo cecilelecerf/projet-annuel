@@ -3,13 +3,12 @@ import {
   clinicIdSchema,
   internalMeetingParticipantIdSchema,
   meetingIdSchema,
-  meetingRecurringIdSchema,
   userIdSchema,
 } from "../ids";
 import {
   createMeetingBaseSchema,
   meetingBaseSchema,
-  meetingStatusSchema,
+  meetingParticipantStatusSchema,
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { userSchema } from "../users";
@@ -20,7 +19,7 @@ export const internalMeetingParticipantSchema = z.object({
   updatedAt: z.coerce.date(),
   meetingId: meetingIdSchema,
   userId: userIdSchema,
-  status: meetingStatusSchema,
+  status: meetingParticipantStatusSchema,
 });
 export const internalMeetingParticipantMetaSchema = z.object({
   id: internalMeetingParticipantIdSchema,
@@ -29,19 +28,20 @@ export const internalMeetingParticipantMetaSchema = z.object({
   meetingId: meetingIdSchema,
   userId: userIdSchema,
   user: userSchema,
-  status: meetingStatusSchema,
+  status: meetingParticipantStatusSchema,
 });
-
-export const internalMeetingSchema = meetingBaseSchema.extend({
+export const internalMeetingField = z.object({
   title: z.string().max(255),
   description: z.string().nullable().optional(),
   clinicId: clinicIdSchema,
   participants: internalMeetingParticipantSchema.array(),
+});
+export const internalMeetingSchema = meetingBaseSchema.extend({
+  ...internalMeetingField.shape,
   kind: z.literal("INTERNAL"),
 });
 export const internalMeetingMetaSchema = internalMeetingSchema.extend({
   participants: z.array(internalMeetingParticipantMetaSchema),
-  recurringId: meetingRecurringIdSchema.nullable(),
 });
 
 const createInternalMeetingBaseFields = internalMeetingSchema
@@ -50,10 +50,9 @@ const createInternalMeetingBaseFields = internalMeetingSchema
     title: true,
     clinicId: true,
   })
-  .partial({ clinicId: true })
   .extend({ userIds: userIdSchema.array() });
 
-const createInternalMeetingFields = createMeetingBaseSchema
+export const createInternalMeetingFields = createMeetingBaseSchema
   .omit({ kind: true, type: true, parentId: true })
   .extend(createInternalMeetingBaseFields.shape);
 
@@ -68,10 +67,19 @@ export const updateInternalMeetingSchema = createInternalMeetingFields
   .refine(timeRefineFn, timeRefineOptions);
 
 export const updateParticipantStatusSchema = z.object({
-  status: meetingStatusSchema,
+  status: meetingParticipantStatusSchema,
+  date: z.coerce.date().optional(),
+  scope: z.enum(["single", "all"]),
 });
-
+export type UpdateParticipantStatus = z.infer<
+  typeof updateParticipantStatusSchema
+>;
 export type InternalMeetingMeta = z.infer<typeof internalMeetingMetaSchema>;
 export type InternalMeeting = z.infer<typeof internalMeetingSchema>;
 export type CreateInternalMeeting = z.infer<typeof createInternalMeetingSchema>;
 export type UpdateInternalMeeting = z.infer<typeof updateInternalMeetingSchema>;
+
+export const deleteInternalMeetingQuerySchema = z.object({
+  scope: z.enum(["single", "all"]).default("single"),
+  date: z.coerce.date().optional(),
+});

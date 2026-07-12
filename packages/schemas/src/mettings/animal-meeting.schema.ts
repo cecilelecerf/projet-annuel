@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   animalIdSchema,
+  clinicIdSchema,
   specialityIdSchema,
   veterinarianClinicIdSchema,
   veterinarianIdSchema,
@@ -11,6 +12,10 @@ import {
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { animalMetaSchema } from "../animals/meta.schema";
+import { clinicSchema } from "../clinics/clinic.schema";
+import { veterinarianSchema } from "../users";
+import { specialitySchema } from "../specilities.schema";
+import { veterinarianClinicMetaSchema } from "../clinics/veterinarian-clinic.schema";
 
 export const animalMeetingStatusSchema = z.enum([
   "SCHEDULED",
@@ -26,16 +31,18 @@ export const animalMeetingFieldSchema = z.object({
   report: z.string().nullable().optional(),
   specialityId: specialityIdSchema.nullable().optional(),
   animalId: animalIdSchema,
-  veterinarianClinicId: veterinarianClinicIdSchema,
+  veterinarianClinicId: veterinarianClinicIdSchema.nullable(),
   status: animalMeetingStatusSchema.default("SCHEDULED"),
 });
 export const animalMeetingSchema = meetingBaseSchema.extend({
   ...animalMeetingFieldSchema.shape,
   kind: z.literal("ANIMAL"),
+  speciality: specialitySchema.nullable(),
 });
 
 export const animalMeetingMetaSchema = animalMeetingSchema.extend({
   animal: animalMetaSchema,
+  veterinarianClinic: veterinarianClinicMetaSchema.nullable(),
 });
 
 export const animalMeetigWithMeetingSchema = animalMeetingSchema
@@ -49,7 +56,15 @@ export const animalMeetigWithMeetingSchema = animalMeetingSchema
     veterinarianClinicId: true,
     status: true,
   })
-  .extend({ meeting: meetingBaseSchema });
+  .extend({
+    animal: animalMetaSchema,
+    speciality: specialitySchema.nullable(),
+    meeting: meetingBaseSchema,
+    veterinarianClinic: z.object({
+      clinic: clinicSchema,
+      veterinarian: veterinarianSchema,
+    }),
+  });
 
 const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   description: true,
@@ -61,11 +76,12 @@ const createAnimalMeetingBaseFields = animalMeetingSchema.pick({
   report: true,
 });
 
-const createAnimalMeetingFields = createMeetingBaseSchema
-  .omit({ kind: true, type: true })
+export const createAnimalMeetingFields = createMeetingBaseSchema
+  .omit({ kind: true, type: true, parentId: true })
   .extend(
     createAnimalMeetingBaseFields.omit({ veterinarianClinicId: true }).extend({
       veterinarianId: veterinarianIdSchema,
+      clinicId: clinicIdSchema,
     }).shape,
   );
 
@@ -83,3 +99,6 @@ export type AnimalMeetingMeta = z.infer<typeof animalMeetingMetaSchema>;
 export type AnimalMeeting = z.infer<typeof animalMeetingSchema>;
 export type CreateAnimalMeeting = z.infer<typeof createAnimalMeetingSchema>;
 export type UpdateAnimalMeeting = z.infer<typeof updateAnimalMeetingSchema>;
+export type AnimalMeetingWithMeeting = z.infer<
+  typeof animalMeetigWithMeetingSchema
+>;

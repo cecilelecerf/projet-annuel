@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MeetingKind, MeetingStatus } from '@armali/schemas'
+import type { MeetingKind, MeetingParticipantStatus } from '@armali/schemas'
 import dayjs from 'dayjs'
 
 const { start, end } = defineProps<{
@@ -8,7 +8,7 @@ const { start, end } = defineProps<{
   start: Date
   end: Date
   kind: Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>
-  status: MeetingStatus
+  status: MeetingParticipantStatus
 }>()
 
 const timeRange = `${dayjs(start).format('H[h]mm')} - ${dayjs(end).format('H[h]mm')}`
@@ -39,10 +39,10 @@ const timeRange = `${dayjs(start).format('H[h]mm')} - ${dayjs(end).format('H[h]m
   gap: var(--spacing-xs);
   flex-direction: row-reverse;
   &.kind-ANIMAL {
-    border-color: var(--el-color-teal-dark);
+    border-color: var(--el-color-#{meeting-color('animal')}-dark-2);
   }
   &.kind-INTERNAL {
-    border-color: var(--el-color-purple-dark);
+    border-color: var(--el-color-#{meeting-color('internal')}-dark-2);
   }
 }
 

@@ -1,4 +1,5 @@
-import { prisma } from "@api/lib/prisma";
+import { VeterinarianClinicId } from "@armali/schemas";
+import { PrismaClient } from "../../../prisma/generated/prisma/client";
 
 export const veterinarianClinicInclude = {
   veterinarian: {
@@ -8,22 +9,23 @@ export const veterinarianClinicInclude = {
 } as const;
 
 export class VeterinarianClinicRepository {
+  constructor(private prisma: PrismaClient) {}
   async findAll() {
-    return prisma.veterinarianClinic.findMany({
+    return this.prisma.veterinarianClinic.findMany({
       include: veterinarianClinicInclude,
       orderBy: { createdAt: "desc" },
     });
   }
 
-  async findById(id: string) {
-    return prisma.veterinarianClinic.findUnique({
+  async findById(id: VeterinarianClinicId) {
+    return this.prisma.veterinarianClinic.findFirst({
       where: { id },
       include: veterinarianClinicInclude,
     });
   }
 
   async findByClinic(clinicId: string) {
-    return prisma.veterinarianClinic.findMany({
+    return this.prisma.veterinarianClinic.findMany({
       where: { clinicId },
       include: veterinarianClinicInclude,
       orderBy: { createdAt: "desc" },
@@ -31,27 +33,27 @@ export class VeterinarianClinicRepository {
   }
 
   async findByVeterinarian(veterinarianId: string) {
-    return prisma.veterinarianClinic.findMany({
+    return this.prisma.veterinarianClinic.findMany({
       where: { veterinarianId },
       include: veterinarianClinicInclude,
     });
   }
 
-  async findByVeterinarianAndClinic(veterinarianId: string, clinicId: string) {
-    return prisma.veterinarianClinic.findFirst({
-      where: { veterinarianId, clinicId },
+  async findByKeys(veterinarianId: string, clinicId: string) {
+    return this.prisma.veterinarianClinic.findUnique({
+      where: { veterinarianId_clinicId: { veterinarianId, clinicId } },
       include: veterinarianClinicInclude,
     });
   }
 
   async create(veterinarianId: string, clinicId: string) {
-    return prisma.veterinarianClinic.create({
+    return this.prisma.veterinarianClinic.create({
       data: { veterinarianId, clinicId },
       include: veterinarianClinicInclude,
     });
   }
 
   async delete(id: string) {
-    return prisma.veterinarianClinic.delete({ where: { id } });
+    return this.prisma.veterinarianClinic.delete({ where: { id } });
   }
 }

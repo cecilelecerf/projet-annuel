@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import type { Prescription, MeetingId } from '@armali/schemas'
 import PrescriptionCards from '@/features/prescriptions/components/PrescriptionCard.vue'
+import { MEETING_COLORS } from '@/utils/meetingColor'
 
 defineProps<{ prescriptions: Prescription[]; meetingId: MeetingId }>()
 defineEmits<{ saved: [] }>()
@@ -19,8 +20,8 @@ const showForm = ref(false)
         <span class="count-badge">{{ prescriptions.length }}</span>
       </h3>
       <el-button
+        :type="MEETING_COLORS.ANIMAL"
         size="small"
-        color="var(--el-color-teal)"
         plain
         @click="showForm = true"
         :icon="Plus"

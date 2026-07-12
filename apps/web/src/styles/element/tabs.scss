@@ -1,0 +1,123 @@
+// ── Tabs — style unifié pour toute l'application ─────────────────────────────
+// À importer une seule fois globalement (ex: dans main.scss / App.vue non-scoped)
+// Usage : <el-tabs v-model="activeTab">...</el-tabs> — aucune classe supplémentaire requise.
+
+.el-tabs {
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+
+  // ── En-tête (barre d'onglets) ────────────────────────────────────────────
+  .el-tabs__header {
+    margin-bottom: 0; // le content est maintenant rattaché visuellement, pas d'espace entre les deux
+  }
+
+  .el-tabs__nav-wrap::after {
+    display: none;
+  }
+
+  .el-tabs__nav-wrap {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .el-tabs__nav-scroll {
+    width: 100%;
+  }
+
+  .el-tabs__nav {
+    display: inline-flex;
+    gap: var(--spacing-2xs, 4px);
+    padding: 4px;
+    border-radius: var(--radius-full);
+    justify-content: space-evenly;
+    width: 100%;
+  }
+
+  .el-tabs__active-bar {
+    display: none;
+  }
+
+  // ── Item d'onglet ─────────────────────────────────────────────────────────
+  .el-tabs__item {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: var(--fw-medium);
+    color: var(--el-text-color-secondary);
+    padding: 0 var(--spacing-md);
+    height: 36px;
+    line-height: 36px;
+    border-radius: var(--radius-full);
+    transition:
+      color 0.15s,
+      background 0.15s;
+
+    &:hover:not(.is-active) {
+      color: var(--el-color-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    &.is-active {
+      font-weight: var(--fw-semibold);
+      color: var(--el-color-primary-dark-2);
+      background: var(--el-color-primary-light-7);
+    }
+
+    &.is-disabled {
+      color: var(--el-text-color-placeholder);
+      cursor: not-allowed;
+
+      &:hover {
+        background: none;
+      }
+    }
+    &:nth-child(2) {
+      padding-left: var(--spacing-md);
+      .tab-label {
+        padding-left: var(--spacing-md);
+      }
+    }
+    &:last-child {
+      padding-right: var(--spacing-md);
+      .tab-label {
+        padding-right: var(--spacing-md);
+      }
+    }
+  }
+
+  // ── Contenu — encadré pour rattacher visuellement au tabs ─────────────────
+  .el-tabs__content {
+    overflow: visible;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    background: var(--el-bg-color);
+  }
+}
+
+// ── Badge de compte dans un label d'onglet ───────────────────────────────────
+.tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2xs, 4px);
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--el-fill-color);
+  color: var(--el-text-color-secondary);
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.el-tabs__item.is-active .count-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}

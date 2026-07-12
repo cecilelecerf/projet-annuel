@@ -1,22 +1,33 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, List, OfficeBuilding, Star, User } from '@element-plus/icons-vue'
-import FormError from '@/components/ui/FormError.vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
 
-const menuItems: MenuItem[] = [
+import {
+  Box,
+  DocumentChecked,
+  House,
+  List,
+  OfficeBuilding,
+  Setting,
+  Star,
+  User,
+  Van,
+} from '@element-plus/icons-vue'
+import FormError from '@/components/ui/FormError.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+
+const menuItems: NavNode[] = [
   {
-    index: 'Admin.Home',
+    index: 'ADMIN.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Admin.ClinicRequests',
+    index: 'ADMIN.ClinicRequests',
     label: 'Demandes cliniques',
     icon: List,
   },
   {
-    index: 'Admin.Clinics',
+    index: 'ADMIN.Clinics',
     label: 'Cliniques',
     icon: OfficeBuilding,
   },
@@ -26,7 +37,48 @@ const menuItems: MenuItem[] = [
     icon: Star,
   },
   {
-    index: 'Admin.Profil',
+    index: '',
+    label: 'Produits',
+    icon: Box,
+    children: [
+      {
+        index: 'ADMIN.Products',
+        label: 'Catalogue produits',
+        icon: Box,
+      },
+      {
+        index: 'ADMIN.ProductRequests',
+        label: 'Demandes de produits',
+        icon: DocumentChecked,
+      },
+      {
+        index: 'ADMIN.Suppliers',
+        label: 'Fournisseurs',
+        icon: Van,
+      },
+    ],
+  },
+  {
+    index: 'ADMIN.Settings',
+    label: 'Settings',
+    icon: Setting,
+    children: [
+      {
+        index: 'ADMIN.Acts',
+        label: 'Acts',
+      },
+      {
+        index: 'ADMIN.Vaccines',
+        label: 'Vaccine',
+      },
+      {
+        index: 'ADMIN.Pets',
+        label: 'Pets',
+      },
+    ],
+  },
+  {
+    index: 'ADMIN.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -38,7 +90,9 @@ const menuItems: MenuItem[] = [
     <FormError />
     <Navbar :menu-items="menuItems" />
     <main class="main">
-      <router-view />
+      <Suspense>
+        <router-view />
+      </Suspense>
     </main>
   </div>
 </template>

@@ -10,7 +10,11 @@ import { baseUserSchema } from "./users/base-user.schema";
 
 // ── Conversation ──────────────────────────────────────────────────────────────
 export const conversationTypeSchema = z.enum(["DIRECT", "GROUP"]);
-export const conversationScopeSchema = z.enum(["CLINIC", "DIRECTOR_NETWORK"]);
+export const conversationScopeSchema = z.enum([
+  "CLINIC",
+  "DIRECTOR_NETWORK",
+  "VETERINARIAN_NETWORK",
+]);
 export const conversationMemberRoleSchema = z.enum(["ADMIN", "MEMBER"]);
 
 export type ConversationType = z.infer<typeof conversationTypeSchema>;
@@ -27,7 +31,13 @@ export const conversationMemberSchema = z.object({
   joinedAt: z.coerce.date(),
   lastReadAt: z.coerce.date().nullable(),
   user: baseUserSchema
-    .pick({ id: true, firstname: true, lastname: true, picture: true, role: true })
+    .pick({
+      id: true,
+      firstname: true,
+      lastname: true,
+      avatarUrl: true,
+      role: true,
+    })
     .optional(),
 });
 export type ConversationMember = z.infer<typeof conversationMemberSchema>;
@@ -39,7 +49,7 @@ export const messageSchema = z.object({
   content: z.string().min(1),
   createdAt: z.coerce.date(),
   sender: baseUserSchema
-    .pick({ id: true, firstname: true, lastname: true, picture: true })
+    .pick({ id: true, firstname: true, lastname: true, avatarUrl: true })
     .optional(),
 });
 export type Message = z.infer<typeof messageSchema>;
@@ -75,12 +85,18 @@ export type CreateDirectConversation = z.infer<
   typeof createDirectConversationSchema
 >;
 
-export const createGroupConversationSchema = z.object({
-  type: z.literal("GROUP"),
-  scope: conversationScopeSchema,
-  name: z.string().min(1).max(255),
-  memberIds: z.array(userIdSchema).min(2),
-});
+export const createGroupConversationSchema = z
+  .object({
+    type: z.literal("GROUP"),
+    scope: conversationScopeSchema,
+    clinicId: clinicIdSchema.optional(),
+    name: z.string().min(1).max(255),
+    memberIds: z.array(userIdSchema).min(2),
+  })
+  .refine((data) => data.scope !== "CLINIC" || !!data.clinicId, {
+    message: "clinicId est requis pour un groupe de portée CLINIC",
+    path: ["clinicId"],
+  });
 export type CreateGroupConversation = z.infer<
   typeof createGroupConversationSchema
 >;
@@ -116,13 +132,19 @@ export const sendMessageSchema = z.object({
 export type SendMessage = z.infer<typeof sendMessageSchema>;
 
 // ── Contacts (personnes/directeurs éligibles pour démarrer une discussion) ─────
-export const conversationContactSchema = baseUserSchema.pick({
-  id: true,
-  firstname: true,
-  lastname: true,
-  picture: true,
-  role: true,
-});
+export const conversationContactSchema = baseUserSchema
+  .pick({
+    id: true,
+    firstname: true,
+    lastname: true,
+    avatarUrl: true,
+    role: true,
+  })
+  .extend({
+    clinics: z
+      .array(z.object({ id: clinicIdSchema, name: z.string() }))
+      .optional(),
+  });
 export type ConversationContact = z.infer<typeof conversationContactSchema>;
 
 export const conversationContactsResponseSchema = z.object({

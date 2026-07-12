@@ -9,7 +9,9 @@ const PRISMA_UNIQUE_MESSAGES: Record<string, string> = {
   token: "Token déjà utilisé",
 };
 
-function isPrismaError(err: unknown): err is { code: string; meta?: Record<string, unknown> } {
+function isPrismaError(
+  err: unknown,
+): err is { code: string; meta?: Record<string, unknown> } {
   return typeof err === "object" && err !== null && "code" in err;
 }
 
@@ -17,7 +19,7 @@ export function errorHandler(
   err: unknown,
   req: Request,
   res: Response,
-  next: NextFunction,
+  _next: NextFunction,
 ) {
   if (err instanceof ZodError) {
     return res.status(422).json({
@@ -42,7 +44,9 @@ export function errorHandler(
       const target = (err.meta?.target as string[] | undefined) ?? [];
       const field = target.find((f) => f in PRISMA_UNIQUE_MESSAGES);
       return res.status(409).json({
-        error: field ? PRISMA_UNIQUE_MESSAGES[field] : "Cette valeur est déjà utilisée",
+        error: field
+          ? PRISMA_UNIQUE_MESSAGES[field]
+          : "Cette valeur est déjà utilisée",
       });
     }
     if (err.code === "P2025") {

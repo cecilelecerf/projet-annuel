@@ -6,7 +6,7 @@ import { useNotify } from '@/composables/useNotify'
 import MessageBubble from './MessageBubble.vue'
 import GroupMembersDialog from './GroupMembersDialog.vue'
 import { Setting, Promotion } from '@element-plus/icons-vue'
-import type { Message } from '@armali/schemas'
+import type { ConversationMember, Message } from '@armali/schemas'
 
 const authStore = useAuthStore()
 const messagingStore = useMessagingStore()
@@ -20,7 +20,9 @@ const loadingOlder = ref(false)
 const conversation = computed(() => messagingStore.activeConversation)
 
 function otherMember() {
-  return conversation.value?.conversationMembers?.find((m) => m.userId !== authStore.user?.id)
+  return conversation.value?.conversationMembers?.find(
+    (m: ConversationMember) => m.userId !== authStore.user?.id,
+  )
 }
 
 const title = computed(() => {
@@ -45,8 +47,10 @@ const typingLabel = computed(() => {
   const ids = [...messagingStore.typingUserIds].filter((id) => id !== authStore.user?.id)
   if (ids.length === 0) return ''
   const names = ids.map((id) => {
-    const member = conversation.value?.conversationMembers?.find((m) => m.userId === id)
-    return member?.user?.firstname ?? 'Quelqu\'un'
+    const member = conversation.value?.conversationMembers?.find(
+      (m: ConversationMember) => m.userId === id,
+    )
+    return member?.user?.firstname ?? "Quelqu'un"
   })
   return names.length > 1 ? `${names.join(', ')} écrivent...` : `${names[0]} écrit...`
 })
@@ -57,14 +61,16 @@ function seenLabel(message: Message, idx: number) {
   if (!isOwn) return undefined
   const isLastOwn = !messagingStore.messages
     .slice(idx + 1)
-    .some((m) => m.senderId === authStore.user?.id)
+    .some((m: Message) => m.senderId === authStore.user?.id)
   if (!isLastOwn) return undefined
-
-  const others = conversation.value.conversationMembers?.filter(
-    (m) => m.userId !== authStore.user?.id,
-  ) ?? []
+ 
+  const others =
+    conversation.value.conversationMembers?.filter(
+      (m: ConversationMember) => m.userId !== authStore.user?.id,
+    ) ?? []
   const seenBy = others.filter(
-    (m) => m.lastReadAt && new Date(m.lastReadAt) >= new Date(message.createdAt),
+    (m: ConversationMember) =>
+      m.lastReadAt && new Date(m.lastReadAt) >= new Date(message.createdAt),
   )
   if (seenBy.length === 0) return undefined
   return conversation.value.type === 'DIRECT' ? 'Vu' : `Vu par ${seenBy.length}`
@@ -117,7 +123,12 @@ async function handleSend() {
           <h3>{{ title }}</h3>
           <span class="conversation-view__status">{{ typingLabel || statusLine }}</span>
         </div>
-        <el-button v-if="conversation.type === 'GROUP'" text :icon="Setting" @click="groupDialog?.open()">
+        <el-button
+          v-if="conversation.type === 'GROUP'"
+          text
+          :icon="Setting"
+          @click="groupDialog?.open()"
+        >
           Gérer le groupe
         </el-button>
       </header>
@@ -141,7 +152,12 @@ async function handleSend() {
           @input="onDraftInput"
           @keydown.enter.exact.prevent="handleSend"
         />
-        <el-button type="primary" :icon="Promotion" native-type="submit" :disabled="!draft.trim()" />
+        <el-button
+          type="primary"
+          :icon="Promotion"
+          native-type="submit"
+          :disabled="!draft.trim()"
+        />
       </form>
 
       <GroupMembersDialog ref="groupDialog" />
@@ -153,7 +169,7 @@ async function handleSend() {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .conversation-view {
   display: flex;
   flex-direction: column;
@@ -163,31 +179,31 @@ async function handleSend() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
+  padding: 14px var(--spacing-lg);
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 .conversation-view__header h3 {
   margin: 0;
 }
 .conversation-view__status {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
 }
 .conversation-view__messages {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 0;
+  padding: var(--spacing-md) 0;
 }
 .conversation-view__loading {
   text-align: center;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
-  margin: 0 0 8px;
+  margin: 0 0 var(--spacing-sm);
 }
 .conversation-view__composer {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-md);
   border-top: 1px solid var(--el-border-color-lighter);
 }
 .conversation-view__empty {

@@ -1,92 +1,209 @@
-import { ConflictError, ForbiddenError, NotFoundError } from "@api/errors";
-import type {
-  CreateAnimalMeeting,
-  Animal,
-  AnimalId,
-  UpdateAnimalMeeting,
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@api/errors";
+import {
+  type CreateAnimalMeeting,
+  type AnimalId,
+  type UpdateAnimalMeeting,
+  type AnimalMeetingWithMeeting,
+  animalMeetigWithMeetingSchema,
+  ClinicId,
+  VeterinarianId,
+  UserId,
 } from "@armali/schemas";
-import { AnimalMeetingRepository } from "./animal-meeting.repository";
+import {
+  AnimalMeetingForUser,
+  AnimalMeetingRepository,
+} from "./animal-meeting.repository";
 import { UserRole } from "../../../prisma/generated/prisma/enums";
-import { Clinic } from "../../../prisma/generated/prisma/client";
 import { prisma } from "@api/lib/prisma";
-import { UserService } from "@api/users";
-import { flatUser } from "@api/users/user.utils";
+import { flatUser, withUserAvatar } from "@api/users/user.utils";
 import { calculateAge, isStaff } from "@api/utils";
+import { EmailService } from "@api/emails/email.service";
+import dayjs from "dayjs";
 import { UserRepository } from "@api/users/user.repository";
+import { expandAll } from "../utils";
+import { MeetingBaseWithSpecific } from "../type";
 
-const animalMeetingRepository = new AnimalMeetingRepository();
-const userRepository = new UserRepository();
+// ── Combine une date (jour) avec une heure (time) en un seul instant ──────────
+function combineDateTime(date: Date, time: Date) {
+  return dayjs(date)
+    .hour(dayjs(time).hour())
+    .minute(dayjs(time).minute())
+    .second(0)
+    .millisecond(0);
+}
 
 export class AnimalMeetingService {
-  async create({
-    data,
-    clinicId,
-  }: {
-    data: CreateAnimalMeeting;
-    clinicId: Clinic["id"];
-  }) {
-    const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
-      where: { clinicId, veterinarianId: data.veterinarianId },
-    });
-    if (!veterinarianClinic) throw new NotFoundError("veterinarianClinic");
+  constructor(
+    private repository: AnimalMeetingRepository,
+    private userRepository: UserRepository,
+    private emailService: EmailService,
+  ) {}
 
+  // ── Helper partagé create/update ─────────────────────────────────────────────
+  private async assertVeterinarianAvailable({
+    veterinarianId,
+    date,
+    startTime,
+    endTime,
+    excludeMeetingId,
+  }: {
+    veterinarianId: string;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    excludeMeetingId?: string;
+  }) {
     const timeOverlapFilter = {
       OR: [
-        { startTime: { lte: data.startTime }, endTime: { gt: data.startTime } },
-        { startTime: { lt: data.endTime }, endTime: { gte: data.endTime } },
-        { startTime: { gte: data.startTime }, endTime: { lte: data.endTime } },
+        { startTime: { lte: startTime }, endTime: { gt: startTime } },
+        { startTime: { lt: endTime }, endTime: { gte: endTime } },
+        { startTime: { gte: startTime }, endTime: { lte: endTime } },
       ],
     };
+
     const meetingConflict = await prisma.meetingBase.findFirst({
       where: {
-        date: data.date,
-        animalMeeting: {
-          veterinarianClinic: { veterinarianId: data.veterinarianId },
-        },
+        date,
+        ...(excludeMeetingId && { id: { not: excludeMeetingId } }),
+        animalMeeting: { veterinarianClinic: { veterinarianId } },
         ...timeOverlapFilter,
       },
     });
-    if (meetingConflict)
+    if (meetingConflict) {
       throw new ConflictError(
         "Le vétérinaire a déjà un rendez-vous sur ce créneau",
       );
+    }
 
-    // 2. Vérifie qu'il a une disponibilité qui couvre ce créneau
     const availability = await prisma.meetingBase.findFirst({
       where: {
-        date: data.date,
+        date,
         kind: "AVAILABILITY",
-        availabilty: {
-          user: { veterinarianProfile: { id: data.veterinarianId } },
-        },
-        startTime: { lte: data.startTime },
-        endTime: { gte: data.endTime },
+        availabilty: { user: { veterinarianProfile: { id: veterinarianId } } },
+        startTime: { lte: startTime },
+        endTime: { gte: endTime },
       },
     });
-    // Vérifie aussi dans les récurrents
-    const recurringAvailability = availability
-      ? availability
-      : await prisma.meetingReccuring.findFirst({
-          where: {
-            kind: "AVAILABILITY",
-            dateStart: { lte: data.date },
-            dateEnd: { gte: data.date },
-            startTime: { lte: data.startTime },
-            endTime: { gte: data.endTime },
-            availabilty: {
-              user: { veterinarianProfile: { id: data.veterinarianId } },
-            },
-          },
-        });
-    if (!recurringAvailability)
+    const recurringAvailability =
+      availability ??
+      (await prisma.meetingReccuring.findFirst({
+        where: {
+          kind: "AVAILABILITY",
+          dateStart: { lte: date },
+          dateEnd: { gte: date },
+          // startTime: { lte: startTime },
+          // endTime: { gte: endTime },
+          // availabilty: {
+          //   user: { veterinarianProfile: { user: { id: veterinarianId } } },
+          // },
+        },
+      }));
+    if (!recurringAvailability) {
       throw new ConflictError(
         "Le vétérinaire n'est pas disponible sur ce créneau",
       );
+    }
+  }
+  private hasScheduleChanged(
+    current: { date: Date; startTime: Date; endTime: Date },
+    data: UpdateAnimalMeeting,
+  ): boolean {
+    const newDate = data.date ?? current.date;
+    const newStart = data.startTime ?? current.startTime;
+    const newEnd = data.endTime ?? current.endTime;
 
-    return animalMeetingRepository.create({
+    return (
+      !dayjs(newDate).isSame(current.date, "day") ||
+      !dayjs(newStart).isSame(current.startTime, "minute") ||
+      !dayjs(newEnd).isSame(current.endTime, "minute")
+    );
+  }
+
+  // ── Vérifie que le créneau (date + startTime) est dans le futur ─────────────
+  private assertIsFuture(date: Date, startTime: Date, message: string) {
+    const meetingDateTime = combineDateTime(date, startTime);
+    if (meetingDateTime.isBefore(dayjs())) {
+      throw new BadRequestError(message);
+    }
+  }
+
+  // ── Vérifie la règle des 48h pour les clients ────────────────────────────────
+  private assertNotWithin48Hours(date: Date, startTime: Date, message: string) {
+    const meetingDateTime = combineDateTime(date, startTime);
+    const hoursUntilMeeting = meetingDateTime.diff(dayjs(), "hour", true);
+    if (hoursUntilMeeting < 48) {
+      throw new ForbiddenError(message);
+    }
+  }
+
+  private animalMeetignWithFlatUser(
+    meeting: AnimalMeetingForUser,
+  ): AnimalMeetingWithMeeting {
+    const client = withUserAvatar(meeting.animal.client);
+    const veterinarian = meeting.veterinarianClinic
+      ? flatUser(meeting.veterinarianClinic?.veterinarian)
+      : undefined;
+    const animalMeeting = {
+      ...meeting,
+      animal: {
+        ...meeting.animal,
+        client,
+      },
+      veterinarianClinic: {
+        ...meeting.veterinarianClinic,
+        veterinarian,
+      },
+    };
+    return animalMeetigWithMeetingSchema.parse(animalMeeting);
+  }
+
+  async create({ data }: { data: CreateAnimalMeeting }) {
+    this.assertIsFuture(
+      data.date,
+      data.startTime,
+      "Impossible de créer un rendez-vous dans le passé",
+    );
+
+    const veterinarianClinic = await prisma.veterinarianClinic.findFirst({
+      where: { clinicId: data.clinicId, veterinarianId: data.veterinarianId },
+    });
+    if (!veterinarianClinic) throw new NotFoundError("veterinarianClinic");
+
+    const animal = await prisma.animal.findUnique({
+      where: { id: data.animalId },
+      include: { client: { include: { user: true } } },
+    });
+    if (!animal) throw new ForbiddenError("L'animal ne vous appartient pas");
+
+    await this.assertVeterinarianAvailable({
+      veterinarianId: data.veterinarianId,
+      date: data.date,
+      startTime: data.startTime,
+      endTime: data.endTime,
+    });
+
+    const animalMeeting = await this.repository.create({
       data,
       veterinarianClinicId: veterinarianClinic.id,
     });
+    if (!animalMeeting) throw new ConflictError("not created");
+
+    await this.emailService.sendAppointmentEmail(
+      "created",
+      animal.client.user.email,
+      {
+        firstname: animal.client.user.firstname,
+        animalName: animal.name,
+        date: data.date,
+        startTime: data.startTime,
+      },
+    );
+    return animalMeeting;
   }
 
   async getById({
@@ -98,16 +215,25 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    const meeting = await animalMeetingRepository.findById(id);
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
-
-    if (role === "CLIENT") {
+    if (!isStaff(role)) {
       const isOwner = meeting.animal.client.id === userId;
       if (!isOwner) throw new ForbiddenError();
     }
-    const user = flatUser(meeting.animal.client);
+
+    const user = withUserAvatar(meeting.animal.client);
     return {
       ...meeting,
+
+      veterinarianClinic: meeting.veterinarianClinic
+        ? {
+            ...meeting.veterinarianClinic,
+            veterinarian: withUserAvatar(
+              meeting.veterinarianClinic.veterinarian,
+            ),
+          }
+        : null,
       animal: {
         ...meeting.animal,
         client: user,
@@ -120,15 +246,84 @@ export class AnimalMeetingService {
     id,
     data,
     userId,
+    role,
   }: {
     id: string;
     data: UpdateAnimalMeeting;
     userId: string;
+    role: UserRole;
   }) {
-    const meeting = await animalMeetingRepository.findById(id);
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
 
-    return animalMeetingRepository.update({ id: meeting.id, data });
+    // ── Vérification d'accès : client propriétaire ou staff ──────────────────
+    const isOwner = meeting.animal.client.id === userId;
+    if (!isStaff(role) && !isOwner) throw new ForbiddenError();
+    const currentDate = meeting.meeting!.date;
+    const currentStartTime = meeting.meeting!.startTime;
+    const currentEndTime = meeting.meeting!.endTime;
+
+    const isRescheduling = this.hasScheduleChanged(
+      {
+        date: currentDate,
+        startTime: currentStartTime,
+        endTime: currentEndTime,
+      },
+      data,
+    );
+    if (isRescheduling) {
+      const currentDate = meeting.meeting!.date;
+      const currentStartTime = meeting.meeting!.startTime;
+
+      // ── Règle des 48h pour les clients, basée sur le créneau actuel ──────────
+      if (!isStaff(role)) {
+        this.assertNotWithin48Hours(
+          currentDate,
+          currentStartTime,
+          "Modification impossible moins de 48h avant le rendez-vous",
+        );
+      }
+
+      const newDate = data.date ?? currentDate;
+      const newStart = data.startTime ?? currentStartTime;
+      const newEnd = data.endTime ?? meeting.meeting!.endTime;
+
+      // ── Le nouveau créneau doit lui aussi être dans le futur ─────────────────
+      this.assertIsFuture(
+        newDate,
+        newStart,
+        "Impossible de déplacer le rendez-vous dans le passé",
+      );
+
+      // ── Vérifie la dispo du véto sur le nouveau créneau ─────────────────────
+      if (meeting.veterinarianClinic?.veterinarianId)
+        await this.assertVeterinarianAvailable({
+          veterinarianId: meeting.veterinarianClinic?.veterinarianId,
+          date: newDate,
+          startTime: newStart,
+          endTime: newEnd,
+          excludeMeetingId: id,
+        });
+    }
+
+    const updated = await this.repository.update({
+      id: meeting.id,
+      data,
+    });
+
+    // ── Notification email si changement de créneau ────────────────────────────
+    if (isRescheduling) {
+      const clientUser = meeting.animal.client.user;
+      const type = isOwner ? "updatedConfirmation" : "rescheduled";
+      await this.emailService.sendAppointmentEmail(type, clientUser.email, {
+        firstname: clientUser.firstname,
+        animalName: meeting.animal.name,
+        date: updated.meeting!.date,
+        startTime: updated.meeting!.startTime,
+      });
+    }
+
+    return updated;
   }
 
   async delete({
@@ -140,40 +335,67 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    const meeting = await animalMeetingRepository.findById(id);
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Rendez-vous");
-
-    const meetingDate = new Date(meeting.meeting!.date);
-    if (meetingDate < new Date()) {
-      throw new ForbiddenError();
-    }
 
     if (!isStaff(role) && meeting.animal.clientId !== userId) {
       throw new ForbiddenError();
     }
 
-    return animalMeetingRepository.delete(id);
+    const meetingDate = meeting.meeting!.date;
+    const meetingStartTime = meeting.meeting!.startTime;
+
+    this.assertIsFuture(
+      meetingDate,
+      meetingStartTime,
+      "Ce rendez-vous est déjà passé",
+    );
+
+    // ── Règle des 48h pour les clients ──────────────────────────────────────────
+    if (!isStaff(role)) {
+      this.assertNotWithin48Hours(
+        meetingDate,
+        meetingStartTime,
+        "Annulation impossible moins de 48h avant le rendez-vous",
+      );
+    }
+
+    const deleted = await this.repository.delete(id);
+
+    // ── Notification email ───────────────────────────────────────────────────────
+    const clientUser = meeting.animal.client.user;
+    await this.emailService.sendAppointmentEmail(
+      "cancelled",
+      clientUser.email,
+      {
+        firstname: clientUser.firstname,
+        animalName: meeting.animal.name,
+        date: meetingDate,
+        startTime: meetingStartTime,
+      },
+    );
+
+    return deleted;
   }
 
-  async getByClient({
+  async getAllByClient({
     id,
     userId,
     role,
   }: {
-    id: string;
+    id: UserId;
     userId: string;
     role: UserRole;
   }) {
-    const user = await userRepository.getUserById({ id });
+    if (!id) throw new BadRequestError("L'id est obligatoire");
+    const user = await this.userRepository.getUserById({ id });
     if (!user) throw new NotFoundError("Utilisateur");
-    if (user.role !== "CLIENT") throw new ForbiddenError();
 
     if (!isStaff(role) && id !== userId) throw new ForbiddenError();
-
-    return animalMeetingRepository.findByClient(id);
+    const animalMeetings = await this.repository.findByClient(id);
+    return animalMeetings.map(this.animalMeetignWithFlatUser);
   }
 
-  // TODO : add vérification
   async getByAnimal({
     animalId,
     userId,
@@ -183,7 +405,46 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    return animalMeetingRepository.findByAnimal(animalId);
+    const animal = await prisma.animal.findUnique({
+      where: { id: animalId },
+      select: { clientId: true },
+    });
+    if (!animal) throw new NotFoundError("Animal");
+
+    if (!isStaff(role) && animal.clientId !== userId)
+      throw new ForbiddenError();
+    const animalMeetings = await this.repository.findByAnimal(animalId);
+    return animalMeetings.map(this.animalMeetignWithFlatUser);
+  }
+  async getAllByVet(vetProfileId: VeterinarianId) {
+    return await this.repository.findByVeterinarian(vetProfileId);
+  }
+  async getAnimalMeetingsAsVet(
+    vetProfileId: VeterinarianId,
+    start: Date,
+    end: Date,
+    clinicIds: ClinicId[] = [],
+  ) {
+    const meetings = await this.repository.findByVeterinarianAndClinic(
+      vetProfileId,
+      start,
+      end,
+      clinicIds,
+    );
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (!meeting) return [];
+      return [meeting as MeetingBaseWithSpecific];
+    });
+    return expandAll(flat, start, end);
+  }
+
+  async getAnimalMeetingsByClinic(clinicId: string, start: Date, end: Date) {
+    const meetings = await this.repository.findByClinic(clinicId, start, end);
+    const flat = meetings.flatMap(({ meeting }): MeetingBaseWithSpecific[] => {
+      if (!meeting) return [];
+      return [meeting as MeetingBaseWithSpecific];
+    });
+    return expandAll(flat, start, end);
   }
 
   async getLastByAnimal({
@@ -195,6 +456,6 @@ export class AnimalMeetingService {
     userId: string;
     role: UserRole;
   }) {
-    return animalMeetingRepository.findLastByAnimal(animalId);
+    return this.repository.findLastByAnimal(animalId);
   }
 }

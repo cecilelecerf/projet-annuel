@@ -1,22 +1,37 @@
 <script setup lang="ts">
-import Navbar from '@/components/ui/nav/Navbar.vue'
-import type { MenuItem } from '@/components/ui/nav/Sidebar.vue'
-import { House, User, Star } from '@element-plus/icons-vue'
+import Navbar from '@/components/ui/nav/NavbarComponent.vue'
+import { House, User, Calendar, ShoppingCart, Box } from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
-    index: 'Client.Home',
+    index: 'CLIENT.Home',
     label: 'Accueil',
     icon: House,
   },
   {
-    index: 'Client.Reviews',
-    label: 'Vétérinaires',
-    icon: Star,
+    index: 'CLIENT.Animals',
+    label: 'Mes animaux',
+    icon: User,
   },
   {
-    index: 'Client.Profil',
+    index: 'CLIENT.Meetings',
+    label: 'Rendez-vous',
+    icon: Calendar,
+  },
+  {
+    index: 'CLIENT.Shop',
+    label: 'Boutique',
+    icon: ShoppingCart,
+  },
+  {
+    index: 'CLIENT.Orders',
+    label: 'Mes commandes',
+    icon: Box,
+  },
+  {
+    index: 'CLIENT.Profil',
     label: 'Profil',
     icon: User,
   },
@@ -28,7 +43,12 @@ const menuItems: MenuItem[] = [
     <FormError />
     <Navbar :menu-items="menuItems" />
     <main class="main">
-      <router-view />
+      <Suspense>
+        <router-view />
+        <template #fallback>
+          <div class="loading">Chargement...</div>
+        </template>
+      </Suspense>
     </main>
   </div>
 </template>
@@ -38,12 +58,12 @@ const menuItems: MenuItem[] = [
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #f8f9fa;
 }
 .main {
-  padding: 32px;
-  max-width: 600px;
-  margin: auto;
-  flex: 1;
-  background: #f8f9fa;
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 32px 24px;
 }
 </style>

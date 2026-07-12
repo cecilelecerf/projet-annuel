@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import 'dayjs/locale/fr'
 import type { AnimalMeetingMeta, AnimalMeetingStatus, UpdateAnimalMeeting } from '@armali/schemas'
 
+dayjs.extend(utc)
 dayjs.locale('fr')
 
 const props = defineProps<{
   meeting: AnimalMeetingMeta
   isEditing: boolean
   status: AnimalMeetingStatus
+  isStaff: boolean
 }>()
 const edit = defineModel<UpdateAnimalMeeting>('edit', { required: true })
 
 const dateLabel = computed(() => dayjs(props.meeting.date).format('dddd D MMMM YYYY'))
+
 const timeLabel = computed(() => {
-  const start = dayjs(props.meeting.startTime).format('H[h]mm')
-  const end = dayjs(props.meeting.endTime).format('H[h]mm')
+  const start = dayjs.utc(props.meeting.startTime).format('H[h]mm')
+  const end = dayjs.utc(props.meeting.endTime).format('H[h]mm')
   return `${start} — ${end}`
 })
 
@@ -30,6 +34,33 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
   COMPLETED: 'success',
   CANCELLED: 'danger',
 }
+
+// ── Combine date (jour) + heure (time) en un seul instant ────────────────────
+const meetingDateTime = computed(() => {
+  const date = dayjs(props.meeting.date)
+  const time = dayjs.utc(props.meeting.startTime)
+  return date.hour(time.hour()).minute(time.minute()).second(0).millisecond(0)
+})
+
+const isPast = computed(() => meetingDateTime.value.isBefore(dayjs()))
+
+const isWithin48Hours = computed(() => meetingDateTime.value.diff(dayjs(), 'hour', true) < 48)
+
+// ── Le client ne peut pas modifier la date/heure si le RDV est passé ─────────
+// ── ou si on est à moins de 48h (le staff n'a pas cette restriction) ──────────
+const canEditSchedule = computed(() => {
+  if (isPast.value) return false
+  if (!props.isStaff && isWithin48Hours.value) return false
+  return true
+})
+
+const lockedReason = computed(() => {
+  if (isPast.value) return 'Ce rendez-vous est passé, la date ne peut plus être modifiée.'
+  if (!props.isStaff && isWithin48Hours.value) {
+    return 'Modification impossible à moins de 48h du rendez-vous. Contacte la clinique.'
+  }
+  return ''
+})
 </script>
 
 <template>
@@ -44,7 +75,7 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
         {{ statusLabel[status] }}
       </el-tag>
     </div>
-    <h1 class="meeting-title">{{ meeting.description ?? 'Consultation' }}</h1>
+    <h1 class="meeting-title">{{ meeting.speciality?.name ?? 'Consultation' }}</h1>
   </div>
 
   <!-- Date & Horaires -->
@@ -52,21 +83,32 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
     <h3 class="section-label">
       <el-icon><Calendar /></el-icon> Date & Horaires
     </h3>
+
     <div v-if="!isEditing" class="info-row">
       <span class="info-value">{{ dateLabel }}</span>
       <span class="info-separator">·</span>
       <span class="info-value">{{ timeLabel }}</span>
     </div>
-    <div v-else class="edit-time-row">
-      <el-time-picker
-        v-model="edit.startTime"
-        format="HH:mm"
-        value-format="HH:mm:ss"
-        size="large"
-      />
-      <span class="time-arrow">→</span>
-      <el-time-picker v-model="edit.endTime" format="HH:mm" value-format="HH:mm:ss" size="large" />
-    </div>
+
+    <template v-else>
+      <div v-if="canEditSchedule" class="edit-time-row">
+        <el-time-picker v-model="edit.startTime" format="HH:mm" size="large" />
+        <span class="time-arrow">→</span>
+        <el-time-picker v-model="edit.endTime" format="HH:mm" size="large" />
+      </div>
+
+      <div v-else class="schedule-locked">
+        <div class="info-row">
+          <span class="info-value">{{ dateLabel }}</span>
+          <span class="info-separator">·</span>
+          <span class="info-value">{{ timeLabel }}</span>
+        </div>
+        <p class="locked-hint">
+          <el-icon><Lock /></el-icon>
+          {{ lockedReason }}
+        </p>
+      </div>
+    </template>
   </div>
 
   <!-- Mesures -->
@@ -140,7 +182,7 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
 .meeting-title {
   font-size: 28px;
   font-weight: var(--fw-bold);
-  color: var(--el-text-color-primary);
+  color: var(--el-color-#{meeting-color('animal')}-dark-3);
   margin: 0;
 }
 
@@ -158,18 +200,10 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
   color: var(--el-text-color-placeholder);
 }
 
-.description-text {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.6;
-  margin: 0;
-  white-space: pre-wrap;
-}
-
 .measures-row,
 .measures-edit-row {
   display: flex;
-  gap: var(--spacing-md);
+  gap: var(--spacing-2xl);
 }
 
 .measure-card {
@@ -178,22 +212,22 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
   flex-direction: column;
   gap: 4px;
   padding: var(--spacing-md);
-  background: var(--el-fill-color-light);
+  background: var(--el-color-#{meeting-color('animal')}-light-7);
   border-radius: var(--radius-md);
   text-align: center;
 }
 
 .measure-label {
   font-size: 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--el-color-#{meeting-color('animal')}-dark-2);
+
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .measure-value {
   font-size: 22px;
   font-weight: var(--fw-bold);
-  color: var(--el-text-color-primary);
+  color: var(--el-color-#{meeting-color('animal')});
 }
 
 .measure-edit {
@@ -218,6 +252,22 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
   color: var(--el-text-color-placeholder);
   font-size: 16px;
 }
+
+.schedule-locked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.locked-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  margin: 0;
+}
+
 .kind-badge {
   display: inline-flex;
   align-items: center;
@@ -229,9 +279,9 @@ const statusTag: Record<AnimalMeetingStatus, string> = {
   width: fit-content;
 
   &.animal {
-    background: var(--el-color-success-light-9);
-    color: var(--el-color-success);
-    border: 1px solid var(--el-color-success-light-5);
+    background: var(--el-color-#{meeting-color('animal')}-light-9);
+    color: var(--el-color-#{meeting-color('animal')});
+    border: 1px solid var(--el-color-#{meeting-color('animal')}-light-5);
   }
 }
 </style>

@@ -1,4 +1,3 @@
-import { prisma } from "@api/lib/prisma";
 import type {
   ConversationMemberRole,
   ConversationScope,
@@ -7,10 +6,13 @@ import {
   conversationListInclude,
   conversationMembersInclude,
 } from "./messaging.types";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class ConversationRepository {
+  constructor(private prisma: PrismaClient) {}
+
   async findExistingDirect(userAId: string, userBId: string) {
-    return prisma.conversation.findFirst({
+    return this.prisma.conversation.findFirst({
       where: {
         type: "DIRECT",
         conversationMembers: { some: { userId: userAId } },
@@ -21,7 +23,7 @@ export class ConversationRepository {
   }
 
   async listForUser(userId: string) {
-    return prisma.conversation.findMany({
+    return this.prisma.conversation.findMany({
       where: { conversationMembers: { some: { userId } } },
       orderBy: { lastMessageAt: { sort: "desc", nulls: "last" } },
       include: conversationListInclude,
@@ -29,7 +31,7 @@ export class ConversationRepository {
   }
 
   async findById(conversationId: string) {
-    return prisma.conversation.findUnique({
+    return this.prisma.conversation.findUnique({
       where: { id: conversationId },
       include: conversationMembersInclude,
     });
@@ -46,7 +48,7 @@ export class ConversationRepository {
     scope: ConversationScope;
     clinicId: string | null;
   }) {
-    return prisma.conversation.create({
+    return this.prisma.conversation.create({
       data: {
         type: "DIRECT",
         scope,
@@ -78,7 +80,7 @@ export class ConversationRepository {
     clinicId: string | null;
     memberIds: string[];
   }) {
-    return prisma.conversation.create({
+    return this.prisma.conversation.create({
       data: {
         type: "GROUP",
         scope,
@@ -102,7 +104,7 @@ export class ConversationRepository {
   }
 
   async addMembers(conversationId: string, memberIds: string[]) {
-    await prisma.conversationMember.createMany({
+    await this.prisma.conversationMember.createMany({
       data: memberIds.map((userId) => ({
         conversationId,
         userId,
@@ -114,7 +116,7 @@ export class ConversationRepository {
   }
 
   async removeMember(conversationId: string, userId: string) {
-    await prisma.conversationMember.delete({
+    await this.prisma.conversationMember.delete({
       where: { conversationId_userId: { conversationId, userId } },
     });
   }
@@ -124,35 +126,35 @@ export class ConversationRepository {
     userId: string,
     role: ConversationMemberRole,
   ) {
-    return prisma.conversationMember.update({
+    return this.prisma.conversationMember.update({
       where: { conversationId_userId: { conversationId, userId } },
       data: { role },
     });
   }
 
   async rename(conversationId: string, name: string) {
-    return prisma.conversation.update({
+    return this.prisma.conversation.update({
       where: { id: conversationId },
       data: { name },
     });
   }
 
   async touchLastMessageAt(conversationId: string, date: Date) {
-    return prisma.conversation.update({
+    return this.prisma.conversation.update({
       where: { id: conversationId },
       data: { lastMessageAt: date },
     });
   }
 
   async updateLastReadAt(conversationId: string, userId: string, date: Date) {
-    return prisma.conversationMember.update({
+    return this.prisma.conversationMember.update({
       where: { conversationId_userId: { conversationId, userId } },
       data: { lastReadAt: date },
     });
   }
 
   async listConversationIdsForUser(userId: string) {
-    const members = await prisma.conversationMember.findMany({
+    const members = await this.prisma.conversationMember.findMany({
       where: { userId },
       select: { conversationId: true },
     });

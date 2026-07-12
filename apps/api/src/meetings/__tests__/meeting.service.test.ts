@@ -1,13 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ForbiddenError, NotFoundError } from "@api/errors";
 
 const mockMeetingRepository = vi.hoisted(() => ({
-  getInternalMeetings: vi.fn(),
+  findById: vi.fn(),
+}));
+const mockAnimalMeetingService = vi.hoisted(() => ({
   getAnimalMeetingsAsVet: vi.fn(),
-  getAnimalMeetingsAsClient: vi.fn(),
+  getAllByVet: vi.fn(),
+}));
+const mockInternalMeetingService = vi.hoisted(() => ({
+  getFlatsByUser: vi.fn(),
+  getAllByUser: vi.fn(),
+}));
+const mockAvailabilityService = vi.hoisted(() => ({
   getAvailabilities: vi.fn(),
-  getAvailabilitiesByClinic: vi.fn(),
-  getMeetingById: vi.fn(),
-  getRecurringById: vi.fn(),
+  sliceAvailabilityIntoSlots: vi.fn(),
+}));
+const mockClinicService = vi.hoisted(() => ({
+  getClinicIdsByUserId: vi.fn(),
+}));
+const mockVeterinarianProfileRepository = vi.hoisted(() => ({
+  findById: vi.fn(),
 }));
 
 vi.mock("@api/meetings/meeting.repository", () => ({
@@ -15,9 +28,58 @@ vi.mock("@api/meetings/meeting.repository", () => ({
     return mockMeetingRepository;
   }),
 }));
+vi.mock("@api/meetings/animal-meeting", () => ({
+  AnimalMeetingService: vi.fn(function () {
+    return mockAnimalMeetingService;
+  }),
+}));
+vi.mock("@api/meetings/internal-meeting", () => ({
+  InternalMeetingService: vi.fn(function () {
+    return mockInternalMeetingService;
+  }),
+}));
+vi.mock("@api/meetings/availabilities", () => ({
+  AvailabilityService: vi.fn(function () {
+    return mockAvailabilityService;
+  }),
+}));
+vi.mock("@api/clinics/clinic.service", () => ({
+  ClinicService: vi.fn(function () {
+    return mockClinicService;
+  }),
+}));
+vi.mock("@api/veterinarians/veterinarian-profile.repository", () => ({
+  VeterinarianProfileRepository: vi.fn(function () {
+    return mockVeterinarianProfileRepository;
+  }),
+}));
 
+const { MeetingRepository } = await import("@api/meetings/meeting.repository");
+const { AnimalMeetingService } = await import("@api/meetings/animal-meeting");
+const { InternalMeetingService } =
+  await import("@api/meetings/internal-meeting");
+const { AvailabilityService } = await import("@api/meetings/availabilities");
+const { ClinicService } = await import("@api/clinics/clinic.service");
+const { VeterinarianProfileRepository } =
+  await import("@api/veterinarians/veterinarian-profile.repository");
 const { MeetingService } = await import("@api/meetings/meeting.service");
-const meetingService = new MeetingService();
+
+const meetingService = new MeetingService(
+  new MeetingRepository({} as any),
+  new AnimalMeetingService({} as any, {} as any, {} as any),
+  new InternalMeetingService({} as any, {} as any, {} as any, {} as any),
+  new AvailabilityService(
+    {} as any,
+    {} as any,
+    {} as any,
+    {} as any,
+    {} as any,
+  ),
+  new ClinicService({} as any),
+  new VeterinarianProfileRepository({} as any),
+);
+
+beforeEach(() => vi.clearAllMocks());
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -33,28 +95,11 @@ const makeBase = (overrides = {}) => ({
   startTime: new Date("1970-01-01T08:00:00.000Z"),
   endTime: new Date("1970-01-01T09:00:00.000Z"),
   date: new Date("2026-01-10T00:00:00.000Z"),
+  recurringId: null,
   parentId: null,
   animalMeeting: null,
   internalMeeting: null,
   availabilty: null,
-  ...overrides,
-});
-
-const makeRecurring = (overrides = {}) => ({
-  id: "recurring-1",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  kind: "ANIMAL" as const,
-  dateStart: new Date("2026-01-01T00:00:00.000Z"),
-  dateEnd: new Date("2026-01-31T00:00:00.000Z"),
-  dayOfWeek: [1],
-  startTime: new Date("1970-01-01T08:00:00.000Z"),
-  endTime: new Date("1970-01-01T09:00:00.000Z"),
-  frequency: "WEEKLY" as const,
-  animalMeeting: null,
-  internalMeeting: null,
-  availabilty: null,
-  childrens: [],
   ...overrides,
 });
 
@@ -68,15 +113,14 @@ const makeAnimalSpecific = (overrides = {}) => ({
   recurringId: null,
   meetingId: "base-1",
   animalId: "pet-1",
-  veterinarianId: "veto-1",
+  veterinarianClinicId: "veto-clinic-1",
   ...overrides,
 });
 
 const makeInternalSpecific = (overrides = {}) => ({
   id: "internal-1",
-  title: "Réunion",
+  title: "Réunion équipe",
   description: null,
-  clinicId: "clinic-1",
   recurringId: null,
   meetingId: "base-1",
   participants: [],
@@ -85,8 +129,8 @@ const makeInternalSpecific = (overrides = {}) => ({
 
 const makeAvailabilitySpecific = (overrides = {}) => ({
   id: "avail-1",
-  userId: "user-1",
-  veterinarianClinicId: null,
+  userId: "veto-1",
+  clinicId: "clinic-1",
   recurringId: null,
   meetingId: "base-1",
   ...overrides,
@@ -99,448 +143,511 @@ const makeBaseWithAnimal = (overrides = {}) =>
     ...overrides,
   });
 
-const makeBaseWithInternal = (overrides = {}) =>
-  makeBase({
-    kind: "INTERNAL" as const,
-    internalMeeting: makeInternalSpecific(),
-    ...overrides,
+// ── flattenMeetingByBase ──────────────────────────────────────────────────────
+
+describe("MeetingService.flattenMeetingByBase", () => {
+  it("aplatit un meeting de type ANIMAL", () => {
+    const result = meetingService.flattenMeetingByBase(makeBaseWithAnimal());
+    expect(result).toHaveProperty("animalId", "pet-1");
   });
 
-const makeBaseWithAvailability = (overrides = {}) =>
-  makeBase({
-    kind: "AVAILABILITY" as const,
-    availabilty: makeAvailabilitySpecific(),
-    ...overrides,
+  it("aplatit un meeting de type INTERNAL", () => {
+    const base = makeBase({
+      kind: "INTERNAL" as const,
+      internalMeeting: makeInternalSpecific(),
+    });
+    const result = meetingService.flattenMeetingByBase(base);
+    expect(result).toHaveProperty("title", "Réunion équipe");
   });
 
-const makeRecurringWithAnimal = (overrides = {}) =>
-  makeRecurring({
-    kind: "ANIMAL" as const,
-    animalMeeting: makeAnimalSpecific({
-      meetingId: null,
-      recurringId: "recurring-1",
-    }),
-    ...overrides,
+  it("aplatit un meeting de type AVAILABILITY", () => {
+    const base = makeBase({
+      kind: "AVAILABILITY" as const,
+      availabilty: makeAvailabilitySpecific(),
+    });
+    const result = meetingService.flattenMeetingByBase(base);
+    expect(result).toHaveProperty("userId", "veto-1");
   });
 
-const makeRecurringWithInternal = (overrides = {}) =>
-  makeRecurring({
-    kind: "INTERNAL" as const,
-    internalMeeting: makeInternalSpecific({
-      meetingId: null,
-      recurringId: "recurring-1",
-    }),
-    ...overrides,
+  it("throw si aucun sous-type n'est présent", () => {
+    expect(() => meetingService.flattenMeetingByBase(makeBase())).toThrow();
   });
-
-const makeRecurringWithAvailability = (overrides = {}) =>
-  makeRecurring({
-    kind: "AVAILABILITY" as const,
-    availabilty: makeAvailabilitySpecific({
-      meetingId: null,
-      recurringId: "recurring-1",
-    }),
-    ...overrides,
-  });
-
-const makeParticipant = (overrides = {}) => ({
-  id: "participant-1",
-  userId: "user-1",
-  status: "ACCEPTED" as const,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  meeting: {
-    id: "internal-1",
-    title: "Réunion",
-    description: null,
-    clinicId: "clinic-1",
-    recurringId: null,
-    meetingId: "base-1",
-    participants: [],
-    recurring: null,
-    meeting: makeBaseWithInternal(),
-  },
-  ...overrides,
 });
 
-beforeEach(() => vi.clearAllMocks());
+// ── getCalendar ───────────────────────────────────────────────────────────────
 
-// ── expandRecurring ───────────────────────────────────────────────────────────
+describe("MeetingService.getCalendar", () => {
+  it("ForbiddenError si role !== SECRETARY et targetId !== userId (consultation du calendrier d'autrui)", async () => {
+    await expect(
+      meetingService.getCalendar({
+        userId: "user-1" as any,
+        role: "VETERINARIAN" as any,
+        targetId: "vet-2" as any, // différent de userId
+        targetRole: "VETERINARIAN" as any,
+        start,
+        end,
+      }),
+    ).rejects.toThrow(ForbiddenError);
 
-describe("MeetingService.expandRecurring", () => {
-  it("génère les occurrences pour le bon jour de la semaine", () => {
-    const reccuring = makeRecurringWithAnimal({ dayOfWeek: [1] });
-
-    const result = meetingService.expandRecurring({ reccuring, start, end });
-
-    // lundis de janvier 2026 : 5, 12, 19, 26
-    expect(result).toHaveLength(4);
-    result.forEach((r) => expect(new Date(r.date!).getUTCDay()).toBe(1));
+    expect(mockClinicService.getClinicIdsByUserId).not.toHaveBeenCalled();
   });
 
-  it("exclut les dates d'exception", () => {
-    const exceptionDate = "2026-01-05";
-    const reccuring = makeRecurringWithAnimal({
-      dayOfWeek: [1],
-      childrens: [
+  it("autorisé si targetId === userId, même sans être SECRETARY", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+
+    const result = await meetingService.getCalendar({
+      userId: "vet-1" as any,
+      role: "VETERINARIAN" as any,
+      targetId: "vet-1" as any, // égal à userId
+      targetRole: "VETERINARIAN" as any,
+      start,
+      end,
+    });
+
+    expect(result.meetings).toHaveLength(0);
+  });
+
+  it("SECRETARY peut consulter le calendrier d'un autre utilisateur", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValue(["clinic-1"]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
+      meetingService.flattenMeetingByBase(makeBaseWithAnimal()),
+    ]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+
+    const result = await meetingService.getCalendar({
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
+      targetId: "vet-1" as any,
+      targetRole: "VETERINARIAN" as any,
+      start,
+      end,
+    });
+
+    expect(result.meetings).toHaveLength(1);
+  });
+
+  it("NotFoundError si la cible n'a aucune clinique associée", async () => {
+    mockClinicService.getClinicIdsByUserId.mockResolvedValueOnce([]); // résolution de la cible
+
+    await expect(
+      meetingService.getCalendar({
+        userId: "secretary-1" as any,
+        role: "SECRETARY" as any,
+        targetId: "vet-1" as any,
+        targetRole: "VETERINARIAN" as any,
+        start,
+        end,
+      }),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("targetRole VETERINARIAN — récupère les animalMeetings avec les clinicIds de l'auteur", async () => {
+    mockClinicService.getClinicIdsByUserId
+      .mockResolvedValueOnce(["target-clinic"]) // résolution de la cible (targetId/targetRole)
+      .mockResolvedValueOnce(["clinic-1"]); // clinicIds de l'auteur (userId/role)
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
+      meetingService.flattenMeetingByBase(makeBaseWithAnimal()),
+    ]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+
+    const result = await meetingService.getCalendar({
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
+      targetId: "vet-1" as any,
+      targetRole: "VETERINARIAN" as any,
+      start,
+      end,
+    });
+
+    expect(
+      mockAnimalMeetingService.getAnimalMeetingsAsVet,
+    ).toHaveBeenCalledWith("vet-1", start, end, ["clinic-1"]);
+    expect(result.meetings).toHaveLength(1);
+  });
+
+  it("targetRole différent de VETERINARIAN — pas d'appel animalMeetings", async () => {
+    mockClinicService.getClinicIdsByUserId
+      .mockResolvedValueOnce(["target-clinic"])
+      .mockResolvedValueOnce(["clinic-1"]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+
+    const result = await meetingService.getCalendar({
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
+      targetId: "client-1" as any,
+      targetRole: "CLIENT" as any,
+      start,
+      end,
+    });
+
+    expect(
+      mockAnimalMeetingService.getAnimalMeetingsAsVet,
+    ).not.toHaveBeenCalled();
+    expect(result.meetings).toHaveLength(0);
+  });
+
+  it("combine internal + animal dans meetings, availabilities retourné séparément", async () => {
+    mockClinicService.getClinicIdsByUserId
+      .mockResolvedValueOnce(["target-clinic"])
+      .mockResolvedValueOnce(["clinic-1"]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
+      meetingService.flattenMeetingByBase(makeBaseWithAnimal()),
+    ]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([
+      meetingService.flattenMeetingByBase(
         makeBase({
-          type: "EXCEPTION" as const,
-          date: new Date(`${exceptionDate}T00:00:00.000Z`),
-          animalMeeting: makeAnimalSpecific(),
+          kind: "INTERNAL" as const,
+          internalMeeting: makeInternalSpecific(),
         }),
-      ],
-    });
-
-    const result = meetingService.expandRecurring({ reccuring, start, end });
-
-    expect(result).toHaveLength(3);
-    result.forEach((r) =>
-      expect(new Date(r.date!).toISOString().split("T")[0]).not.toBe(
-        exceptionDate,
       ),
-    );
-  });
-
-  it("retourne un tableau vide si aucune occurrence dans la plage", () => {
-    const reccuring = makeRecurringWithAnimal({ dayOfWeek: [1] });
-
-    const result = meetingService.expandRecurring({
-      reccuring,
-      start: new Date("2026-03-01T00:00:00.000Z"),
-      end: new Date("2026-03-31T00:00:00.000Z"),
-    });
-
-    expect(result).toHaveLength(0);
-  });
-
-  it("les occurrences ont type SPECIFIED", () => {
-    const reccuring = makeRecurringWithAnimal({ dayOfWeek: [1] });
-
-    const result = meetingService.expandRecurring({ reccuring, start, end });
-
-    result.forEach((r) => expect(r.type).toBe("SPECIFIED"));
-  });
-
-  it("utilise le contenu du children SPECIFIED pour la date correspondante", () => {
-    const overrideDate = "2026-01-05";
-    const reccuring = makeRecurringWithAnimal({
-      dayOfWeek: [1],
-      childrens: [
-        makeBaseWithAnimal({
-          type: "SPECIFIED" as const,
-          date: new Date(`${overrideDate}T00:00:00.000Z`),
-          animalMeeting: makeAnimalSpecific({
-            description: "Consultation spéciale",
-          }),
+    ]);
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([
+      meetingService.flattenMeetingByBase(
+        makeBase({
+          kind: "AVAILABILITY" as const,
+          availabilty: makeAvailabilitySpecific(),
         }),
-      ],
+      ),
+    ]);
+
+    const result = await meetingService.getCalendar({
+      userId: "secretary-1" as any,
+      role: "SECRETARY" as any,
+      targetId: "vet-1" as any,
+      targetRole: "VETERINARIAN" as any,
+      start,
+      end,
     });
 
-    const result = meetingService.expandRecurring({ reccuring, start, end });
+    expect(result.meetings).toHaveLength(2);
+    expect(result.availabilities).toHaveLength(1);
+  });
+});
 
-    const override = result.find(
-      (r) => new Date(r.date!).toISOString().split("T")[0] === overrideDate,
-    );
-    expect(override).toBeDefined();
-    if (override && "description" in override) {
-      expect(override.description).toBe("Consultation spéciale");
-    }
+// ── getMeetingById ────────────────────────────────────────────────────────────
+
+describe("MeetingService.getMeetingById", () => {
+  it("meeting introuvable — NotFoundError", async () => {
+    mockMeetingRepository.findById.mockResolvedValue(null);
+    await expect(
+      meetingService.getMeetingById("unknown" as any),
+    ).rejects.toThrow(NotFoundError);
   });
 
-  it("ignore les exceptions qui ne sont pas de type EXCEPTION", () => {
-    const reccuring = makeRecurringWithAnimal({
-      dayOfWeek: [1],
-      childrens: [
-        makeBaseWithAnimal({
-          type: "SPECIFIED" as const,
-          date: new Date("2026-01-05T00:00:00.000Z"),
+  it("retourne le meeting aplati", async () => {
+    mockMeetingRepository.findById.mockResolvedValue(makeBaseWithAnimal());
+    const result = await meetingService.getMeetingById("base-1" as any);
+    expect(result).toHaveProperty("animalId", "pet-1");
+  });
+});
+
+// ── getVetSlots ───────────────────────────────────────────────────────────────
+
+describe("MeetingService.getVetSlots", () => {
+  it("NotFoundError si le vétérinaire n'existe pas", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      meetingService.getVetSlots({
+        veterinarianId: "vet-1" as any,
+        start,
+        end,
+        clinicIds: ["clinic-1" as any],
+      }),
+    ).rejects.toThrow(NotFoundError);
+
+    expect(mockAvailabilityService.getAvailabilities).not.toHaveBeenCalled();
+  });
+
+  it("passe les créneaux occupés (internal + animal) à sliceAvailabilityIntoSlots", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue({
+      id: "vet-1",
+    });
+
+    const availability = meetingService.flattenMeetingByBase(
+      makeBase({
+        kind: "AVAILABILITY" as const,
+        availabilty: makeAvailabilitySpecific(),
+      }),
+    );
+    const internalOccupied = meetingService.flattenMeetingByBase(
+      makeBase({
+        kind: "INTERNAL" as const,
+        internalMeeting: makeInternalSpecific(),
+        startTime: new Date("1970-01-01T09:00:00.000Z"),
+        endTime: new Date("1970-01-01T09:30:00.000Z"),
+      }),
+    );
+    const animalOccupied =
+      meetingService.flattenMeetingByBase(makeBaseWithAnimal());
+
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([availability]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([
+      internalOccupied,
+    ]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([
+      animalOccupied,
+    ]);
+    mockAvailabilityService.sliceAvailabilityIntoSlots.mockReturnValue([
+      { startTime: new Date(), endTime: new Date() },
+    ]);
+
+    const slots = await meetingService.getVetSlots({
+      veterinarianId: "vet-1" as any,
+      start,
+      end,
+      clinicIds: ["clinic-1" as any],
+    });
+
+    expect(
+      mockAvailabilityService.sliceAvailabilityIntoSlots,
+    ).toHaveBeenCalledWith(
+      availability,
+      [
+        {
+          start: internalOccupied.startTime,
+          end: internalOccupied.endTime,
+          date: internalOccupied.date,
+        },
+        {
+          start: animalOccupied.startTime,
+          end: animalOccupied.endTime,
+          date: animalOccupied.date,
+        },
+      ],
+      30,
+    );
+    expect(slots).toHaveLength(1);
+  });
+
+  it("utilise slotDurationMinutes personnalisé", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue({
+      id: "vet-1",
+    });
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([
+      meetingService.flattenMeetingByBase(
+        makeBase({
+          kind: "AVAILABILITY" as const,
+          availabilty: makeAvailabilitySpecific(),
         }),
-      ],
+      ),
+    ]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
+    mockAvailabilityService.sliceAvailabilityIntoSlots.mockReturnValue([]);
+
+    await meetingService.getVetSlots({
+      veterinarianId: "vet-1" as any,
+      start,
+      end,
+      slotDurationMinutes: 15,
+      clinicIds: ["clinic-1" as any],
     });
 
-    const result = meetingService.expandRecurring({ reccuring, start, end });
+    expect(
+      mockAvailabilityService.sliceAvailabilityIntoSlots,
+    ).toHaveBeenCalledWith(expect.anything(), expect.anything(), 15);
+  });
 
-    expect(result).toHaveLength(4);
+  it("aucune disponibilité — tableau vide, slicer jamais appelé", async () => {
+    mockVeterinarianProfileRepository.findById.mockResolvedValue({
+      id: "vet-1",
+    });
+    mockAvailabilityService.getAvailabilities.mockResolvedValue([]);
+    mockInternalMeetingService.getFlatsByUser.mockResolvedValue([]);
+    mockAnimalMeetingService.getAnimalMeetingsAsVet.mockResolvedValue([]);
+
+    const slots = await meetingService.getVetSlots({
+      veterinarianId: "vet-1" as any,
+      start,
+      end,
+      clinicIds: ["clinic-1" as any],
+    });
+
+    expect(
+      mockAvailabilityService.sliceAvailabilityIntoSlots,
+    ).not.toHaveBeenCalled();
+    expect(slots).toHaveLength(0);
   });
 });
 
-// ── getInternalMeetings ───────────────────────────────────────────────────────
+// ── generateIcs ───────────────────────────────────────────────────────────────
 
-describe("MeetingService.getInternalMeetings", () => {
-  it("retourne un tableau vide si aucun participant", async () => {
-    mockMeetingRepository.getInternalMeetings.mockResolvedValue([]);
-
-    const result = await meetingService.getInternalMeetings(
-      "user-1",
-      start,
-      end,
-    );
-
-    expect(result).toHaveLength(0);
-  });
-
-  it("retourne les meetings internes aplatis", async () => {
-    mockMeetingRepository.getInternalMeetings.mockResolvedValue([
-      makeParticipant(),
-    ]);
-
-    const result = await meetingService.getInternalMeetings(
-      "user-1",
-      start,
-      end,
-    );
-
-    expect(result.length).toBeGreaterThan(0);
-    result.forEach((r) => expect(r.kind).toBe("INTERNAL"));
-  });
-
-  it("expand les meetings récurrents", async () => {
-    mockMeetingRepository.getInternalMeetings.mockResolvedValue([
-      makeParticipant({
+describe("MeetingService.generateIcs", () => {
+  it("génère un event pour chaque animalMeeting ponctuel du véto", async () => {
+    mockAnimalMeetingService.getAllByVet.mockResolvedValue([
+      {
         meeting: {
-          id: "internal-1",
-          title: "Réunion",
-          description: null,
-          clinicId: "clinic-1",
-          recurringId: "recurring-1",
-          meetingId: null,
-          participants: [],
-          recurring: makeRecurringWithInternal({ dayOfWeek: [2] }), // mardi
-          meeting: null,
+          id: "meeting-1",
+          date: new Date("2026-06-10T00:00:00.000Z"),
+          startTime: new Date("1970-01-01T09:00:00.000Z"),
+          endTime: new Date("1970-01-01T09:30:00.000Z"),
         },
-      }),
+        speciality: { name: "Cardiologie" },
+        animal: { name: "Rex" },
+        description: "Consultation de routine",
+      },
     ]);
+    mockInternalMeetingService.getAllByUser.mockResolvedValue([]);
 
-    const result = await meetingService.getInternalMeetings(
-      "user-1",
-      start,
-      end,
+    const ics = await meetingService.generateIcs(
+      "vet-1" as any,
+      "VETERINARIAN" as any,
     );
 
-    // mardis de janvier 2026 : 6, 13, 20, 27
-    expect(result).toHaveLength(4);
-    result.forEach((r) => expect(r.type).toBe("SPECIFIED"));
+    expect(ics).toContain("SUMMARY:Cardiologie");
+    expect(ics).toContain("DURATION:PT30M");
   });
 
-  it("filtre les participants sans meeting ponctuel ni récurrent", async () => {
-    mockMeetingRepository.getInternalMeetings.mockResolvedValue([
-      makeParticipant({
+  it("ignore les animalMeetings sans meeting rattaché", async () => {
+    mockAnimalMeetingService.getAllByVet.mockResolvedValue([
+      {
+        meeting: null,
+        speciality: null,
+        animal: { name: "Rex" },
+        description: null,
+      },
+    ]);
+    mockInternalMeetingService.getAllByUser.mockResolvedValue([]);
+
+    const ics = await meetingService.generateIcs(
+      "vet-1" as any,
+      "VETERINARIAN" as any,
+    );
+
+    expect(ics).not.toContain("BEGIN:VEVENT");
+  });
+
+  it("titre par défaut 'Consultation générale' si pas de spécialité", async () => {
+    mockAnimalMeetingService.getAllByVet.mockResolvedValue([
+      {
         meeting: {
-          id: "internal-1",
-          title: "Réunion",
-          description: null,
-          clinicId: "clinic-1",
-          recurringId: null,
-          meetingId: null,
-          participants: [],
-          recurring: null,
-          meeting: null,
+          id: "meeting-1",
+          date: new Date("2026-06-10T00:00:00.000Z"),
+          startTime: new Date("1970-01-01T09:00:00.000Z"),
+          endTime: new Date("1970-01-01T09:30:00.000Z"),
         },
-      }),
+        speciality: null,
+        animal: { name: "Rex" },
+        description: null,
+      },
     ]);
+    mockInternalMeetingService.getAllByUser.mockResolvedValue([]);
 
-    const result = await meetingService.getInternalMeetings(
-      "user-1",
-      start,
-      end,
+    const ics = await meetingService.generateIcs(
+      "vet-1" as any,
+      "VETERINARIAN" as any,
     );
 
-    expect(result).toHaveLength(0);
-  });
-});
-
-// ── getAnimalMeetingsAsVet ────────────────────────────────────────────────────
-
-describe("MeetingService.getAnimalMeetingsAsVet", () => {
-  it("retourne un tableau vide si aucun meeting", async () => {
-    mockMeetingRepository.getAnimalMeetingsAsVet.mockResolvedValue([]);
-
-    const result = await meetingService.getAnimalMeetingsAsVet(
-      "veto-1",
-      start,
-      end,
-    );
-
-    expect(result).toHaveLength(0);
+    expect(ics).toContain("SUMMARY:Consultation générale");
   });
 
-  it("retourne les meetings animaux ponctuels aplatis", async () => {
-    mockMeetingRepository.getAnimalMeetingsAsVet.mockResolvedValue([
+  it("ajoute un event standalone pour un internalMeeting SPECIFIED non récurrent", async () => {
+    mockAnimalMeetingService.getAllByVet.mockResolvedValue([]);
+    mockInternalMeetingService.getAllByUser.mockResolvedValue([
       {
-        ...makeAnimalSpecific(),
-        recurring: null,
-        meeting: makeBaseWithAnimal(),
+        id: "internal-1",
+        title: "Formation équipement",
+        description: "Présentation échographie",
+        recurringId: null,
+        meetingId: "meeting-2",
+        meeting: {
+          type: "SPECIFIED",
+          date: new Date("2026-03-20T00:00:00.000Z"),
+          startTime: new Date("1970-01-01T14:00:00.000Z"),
+          endTime: new Date("1970-01-01T15:30:00.000Z"),
+        },
       },
     ]);
 
-    const result = await meetingService.getAnimalMeetingsAsVet(
-      "veto-1",
-      start,
-      end,
+    const ics = await meetingService.generateIcs(
+      "vet-1" as any,
+      "VETERINARIAN" as any,
     );
 
-    expect(result.length).toBeGreaterThan(0);
-    result.forEach((r) => expect(r.kind).toBe("ANIMAL"));
+    expect(ics).toContain("SUMMARY:Formation équipement");
+    expect(ics).toContain("DURATION:PT90M");
   });
 
-  it("expand les meetings animaux récurrents", async () => {
-    mockMeetingRepository.getAnimalMeetingsAsVet.mockResolvedValue([
+  it("génère un event récurrent (RRULE) pour un internalMeeting récurrent", async () => {
+    mockAnimalMeetingService.getAllByVet.mockResolvedValue([]);
+    mockInternalMeetingService.getAllByUser.mockResolvedValue([
       {
-        ...makeAnimalSpecific(),
-        recurring: makeRecurringWithAnimal({ dayOfWeek: [1] }),
+        id: "internal-recurring-1",
+        title: "Réunion hebdomadaire équipe",
+        description: "Point de la semaine",
+        recurringId: "recurring-1",
+        meetingId: null,
         meeting: null,
+        recurring: {
+          id: "recurring-1",
+          frequency: "WEEKLY",
+          dayOfWeek: [1],
+          dateStart: new Date("2026-01-05T00:00:00.000Z"),
+          dateEnd: new Date("2026-09-30T00:00:00.000Z"),
+          startTime: new Date("1970-01-01T10:00:00.000Z"),
+          endTime: new Date("1970-01-01T11:00:00.000Z"),
+        },
       },
     ]);
 
-    const result = await meetingService.getAnimalMeetingsAsVet(
-      "veto-1",
-      start,
-      end,
+    const ics = await meetingService.generateIcs(
+      "vet-1" as any,
+      "VETERINARIAN" as any,
     );
 
-    // lundis de janvier 2026 : 5, 12, 19, 26
-    expect(result).toHaveLength(4);
-  });
-});
-
-// ── getAnimalMeetingsAsClient ─────────────────────────────────────────────────
-
-describe("MeetingService.getAnimalMeetingsAsClient", () => {
-  it("retourne un tableau vide si aucun meeting", async () => {
-    mockMeetingRepository.getAnimalMeetingsAsClient.mockResolvedValue([]);
-
-    const result = await meetingService.getAnimalMeetingsAsClient(
-      "client-1",
-      start,
-      end,
-    );
-
-    expect(result).toHaveLength(0);
+    expect(ics).toContain("SUMMARY:Réunion hebdomadaire équipe");
+    expect(ics).toContain("RRULE:FREQ=WEEKLY");
+    expect(ics).toContain("DURATION:PT60M");
   });
 
-  it("retourne les meetings animaux du client aplatis", async () => {
-    mockMeetingRepository.getAnimalMeetingsAsClient.mockResolvedValue([
+  it("ajoute les EXDATE pour les occurrences EXCEPTION d'une récurrence", async () => {
+    mockAnimalMeetingService.getAllByVet.mockResolvedValue([]);
+    mockInternalMeetingService.getAllByUser.mockResolvedValue([
       {
-        ...makeAnimalSpecific(),
-        recurring: null,
-        meeting: makeBaseWithAnimal(),
-      },
-    ]);
-
-    const result = await meetingService.getAnimalMeetingsAsClient(
-      "client-1",
-      start,
-      end,
-    );
-
-    expect(result.length).toBeGreaterThan(0);
-    result.forEach((r) => expect(r.kind).toBe("ANIMAL"));
-  });
-});
-
-// ── getAvailabilities ─────────────────────────────────────────────────────────
-
-describe("MeetingService.getAvailabilities", () => {
-  it("retourne un tableau vide si aucune disponibilité", async () => {
-    mockMeetingRepository.getAvailabilities.mockResolvedValue([]);
-
-    const result = await meetingService.getAvailabilities({
-      userId: "user-1",
-      start,
-      end,
-    });
-
-    expect(result).toHaveLength(0);
-  });
-
-  it("retourne les disponibilités ponctuelles aplaties", async () => {
-    mockMeetingRepository.getAvailabilities.mockResolvedValue([
-      {
-        ...makeAvailabilitySpecific(),
-        recurring: null,
-        meeting: makeBaseWithAvailability(),
-      },
-    ]);
-
-    const result = await meetingService.getAvailabilities({
-      userId: "user-1",
-      start,
-      end,
-    });
-
-    expect(result.length).toBeGreaterThan(0);
-    result.forEach((r) => expect(r.kind).toBe("AVAILABILITY"));
-  });
-
-  it("expand les disponibilités récurrentes", async () => {
-    mockMeetingRepository.getAvailabilities.mockResolvedValue([
-      {
-        ...makeAvailabilitySpecific(),
-        recurring: makeRecurringWithAvailability({ dayOfWeek: [3] }), // mercredi
+        id: "internal-recurring-1",
+        title: "Réunion hebdomadaire équipe",
+        description: null,
+        recurringId: "recurring-1",
+        meetingId: null,
         meeting: null,
+        recurring: {
+          id: "recurring-1",
+          frequency: "WEEKLY",
+          dayOfWeek: [1],
+          dateStart: new Date("2026-01-05T00:00:00.000Z"),
+          dateEnd: new Date("2026-09-30T00:00:00.000Z"),
+          startTime: new Date("1970-01-01T10:00:00.000Z"),
+          endTime: new Date("1970-01-01T11:00:00.000Z"),
+        },
       },
-    ]);
-
-    const result = await meetingService.getAvailabilities({
-      userId: "user-1",
-      start,
-      end,
-    });
-
-    // mercredis de janvier 2026 : 7, 14, 21, 28
-    expect(result).toHaveLength(4);
-  });
-});
-
-// ── getAvailabilitiesByClinic ─────────────────────────────────────────────────
-
-describe("MeetingService.getAvailabilitiesByClinic", () => {
-  it("retourne un tableau vide si aucune disponibilité", async () => {
-    mockMeetingRepository.getAvailabilitiesByClinic.mockResolvedValue([]);
-
-    const result = await meetingService.getAvailabilitiesByClinic({
-      clinicId: "clinic-1",
-      start,
-      end,
-    });
-
-    expect(result).toHaveLength(0);
-  });
-
-  it("retourne les disponibilités de la clinique aplaties", async () => {
-    mockMeetingRepository.getAvailabilitiesByClinic.mockResolvedValue([
       {
-        ...makeAvailabilitySpecific(),
-        recurring: null,
-        meeting: makeBaseWithAvailability(),
+        id: "internal-exception-1",
+        title: "Réunion hebdomadaire équipe",
+        description: null,
+        recurringId: "recurring-1",
+        meetingId: "meeting-exception-1",
+        meeting: {
+          type: "EXCEPTION",
+          parentId: "recurring-1",
+          date: new Date("2026-03-16T00:00:00.000Z"),
+          startTime: new Date("1970-01-01T10:00:00.000Z"),
+          endTime: new Date("1970-01-01T11:00:00.000Z"),
+        },
       },
     ]);
 
-    const result = await meetingService.getAvailabilitiesByClinic({
-      clinicId: "clinic-1",
-      start,
-      end,
-    });
+    const ics = await meetingService.generateIcs(
+      "vet-1" as any,
+      "VETERINARIAN" as any,
+    );
 
-    expect(result.length).toBeGreaterThan(0);
-  });
-
-  it("expand les disponibilités récurrentes par clinique", async () => {
-    mockMeetingRepository.getAvailabilitiesByClinic.mockResolvedValue([
-      {
-        ...makeAvailabilitySpecific(),
-        recurring: makeRecurringWithAvailability({ dayOfWeek: [4] }), // jeudi
-        meeting: null,
-      },
-    ]);
-
-    const result = await meetingService.getAvailabilitiesByClinic({
-      clinicId: "clinic-1",
-      start,
-      end,
-    });
-
-    // jeudis de janvier 2026 : 1, 8, 15, 22, 29
-    expect(result).toHaveLength(5);
+    expect(ics).toContain("EXDATE");
   });
 });

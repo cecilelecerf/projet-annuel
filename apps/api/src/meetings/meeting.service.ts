@@ -1,326 +1,69 @@
-import type { Weekday, Frequency } from "rrule";
-import RRuleLib from "rrule";
-const { RRule, RRuleSet } = RRuleLib;
 import {
   AnimalMeeting,
   Availability,
   InternalMeeting,
-  InternalMeetingParticipant,
   MeetingBase,
   MeetingReccuring,
 } from "../../prisma/generated/prisma/client";
 import { MeetingRepository } from "./meeting.repository";
-import type { MeetingId, UserRole } from "@armali/schemas";
+import type {
+  ClinicId,
+  MeetingId,
+  UserId,
+  UserRole,
+  VeterinarianId,
+} from "@armali/schemas";
 import { ForbiddenError, NotFoundError } from "@api/errors";
+import { AnimalMeetingService } from "./animal-meeting";
+import { MeetingBaseWithSpecific } from "./type";
+import { flattenBase } from "./utils";
+import { InternalMeetingService } from "./internal-meeting";
+import { AvailabilityService } from "./availabilities";
+import { ClinicService } from "@api/clinics/clinic.service";
+import { createEvents, EventAttributes } from "ics";
+import dayjs from "dayjs";
+import { RRULE_DAYS, RRULE_FREQ } from "./data";
+import RRuleLib from "rrule";
+import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
 
+const { RRule } = RRuleLib;
+const DEFAULT_SLOT_DURATION_MINUTES = 30;
+function toIcsDate(date: Date, time: Date) {
+  const d = dayjs(date)
+    .set("hour", time.getHours())
+    .set("minute", time.getMinutes());
+
+  return [d.year(), d.month() + 1, d.date(), d.hour(), d.minute()] as [
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+}
+
+function toIcsDateTime(date: Date): [number, number, number, number, number] {
+  const d = dayjs(date);
+
+  return [d.year(), d.month() + 1, d.date(), d.hour(), d.minute()];
+}
 // ── Types ──────────────────────────────────────────────────────────────────────
-
-type MeetingBaseWithSpecific = MeetingBase & {
-  animalMeeting: AnimalMeeting | null;
-  internalMeeting:
-    | (InternalMeeting & { participants: InternalMeetingParticipant[] })
-    | null;
-  availabilty: Availability | null;
-};
-
-type MeetingRecurringWithChildren = MeetingReccuring & {
-  animalMeeting: AnimalMeeting | null;
-  internalMeeting:
-    | (InternalMeeting & { participants: InternalMeetingParticipant[] })
-    | null;
-  availabilty: Availability | null;
-  childrens: MeetingBaseWithSpecific[];
-};
 
 export type FlatMeeting = MeetingBase &
   (AnimalMeeting | InternalMeeting | Availability);
 
-const meetingRepository = new MeetingRepository();
-
-const RRULE_DAYS: Weekday[] = [
-  RRule.SU,
-  RRule.MO,
-  RRule.TU,
-  RRule.WE,
-  RRule.TH,
-  RRule.FR,
-  RRule.SA,
-];
-
-const RRULE_FREQ: Record<string, Frequency> = {
-  DAILY: RRule.DAILY,
-  WEEKLY: RRule.WEEKLY,
-  MONTHLY: RRule.MONTHLY,
-  YEARLY: RRule.YEARLY,
-};
-
 export class MeetingService {
-  private isRecurring(
-    m: MeetingBaseWithSpecific | MeetingRecurringWithChildren,
-  ): m is MeetingRecurringWithChildren {
-    return "dateStart" in m;
-  }
-  // ── Flatten ────────────────────────────────────────────────────────────────
-
-  private flattenBase({
-    animalMeeting,
-    internalMeeting,
-    availabilty,
-    ...rest
-  }: MeetingBaseWithSpecific): FlatMeeting {
-    if (animalMeeting) return { ...animalMeeting, ...rest };
-    if (internalMeeting) return { ...internalMeeting, ...rest };
-    if (availabilty) return { ...availabilty, ...rest };
-    throw new Error(`MeetingBase ${rest.id} has no specific type`);
-  }
+  constructor(
+    private repository: MeetingRepository,
+    private animalMeetingService: AnimalMeetingService,
+    private internalMeetingService: InternalMeetingService,
+    private availabilityService: AvailabilityService,
+    private clinicService: ClinicService,
+    private veterinarianProfile: VeterinarianProfileRepository,
+  ) {}
 
   flattenMeetingByBase(base: MeetingBaseWithSpecific): FlatMeeting {
-    return this.flattenBase(base);
-  }
-
-  // ── Expand ─────────────────────────────────────────────────────────────────
-
-  expandRecurring({
-    reccuring,
-    start,
-    end,
-  }: {
-    reccuring: MeetingRecurringWithChildren;
-    start: Date;
-    end: Date;
-  }) {
-    const exceptionDates = (reccuring.childrens ?? [])
-      .filter((c) => c.type === "EXCEPTION")
-      .map((c) => c.date!)
-      .filter(Boolean);
-
-    const overrideMap = (reccuring.childrens ?? [])
-      .filter((c) => c.type === "SPECIFIED")
-      .reduce<Record<string, MeetingBaseWithSpecific>>((acc, c) => {
-        const dateStr = c.date?.toISOString().split("T")[0];
-        if (dateStr) acc[dateStr] = c as MeetingBaseWithSpecific;
-        return acc;
-      }, {});
-    const freq = RRULE_FREQ[reccuring.frequency];
-    const rule = new RRule({
-      freq,
-      byweekday: reccuring.dayOfWeek.map((d) => RRULE_DAYS[d]),
-      dtstart: new Date(
-        reccuring.dateStart.toISOString().split("T")[0] + "T00:00:00.000Z",
-      ),
-      until: new Date(
-        reccuring.dateEnd.toISOString().split("T")[0] + "T23:59:59.000Z",
-      ),
-    });
-    const ruleSet = new RRuleSet();
-    ruleSet.rrule(rule);
-    exceptionDates.forEach((d) => ruleSet.exdate(d));
-
-    const occurrences = ruleSet.between(start, end, true);
-
-    return occurrences.map((date) => {
-      const dateStr = date.toISOString().split("T")[0];
-
-      if (overrideMap[dateStr]) {
-        return this.flattenBase(overrideMap[dateStr]);
-      }
-
-      let t: AnimalMeeting | InternalMeeting | Availability | undefined;
-      if (reccuring.animalMeeting) t = reccuring.animalMeeting;
-      else if (reccuring.internalMeeting) t = reccuring.internalMeeting;
-      else if (reccuring.availabilty) t = reccuring.availabilty;
-
-      if (!t)
-        throw new Error(
-          `RecurringMeetingBase ${reccuring.id} has no specific type`,
-        );
-
-      return {
-        ...t,
-        id: reccuring.id,
-        recurringId: reccuring.id,
-        createdAt: reccuring.createdAt,
-        updatedAt: reccuring.updatedAt,
-        startTime: reccuring.startTime,
-        endTime: reccuring.endTime,
-        kind: reccuring.kind,
-        date: new Date(dateStr + "T00:00:00.000Z"),
-        type: "SPECIFIED" as const,
-        parentId: null,
-      };
-    });
-  }
-
-  private expandAll(
-    flat: (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[],
-    start: Date,
-    end: Date,
-  ): FlatMeeting[] {
-    const recurrings: MeetingRecurringWithChildren[] = [];
-    const nonRecurring: MeetingBaseWithSpecific[] = [];
-    flat.forEach((item) => {
-      if (this.isRecurring(item)) recurrings.push(item);
-      else nonRecurring.push(item);
-    });
-    return [
-      ...nonRecurring.map((m) => this.flattenBase(m)),
-      ...recurrings.flatMap((m) =>
-        this.expandRecurring({ reccuring: m, start, end }),
-      ),
-    ];
-  }
-
-  // ── Par ressource ──────────────────────────────────────────────────────────
-
-  async getInternalMeetings(
-    userId: string,
-    start: Date,
-    end: Date,
-  ): Promise<FlatMeeting[]> {
-    const participants = await meetingRepository.getInternalMeetings(
-      userId,
-      start,
-      end,
-    );
-    const flat = participants.flatMap(
-      ({
-        meeting: { recurring, meeting },
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-    return this.expandAll(flat, start, end);
-  }
-
-  async getAnimalMeetingsAsVet(
-    vetProfileId: string,
-    start: Date,
-    end: Date,
-  ): Promise<FlatMeeting[]> {
-    const meetings = await meetingRepository.getAnimalMeetingsAsVet(
-      vetProfileId,
-      start,
-      end,
-    );
-    const flat = meetings.flatMap(
-      ({
-        recurring,
-        meeting,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-    return this.expandAll(flat, start, end);
-  }
-
-  async getAnimalMeetingsByClinic(
-    clinicId: string,
-    start: Date,
-    end: Date,
-  ): Promise<FlatMeeting[]> {
-    const meetings = await meetingRepository.getAnimalMeetingsByClinic(
-      clinicId,
-      start,
-      end,
-    );
-    const flat = meetings.flatMap(
-      ({
-        recurring,
-        meeting,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-    return this.expandAll(flat, start, end);
-  }
-
-  async getAnimalMeetingsAsClient(
-    clientProfileId: string,
-    start: Date,
-    end: Date,
-  ): Promise<FlatMeeting[]> {
-    const meetings = await meetingRepository.getAnimalMeetingsAsClient(
-      clientProfileId,
-      start,
-      end,
-    );
-
-    const flat = meetings.flatMap(
-      ({
-        meeting,
-        recurring,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-
-    return this.expandAll(flat, start, end);
-  }
-
-  async getAvailabilities({
-    userId,
-    start,
-    end,
-  }: {
-    userId: string;
-    start: Date;
-    end: Date;
-  }): Promise<FlatMeeting[]> {
-    const avails = await meetingRepository.getAvailabilities({
-      userId,
-      start,
-      end,
-    });
-
-    const flat = avails.flatMap(
-      ({
-        recurring,
-        meeting,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-
-    return this.expandAll(flat, start, end);
-  }
-
-  async getAvailabilitiesByClinic({
-    clinicId,
-    start,
-    end,
-  }: {
-    clinicId: string;
-    start: Date;
-    end: Date;
-  }): Promise<FlatMeeting[]> {
-    const avails = await meetingRepository.getAvailabilitiesByClinic({
-      clinicId,
-      start,
-      end,
-    });
-
-    const flat = avails.flatMap(
-      ({
-        recurring,
-        meeting,
-      }): (MeetingBaseWithSpecific | MeetingRecurringWithChildren)[] => {
-        if (recurring) return [recurring as MeetingRecurringWithChildren];
-        if (meeting) return [meeting as MeetingBaseWithSpecific];
-        return [];
-      },
-    );
-
-    return this.expandAll(flat, start, end);
+    return flattenBase(base);
   }
 
   // ── Calendrier agrégé ──────────────────────────────────────────────────────
@@ -328,52 +71,236 @@ export class MeetingService {
   async getCalendar({
     userId,
     role,
-    vetProfileId,
-    clientProfileId,
-    clinicId,
+    targetId,
+    targetRole,
     start,
     end,
   }: {
-    userId: string;
+    userId: UserId;
+    targetId: UserId;
+    targetRole: UserRole;
     role: UserRole;
-    vetProfileId?: string;
-    clientProfileId?: string;
-    clinicId?: string;
     start: Date;
     end: Date;
   }) {
-    const [internal, animal, availabilities] = await Promise.all([
-      this.getInternalMeetings(userId, start, end),
-      role === "VETERINARIAN" && vetProfileId
-        ? this.getAnimalMeetingsAsVet(vetProfileId, start, end)
-        : role === "CLIENT" && clientProfileId
-          ? this.getAnimalMeetingsAsClient(clientProfileId, start, end)
-          : Promise.resolve([]),
-      clinicId
-        ? this.getAvailabilitiesByClinic({ clinicId, start, end })
-        : this.getAvailabilities({ userId, start, end }),
+    if (role !== "SECRETARY" && targetId !== userId) throw new ForbiddenError();
+
+    const target = await this.clinicService.getClinicIdsByUserId({
+      userId: targetId,
+      role: targetRole,
+    });
+    if (target.length === 0) throw new NotFoundError("user");
+    const authorClinicIds = await this.clinicService.getClinicIdsByUserId({
+      userId,
+      role,
+    });
+
+    const animal =
+      targetRole === "VETERINARIAN"
+        ? await this.animalMeetingService.getAnimalMeetingsAsVet(
+            targetId,
+            start,
+            end,
+            authorClinicIds,
+          )
+        : [];
+
+    const [internal, availabilities] = await Promise.all([
+      this.internalMeetingService.getFlatsByUser(
+        targetId,
+        start,
+        end,
+        authorClinicIds,
+      ),
+      this.availabilityService.getAvailabilities({
+        userId: targetId,
+        start,
+        end,
+        clinicIds: authorClinicIds,
+      }),
     ]);
+
     return {
       meetings: [...internal, ...animal],
       availabilities,
     };
   }
 
-  async getMeeting(id: string): Promise<FlatMeeting> {
-    const meeting = await meetingRepository.getMeetingById(id);
+  async getMeetingById(id: MeetingId): Promise<FlatMeeting> {
+    const meeting = await this.repository.findById(id);
     if (!meeting) throw new NotFoundError("Meeting");
     return this.flattenMeetingByBase(meeting as MeetingBaseWithSpecific);
   }
 
-  async delete(id: MeetingId) {
-    const meeting = await meetingRepository.getMeetingById(id);
-    if (!meeting) throw new NotFoundError("Rendez-vous");
+  async getVetSlots({
+    veterinarianId,
+    start,
+    end,
+    slotDurationMinutes = DEFAULT_SLOT_DURATION_MINUTES,
+    clinicIds,
+  }: {
+    veterinarianId: VeterinarianId;
+    start: Date;
+    end: Date;
+    slotDurationMinutes?: number;
+    clinicIds: ClinicId[];
+  }) {
+    const veterinarian =
+      await this.veterinarianProfile.findById(veterinarianId);
+    if (!veterinarian) throw new NotFoundError("Veterinarian");
 
-    const meetingDate = new Date(meeting!.date);
-    if (meetingDate < new Date()) {
-      throw new ForbiddenError();
+    const [availabilities, internal, animal] = await Promise.all([
+      this.availabilityService.getAvailabilities({
+        userId: veterinarianId,
+        start,
+        end,
+        clinicIds,
+      }),
+      this.internalMeetingService.getFlatsByUser(veterinarianId, start, end),
+      this.animalMeetingService.getAnimalMeetingsAsVet(
+        veterinarianId,
+        start,
+        end,
+      ),
+    ]);
+
+    const occupied = [...internal, ...animal].map((m) => ({
+      start: new Date(m.startTime),
+      end: new Date(m.endTime),
+      date: new Date(m.date),
+    }));
+
+    return availabilities.flatMap((a) =>
+      this.availabilityService.sliceAvailabilityIntoSlots(
+        a,
+        occupied,
+        slotDurationMinutes,
+      ),
+    );
+  }
+
+  async generateIcs(userId: UserId) {
+    const animalMeeting = await this.animalMeetingService.getAllByVet(userId);
+    const events: EventAttributes[] = [];
+    for (const meeting of animalMeeting) {
+      if (!meeting || !meeting.meeting) continue;
+
+      events.push({
+        uid: meeting.meeting.id,
+        title: meeting.speciality?.name ?? "Consultation générale",
+        start: toIcsDate(meeting.meeting.date, meeting.meeting.startTime),
+        duration: {
+          minutes: dayjs(meeting.meeting.endTime).diff(
+            meeting.meeting.startTime,
+            "minutes",
+          ),
+        },
+        description: `RDV avec : ${meeting.animal.name}\n${meeting.description ?? ""}`,
+      });
     }
 
-    return meetingRepository.delete(id);
+    const internalMeetings =
+      await this.internalMeetingService.getAllByUser(userId);
+    const speciefedInternal = internalMeetings.filter(
+      (im) => im.meetingId && im.meeting && im.meeting?.type === "SPECIFIED",
+    );
+
+    speciefedInternal.forEach((meeting) => {
+      if (!meeting.meeting) return;
+      events.push({
+        uid: meeting.id,
+        title: meeting.title,
+        start: toIcsDate(meeting.meeting.date, meeting.meeting.startTime),
+        duration: {
+          minutes: dayjs(meeting.meeting.endTime).diff(
+            meeting.meeting.startTime,
+            "minutes",
+          ),
+        },
+        description: meeting.description ?? "",
+      });
+    });
+
+    const recurrenceWithExclusion = internalMeetings.reduce<
+      Record<
+        string,
+        {
+          recurring: MeetingReccuring | null;
+          internalMeeting: InternalMeeting;
+          exclusions: MeetingBase[];
+        }
+      >
+    >((acc, im) => {
+      // Meeting spécifique indépendant
+      if (im.meeting?.type === "SPECIFIED") {
+        return acc;
+      }
+
+      // Création de la clé pour la récurrence
+      if (im.recurringId) {
+        acc[im.recurringId] ??= {
+          recurring: im.recurring,
+          internalMeeting: im,
+          exclusions: [],
+        };
+      }
+
+      // Override d'une occurrence
+      if (im.meeting?.parentId && im.meeting.type === "EXCEPTION") {
+        acc[im.meeting.parentId].exclusions.push(im.meeting);
+      }
+
+      return acc;
+    }, {});
+
+    Object.values(recurrenceWithExclusion).forEach((recurring) => {
+      if (!recurring.recurring) return;
+      const freq = RRULE_FREQ[recurring.recurring.frequency];
+      const rule = new RRule({
+        freq,
+        byweekday: recurring.recurring.dayOfWeek.map((d) => RRULE_DAYS[d]),
+        dtstart: new Date(
+          dayjs(recurring.recurring.dateStart)
+            .set("hour", recurring.recurring.startTime.getHours())
+            .set("minute", recurring.recurring.startTime.getMinutes())
+            .toISOString(),
+        ),
+        until: new Date(
+          recurring.recurring.dateEnd.toISOString().split("T")[0] +
+            "T23:59:59.000Z",
+        ),
+      });
+      const firstOccurrence = rule.after(new Date(0), true);
+      if (!firstOccurrence) return;
+      const recurrenceRule = rule
+        .toString()
+        .split("\n")
+        .find((line) => line.startsWith("RRULE:"))
+        ?.replace("RRULE:", "");
+      events.push({
+        uid: recurring.recurring.id,
+        title: recurring.internalMeeting.title ?? "",
+        start: toIcsDate(firstOccurrence, recurring.recurring?.startTime),
+        duration: {
+          minutes: dayjs(recurring.recurring.endTime).diff(
+            recurring.recurring.startTime,
+            "minutes",
+          ),
+        },
+        recurrenceRule,
+        exclusionDates:
+          recurring.exclusions.length > 0
+            ? recurring.exclusions.map((d) => toIcsDateTime(d.date))
+            : undefined,
+      });
+    });
+
+    const { error, value } = createEvents(events);
+
+    if (error) {
+      throw error;
+    }
+
+    return value;
   }
 }

@@ -1,6 +1,12 @@
 import type { PrismaClient } from "../generated/prisma/client";
 
 export async function cleanup(prisma: PrismaClient) {
+  await prisma.supplierOrderItem.deleteMany();
+  await prisma.budgetTransaction.deleteMany();
+  await prisma.supplierOrder.deleteMany();
+  await prisma.supplierProduct.deleteMany();
+  await prisma.supplier.deleteMany();
+
   await prisma.message.deleteMany();
   await prisma.conversationMember.deleteMany();
   await prisma.conversation.deleteMany();
@@ -27,18 +33,20 @@ export async function cleanup(prisma: PrismaClient) {
   await prisma.meetingReccuring.deleteMany();
   await prisma.meetingBase.deleteMany();
   await prisma.animal.deleteMany();
+  await prisma.review.deleteMany();
   await prisma.veterinarianClinic.deleteMany();
   await prisma.speciality.deleteMany();
   await prisma.vaccine.deleteMany();
   await prisma.race.deleteMany();
   await prisma.pet.deleteMany();
-  await prisma.directorClinicProfile.deleteMany();
   await prisma.referentClinicProfile.deleteMany();
   await prisma.secretaryProfile.deleteMany();
   await prisma.veterinarianProfile.deleteMany();
   await prisma.clientProfile.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.clinic.deleteMany();
+  await prisma.clinicRequest.deleteMany();
+  await prisma.directorClinicProfile.deleteMany();
   await prisma.bankingInfo.deleteMany();
   await prisma.medicalVisit.deleteMany();
   await prisma.user.deleteMany();

@@ -5,14 +5,18 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import type { Client } from '@armali/schemas'
 import { animalApi } from '@/features/animals/api'
-import { calendarApi } from '@/features/meetings/api/calendar.api'
+import { meetingApi } from '@/features/meetings/api/meeting.api'
+import { useAuthStore } from '@/stores/authStore'
+import ContactCard from '@/components/ContactCard.vue'
+import MeetingListByAnimal from '@/features/meetings/components/animal-meeting/MeetingListByAnimal.vue'
 
 const { client } = defineProps<{ client: Client }>()
 dayjs.locale('fr')
 const router = useRouter()
+const { user } = useAuthStore()
 const [animals, meetings] = await Promise.all([
   animalApi.getAllByUser(client.id),
-  calendarApi.animal.getAllByClientId(client.id),
+  meetingApi.animal.getAllByClientId(client.id),
 ])
 const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 </script>
@@ -67,59 +71,40 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
         </h3>
 
         <div v-if="animals.length" class="pets-grid">
-          <div
+          <ContactCard
             v-for="pet in animals"
             :key="pet.id"
-            class="pet-card"
-            @click="router.push({ name: 'Secretary.Animals.Detail', params: { id: pet.id } })"
-          >
-            <div class="pet-avatar">{{ pet.name.charAt(0) }}</div>
-            <div class="pet-info">
-              <span class="pet-name">{{ pet.name }}</span>
-              <span class="pet-meta"> {{ pet.race?.pet?.name }} · {{ pet.race?.name }} </span>
-              <span class="pet-meta"> {{ dayjs().diff(dayjs(pet.dateOfBirth), 'year') }} ans </span>
-            </div>
-            <el-icon class="pet-arrow"><ArrowRight /></el-icon>
-          </div>
+            :name="pet.name"
+            :metas="[
+              `${pet.race.pet.name} ${pet.race.name}`,
+              `${dayjs().diff(dayjs(pet.dateOfBirth), 'year')} ans`,
+            ]"
+            :route="{
+              name: `${user?.role.toUpperCase()}.Animals.Detail`,
+              params: { id: pet.id },
+            }"
+          />
         </div>
         <p v-else class="empty-text">Aucun animal enregistré</p>
       </div>
 
-      <div class="section">
+      <MeetingListByAnimal :meetings="meetings" :client-id="client.id" />
+      <!-- <div class="section">
         <h3 class="section-label">
           <el-icon><Calendar /></el-icon>
           Derniers rendez-vous
         </h3>
 
         <div v-if="meetings.length" class="meetings-list">
-          <div
+          <AnimalMeetingCard
             v-for="meeting in meetings.slice(0, 5)"
             :key="meeting.meeting.id"
-            class="meeting-row"
-            @click="
-              router.push({
-                name: 'Secretary.Calendar.Meeting.Detail',
-                params: { id: meeting.meeting.id },
-              })
-            "
-          >
-            <div class="meeting-date">
-              <span class="meeting-day">
-                {{ dayjs(meeting.meeting?.date).format('D MMM') }}
-              </span>
-              <span class="meeting-year">
-                {{ dayjs(meeting.meeting?.date).format('YYYY') }}
-              </span>
-            </div>
-            <div class="meeting-info">
-              <span class="meeting-pet">{{ meeting.animal.name }}</span>
-              <span class="meeting-desc">{{ meeting.description ?? 'Consultation' }}</span>
-            </div>
-            <el-icon><ArrowRight /></el-icon>
-          </div>
+            :animal-meeting="meeting"
+            status="PAST"
+          />
         </div>
         <p v-else class="empty-text">Aucun rendez-vous</p>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -182,16 +167,18 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 }
 
 .profile-role {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
   background: var(--el-fill-color);
-  padding: 2px 10px;
+  padding: var(--spacing-2xs) var(--spacing-sm);
   border-radius: var(--radius-full);
 }
 
 .profile-details {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: var(--spacing-xs);
   width: 100%;
   margin-top: var(--spacing-sm);
@@ -201,7 +188,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--el-text-color-secondary);
 
   .el-icon {
@@ -261,7 +248,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
   flex-shrink: 0;
 }
@@ -270,12 +257,12 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs);
   min-width: 0;
 }
 
 .pet-name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
   color: var(--el-text-color-primary);
   white-space: nowrap;
@@ -284,7 +271,7 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 }
 
 .pet-meta {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
 }
 
@@ -325,13 +312,13 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
 }
 
 .meeting-day {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   color: var(--el-color-primary);
 }
 
 .meeting-year {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--el-text-color-placeholder);
 }
 
@@ -339,17 +326,17 @@ const clientAge = dayjs().diff(dayjs(client.clientProfile?.dateOfBirth), 'year')
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs);
 }
 
 .meeting-pet {
-  font-size: 13px;
+  font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
   color: var(--el-text-color-primary);
 }
 
 .meeting-desc {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--el-text-color-secondary);
 }
 </style>

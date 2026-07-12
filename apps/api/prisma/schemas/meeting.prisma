@@ -32,7 +32,6 @@ model MeetingReccuring {
   kind            MeetingKind
   availabilty     Availability?
   internalMeeting InternalMeeting?
-  animalMeeting   AnimalMeeting?
 
   @@map("meeting_recurring")
 }
@@ -58,6 +57,7 @@ model MeetingBase {
   internalMeeting InternalMeeting?
   animalMeeting   AnimalMeeting?
 
+  // MeetingBase.parentId → utilisé quand un MeetingBase concret (override ou exception) est rattaché à un patron récurrent
   parentId String?
   parent   MeetingReccuring? @relation("RecurringChildren", fields: [parentId], references: [id])
 
@@ -99,7 +99,7 @@ model InternalMeetingParticipant {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   status MeetingStatus
-
+@@unique([userId, meetingId])
   @@map("internal_meeting_participants")
 }
 
@@ -108,6 +108,7 @@ model InternalMeeting {
   title       String
   description String?
 
+  // InternalMeeting.recurringId → utilisé quand l'InternalMeeting est rattaché directement au patron (c'est le cas "occurrence jamais matérialisée")
   recurringId String?           @unique
   recurring   MeetingReccuring? @relation(fields: [recurringId], references: [id], onDelete: Cascade)
 
@@ -139,24 +140,19 @@ model AnimalMeeting {
   report      String?
   status      AnimalMeetingStatus @default(SCHEDULED)
 
-  recurringId String?           @unique
-  recurring   MeetingReccuring? @relation(fields: [recurringId], references: [id], onDelete: Cascade)
-
   meetingId String?      @unique
   meeting   MeetingBase? @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   specialityId         String?
-  speciality           Speciality?        @relation(fields: [specialityId], references: [id])
+  speciality           Speciality?         @relation(fields: [specialityId], references: [id])
   animalId             String
-  animal               Animal             @relation(fields: [animalId], references: [id], onDelete: Cascade)
-  veterinarianClinicId String
-  veterinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id])
+  animal               Animal              @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  veterinarianClinicId String?
+  veterinarianClinic   VeterinarianClinic? @relation(fields: [veterinarianClinicId], references: [id])
 
   animalHealthConditions AnimalHealthCondition[]
   animalMedicalHistories AnimalMedicalHistory[]
   prescriptions          Prescription[]
-  veterinarianProfile    VeterinarianProfile?    @relation(fields: [veterinarianProfileId], references: [id])
-  veterinarianProfileId  String?
 
   @@map("animal_meetings")
 }

@@ -7,43 +7,37 @@ import type {
   UserRole,
 } from "@armali/schemas";
 
-const ALLOWED_ROLES: UserRole[] = [
-  "VETERINARIAN",
-  "SECRETARY",
-  "DIRECTOR",
-  "REFERANT",
-  "ADMIN",
-];
-
-const prescriptionRepository = new PrescriptionRepository();
+const ALLOWED_ROLES: UserRole[] = ["VETERINARIAN"];
 
 export class PrescriptionService {
+  constructor(private repository: PrescriptionRepository) {}
+
   async getByMeeting(meetingId: MeetingId) {
-    return prescriptionRepository.findByMeeting(meetingId);
+    return this.repository.findByMeeting(meetingId);
   }
 
   async getById(id: string) {
-    const prescription = await prescriptionRepository.findById(id);
+    const prescription = await this.repository.findById(id);
     if (!prescription) throw new NotFoundError("Prescription");
     return prescription;
   }
 
   async create(data: CreatePrescription, role: UserRole) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
-    return prescriptionRepository.create(data);
+    return this.repository.create(data);
   }
 
   async update(id: string, data: UpdatePrescription, role: UserRole) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
-    const prescription = await prescriptionRepository.findById(id);
+    const prescription = await this.repository.findById(id);
     if (!prescription) throw new NotFoundError("Prescription");
-    return prescriptionRepository.update(id, data);
+    return this.repository.update(id, data);
   }
 
   async delete(id: string, role: UserRole) {
     if (!ALLOWED_ROLES.includes(role)) throw new ForbiddenError();
-    const prescription = await prescriptionRepository.findById(id);
+    const prescription = await this.repository.findById(id);
     if (!prescription) throw new NotFoundError("Prescription");
-    return prescriptionRepository.delete(id);
+    return this.repository.delete(id);
   }
 }

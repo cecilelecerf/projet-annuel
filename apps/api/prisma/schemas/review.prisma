@@ -1,4 +1,4 @@
-model VetReview {
+model Review {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -6,11 +6,11 @@ model VetReview {
   comment   String?
 
   clientId String
-  client   User   @relation("ClientReviews", fields: [clientId], references: [id], onDelete: Cascade)
+  client   ClientProfile @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  veterinarianId String
-  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id], onDelete: Cascade)
+  veterinarianClinicId String
+  veterinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id], onDelete: Cascade)
 
-  @@unique([clientId, veterinarianId])
+  @@unique([clientId, veterinarianClinicId])
   @@map("veterinarian_reviews")
 }

@@ -35,13 +35,17 @@ const refreshAccessToken = async (): Promise<string> => {
   localStorage.setItem('refreshToken', data.refreshToken)
   return data.accessToken
 }
-const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+
+type ApiOptions = RequestInit & {
+  responseType?: 'json' | 'blob' | 'text'
+}
+const api = async <T = unknown>(endpoint: string, options: ApiOptions = {}): Promise<T> => {
   const token = localStorage.getItem('accessToken')
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -50,7 +54,7 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
   if (response.status === 204) return null as T
   if (response.status === 401 && !endpoint.includes('/auth/')) {
     if (isRefreshing) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         refreshQueue.push((newToken) => {
           options.headers = {
             ...options.headers,
@@ -87,9 +91,8 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
     }
   }
 
-  const data = await response.json().catch(() => ({}))
-
   if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
     // Le middleware `validate` renvoie déjà { message, errors: Record<string,string[]> }
     // Le handler d'erreurs global renvoie { error, issues: ZodIssue[] } pour les ZodError non interceptées
     const fieldErrors: Record<string, string[]> | undefined =
@@ -113,12 +116,24 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
     throw new ApiError(response.status, message, fieldErrors)
   }
 
-  return data as T
+  const responseType = options.responseType ?? 'json'
+
+  switch (responseType) {
+    case 'blob':
+      return (await response.blob()) as T
+
+    case 'text':
+      return (await response.text()) as T
+
+    default:
+      return (await response.json().catch(() => null)) as T
+  }
 }
 
 export const http = {
   get: <T>(endpoint: string) => api<T>(endpoint),
 
+  getBlob: (endpoint: string) => api<Blob>(endpoint, { responseType: 'blob' }),
   post: <T>(endpoint: string, body: unknown) =>
     api<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
 

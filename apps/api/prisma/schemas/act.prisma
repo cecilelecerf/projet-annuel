@@ -18,7 +18,7 @@ model Act {
   basePrice   Decimal  @db.Decimal(8, 2)
 
   vaccineId String?  @unique
-  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id])
+  vaccine   Vaccine? @relation(fields: [vaccineId], references: [id], onDelete: Cascade)
 
   clinicActs             ClinicAct[]
   animalMedicalHistories AnimalMedicalHistory[]
@@ -73,7 +73,8 @@ model AnimalMedicalHistory {
   analysis        Analysis?
   animalVaccine   AnimalVaccine?
 
-  performedBy VeterinarianClinic[]
+  performedById String?
+  performedBy   VeterinarianClinic? @relation(fields: [performedById], references: [id])
 
   @@map("animal_medical_histories")
 }
@@ -123,8 +124,8 @@ model HospitalizationReport {
   hospitalizationId String
   hospitalization   Hospitalization @relation(fields: [hospitalizationId], references: [id])
 
-  veterinarianId String
-  veterinarian   VeterinarianProfile @relation(fields: [veterinarianId], references: [id])
+  veterinarianClinicId String
+  veterinarianClinic   VeterinarianClinic @relation(fields: [veterinarianClinicId], references: [id])
 
   @@map("hospitalization_reports")
 }
@@ -145,7 +146,6 @@ model Imaging {
   imagingType ImagingType
   bodyPart    String?
   findings    String?
-  fileUrl     String? // PDF ou image
 
   @@map("imagings")
 }
@@ -175,7 +175,6 @@ model Analysis {
   laboratory     String? // labo externe si applicable
   sentAt         DateTime?
   receivedAt     DateTime?
-  fileUrl        String? // PDF des résultats
   interpretation String? // interprétation du vétérinaire
 
   @@map("analyses")

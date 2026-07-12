@@ -6,6 +6,8 @@ import {
   productClinicIdSchema,
   clinicIdSchema,
   healthConditionIdSchema,
+  productRequestIdSchema,
+  userIdSchema,
 } from "./ids";
 
 // ── Brand ─────────────────────────────────────────────────────────────────────
@@ -33,12 +35,78 @@ export const productSchema = z.object({
   description: z.string().max(255).nullable().optional(),
 });
 
-export const createProductSchema = productSchema.omit({ id: true });
+export const createProductSchema = productSchema
+  .omit({ id: true, qrCode: true })
+  .extend({
+    qrCode: z.string().min(1).max(255).optional(),
+  });
 export const updateProductSchema = createProductSchema.partial();
 
 export type Product = z.infer<typeof productSchema>;
 export type CreateProduct = z.infer<typeof createProductSchema>;
 export type UpdateProduct = z.infer<typeof updateProductSchema>;
+
+// ── Product Request ───────────────────────────────────────────────────────────────────
+export const productRequestStatusSchema = z.enum([
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+]);
+ 
+export const productRequestSchema = z.object({
+  id: productRequestIdSchema,
+  status: productRequestStatusSchema,
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  picture: z.url().nullable().optional(),
+  websiteUrl: z.url().nullable().optional(),
+  brandId: brandIdSchema.nullable().optional(),
+  newBrandName: z.string().nullable().optional(),
+  rejectionReason: z.string().nullable().optional(),
+  createdProductId: productIdSchema.nullable().optional(),
+  requestedById: userIdSchema,
+  clinicId: clinicIdSchema,
+  reviewedById: userIdSchema.nullable().optional(),
+  createdAt: z.string(),
+});
+ 
+// Payload de création : le référent ne fournit ni id, ni status, ni champs de review
+export const createProductRequestSchema = z
+  .object({
+    name: z.string().min(1),
+    description: z.string().optional(),
+    picture: z.url().optional(),
+    websiteUrl: z.url().optional(),
+    brandId: brandIdSchema.optional(),
+    newBrandName: z.string().optional(),
+  })
+  .refine((data) => data.brandId || data.newBrandName, {
+    message: "Il faut choisir une marque existante ou en indiquer une nouvelle",
+    path: ["newBrandName"],
+  });
+ 
+
+export const rejectProductRequestSchema = z.object({
+  rejectionReason: z.string().optional(),
+});
+
+export const productRequestWithRelationsSchema = productRequestSchema.extend({
+  brand: brandSchema.nullable().optional(),
+  requestedBy: z.object({
+    firstname: z.string(),
+    lastname: z.string(),
+    email: z.string(),
+  }),
+  clinic: z.object({ name: z.string() }),
+});
+ 
+export type ProductRequestStatus = z.infer<typeof productRequestStatusSchema>;
+export type ProductRequest = z.infer<typeof productRequestSchema>;
+export type CreateProductRequest = z.infer<typeof createProductRequestSchema>;
+export type RejectProductRequest = z.infer<typeof rejectProductRequestSchema>;
+export type ProductRequestWithRelations = z.infer<
+  typeof productRequestWithRelationsSchema
+>;
 
 // ── Food (extends Product) ────────────────────────────────────────────────────
 export const foodTypeSchema = z.enum(["kibble", "wet"]);
@@ -96,4 +164,34 @@ export type FoodRecommendation = z.infer<typeof foodRecommendationSchema>;
 export type FoodHealthCondition = z.infer<typeof foodHealthConditionSchema>;
 export type CreateFoodHealthCondition = z.infer<
   typeof createFoodHealthConditionSchema
+>;
+
+export const restockProductClinicSchema = z.object({
+  quantity: z.number().int().positive(),
+});
+
+export type RestockProductClinic = z.infer<typeof restockProductClinicSchema>;
+
+export const productWithBrandSchema = productSchema.extend({
+  brand: brandSchema,
+});
+ 
+export const productClinicWithProductSchema = productClinicSchema.extend({
+  product: productWithBrandSchema,
+});
+ 
+export type ProductWithBrand = z.infer<typeof productWithBrandSchema>;
+export type ProductClinicWithProduct = z.infer<
+  typeof productClinicWithProductSchema
+>;
+
+export const productClinicWithClinicSchema = productClinicWithProductSchema.extend({
+  clinic: z.object({
+    id: clinicIdSchema,
+    name: z.string(),
+  }),
+});
+ 
+export type ProductClinicWithClinic = z.infer<
+  typeof productClinicWithClinicSchema
 >;

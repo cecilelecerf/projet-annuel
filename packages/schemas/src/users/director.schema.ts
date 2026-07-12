@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { directorClinicIdSchema, clinicIdSchema } from "../ids";
 import { baseUserSchema, registerSchema } from "./base-user.schema";
-import { clinicAddressSchema, siretSchema } from "../clinic.schema";
+import { clinicAddressSchema, siretSchema } from "../clinics/clinic.schema";
 
 export const directorProfileSchema = z.object({
   id: directorClinicIdSchema,
-  clinicId: clinicIdSchema,
+  clinicId: clinicIdSchema.nullable().optional(),
 });
 export const clinicRegistrationSchema = z
   .object({

@@ -8,6 +8,7 @@ import {
   petFoodIdSchema,
   clientPetHealthConditionIdSchema,
 } from "./ids";
+import { healthConditionSchema } from "./pet.schema";
 
 // ── ClientPetHealthCondition ──────────────────────────────────────────────────
 export const clientPetHealthConditionSchema = z.object({
@@ -20,6 +21,12 @@ export const clientPetHealthConditionSchema = z.object({
   addedBy: userIdSchema,
 });
 
+export const clientPetHealthConditionMetaSchema = clientPetHealthConditionSchema
+  .extend({
+    healthCondition: healthConditionSchema,
+  })
+  .omit({ addedBy: true });
+
 export const createClientPetHealthConditionSchema =
   clientPetHealthConditionSchema.omit({ id: true });
 export const updateClientPetHealthConditionSchema =
@@ -27,6 +34,9 @@ export const updateClientPetHealthConditionSchema =
 
 export type ClientPetHealthCondition = z.infer<
   typeof clientPetHealthConditionSchema
+>;
+export type ClientPetHealthConditionMeta = z.infer<
+  typeof clientPetHealthConditionMetaSchema
 >;
 export type CreateClientPetHealthCondition = z.infer<
   typeof createClientPetHealthConditionSchema

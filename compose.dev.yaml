@@ -44,6 +44,7 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      S3_ENDPOINT: http://minio:9000
       CI: "true"
       PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
       CHOKIDAR_USEPOLLING: "true"
@@ -113,6 +114,7 @@ services:
       - .env.dev
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      S3_ENDPOINT: http://minio:9000
       PNPM_CONFIG_CONFIRM_MODULES_PURGE: "false"
     depends_on:
       postgres:

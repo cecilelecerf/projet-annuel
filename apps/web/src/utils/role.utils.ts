@@ -7,6 +7,6 @@ export const getStringRole = (role: UserRole) =>
     .with('VETERINARIAN', () => 'vétérinaire')
     .with('SECRETARY', () => 'secrétaire')
     .with('DIRECTOR', () => 'directeur')
-    .with('REFERANT', () => 'référant')
+    .with('REFERENT', () => 'référant')
     .with('ADMIN', () => 'administrateur')
     .exhaustive()

@@ -7,13 +7,13 @@ import { meetingApi } from '../../api/meeting.api.ts'
 import { prescriptionApi } from '@/features/prescriptions/api'
 import MeetingPets from './MeetingPets.vue'
 import MeetingInfo from './MeetingInfo.vue'
-import MeetingActs from './MeetingActs.vue'
 import MeetingPrescriptions from './MeetingPrescriptions.vue'
-import { medicalHistoriesApi } from '@/features/medicalHistories/api'
+import { medicalHistoriesApi } from '@/features/medical-histories/medical-history.api.ts'
 import type { AnimalMeetingMeta, UpdateAnimalMeeting } from '@armali/schemas'
 import { useMeetingActions } from '../../composables/useMeetingActions.ts'
 import { combineDateAndTime } from '../utils.ts'
 import HeaderMeetingSection from '../HeaderMeetingSection.vue'
+import MedicalHistorySection from '../../../medical-histories/components/MedicalHistorySection.vue'
 
 const { meeting } = defineProps<{ meeting: AnimalMeetingMeta }>()
 const router = useRouter()
@@ -103,11 +103,12 @@ const onPrescriptionSaved = async () => {
         :is-editing="isEditing"
         :is-staff="user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN'"
       />
-      <MeetingActs
+      <MedicalHistorySection
         :acts="localActs"
         :clinic-id="meeting.veterinarianClinic?.clinicId"
         :meeting-id="meeting.id"
         @saved="onActSaved"
+        :with-add="user?.role === 'SECRETARY' || user?.role === 'VETERINARIAN'"
       />
       <MeetingPrescriptions
         :prescriptions="localPrescriptions"
@@ -147,13 +148,9 @@ const onPrescriptionSaved = async () => {
   display: flex;
   gap: var(--spacing-md);
   width: 100%;
-
-  @include below('sm') {
-    flex-direction: column;
-  }
+  flex-direction: column;
 
   @include above('lg') {
-    flex-direction: column;
     width: 300px;
   }
 }

@@ -5,7 +5,7 @@ export const directorRouter: RouteRecordRaw[] = [
   {
     path: '/director',
     component: () => import('@/layouts/DirectorLayout.vue'),
-    beforeEnter: requireRole('DIRECTOR'),
+    beforeEnter: [requireRole('DIRECTOR')],
     children: [
       {
         path: '',
@@ -15,7 +15,7 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'DIRECTOR.Profil',
-        component: () => import('@/features/users/views/director/ProfilView.vue'),
+        component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
         path: 'calendar',
@@ -30,58 +30,70 @@ export const directorRouter: RouteRecordRaw[] = [
       {
         path: 'staff',
         name: 'DIRECTOR.Staff',
-        component: () => import('@/features/users/views/director/Staff.vue'),
+        component: () => import('@/features/staffs/views/StaffListView.vue'),
       },
       {
-        path: 'clinique',
-        name: 'DIRECTOR.Clinic',
-        component: () => import('@/features/users/views/director/ClinicView.vue'),
+        path: 'staff/new',
+        name: 'DIRECTOR.Staff.Create',
+        component: () => import('@/features/staffs/views/StaffCreateView.vue'),
       },
-      // ── Administration & Configuration ────────────────────────
-      // {
-      //   path: 'administration',
-      //   name: 'DIRECTOR.Administration',
-      //   //        component: () => import('@/views/directeur/administration/Administration.vue'),
-      //   children: [
-      //     {
-      //       path: 'etablissement',
-      //       name: 'DIRECTOR.Admin.Etablissement',
-      //       //            component: () => import('@/views/directeur/administration/GestionEtablissement.vue'),
-      //       // Demandes de création d'une clinique, Modification de ses établissements
-      //     },
-      //     {
-      //       path: 'personnel',
-      //       name: 'DIRECTOR.Admin.Personnel',
-      //       //            component: () => import('@/views/directeur/administration/GestionPersonnel.vue'),
-      //       // CRUD des référents cliniques, CRUD des vétérinaires, CRUD des secrétaires
-      //     },
-      //   ],
-      // },
-      // // ── Messagerie ────────────────────────────────────────────
-      // {
-      //   path: 'messagerie',
-      //   name: 'DIRECTOR.Messagerie',
-      //   //        component: () => import('@/views/directeur/messagerie/Messagerie.vue'),
-      //   children: [
-      //     {
-      //       path: 'groupe',
-      //       name: 'DIRECTOR.Messagerie.Groupe',
-      //       //            component: () => import('@/views/directeur/messagerie/Groupe.vue'),
-      //       // Création de nouveaux groupes
-      //     },
-      //     {
-      //       path: 'privees',
-      //       name: 'DIRECTOR.Messagerie.Privees',
-      //       //            component: () => import('@/views/directeur/messagerie/Privees.vue'),
-      //       // Envois de messages privées (à 1 seule personne)
-      //     },
-      //     {
-      //       path: 'privees/:id',
-      //       name: 'DIRECTOR.Messagerie.Conversation',
-      //       //            component: () => import('@/views/directeur/messagerie/Conversation.vue'),
-      //     },
-      //   ],
-      // },
+      {
+        path: 'staff/:id',
+        name: 'DIRECTOR.Staff.Detail',
+        component: () => import('@/features/staffs/views/StaffDetailView.vue'),
+      },
+      {
+        path: 'clinics',
+        name: 'DIRECTOR.Clinic',
+        component: () => import('@/features/clinics/views/ClinicView.vue'),
+      },
+      {
+        path: 'shop',
+        name: 'DIRECTOR.Boutique',
+        component: () => import('@/features/products/views/ShopView.vue'),
+      },
+      {
+        path: 'clinics/:id/acts',
+        name: 'DIRECTOR.Acts',
+        component: () => import('@/features/clinic-acts/view/ClinicActView.vue'),
+      },
+      {
+        path: 'clinics/:id/pets',
+        name: 'DIRECTOR.Pets',
+        component: () => import('@/features/pets/views/LinkPetsView.vue'),
+      },
+      {
+        path: 'clinics/:id/specialities',
+        name: 'DIRECTOR.Specialities',
+        component: () => import('@/features/specialities/views/LinkSpecialitiesView.vue'),
+      },
+
+      // ── Messagerie ────────────────────────────────────────────
+      {
+        path: 'messagerie',
+        name: 'DIRECTOR.Messagerie',
+        component: () => import('@/features/messaging/views/MessagingView.vue'),
+      },
+      {
+        path: 'sales',
+        name: 'DIRECTOR.Sales',
+        component: () => import('@/features/sales/views/SalesView.vue'),
+      },
+      {
+        path: 'budget',
+        name: 'DIRECTOR.Budget',
+        component: () => import('@/features/budget/views/BudgetView.vue'),
+      },
+      {
+        path: 'fournisseurs',
+        name: 'DIRECTOR.Suppliers',
+        component: () => import('@/features/suppliers/views/SupplierListView.vue'),
+      },
+      {
+        path: 'commandes-fournisseurs',
+        name: 'DIRECTOR.SupplierOrders',
+        component: () => import('@/features/supplier-orders/views/SupplierOrderListView.vue'),
+      },
     ],
   },
 ]

@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, List, OfficeBuilding, User, UserFilled } from '@element-plus/icons-vue'
+import {
+  Box,
+  DocumentChecked,
+  House,
+  List,
+  OfficeBuilding,
+  Setting,
+  User,
+  UserFilled,
+  Van,
+} from '@element-plus/icons-vue'
 import FormError from '@/components/ui/FormError.vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
     index: 'ADMIN.Home',
     label: 'Accueil',
@@ -16,7 +26,7 @@ const menuItems: MenuItem[] = [
     icon: List,
   },
   {
-    index: 'Admin.Clinics',
+    index: 'ADMIN.Clinics',
     label: 'Cliniques',
     icon: OfficeBuilding,
   },
@@ -26,7 +36,48 @@ const menuItems: MenuItem[] = [
     icon: UserFilled,
   },
   {
-    index: 'Admin.Profil',
+    index: '',
+    label: 'Produits',
+    icon: Box,
+    children: [
+      {
+        index: 'ADMIN.Products',
+        label: 'Catalogue produits',
+        icon: Box,
+      },
+      {
+        index: 'ADMIN.ProductRequests',
+        label: 'Demandes de produits',
+        icon: DocumentChecked,
+      },
+      {
+        index: 'ADMIN.Suppliers',
+        label: 'Fournisseurs',
+        icon: Van,
+      },
+    ],
+  },
+  {
+    index: 'ADMIN.Settings',
+    label: 'Settings',
+    icon: Setting,
+    children: [
+      {
+        index: 'ADMIN.Acts',
+        label: 'Acts',
+      },
+      {
+        index: 'ADMIN.Vaccines',
+        label: 'Vaccine',
+      },
+      {
+        index: 'ADMIN.Pets',
+        label: 'Pets',
+      },
+    ],
+  },
+  {
+    index: 'ADMIN.Profil',
     label: 'Profil',
     icon: User,
   },

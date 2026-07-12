@@ -1,7 +1,6 @@
 import { Router } from "express";
 import type { RequestHandler, Router as RouterType } from "express";
 import { authMiddleware, roleMiddleware } from "@api/middlewares";
-import { STAFF_ROLES } from "@api/utils";
 import {
   animalController,
   animalMeetingController,
@@ -15,23 +14,27 @@ const controller = userController;
 userRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(["ADMIN", "DIRECTOR", "REFERANT"]),
+  roleMiddleware(["ADMIN", "SECRETARY", "VETERINARIAN"]),
   controller.getUsers.bind(controller) as RequestHandler,
 );
-
-userRouter.get(
-  "/roles/:role",
+userRouter.post(
+  "/me/avatar/upload",
   authMiddleware,
-  roleMiddleware(STAFF_ROLES),
-  controller.getUsersByRole.bind(controller) as RequestHandler,
+  controller.uploadAvatar.bind(controller) as RequestHandler,
+);
+userRouter.patch(
+  "/me/avatar/confirm",
+  authMiddleware,
+  controller.confirmAvatar.bind(controller) as RequestHandler,
 );
 
 userRouter.get(
   "/:id/animals",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getByUser.bind(animalController) as RequestHandler,
+  animalController.getAllByUser.bind(animalController) as RequestHandler,
 );
+
 userRouter.get(
   "/:id/animal-meetings",
   authMiddleware,
@@ -40,10 +43,18 @@ userRouter.get(
     animalMeetingController,
   ) as RequestHandler,
 );
+
 userRouter.get(
   "/:id",
   authMiddleware,
   controller.getUserById.bind(controller) as RequestHandler,
+);
+
+userRouter.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.deleteUser.bind(controller) as RequestHandler,
 );
 
 export default userRouter;

@@ -1,77 +1,152 @@
-import { prisma } from "@api/lib/prisma";
-import type { CreateReview } from "@armali/schemas";
+import type {
+  ClientId,
+  CreateReview,
+  ReviewId,
+  UserId,
+  UserRole,
+  VeterinarianClinicId,
+  VeterinarianId,
+} from "@armali/schemas";
+import {
+  ReviewRepository,
+  ReviewWithRelationsInclude,
+} from "./review.repository";
+import { ClinicService } from "@api/clinics/clinic.service";
+import { match } from "ts-pattern";
+import { ForbiddenError } from "@api/errors";
+import { withAvatarUrl } from "@api/users/user.utils";
 
 export class ReviewService {
-  async listVeterinarians() {
-    const vets = await prisma.veterinarianProfile.findMany({
-      include: {
-        user: { select: { id: true, firstname: true, lastname: true } },
-        reviews: { select: { rating: true } },
-        veterinarianClinics: {
-          include: { clinic: { select: { name: true } } },
-        },
-      },
-    });
+  constructor(
+    private repository: ReviewRepository,
+    private clinicService: ClinicService,
+  ) {}
 
-    return vets.map((v) => {
-      const avg =
-        v.reviews.length > 0
-          ? v.reviews.reduce((sum, r) => sum + r.rating, 0) / v.reviews.length
-          : null;
-      return {
-        id: v.id,
-        firstname: v.user.firstname,
-        lastname: v.user.lastname,
-        bio: v.bio,
-        clinics: v.veterinarianClinic.map((vc) => vc.clinic.name),
-        averageRating: avg ? Math.round(avg * 10) / 10 : null,
-        reviewCount: v.reviews.length,
-      };
-    });
+  private formatMetaReview(review: ReviewWithRelationsInclude) {
+    return {
+      ...review,
+      id: review.id as ReviewId,
+      veterinarian: withAvatarUrl(review.veterinarianClinic.veterinarian.user),
+      client: withAvatarUrl(review.client.user),
+      clinic: review.veterinarianClinic.clinic,
+    };
   }
 
   async upsertReview(clientId: string, data: CreateReview) {
-    return prisma.vetReview.upsert({
-      where: {
-        clientId_veterinarianId: {
-          clientId,
-          veterinarianId: data.veterinarianId,
-        },
-      },
-      update: {
-        rating: data.rating,
-        comment: data.comment ?? null,
-      },
-      create: {
-        clientId,
-        veterinarianId: data.veterinarianId,
-        rating: data.rating,
-        comment: data.comment ?? null,
-      },
+    return this.repository.upsertReview({
+      clientId,
+      veterinarianClinicId: data.veterinarianClinicId,
+      rating: data.rating,
+      comment: data.comment ?? null,
     });
   }
 
-  async getMyReviews(clientId: string) {
-    return prisma.vetReview.findMany({
-      where: { clientId },
-      include: {
-        veterinarian: {
-          include: {
-            user: { select: { firstname: true, lastname: true } },
-          },
+  async getReviewsByRole({
+    userId,
+    role,
+    targetVeterinarianId,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    targetVeterinarianId?: VeterinarianId;
+  }) {
+    const reviews = await match(role)
+      .with("ADMIN", async () => await this.repository.findAll())
+      .with(
+        "CLIENT",
+        async () => await this.repository.findReviewsByClient(userId),
+      )
+      .with(
+        "VETERINARIAN",
+        async () => await this.repository.findReviewsByVeterinarian(userId),
+      )
+      .when(
+        (r) => r === "DIRECTOR" || r === "REFERENT",
+        async () => {
+          const clinicId = await this.clinicService.getClinicIdByUserId({
+            userId,
+            role,
+          });
+          if (targetVeterinarianId) {
+            return await this.repository.findReviewsByVeterinarian(
+              targetVeterinarianId,
+              clinicId,
+            );
+          }
+          return await this.repository.findReviewsByClinic({ clinicId });
         },
-      },
-      orderBy: { updatedAt: "desc" },
-    });
+      )
+      .otherwise(() => {
+        throw new ForbiddenError();
+      });
+    return reviews.map(this.formatMetaReview);
   }
 
-  async getVetReviews(veterinarianId: string) {
-    return prisma.vetReview.findMany({
-      where: { veterinarianId },
-      include: {
-        client: { select: { firstname: true, lastname: true } },
-      },
-      orderBy: { updatedAt: "desc" },
+  async getByKeys({
+    clientId,
+    veterinarianClinicId,
+  }: {
+    clientId: ClientId;
+    veterinarianClinicId: VeterinarianClinicId;
+  }) {
+    const review = await this.repository.findKeys({
+      clientId,
+      veterinarianClinicId,
     });
+    if (review) return this.formatMetaReview(review);
+    return review;
+  }
+
+  async getStats({
+    userId,
+    role,
+    veterinarianId,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    veterinarianId?: VeterinarianId;
+  }) {
+    const roundAverage = (value: number | null) =>
+      value !== null ? Math.round(value * 10) / 10 : null;
+
+    const toResult = (stats: { average: number | null; count: number }) => ({
+      average: roundAverage(stats.average),
+      count: stats.count,
+    });
+
+    // ADMIN et REFERENT peuvent consulter les stats d'un vétérinaire précis
+    if (veterinarianId && (role === "DIRECTOR" || role === "REFERENT")) {
+      const clinicId = await this.clinicService.getClinicIdByUserId({
+        userId,
+        role,
+      });
+      return toResult(
+        await this.repository.getStatsByVeterinarian(veterinarianId, clinicId),
+      );
+    }
+
+    switch (role) {
+      case "ADMIN":
+        return toResult(await this.repository.getGlobalStats());
+
+      case "VETERINARIAN":
+        // PK partagée : VeterinarianProfile.id === User.id
+        return toResult(await this.repository.getStatsByVeterinarian(userId));
+
+      case "DIRECTOR":
+      case "REFERENT": {
+        const clinicId = await this.clinicService.getClinicIdByUserId({
+          userId,
+          role,
+        });
+        return toResult(await this.repository.getStatsByClinic(clinicId));
+      }
+
+      case "CLIENT":
+        return toResult(await this.repository.getStatsByClient(userId));
+
+      default:
+        return { average: null, count: 0 };
+    }
   }
 }

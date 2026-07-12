@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Animal, User, ClinicId, Staff } from '@armali/schemas'
-import DateField from './DateField.vue'
+import type { Animal, User, ClinicId, StaffMember } from '@armali/schemas'
+import DateField from './fields/DateField.vue'
 import AvailabilityTimeline from './timeline/AvailabilityTimeline.vue'
-import SearchSelectSingle from './SearchSelectSingle.vue'
+import SearchSelectSingle from '../../../../components/ui/SearchSelectSingle.vue'
 
 defineProps<{
   clients: User[]
   animals: Animal[]
-  vets: Staff[]
+  vets: StaffMember[]
   isVetLocked: boolean
 }>()
 
 const selectedClient = defineModel<User | null>('selectedClient', { required: true })
 const selectAnimal = defineModel<Animal | null>('selectAnimal', { required: true })
-const selectedVet = defineModel<User | null>('selectedVet', { required: true })
+const selectedVet = defineModel<StaffMember | null>('selectedVet', { required: true })
 const clinicId = defineModel<ClinicId | undefined>('clinicId', { required: true })
 const date = defineModel<Date>('date', { required: true })
 const start = defineModel<string>('start', { required: true })

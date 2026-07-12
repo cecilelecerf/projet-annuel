@@ -21,7 +21,7 @@ const props = defineProps<{
   animal: BookingAnimal
   clinic: BookingClinic
   vet: BookingVet
-  slot: BookingSlot
+  selectedSlot: BookingSlot
   reason?: string
   specialityId?: SpecialityId | null
 }>()
@@ -40,9 +40,9 @@ async function confirm() {
     await meetingApi.animal.new({
       animalId: props.animal.id,
       veterinarianId: props.vet.id,
-      date: props.slot.date,
-      startTime: props.slot.startTime,
-      endTime: props.slot.endTime,
+      date: props.selectedSlot.date,
+      startTime: props.selectedSlot.startTime,
+      endTime: props.selectedSlot.endTime,
       specialityId: props.specialityId ?? null,
       description: props.reason || null,
       clinicId: props.clinic.id,
@@ -118,8 +118,10 @@ async function confirm() {
         <div class="summary-row">
           <span class="summary-label">Date & heure</span>
           <div class="summary-value">
-            <span class="summary-main summary-date">{{ formatDate(slot.date) }}</span>
-            <span class="summary-sub">{{ subtractTime(slot.startTime, slot.endTime) }}</span>
+            <span class="summary-main summary-date">{{ formatDate(selectedSlot.date) }}</span>
+            <span class="summary-sub">{{
+              subtractTime(selectedSlot.startTime, selectedSlot.endTime)
+            }}</span>
           </div>
         </div>
         <template v-if="reason">

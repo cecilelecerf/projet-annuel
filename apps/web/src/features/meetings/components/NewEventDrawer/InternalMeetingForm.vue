@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { User, Staff } from '@armali/schemas'
-import SearchSelectMultiple from './SearchSelectMultiple.vue'
+import type { StaffMember } from '@armali/schemas'
+import SearchSelectMultiple from '../../../../components/ui/SearchSelectMultiple.vue'
 
 defineProps<{
-  staffs: Staff[] | undefined
+  staffs: StaffMember[] | undefined
 }>()
 
 const title = defineModel<string>('title', { required: true })
-const participants = defineModel<User[]>('participants', { required: true })
+const participants = defineModel<StaffMember[]>('participants', { required: true })
 const location = defineModel<string>('location', { required: true })
 </script>
 

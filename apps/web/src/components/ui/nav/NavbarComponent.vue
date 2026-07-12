@@ -1,19 +1,104 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
-import Sidebar, { type MenuItem } from './SidebarComponent.vue'
+import Sidebar from './SidebarComponent.vue'
+import NotificationMessageItem from './clocks/NotificationMessageItem.vue'
+import NotificationStockItem from './clocks/NotificationStockItem.vue'
 import { getStringRole } from '@/utils/role.utils'
+import type { Conversation, ConversationId, ProductClinicWithProduct } from '@armali/schemas'
 import { useNotify } from '@/composables/useNotify'
+import { useMessagingStore } from '@/features/messaging/stores/messagingStore'
+import { http } from '@/lib/api'
+import { productsApi } from '@/features/products/api/products.api'
+import { useCartStore } from '@/features/shop/stores/cartStore'
+import type { NavNode } from './NaveNode.ts'
 
 const notify = useNotify()
 
-defineProps<{ menuItems: MenuItem[] }>()
+defineProps<{ menuItems: NavNode[] }>()
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { user } = storeToRefs(authStore)
+const messagingStore = useMessagingStore()
+const cartStore = useCartStore()
+
+function goToCart() {
+  router.push({ name: 'CLIENT.Cart' })
+}
+
+const unreadConversations = computed(() =>
+  messagingStore.sortedConversations.filter((c) => (c.unreadCount ?? 0) > 0).slice(0, 5),
+)
+
+function conversationTitle(conversation: Conversation) {
+  if (conversation.type === 'GROUP') return conversation.name ?? 'Groupe'
+  const other = conversation.conversationMembers?.find((m) => m.userId !== user.value?.id)
+  return other?.user ? `${other.user.firstname} ${other.user.lastname}` : 'Conversation'
+}
+
+function goToConversation(conversationId: ConversationId) {
+  const role = user.value?.role
+  messagingStore.openConversation(conversationId)
+  router.push({ name: `${role?.toUpperCase()}.Messagerie` })
+}
+
+// ── Alertes de stock bas (référent / directeur uniquement) ────────────────
+const lowStockProducts = ref<ProductClinicWithProduct[]>([])
+const readStockIds = ref<Set<string>>(new Set())
+
+const STOCK_ALERT_ROLES = ['REFERENT', 'DIRECTOR']
+
+async function loadStockAlerts() {
+  if (!user.value || !STOCK_ALERT_ROLES.includes(user.value.role)) return
+  try {
+    const clinics = await http.get<{ id: string }[]>('/clinics/me')
+    const clinic = clinics[0]
+    if (!clinic) return
+    lowStockProducts.value = await productsApi.getLowStock(clinic.id)
+  } catch {
+    /* silencieux : une alerte de stock qui échoue ne doit pas bloquer la navbar */
+  }
+}
+
+onMounted(loadStockAlerts)
+
+function goToStockAlert(product: ProductClinicWithProduct) {
+  readStockIds.value.add(product.id)
+  const role = user.value?.role
+  router.push({ name: `${role}.Boutique` })
+}
+
+// ── Fusion des notifications (messages + stock) pour un rendu unifié ──────
+
+type NotificationItem =
+  | { kind: 'message'; key: string; conversation: Conversation }
+  | { kind: 'stock'; key: string; product: ProductClinicWithProduct }
+
+const notificationItems = computed<NotificationItem[]>(() => [
+  ...unreadConversations.value.map(
+    (conversation): NotificationItem => ({
+      kind: 'message',
+      key: `message-${conversation.id}`,
+      conversation,
+    }),
+  ),
+  ...lowStockProducts.value.map(
+    (product): NotificationItem => ({
+      kind: 'stock',
+      key: `stock-${product.id}`,
+      product,
+    }),
+  ),
+])
+
+const unreadLowStockCount = computed(
+  () => lowStockProducts.value.filter((p) => !readStockIds.value.has(p.id)).length,
+)
+
+const totalNotifications = computed(() => messagingStore.totalUnread + unreadLowStockCount.value)
 
 const userInitials = computed(() => {
   if (!user.value) return '?'
@@ -34,15 +119,66 @@ const handleLogout = async () => {
       <h1 class="navbar__title">Espace {{ user && getStringRole(user.role) }}</h1>
     </div>
     <div class="navbar__right">
-      <el-badge :value="3" class="navbar__badge">
-        <el-button circle plain>
-          <el-icon><Bell /></el-icon>
+      <el-badge
+        v-if="user?.role === 'CLIENT'"
+        :value="cartStore.totalItems"
+        :hidden="cartStore.totalItems === 0"
+        class="navbar__badge"
+      >
+        <el-button circle plain @click="goToCart">
+          <el-icon><ShoppingCart /></el-icon>
         </el-button>
       </el-badge>
 
       <el-dropdown trigger="click" placement="bottom-end">
+        <el-badge
+          :value="totalNotifications"
+          :hidden="totalNotifications === 0"
+          class="navbar__badge"
+        >
+          <el-button circle plain>
+            <el-icon><Bell /></el-icon>
+          </el-button>
+        </el-badge>
+
+        <template #dropdown>
+          <el-dropdown-menu class="navbar__notifications">
+            <el-dropdown-item v-if="notificationItems.length === 0" disabled>
+              Aucune nouvelle notification
+            </el-dropdown-item>
+
+            <!-- Boucle unique sur toutes les notifications (messages + stock),
+                 chacune rendue par le composant correspondant à son type -->
+            <template v-for="item in notificationItems" :key="item.key">
+              <el-dropdown-item
+                v-if="item.kind === 'message'"
+                @click="goToConversation(item.conversation.id)"
+              >
+                <NotificationMessageItem
+                  :title="conversationTitle(item.conversation)"
+                  :preview="item.conversation.lastMessage?.content"
+                  :unread-count="item.conversation.unreadCount"
+                />
+              </el-dropdown-item>
+
+              <el-dropdown-item v-else @click="goToStockAlert(item.product)">
+                <NotificationStockItem
+                  :product-name="item.product.product.name"
+                  :stock="item.product.stock"
+                  :minimum-required="item.product.minimumRequired"
+                  :unread="!readStockIds.has(item.product.id)"
+                />
+              </el-dropdown-item>
+            </template>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+      <el-dropdown trigger="click" placement="bottom-end">
         <div class="navbar__user">
-          <el-avatar class="navbar__avatar">{{ userInitials }}</el-avatar>
+          <el-avatar class="navbar__avatar" :src="user?.avatarUrl ?? undefined">
+            <template v-if="!user?.avatarUrl">{{ userInitials }}</template>
+          </el-avatar>
           <Transition name="fade">
             <div v-if="user" class="navbar__user-info">
               <span class="navbar__user-name">{{ user.firstname }} {{ user.lastname }}</span>
@@ -101,6 +237,10 @@ $navbar-height: 64px;
   :deep(.el-badge__content) {
     background: var(--el-color-primary);
   }
+}
+
+.navbar__notifications {
+  min-width: 260px;
 }
 
 .navbar__user {

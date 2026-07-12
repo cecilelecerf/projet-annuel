@@ -1,30 +1,14 @@
-import { NotFoundError, ForbiddenError } from "@api/errors";
+import { NotFoundError, ForbiddenError, BadRequestError } from "@api/errors";
 import { ActRepository } from "./act.repository";
-import { ClinicActRepository } from "./clinic-act.repository";
-import type {
-  CreateAct,
-  UpdateAct,
-  CreateClinicAct,
-  UpdateClinicAct,
-  UserRole,
-} from "@armali/schemas";
+import type { ActType, CreateAct, UpdateAct, UserRole } from "@armali/schemas";
 
 const ADMIN_ROLES: UserRole[] = ["ADMIN"];
-const STAFF_ROLES: UserRole[] = [
-  "DIRECTOR",
-  "SECRETARY",
-  "REFERANT",
-  "VETERINARIAN",
-];
 
 export class ActService {
-  constructor(
-    private repository: ActRepository,
-    private clinicActRepository: ClinicActRepository,
-  ) {}
+  constructor(private repository: ActRepository) {}
 
-  async getAll() {
-    return this.repository.findAll();
+  async getAll({ actType }: { actType?: ActType[] }) {
+    return this.repository.findAll({ actType });
   }
 
   async getById(id: string) {
@@ -42,6 +26,11 @@ export class ActService {
     if (!ADMIN_ROLES.includes(role)) throw new ForbiddenError();
     const act = await this.repository.findById(id);
     if (!act) throw new NotFoundError("Acte");
+    if (act.type === "VACCINATION") {
+      throw new BadRequestError(
+        "Un acte de vaccination doit être supprimé via la gestion des vaccins, pas le catalogue d'actes",
+      );
+    }
     return this.repository.update(id, data);
   }
 
@@ -49,40 +38,11 @@ export class ActService {
     if (!ADMIN_ROLES.includes(role)) throw new ForbiddenError();
     const act = await this.repository.findById(id);
     if (!act) throw new NotFoundError("Acte");
+    if (act.type === "VACCINATION") {
+      throw new BadRequestError(
+        "Un acte de vaccination doit être supprimé via la gestion des vaccins, pas le catalogue d'actes",
+      );
+    }
     return this.repository.delete(id);
-  }
-
-  // ── ClinicActs (actes d'une clinique) ─────────────────────────────────────
-
-  async getClinicActs(clinicId: string) {
-    return this.clinicActRepository.findByClinic(clinicId);
-  }
-
-  async getClinicActById(id: string) {
-    const act = await this.clinicActRepository.findById(id);
-    if (!act) throw new NotFoundError("Acte clinique");
-    return act;
-  }
-
-  async createClinicAct(data: CreateClinicAct, role: UserRole) {
-    if (!STAFF_ROLES.includes(role) && !ADMIN_ROLES.includes(role))
-      throw new ForbiddenError();
-    return this.clinicActRepository.create(data);
-  }
-
-  async updateClinicAct(id: string, data: UpdateClinicAct, role: UserRole) {
-    if (!STAFF_ROLES.includes(role) && !ADMIN_ROLES.includes(role))
-      throw new ForbiddenError();
-    const act = await this.clinicActRepository.findById(id);
-    if (!act) throw new NotFoundError("Acte clinique");
-    return this.clinicActRepository.update(id, data);
-  }
-
-  async deleteClinicAct(id: string, role: UserRole) {
-    if (!STAFF_ROLES.includes(role) && !ADMIN_ROLES.includes(role))
-      throw new ForbiddenError();
-    const act = await this.clinicActRepository.findById(id);
-    if (!act) throw new NotFoundError("Acte clinique");
-    return this.clinicActRepository.delete(id);
   }
 }

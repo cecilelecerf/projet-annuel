@@ -1,4 +1,4 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedOrders(
   prisma: PrismaClient,
@@ -6,7 +6,11 @@ export async function seedOrders(
     users,
     clinics,
   }: {
-    users: any;
+    users: ReturnType<typeof import("./users").seedUsers> extends Promise<
+      infer T
+    >
+      ? T
+      : never;
     clinics: ReturnType<typeof import("./clinics").seedClinics> extends Promise<
       infer T
     >
@@ -25,6 +29,7 @@ export async function seedOrders(
     data: {
       status: "CONFIRMED",
       pickupAt: new Date("2026-02-25T10:00:00"),
+      pickupCode: "A1B2C3",
       clientId: clientUser1.id,
       clinicId: clinics.clinic1.id,
     },

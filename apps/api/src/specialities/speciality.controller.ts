@@ -1,20 +1,25 @@
 import type { NextFunction, Response } from "express";
+import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
+import { BadRequestError } from "@api/errors";
 import {
-  specialitySchema,
   createSpecialitySchema,
-  updateSpecialitySchema,
   SpecialityId,
+  specialitySchema,
+  updateSpecialitySchema,
+  type CreateSpeciality,
+  type UpdateSpeciality,
 } from "@armali/schemas";
-import { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import { SpecialityService } from "./speciality.service";
 
 export class SpecialityController {
-  constructor(private readonly service: SpecialityService) {}
+  constructor(private service: SpecialityService) {}
 
   async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const specialities = await this.service.getAll();
-      return res.json(specialitySchema.array().parse(specialities));
+      const search =
+        typeof req.query.search === "string" ? req.query.search : undefined;
+      const specialities = await this.service.getAll(search);
+      res.status(200).json(specialitySchema.array().parse(specialities));
     } catch (err) {
       next(err);
     }
@@ -27,31 +32,41 @@ export class SpecialityController {
   ) {
     try {
       const speciality = await this.service.getById(req.params.id);
-      return res.json(specialitySchema.parse(speciality));
+      return res.status(200).json(specialitySchema.parse(speciality));
     } catch (err) {
       next(err);
     }
   }
 
-  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  async create(
+    req: AuthenticatedRequest & { body: CreateSpeciality },
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-      const data = createSpecialitySchema.parse(req.body);
-      const speciality = await this.service.create(data);
-      return res.status(201).json(specialitySchema.parse(speciality));
+      const result = createSpecialitySchema.safeParse(req.body);
+      if (!result.success) throw new BadRequestError(result.error.message);
+      const speciality = await this.service.create(result.data, req.user.role);
+      res.status(201).json(specialitySchema.parse(speciality));
     } catch (err) {
       next(err);
     }
   }
 
   async update(
-    req: RequestWithParams<{ id: SpecialityId }>,
+    req: RequestWithParams<{ id: SpecialityId }> & { body: UpdateSpeciality },
     res: Response,
     next: NextFunction,
   ) {
     try {
-      const data = updateSpecialitySchema.parse(req.body);
-      const speciality = await this.service.update(req.params.id, data);
-      return res.json(specialitySchema.parse(speciality));
+      const result = updateSpecialitySchema.safeParse(req.body);
+      if (!result.success) throw new BadRequestError(result.error.message);
+      const speciality = await this.service.update(
+        req.params.id,
+        result.data,
+        req.user.role,
+      );
+      res.status(200).json(specialitySchema.parse(speciality));
     } catch (err) {
       next(err);
     }
@@ -63,8 +78,8 @@ export class SpecialityController {
     next: NextFunction,
   ) {
     try {
-      await this.service.delete(req.params.id);
-      return res.status(204).send();
+      await this.service.delete(req.params.id, req.user.role);
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

@@ -44,7 +44,7 @@ const chartOptions: ChartOptions<'line'> = {
 </script>
 
 <template>
-  <div v-if="weightData.length > 1" class="section">
+  <div v-if="weightData.length > 1" class="card">
     <h3 class="section-label">Évolution du poids</h3>
     <div class="chart-wrapper">
       <Line :data="chartData" :options="chartOptions" />

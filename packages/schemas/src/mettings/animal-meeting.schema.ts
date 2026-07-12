@@ -12,12 +12,10 @@ import {
 } from "./meeting-base.schema";
 import { timeRefineFn, timeRefineOptions } from "./utils";
 import { animalMetaSchema } from "../animals/meta.schema";
-import {
-  clinicSchema,
-  specialitySchema,
-  veterinarianClinicSchema,
-} from "../clinic.schema";
+import { clinicSchema } from "../clinics/clinic.schema";
 import { veterinarianSchema } from "../users";
+import { specialitySchema } from "../specilities.schema";
+import { veterinarianClinicMetaSchema } from "../clinics/veterinarian-clinic.schema";
 
 export const animalMeetingFieldSchema = z.object({
   description: z.string().nullable().optional(),
@@ -36,7 +34,7 @@ export const animalMeetingSchema = meetingBaseSchema.extend({
 
 export const animalMeetingMetaSchema = animalMeetingSchema.extend({
   animal: animalMetaSchema,
-  veterinarianClinic: veterinarianClinicSchema.nullable(),
+  veterinarianClinic: veterinarianClinicMetaSchema.nullable(),
 });
 
 export const animalMeetigWithMeetingSchema = animalMeetingSchema

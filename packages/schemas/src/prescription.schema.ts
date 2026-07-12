@@ -21,7 +21,7 @@ export const prescriptionItemSchema = z.object({
   medicationName: z.string().min(1).max(255),
   dosage: z.string().min(1).max(100),
   frequency: z.string().min(1).max(100),
-  duration: z.number().int().positive().nullable().optional(),
+  duration: z.coerce.number().int().positive().nullable().optional(),
   instructions: z.string().max(500).nullable().optional(),
   prescriptionId: prescriptionIdSchema,
   clinicProductId: clinicProductIdSchema.nullable().optional(),

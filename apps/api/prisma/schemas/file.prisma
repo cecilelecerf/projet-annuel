@@ -1,0 +1,40 @@
+model File {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  storageKey String
+  mimeType   String
+  size       Int?
+
+  // Exemple : IMAGE, PDF, DOCUMENT
+  type FileType
+
+  // Exemple : ANIMAL, USER, PRESCRIPTION
+  entityType FileEntityType
+  entityId   String
+
+  avatarOf User?   @relation("UserAvatar")
+  photoOf  Animal? @relation("AnimalPhoto")
+  imageOf  Brand?  @relation("BrandImage")
+
+  @@index([entityType, entityId])
+  @@map("files")
+}
+
+enum FileType {
+  IMAGE
+  PDF
+  DOCUMENT
+}
+
+enum FileEntityType {
+  USER
+  ANIMAL
+  PRESCRIPTION
+  CLINIC
+  BRAND
+  PRODUCT
+  IMAGING
+  ANALYSIS
+}

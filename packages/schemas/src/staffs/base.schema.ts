@@ -1,0 +1,52 @@
+import { z } from "zod";
+import { veterinarianIdentityInputSchema } from "../users/veterinarian.schema";
+import {
+  bankingInfoInputSchema,
+  baseUserSchema,
+} from "../users/base-user.schema";
+import { specialitySchema } from "../specilities.schema";
+
+export const staffRoleSchema = z.enum([
+  "VETERINARIAN",
+  "SECRETARY",
+  "DIRECTOR",
+  "REFERENT",
+]);
+
+export const staffMemberSchema = baseUserSchema
+  .pick({
+    id: true,
+    lastname: true,
+    firstname: true,
+    email: true,
+    avatarUrl: true,
+  })
+  .extend({ role: staffRoleSchema });
+
+// ── Fiche détail (GET /referent/staff/:id) ─────────────────────────────────
+
+export const veterinarianStaffProfileSchema = z.object({
+  licenseNumber: z.string(),
+  bio: z.string().nullable().optional(),
+  specialities: z.array(specialitySchema),
+  veterinarianIdentity: veterinarianIdentityInputSchema.nullable().optional(),
+  bankingInfo: bankingInfoInputSchema.nullable().optional(),
+});
+
+export const secretaryStaffProfileSchema = z.object({
+  bankingInfo: bankingInfoInputSchema.nullable().optional(),
+});
+
+export const staffMemberDetailSchema = staffMemberSchema.extend({
+  createdAt: z.coerce.date(),
+  veterinarianProfile: veterinarianStaffProfileSchema.nullable().optional(),
+  secretaryProfile: secretaryStaffProfileSchema.nullable().optional(),
+});
+
+export type StaffRole = z.infer<typeof staffRoleSchema>;
+export type StaffMember = z.infer<typeof staffMemberSchema>;
+export type VeterinarianStaffProfile = z.infer<
+  typeof veterinarianStaffProfileSchema
+>;
+export type SecretaryStaffProfile = z.infer<typeof secretaryStaffProfileSchema>;
+export type StaffMemberDetail = z.infer<typeof staffMemberDetailSchema>;

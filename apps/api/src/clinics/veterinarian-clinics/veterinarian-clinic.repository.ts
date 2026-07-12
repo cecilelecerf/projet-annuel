@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client/extension";
+import { VeterinarianClinicId } from "@armali/schemas";
+import { PrismaClient } from "../../../prisma/generated/prisma/client";
 
 export const veterinarianClinicInclude = {
   veterinarian: {
@@ -16,8 +17,8 @@ export class VeterinarianClinicRepository {
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.veterinarianClinic.findUnique({
+  async findById(id: VeterinarianClinicId) {
+    return this.prisma.veterinarianClinic.findFirst({
       where: { id },
       include: veterinarianClinicInclude,
     });
@@ -38,9 +39,9 @@ export class VeterinarianClinicRepository {
     });
   }
 
-  async findByVeterinarianAndClinic(veterinarianId: string, clinicId: string) {
-    return this.prisma.veterinarianClinic.findFirst({
-      where: { veterinarianId, clinicId },
+  async findByKeys(veterinarianId: string, clinicId: string) {
+    return this.prisma.veterinarianClinic.findUnique({
+      where: { veterinarianId_clinicId: { veterinarianId, clinicId } },
       include: veterinarianClinicInclude,
     });
   }

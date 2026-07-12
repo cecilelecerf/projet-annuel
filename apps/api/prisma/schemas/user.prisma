@@ -3,7 +3,7 @@ enum UserRole {
   SECRETARY
   VETERINARIAN
   DIRECTOR
-  REFERANT
+  REFERENT
   ADMIN
 }
 
@@ -16,7 +16,6 @@ model User {
   firstname String
   lastname  String
   password  String
-  picture   String?
 
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
@@ -24,16 +23,23 @@ model User {
   directorClinicProfile DirectorClinicProfile?
   referentClinicProfile ReferentClinicProfile?
 
-  vetReviews                  VetReview[]                  @relation("ClientReviews")
+  avatarId String? @unique
+  avatar   File?   @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+
   refreshTokens               RefreshToken[]
   otpCodes                    OtpCode[]
-  clinicCreationRequests      ClinicCreationRequest[]
   animalConditionHealths      AnimalHealthCondition[]
   conversationMembers         ConversationMember[]
+  createdConversations        Conversation[]               @relation("CreatedConversations")
+  sentMessages                Message[]                    @relation("SentMessages")
   internalMeetingParticipants InternalMeetingParticipant[]
   meticalVisites              MedicalVisit[]
   availabilities              Availability[]
   adminInternalMeetings       InternalMeeting[]
+  productRequestsMade         ProductRequest[]             @relation("ProductRequestsMade")
+  productRequestsReviewed     ProductRequest[]             @relation("ProductRequestsReviewed")
+  budgetTransactions          BudgetTransaction[]
+  supplierOrders              SupplierOrder[]
 
   @@index([email])
   @@index([role])
@@ -53,6 +59,7 @@ model ClientProfile {
   animal         Animal[]
   clinicProducts ClinicProduct[]
   order          Order[]
+  reviews        Review[]
 
   @@map("client_profiles")
 }
@@ -64,15 +71,12 @@ model VeterinarianProfile {
 
   user User @relation(fields: [id], references: [id], onDelete: Cascade)
 
-  animals                Animal[]
-  specialities           Speciality[]
-  veterinarianClinics    VeterinarianClinic[]
-  pets                   Pet[]
-  hospitalizationReports HospitalizationReport[]
-  prescriptions          Prescription[]
-  veterinarianIdentity   VeterinarianIdentity?
-  bankingInfo            BankingInfo?
-  reviews                VetReview[]
+  specialities         Speciality[]
+  veterinarianClinics  VeterinarianClinic[]
+  pets                 Pet[]
+  veterinarianIdentity VeterinarianIdentity?
+  bankingInfo          BankingInfo?
+  prescriptions        Prescription[]
 
   @@map("veterinarian_profiles")
 }
@@ -118,8 +122,8 @@ model BankingInfo {
   veterinarian   VeterinarianProfile?   @relation(fields: [veterinarianId], references: [id])
   secretaryId    String?                @unique
   secretary      SecretaryProfile?      @relation(fields: [secretaryId], references: [id])
-  referantId     String?                @unique
-  referant       ReferentClinicProfile? @relation(fields: [referantId], references: [id])
+  referentId     String?                @unique
+  referent       ReferentClinicProfile? @relation(fields: [referentId], references: [id])
 
   @@map("banking_infos")
 }
@@ -139,9 +143,11 @@ model SecretaryProfile {
 model DirectorClinicProfile {
   id String @id @default(uuid())
 
-  user     User   @relation(fields: [id], references: [id], onDelete: Cascade)
-  clinicId String
-  clinic   Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  clinic Clinic?
+
+  clinicRequests ClinicRequest[]
 
   @@map("director_clinic_profiles")
 }

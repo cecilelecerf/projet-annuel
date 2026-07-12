@@ -1,115 +1,262 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import request from "supertest";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
 import { app } from "@api/app";
+import { loginAs } from "@api/meetings/__tests__/meeting.router.test";
 import { getPrisma } from "../../../../__tests__/setup";
 
-const validQuery = "startDate=2026-01-01&endDate=2026-12-31";
+dayjs.extend(utc);
 
-const loginAs = async (email: string, password = "Password123!") => {
-  const res = await request(app)
-    .post("/api/auth/login")
-    .send({ email, password });
-  return res.body.accessToken as string;
-};
+describe("Internal meeting router", () => {
+  let vetToken: string;
+  let directorToken: string;
+  let clientToken: string;
 
-// ── POST /api/meetings/internal ───────────────────────────────────────────────
+  let vetUserId: string;
+  let vetClinicId: string | undefined;
+  let directorUserId: string;
 
-describe("POST /api/meetings/internal", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).post("/api/meetings/internal");
-    expect(res.status).toBe(401);
-  });
+  beforeAll(async () => {
+    vetToken = await loginAs("veto@gmail.com");
+    directorToken = await loginAs("directeur@gmail.com");
+    clientToken = await loginAs("client@gmail.com");
 
-  it("403 — rôle CLIENT non autorisé", async () => {
-    const token = await loginAs("client@gmail.com");
-    const res = await request(app)
-      .post("/api/meetings/internal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({});
-    expect(res.status).toBe(403);
-  });
+    const prisma = getPrisma();
 
-  it("400 — body invalide", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const res = await request(app)
-      .post("/api/meetings/internal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({});
-    expect(res.status).toBe(400);
-  });
-
-  it("201 — SECRETARY crée une réunion interne", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const veto = await getPrisma().user.findUnique({
+    const vet = await prisma.user.findUnique({
       where: { email: "veto@gmail.com" },
+      include: {
+        veterinarianProfile: { include: { veterinarianClinics: true } },
+      },
     });
 
-    const res = await request(app)
-      .post("/api/meetings/internal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        date: "2026-06-15",
-        startTime: "1970-01-01T14:00:00.000Z",
-        endTime: "1970-01-01T15:00:00.000Z",
-        title: "Réunion test",
-        userIds: [veto!.id],
-      });
-    expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty("id");
-  });
-});
-
-// ── DELETE /api/meetings/internal/:id ─────────────────────────────────────────
-
-describe("DELETE /api/meetings/internal/:id", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).delete("/api/meetings/internal/some-id");
-    expect(res.status).toBe(401);
-  });
-  it("403 — N'est pas l'admin", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const veto = await getPrisma().user.findUnique({
-      where: { email: "veto@gmail.com" },
+    const director = await prisma.user.findUnique({
+      where: { email: "directeur@gmail.com" },
     });
 
-    const created = await request(app)
-      .post("/api/meetings/internal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        date: "2026-08-01",
-        startTime: "1970-01-01T10:31:00.000Z",
-        endTime: "1970-01-01T11:00:00.000Z",
-        title: "À supprimer",
-        userIds: [veto!.id],
-      });
+    if (!vet || !director) throw new Error("Users introuvables");
 
-    const tokenVeto = await loginAs("veto@gmail.com");
-    const res = await request(app)
-      .delete(`/api/meetings/internal/${created.body.id}`)
-      .set("Authorization", `Bearer ${tokenVeto}`);
-    expect(res.status).toBe(403);
+    vetUserId = vet.id;
+    vetClinicId = vet.veterinarianProfile?.veterinarianClinics[0].clinicId;
+    directorUserId = director.id;
   });
-  it("204 — SECRETARY supprime une réunion interne", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const veto = await getPrisma().user.findUnique({
-      where: { email: "veto@gmail.com" },
+
+  describe("POST /api/meetings/internal", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).post("/api/meetings/internal").send({});
+
+      expect(res.status).toBe(401);
     });
 
-    const created = await request(app)
-      .post("/api/meetings/internal")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        date: "2026-08-01",
-        startTime: "1970-01-01T10:00:00.000Z",
-        endTime: "1970-01-01T11:00:00.000Z",
-        title: "À supprimer",
-        userIds: [veto!.id],
-      });
+    it("403 — CLIENT ne peut pas créer une réunion interne", async () => {
+      const res = await request(app)
+        .post("/api/meetings/internal")
+        .set("Authorization", `Bearer ${clientToken}`)
+        .send({});
 
-    const res = await request(app)
-      .delete(`/api/meetings/internal/${created.body.id}`)
-      .set("Authorization", `Bearer ${token}`);
+      expect(res.status).toBe(403);
+    });
 
-    expect(res.status).toBe(204);
+    it("400 — body invalide", async () => {
+      const res = await request(app)
+        .post("/api/meetings/internal")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          title: "Réunion",
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("201 — création d'une réunion interne", async () => {
+      const res = await request(app)
+        .post("/api/meetings/internal")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          title: "Réunion équipe",
+          description: "Description",
+          date: "2027-08-01",
+          startTime: "1970-01-01T09:00:00.000Z",
+          endTime: "1970-01-01T10:00:00.000Z",
+          userIds: [vetUserId, directorUserId],
+          clinicId: vetClinicId,
+          adminId: vetUserId,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty("id");
+    });
+  });
+
+  describe("PATCH /api/meetings/internal/:id", () => {
+    async function createMeeting() {
+      const res = await request(app)
+        .post("/api/meetings/internal")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          title: "Réunion",
+          description: "Description",
+          date: "2027-09-01",
+          startTime: "1970-01-01T09:00:00.000Z",
+          endTime: "1970-01-01T10:00:00.000Z",
+          clinicId: vetClinicId,
+          adminId: vetUserId,
+          userIds: [vetUserId],
+        });
+
+      expect(res.status).toBe(201);
+
+      return res.body.id;
+    }
+
+    it("401 — sans token", async () => {
+      const res = await request(app)
+        .patch("/api/meetings/internal/test")
+        .send({});
+
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — CLIENT ne peut pas modifier une réunion", async () => {
+      const res = await request(app)
+        .patch("/api/meetings/internal/test")
+        .set("Authorization", `Bearer ${clientToken}`)
+        .query({
+          scope: "single",
+        })
+        .send({});
+
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — modification d'une réunion", async () => {
+      const id = await createMeeting();
+
+      const res = await request(app)
+        .patch(`/api/meetings/internal/${id}`)
+        .query({
+          scope: "single",
+        })
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          title: "Nouveau titre",
+        });
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe("PATCH /api/meetings/internal/:id/participants", () => {
+    async function createMeeting() {
+      const res = await request(app)
+        .post("/api/meetings/internal")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          title: "Réunion",
+          description: "Description",
+          date: "2027-09-15",
+          startTime: "1970-01-01T09:00:00.000Z",
+          endTime: "1970-01-01T10:00:00.000Z",
+          clinicId: vetClinicId,
+          adminId: vetUserId,
+          userIds: [vetUserId],
+        });
+
+      return res.body.id;
+    }
+
+    it("401 — sans token", async () => {
+      const res = await request(app)
+        .patch("/api/meetings/internal/test/participants")
+        .send({});
+
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — CLIENT ne peut pas modifier son statut", async () => {
+      const res = await request(app)
+        .patch("/api/meetings/internal/test/participants")
+        .set("Authorization", `Bearer ${clientToken}`)
+        .send({
+          status: "ACCEPTED",
+          scope: "all",
+        });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("400 — body invalide", async () => {
+      const id = await createMeeting();
+
+      const res = await request(app)
+        .patch(`/api/meetings/internal/${id}/participants`)
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({});
+
+      expect(res.status).toBe(400);
+    });
+
+    it("200 — met à jour le statut du participant", async () => {
+      const id = await createMeeting();
+
+      const res = await request(app)
+        .patch(`/api/meetings/internal/${id}/participants`)
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          status: "ACCEPTED",
+          scope: "all",
+        });
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe("DELETE /api/meetings/internal/:id", () => {
+    async function createMeeting() {
+      const res = await request(app)
+        .post("/api/meetings/internal")
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({
+          title: "Réunion",
+          description: "Description",
+          date: "2027-10-01",
+          startTime: "1970-01-01T09:00:00.000Z",
+          endTime: "1970-01-01T10:00:00.000Z",
+          clinicId: vetClinicId,
+          adminId: vetUserId,
+          userIds: [vetUserId],
+        });
+      return res.body.id;
+    }
+
+    it("401 — sans token", async () => {
+      const res = await request(app).delete("/api/meetings/internal/test");
+
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — CLIENT ne peut pas supprimer une réunion", async () => {
+      const res = await request(app)
+        .delete("/api/meetings/internal/test")
+        .set("Authorization", `Bearer ${clientToken}`)
+        .query({
+          scope: "single",
+        });
+
+      expect(res.status).toBe(403);
+    });
+
+    it("204 — suppression d'une réunion", async () => {
+      const id = await createMeeting();
+      const res = await request(app)
+        .delete(`/api/meetings/internal/${id}`)
+        .query({
+          scope: "single",
+        })
+        .set("Authorization", `Bearer ${vetToken}`);
+      expect(res.status).toBe(204);
+    });
   });
 });

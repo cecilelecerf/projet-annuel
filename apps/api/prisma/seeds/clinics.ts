@@ -21,6 +21,7 @@ export async function seedClinics(
   {
     specialities,
     pets,
+    directors,
   }: {
     specialities: ReturnType<
       typeof import("./specialities").seedSpecialities
@@ -30,19 +31,23 @@ export async function seedClinics(
     pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
       ? T
       : never;
+
+    directors: ReturnType<
+      typeof import("./directors").seedDirectors
+    > extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
   const address1 = "15 Rue de la Convention, Paris 75015";
-  const address2 = "5 Rue Saint-Jacques, Paris 75005";
   const address3 = "40 Avenue du Maine, Paris 75014";
   const address4 = "18 Rue de la République, Lyon 69002";
-  const [coord1, coord2, coord3, coord4] = await Promise.all([
+  const [coord1, coord3, coord4] = await Promise.all([
     geocodeAddress(address1),
-    geocodeAddress(address2),
     geocodeAddress(address3),
     geocodeAddress(address4),
   ]);
-  const [clinic1, clinic2, clinic3, clinic4] = await Promise.all([
+  const [clinic1, clinic2, clinic3] = await Promise.all([
     prisma.clinic.upsert({
       where: { siret: "12345678901234" },
       update: {},
@@ -54,10 +59,12 @@ export async function seedClinics(
         website: "https://vetparc.fr",
         description:
           "Clinique généraliste et spécialisée en cardiologie et neurologie",
+        directorId: directors.directorUser1.id,
+
         openingHours: "Lun-Ven 8h-19h · Sam 9h-17h",
         lat: coord1.lat,
         lng: coord1.lng,
-        clinicPet: {
+        pets: {
           connect: [
             { id: pets.petCat.id },
             { id: pets.petDog.id },
@@ -77,34 +84,6 @@ export async function seedClinics(
     }),
 
     prisma.clinic.upsert({
-      where: { siret: "98765432109876" },
-      update: {},
-      create: {
-        name: "Cabinet Vétérinaire Saint-Michel",
-        address: address2,
-        siret: "98765432109876",
-        phone: "01 98 76 54 32",
-        website: "https://vetsaintmichel.fr",
-        description:
-          "Clinique généraliste avec expertise en dermatologie et comportement",
-        openingHours: "Lun-Sam 9h-18h",
-        lat: coord2.lat,
-        lng: coord2.lng,
-        clinicPet: {
-          connect: [{ id: pets.petCat.id }, { id: pets.petDog.id }],
-        },
-        specialities: {
-          connect: [
-            { id: specialities.medecineGenerale.id },
-            { id: specialities.dermatologie.id },
-            { id: specialities.comportementAnimal.id },
-            { id: specialities.dentisterie.id },
-          ],
-        },
-      },
-    }),
-
-    prisma.clinic.upsert({
       where: { siret: "11122233344455" },
       update: {},
       create: {
@@ -118,7 +97,9 @@ export async function seedClinics(
         openingHours: "Lun-Ven 8h-20h · Sam-Dim 9h-18h (urgences)",
         lat: coord3.lat,
         lng: coord3.lng,
-        clinicPet: {
+
+        directorId: directors.directorUser2.id,
+        pets: {
           connect: [{ id: pets.petDog.id }, { id: pets.petRabbit.id }],
         },
         specialities: {
@@ -147,7 +128,8 @@ export async function seedClinics(
         openingHours: "Mar-Sam 9h-18h",
         lat: coord4.lat,
         lng: coord4.lng,
-        clinicPet: {
+        directorId: directors.directorApproved.id,
+        pets: {
           connect: [
             { id: pets.petCat.id },
             { id: pets.petDog.id },
@@ -166,5 +148,5 @@ export async function seedClinics(
     }),
   ]);
 
-  return { clinic1, clinic2, clinic3, clinic4 };
+  return { clinic1, clinic2, clinic3 };
 }

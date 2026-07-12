@@ -1,4 +1,4 @@
-import type { PrismaClient, Clinic, User } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedVeterinarianClinics(
   prisma: PrismaClient,
@@ -18,10 +18,11 @@ export async function seedVeterinarianClinics(
       : never;
   },
 ) {
-  const { vetProfile1, vetProfile2, vetProfile3 } = users;
+  const { vetProfile1, vetProfile3 } = users;
   const vetoClinic1 = await prisma.veterinarianClinic.create({
     data: { veterinarianId: vetProfile1.id, clinicId: clinics.clinic1.id },
   });
+
   const vetoClinic2 = await prisma.veterinarianClinic.create({
     data: { veterinarianId: vetProfile1.id, clinicId: clinics.clinic2.id },
   });

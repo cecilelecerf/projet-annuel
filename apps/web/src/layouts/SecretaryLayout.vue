@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, Calendar, User, SetUp } from '@element-plus/icons-vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+import { House, Calendar, ChatDotRound, User, SetUp, Box } from '@element-plus/icons-vue'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
     index: 'SECRETARY.Home',
     label: 'Accueil',
@@ -18,12 +18,29 @@ const menuItems: MenuItem[] = [
   {
     index: 'SECRETARY.Veto.List',
     label: 'Vétérinaire',
+    query: { role: 'VETERINARIAN' },
+    icon: Calendar,
+  },
+  {
+    index: 'SECRETARY.Animals.List',
+    label: 'Animaux suivis',
+    query: { role: 'VETERINARIAN' },
     icon: Calendar,
   },
   {
     index: 'SECRETARY.Avaibality',
-    label: 'Dispobilité',
+    label: 'Disponibilité',
     icon: SetUp,
+  },
+  {
+    index: 'SECRETARY.Orders',
+    label: 'Retrait commandes',
+    icon: Box,
+  },
+  {
+    index: 'SECRETARY.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
   },
   {
     index: 'SECRETARY.Profil',

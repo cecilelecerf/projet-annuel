@@ -1,5 +1,6 @@
 import { hash } from "bcryptjs";
 import type { PrismaClient } from "../generated/prisma/client";
+import { seedAvatar } from "./files";
 
 export async function seedUsers(
   prisma: PrismaClient,
@@ -23,15 +24,13 @@ export async function seedUsers(
       : never;
   },
 ) {
-  const { clinic1, clinic2 } = clinics;
+  const { clinic1 } = clinics;
 
   const password = await hash("Password123!", 10);
 
   // ── Users ────────────────────────────────────────────────────────────────────
   const [
     adminUser,
-    directorUser1,
-    directorUser2,
     referentUser1,
     vetoUser1,
     vetoUser2,
@@ -51,40 +50,30 @@ export async function seedUsers(
     }),
     prisma.user.create({
       data: {
-        email: "directeur@gmail.com",
-        firstname: "Jean",
-        lastname: "Martin",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "directeur@vetsaintmichel.fr",
-        firstname: "Marie",
-        lastname: "Dupont",
-        password,
-        role: "DIRECTOR",
-      },
-    }),
-    prisma.user.create({
-      data: {
         email: "referent@gmail.com",
         firstname: "Sophie",
         lastname: "Bernard",
         password,
-        role: "REFERANT",
+        role: "REFERENT",
       },
     }),
-    prisma.user.create({
-      data: {
-        email: "veto@gmail.com",
-        firstname: "Pierre",
-        lastname: "Leroy",
-        password,
-        role: "VETERINARIAN",
-      },
-    }),
+    prisma.user
+      .create({
+        data: {
+          email: "veto@gmail.com",
+          firstname: "Pierre",
+          lastname: "Leroy",
+          password,
+          role: "VETERINARIAN",
+        },
+      })
+      .then(async (user) => {
+        await seedAvatar(prisma, {
+          userId: user.id,
+          localImagePath: "assets/users/avatar-pierre.jpg",
+        });
+        return user;
+      }),
     prisma.user.create({
       data: {
         email: "dr.moreau@vetparc.fr",
@@ -103,43 +92,58 @@ export async function seedUsers(
         role: "VETERINARIAN",
       },
     }),
-    prisma.user.create({
-      data: {
-        email: "secretaire@gmail.com",
-        firstname: "Lucie",
-        lastname: "Petit",
-        password,
-        role: "SECRETARY",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "client@gmail.com",
-        firstname: "Alice",
-        lastname: "Durand",
-        password,
-        role: "CLIENT",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "thomas.blanc@email.fr",
-        firstname: "Thomas",
-        lastname: "Blanc",
-        password,
-        role: "CLIENT",
-      },
-    }),
+    prisma.user
+      .create({
+        data: {
+          email: "secretaire@gmail.com",
+          firstname: "Lucie",
+          lastname: "Petit",
+          password,
+          role: "SECRETARY",
+        },
+      })
+      .then(async (user) => {
+        await seedAvatar(prisma, {
+          userId: user.id,
+          localImagePath: "assets/users/avatar-lucie.jpg",
+        });
+        return user;
+      }),
+    prisma.user
+      .create({
+        data: {
+          email: "client@gmail.com",
+          firstname: "Alice",
+          lastname: "Durand",
+          password,
+          role: "CLIENT",
+        },
+      })
+      .then(async (user) => {
+        await seedAvatar(prisma, {
+          userId: user.id,
+          localImagePath: "assets/users/avatar-alice.jpg",
+        });
+        return user;
+      }),
+    prisma.user
+      .create({
+        data: {
+          email: "thomas.blanc@email.fr",
+          firstname: "Thomas",
+          lastname: "Blanc",
+          password,
+          role: "CLIENT",
+        },
+      })
+      .then(async (user) => {
+        await seedAvatar(prisma, {
+          userId: user.id,
+          localImagePath: "assets/users/avatar-thomas.jpg",
+        });
+        return user;
+      }),
   ]);
-
-  // ── Profiles clinic ───────────────────────────────────────────────────────────
-  await prisma.directorClinicProfile.createMany({
-    data: [
-      { id: directorUser1.id, clinicId: clinic1.id },
-      { id: directorUser2.id, clinicId: clinic2.id },
-    ],
-  });
-
   await prisma.referentClinicProfile.create({
     data: { id: referentUser1.id, clinicId: clinic1.id },
   });
@@ -222,8 +226,6 @@ export async function seedUsers(
 
   return {
     adminUser,
-    directorUser1,
-    directorUser2,
     referentUser1,
     vetoUser1,
     vetoUser2,

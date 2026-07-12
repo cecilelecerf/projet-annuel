@@ -12,17 +12,23 @@ model Clinic {
   lat          Float
   lng          Float
 
+  directorId String                @unique
+  director   DirectorClinicProfile @relation(fields: [directorId], references: [id])
+
   specialities           Speciality[]
-  clinicPet              Pet[]
+  pets                   Pet[]
   order                  Order[]
   clinicProducts         ClinicProduct[]
   veterinarianClinics    VeterinarianClinic[]
   secretaryProfile       SecretaryProfile[]
-  directorClinicProfiles DirectorClinicProfile[]
   referentClinicProfiles ReferentClinicProfile[]
   internalMeetings       InternalMeeting[]
   clinicActs             ClinicAct[]
   availabilities         Availability[]
+  conversations          Conversation[]
+  productRequests        ProductRequest[]
+  budgetTransactions     BudgetTransaction[]
+  supplierOrders         SupplierOrder[]
 
   @@map("clinics")
 }
@@ -33,7 +39,7 @@ enum ClinicRequestStatus {
   REJECTED
 }
 
-model ClinicCreationRequest {
+model ClinicRequest {
   id          String              @id @default(uuid())
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @default(now()) @updatedAt
@@ -46,9 +52,9 @@ model ClinicCreationRequest {
   description String?
 
   directorId String
-  director   User   @relation(fields: [directorId], references: [id], onDelete: Cascade)
+  director   DirectorClinicProfile @relation(fields: [directorId], references: [id], onDelete: Cascade)
 
-  @@map("clinic_creation_requests")
+  @@map("clinic_requests")
 }
 
 model Speciality {
@@ -75,9 +81,12 @@ model VeterinarianClinic {
   clinicId       String
   clinic         Clinic              @relation(fields: [clinicId], references: [id], onDelete: Cascade)
 
+  actsRealised           AnimalMedicalHistory[]
+  reviews                Review[]
   animalMeetings         AnimalMeeting[]
-  animalMedicalHistory   AnimalMedicalHistory? @relation(fields: [animalMedicalHistoryId], references: [id])
-  animalMedicalHistoryId String?
+  hospitalizationReports HospitalizationReport[]
+  animals                Animal[]
 
+  @@unique([veterinarianId, clinicId])
   @@map("veterinarian_clinics")
 }

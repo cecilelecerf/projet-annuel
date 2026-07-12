@@ -3,9 +3,11 @@ import type {
   UpdateClinic,
   BookingSearchQuery,
   ClinicId,
+  PetId,
+  SpecialityId,
 } from "@armali/schemas";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { PrismaClient } from "../../prisma/generated/prisma/client";
+import { Clinic, PrismaClient } from "../../prisma/generated/prisma/client";
 
 const futureAvailabilityWhere = () => ({
   OR: [
@@ -23,29 +25,28 @@ const futureAvailabilityWhere = () => ({
 export class ClinicRepository {
   constructor(private prisma: PrismaClient) {}
 
+  async findAll() {
+    return this.prisma.clinic.findMany({ orderBy: { createdAt: "desc" } });
+  }
+
   async findById(clinicId: string) {
     return this.prisma.clinic.findUnique({ where: { id: clinicId } });
   }
 
   async findClientsById(clinicId: string) {
-    return this.prisma.clinic.findUnique({
-      where: { id: clinicId },
-      include: {
-        veterinarianClinics: {
-          include: {
-            veterinarian: {
-              include: {
-                animals: { include: { client: { include: { user: true } } } },
-              },
-            },
+    return this.prisma.clientProfile.findMany({
+      where: {
+        animal: {
+          some: {
+            attendingVeterinarianClinic: { clinicId },
           },
         },
       },
+      include: { user: { include: { avatar: true } } },
     });
   }
-
   // ── Trouve la clinique d'un utilisateur selon son rôle ────────────────────
-  async findClinicByUserId(userId: string) {
+  async findClinicByUserId(userId: string): Promise<(Clinic | null)[]> {
     const director = await this.prisma.directorClinicProfile.findUnique({
       where: { id: userId },
       include: { clinic: true },
@@ -70,6 +71,7 @@ export class ClinicRepository {
       include: { clinic: true },
     });
     if (secretary) return [secretary.clinic];
+    return [];
   }
 
   // ── Trouve le clinicId d'un utilisateur selon son rôle ───────────────────
@@ -96,10 +98,11 @@ export class ClinicRepository {
       case "DIRECTOR": {
         const dp = await this.prisma.directorClinicProfile.findUnique({
           where: { id: userId },
+          include: { clinic: true },
         });
-        return dp?.clinicId ? [dp.clinicId as ClinicId] : null;
+        return dp?.clinic?.id ? [dp.clinic.id as ClinicId] : null;
       }
-      case "REFERANT": {
+      case "REFERENT": {
         const rp = await this.prisma.referentClinicProfile.findUnique({
           where: { id: userId },
         });
@@ -108,51 +111,6 @@ export class ClinicRepository {
       default:
         return null;
     }
-  }
-
-  // ── Staff d'une clinique ──────────────────────────────────────────────────
-  async findStaff(clinicId: string) {
-    const [director, referents, vets, secretaries] = await Promise.all([
-      prisma.directorClinicProfile.findFirst({
-        where: { clinicId },
-        include: { user: true },
-      }),
-      prisma.referentClinicProfile.findMany({
-        where: { clinicId },
-        include: { user: true },
-      }),
-      prisma.veterinarianClinic.findMany({
-        where: { clinicId },
-        include: {
-          veterinarian: {
-            include: { user: true },
-          },
-        },
-      }),
-      prisma.secretaryProfile.findMany({
-        where: { clinicId },
-        include: { user: true },
-      }),
-    ]);
-
-    return {
-      director: director
-        ? { ...director.user, role: "DIRECTOR" as const }
-        : null,
-      referents: referents.map((r) => ({
-        ...r.user,
-        role: "REFERANT" as const,
-      })),
-      veterinarians: vets.map((v) => ({
-        ...v.veterinarian.user,
-        role: "VETERINARIAN" as const,
-        licenseNumber: v.veterinarian.licenseNumber,
-      })),
-      secretaries: secretaries.map((s) => ({
-        ...s.user,
-        role: "SECRETARY" as const,
-      })),
-    };
   }
 
   // ── Director profile ──────────────────────────────────────────────────────
@@ -233,5 +191,76 @@ export class ClinicRepository {
         },
       },
     });
+  }
+
+  // ── Suppression de clinique ───────────────────────────────────────────────
+
+  findClinicById(clinicId: string) {
+    return this.prisma.clinic.findUnique({ where: { id: clinicId } });
+  }
+
+  async countClinicDependencies(clinicId: string) {
+    const [orderCount, meetingCount, appointmentCount, medicalHistoryCount] =
+      await Promise.all([
+        this.prisma.order.count({ where: { clinicId } }),
+        this.prisma.internalMeeting.count({ where: { clinicId } }),
+        this.prisma.animalMeeting.count({
+          where: { veterinarianClinic: { clinicId } },
+        }),
+        this.prisma.animalMedicalHistory.count({
+          where: { clinicAct: { clinicId } },
+        }),
+      ]);
+
+    return { orderCount, meetingCount, appointmentCount, medicalHistoryCount };
+  }
+
+  deleteClinicById(clinicId: string) {
+    return this.prisma.clinic.delete({ where: { id: clinicId } });
+  }
+
+  async getAcceptedPets(clinicId: ClinicId) {
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: { pets: { orderBy: { name: "asc" } } },
+    });
+    return clinic?.pets ?? null;
+  }
+
+  async setAcceptedPets(clinicId: ClinicId, petIds: PetId[]) {
+    const clinic = await this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        pets: {
+          set: petIds.map((id) => ({ id })),
+        },
+      },
+      include: { pets: { orderBy: { name: "asc" } } },
+    });
+    return clinic.pets;
+  }
+
+  async getAcceptedSpecialities(clinicId: ClinicId) {
+    const clinic = await this.prisma.clinic.findUnique({
+      where: { id: clinicId },
+      include: { specialities: { orderBy: { name: "asc" } } },
+    });
+    return clinic?.specialities ?? null;
+  }
+
+  async setAcceptedSpecialities(
+    clinicId: ClinicId,
+    specialityIds: SpecialityId[],
+  ) {
+    const clinic = await this.prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        specialities: {
+          set: specialityIds.map((id) => ({ id })),
+        },
+      },
+      include: { specialities: { orderBy: { name: "asc" } } },
+    });
+    return clinic.specialities;
   }
 }

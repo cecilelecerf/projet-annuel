@@ -15,35 +15,30 @@ export const clientRouter: RouteRecordRaw[] = [
       {
         path: 'profil',
         name: 'CLIENT.Profil',
-        component: () => import('@/features/users/views/client/ProfilView.vue'),
+        component: () => import('@/features/profile/views/ProfileView.vue'),
       },
       {
         path: 'booking',
         name: 'CLIENT.Booking',
         component: () => import('@/features/meetings/views/BookingView.vue'),
       },
-      {
-        path: 'veterinaires',
-        name: 'CLIENT.Reviews',
-        component: () => import('@/features/users/views/client/Reviews.vue'),
-      },
 
       // ── Animal ───────────────────────────────────────────────
-      // {
-      //   path: 'animaux',
-      //   name: 'CLIENT.Animaux',
-      //   component: () => import('@/features/animals/views/AnimalView/'),
-      // },
-      // {
-      //   path: 'animaux/nouveau',
-      //   name: 'CLIENT.Animal.Nouveau',
-      //   //        component: () => import('@/views/client/animal/NouvelAnimal.vue'),
-      //   // Champs : Nom, Photo, Description
-      // },
       {
-        path: 'animal/:id',
+        path: 'animals',
+        name: 'CLIENT.Animals',
+        component: () => import('@/features/animals/views/AnimalsListView.vue'),
+      },
+      {
+        path: 'animals/create',
+        name: 'CLIENT.Animals.Create',
+        component: () => import('@/features/animals/views/AnimalCreateView.vue'),
+        // Champs : Nom, Photo, Description
+      },
+      {
+        path: 'animals/:id',
         name: 'CLIENT.Animals.Detail',
-        component: () => import('@/features/animals/views/AnimalView/AnimalView.vue'),
+        component: () => import('@/features/animals/views/AnimalDetailView.vue'),
       },
       // {
       //   path: 'animaux/:id/regime-alimentaire',
@@ -117,52 +112,36 @@ export const clientRouter: RouteRecordRaw[] = [
       // },
 
       // // ── Boutique ─────────────────────────────────────────────
-      // {
-      //   path: 'boutique',
-      //   name: 'CLIENT.Boutique',
-      //   //        component: () => import('@/views/client/boutique/Boutique.vue'),
-      //   children: [
-      //     {
-      //       path: '',
-      //       name: 'CLIENT.Boutique.Produits',
-      //       //            component: () => import('@/views/client/boutique/TousLesProduits.vue'),
-      //       // Vue de tous les produits, Filtre : marque, type animal, prix…
-      //       // + Recherche d'un produit
-      //     },
-      //     {
-      //       path: 'produits/:id',
-      //       name: 'CLIENT.Boutique.Produit.Detail',
-      //       //            component: () => import('@/views/client/boutique/FicheProduit.vue'),
-      //       // Contient : Image, Description, Notes et avis d'autres clients, Prix
-      //       // Action : Ajout au panier
-      //     },
-      //   ],
-      // },
+      {
+        path: 'shop',
+        name: 'CLIENT.Shop',
+        component: () => import('@/features/shop/views/ShopListView.vue'),
+      },
+      {
+        path: 'shop/:id',
+        name: 'CLIENT.Shop.Detail',
+        component: () => import('@/features/shop/views/ShopDetailView.vue'),
+      },
 
       // // ── Panier ───────────────────────────────────────────────
-      // {
-      //   path: 'panier',
-      //   name: 'CLIENT.Panier',
-      //   //        component: () => import('@/views/client/panier/Panier.vue'),
-      //   children: [
-      //     {
-      //       path: '',
-      //       name: 'CLIENT.Panier.Recap',
-      //       //            component: () => import('@/views/client/panier/RecapProduits.vue'),
-      //     },
-      //     {
-      //       path: 'paiement',
-      //       name: 'CLIENT.Panier.Paiement',
-      //       //            component: () => import('@/views/client/panier/Paiement.vue'),
-      //     },
-      //   ],
-      // },
+      {
+        path: 'cart',
+        name: 'CLIENT.Cart',
+        component: () => import('@/features/shop/views/CartView.vue'),
+      },
+      {
+        path: 'checkout',
+        name: 'CLIENT.Checkout',
+        component: () => import('@/features/shop/views/CheckoutView.vue'),
+      },
+      {
+        path: 'orders',
+        name: 'CLIENT.Orders',
+        component: () => import('@/features/shop/views/OrdersListView.vue'),
+      },
 
       // // ── Profil ───────────────────────────────────────────────
-      // {
-      //   path: 'profil',
-      //   name: 'CLIENT.Profil',
-      //   //        component: () => import('@/views/client/profil/Profil.vue'),
+
       //   children: [
       //     {
       //       path: 'parametres',

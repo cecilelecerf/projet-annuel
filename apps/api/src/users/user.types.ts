@@ -8,8 +8,11 @@ export const userWithProfileAndClinicIdInclude = {
   },
   clientProfile: true,
   secretaryProfile: { select: { id: true, clinicId: true } },
-  directorClinicProfile: { select: { id: true, clinicId: true } },
+  directorClinicProfile: {
+    select: { id: true, clinic: { select: { id: true } } },
+  },
   referentClinicProfile: { select: { id: true, clinicId: true } },
+  avatar: true,
 } satisfies Prisma.UserInclude;
 
 export type UserWithProfileAndClinicId = Prisma.UserGetPayload<{

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ForbiddenError, NotFoundError } from "@api/errors";
-import { animalService } from "@api/instances";
+import { CreateAnimal, UserId } from "@armali/schemas";
 
 // ── Mock ──────────────────────────────────────────────────────────────────────
 
@@ -14,17 +14,54 @@ const mockAnimalRepository = vi.hoisted(() => ({
   delete: vi.fn(),
 }));
 
+const mockVaccineRepository = vi.hoisted(() => ({
+  findByPetId: vi.fn(),
+}));
+
+const mockClinicRepository = vi.hoisted(() => ({
+  findClinicByUserId: vi.fn(),
+  findClinicIdByUser: vi.fn(),
+  findClientsById: vi.fn(),
+}));
+
 vi.mock("@api/animals/animal.repository", () => ({
   AnimalRepository: vi.fn(function () {
     return mockAnimalRepository;
   }),
 }));
 
+vi.mock("@api/vaccines/vaccine.repository", () => ({
+  VaccineRepository: vi.fn(function () {
+    return mockVaccineRepository;
+  }),
+}));
+vi.mock("@api/clinic/clinic.repository", () => ({
+  ClinicRepository: vi.fn(function () {
+    return mockClinicRepository;
+  }),
+}));
 const mockPrisma = vi.hoisted(() => ({
   vaccine: { findMany: vi.fn() },
 }));
 
 vi.mock("@api/lib/prisma", () => ({ prisma: mockPrisma }));
+const { ClinicRepository } = await import("@api/clinics/clinic.repository");
+
+const { AnimalRepository } = await import("@api/animals/animal.repository");
+const { VaccineRepository } = await import("@api/vaccines/vaccine.repository");
+const { AnimalService } = await import("@api/animals/animal.service");
+const { VeterinarianProfileRepository } =
+  await import("@api/veterinarians/veterinarian-profile.repository");
+const { ClinicService } = await import("@api/clinics/clinic.service");
+
+const clinicService = new ClinicService(new ClinicRepository({} as any));
+
+const animalService = new AnimalService(
+  new AnimalRepository({} as any),
+  new VaccineRepository({} as any),
+  new ClinicService(new ClinicRepository({} as any)),
+  new VeterinarianProfileRepository({} as any),
+);
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -36,16 +73,23 @@ const makeAnimal = (overrides = {}) => ({
   activity: null,
   outdoorAccess: false,
   animalContact: false,
-  attendingVeterinarianId: null,
+  attendingVeterinarianClinicId: null,
   clientId: "client-profile-1",
   raceId: "race-1",
   createdAt: new Date(),
   updatedAt: new Date(),
-  client: { country: "FR" },
+  client: {
+    user: {
+      id: "client-profile-1",
+      firstname: "Alice",
+      lastname: "Durand",
+      avatarUrl: null,
+    },
+  },
   race: { petId: "pet-1" },
+  attendingVeterinarianClinic: null,
   ...overrides,
 });
-
 const makeVaccine = (overrides = {}) => ({
   id: "vaccine-1",
   recommendedAge: 8,
@@ -204,7 +248,7 @@ describe("AnimalService.create", () => {
     name: "Rex",
     dateOfBirth: new Date("2020-01-01"),
     raceId: "race-1",
-  };
+  } as CreateAnimal;
 
   it("CLIENT — clientId forcé à userId", async () => {
     const created = makeAnimal({ clientId: "client-profile-1" });
@@ -212,7 +256,7 @@ describe("AnimalService.create", () => {
 
     await animalService.create({
       data: baseData as any,
-      userId: "client-profile-1",
+      userId: "client-profile-1" as UserId,
       role: "CLIENT",
     });
 
@@ -227,7 +271,7 @@ describe("AnimalService.create", () => {
 
     await animalService.create({
       data: { ...baseData, clientId: "other-client" } as any,
-      userId: "user-staff",
+      userId: "user-staff" as UserId,
       role: "SECRETARY",
     });
 
@@ -241,8 +285,8 @@ describe("AnimalService.create", () => {
     mockAnimalRepository.create.mockResolvedValue(created);
 
     await animalService.create({
-      data: baseData as any,
-      userId: "user-staff",
+      data: baseData,
+      userId: "user-staff" as UserId,
       role: "SECRETARY",
     });
 
@@ -329,7 +373,7 @@ describe("AnimalService.delete", () => {
     mockAnimalRepository.findById.mockResolvedValue(null);
 
     await expect(
-      animalService.delete({ id: "unknown", userId: "user-1", role: "CLIENT" }),
+      animalService.delete({ id: "unknown", userId: "user-1" }),
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -342,7 +386,6 @@ describe("AnimalService.delete", () => {
       animalService.delete({
         id: "animal-1",
         userId: "client-profile-1",
-        role: "CLIENT",
       }),
     ).rejects.toThrow(ForbiddenError);
   });
@@ -356,7 +399,6 @@ describe("AnimalService.delete", () => {
     await animalService.delete({
       id: "animal-1",
       userId: "client-profile-1",
-      role: "CLIENT",
     });
 
     expect(mockAnimalRepository.delete).toHaveBeenCalledWith("animal-1");
@@ -371,7 +413,6 @@ describe("AnimalService.delete", () => {
       animalService.delete({
         id: "animal-1",
         userId: "user-staff",
-        role: "SECRETARY",
       }),
     ).rejects.toThrow(ForbiddenError);
 
@@ -393,7 +434,7 @@ describe("AnimalService.getVaccinesByAnimal", () => {
   it("retourne un tableau vide si aucun vaccin pour l'espèce", async () => {
     mockAnimalRepository.findById.mockResolvedValue(makeAnimal());
     mockAnimalRepository.findVaccinesByAnimal.mockResolvedValue([]);
-    mockPrisma.vaccine.findMany.mockResolvedValue([]);
+    mockVaccineRepository.findByPetId.mockResolvedValue([]);
 
     const result = await animalService.getVaccinesByAnimal("animal-1");
 
@@ -403,12 +444,12 @@ describe("AnimalService.getVaccinesByAnimal", () => {
   it("vaccin effectué — status UP_TO_DATE si pas encore échu", async () => {
     mockAnimalRepository.findById.mockResolvedValue(makeAnimal());
     const animalVaccine = makeAnimalVaccine({
-      medicalHistory: { performedAt: new Date() }, // fait aujourd'hui
+      medicalHistory: { performedAt: new Date() },
     });
     mockAnimalRepository.findVaccinesByAnimal.mockResolvedValue([
       animalVaccine,
     ]);
-    mockPrisma.vaccine.findMany.mockResolvedValue([makeVaccine()]);
+    mockVaccineRepository.findByPetId.mockResolvedValue([makeVaccine()]);
 
     const result = await animalService.getVaccinesByAnimal("animal-1");
 
@@ -418,12 +459,12 @@ describe("AnimalService.getVaccinesByAnimal", () => {
   it("vaccin effectué — status OVERDUE si rappel dépassé", async () => {
     mockAnimalRepository.findById.mockResolvedValue(makeAnimal());
     const animalVaccine = makeAnimalVaccine({
-      medicalHistory: { performedAt: new Date("2020-01-01") }, // très ancien
+      medicalHistory: { performedAt: new Date("2020-01-01") },
     });
     mockAnimalRepository.findVaccinesByAnimal.mockResolvedValue([
       animalVaccine,
     ]);
-    mockPrisma.vaccine.findMany.mockResolvedValue([makeVaccine()]);
+    mockVaccineRepository.findByPetId.mockResolvedValue([makeVaccine()]);
 
     const result = await animalService.getVaccinesByAnimal("animal-1");
 
@@ -438,7 +479,7 @@ describe("AnimalService.getVaccinesByAnimal", () => {
       }),
     );
     mockAnimalRepository.findVaccinesByAnimal.mockResolvedValue([]);
-    mockPrisma.vaccine.findMany.mockResolvedValue([
+    mockVaccineRepository.findByPetId.mockResolvedValue([
       makeVaccine({
         countryRules: [{ country: "FR", type: "MANDATORY", minAge: 8 }],
       }),
@@ -457,7 +498,7 @@ describe("AnimalService.getVaccinesByAnimal", () => {
       }),
     );
     mockAnimalRepository.findVaccinesByAnimal.mockResolvedValue([]);
-    mockPrisma.vaccine.findMany.mockResolvedValue([
+    mockVaccineRepository.findByPetId.mockResolvedValue([
       makeVaccine({
         countryRules: [{ country: "FR", type: "RECOMMENDED", minAge: 8 }],
       }),
@@ -473,7 +514,7 @@ describe("AnimalService.getVaccinesByAnimal", () => {
       makeAnimal({ client: { country: "FR" } }),
     );
     mockAnimalRepository.findVaccinesByAnimal.mockResolvedValue([]);
-    mockPrisma.vaccine.findMany.mockResolvedValue([
+    mockVaccineRepository.findByPetId.mockResolvedValue([
       makeVaccine({
         countryRules: [{ country: "DE", type: "MANDATORY", minAge: 8 }],
       }),

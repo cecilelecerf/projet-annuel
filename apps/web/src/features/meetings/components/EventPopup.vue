@@ -19,6 +19,7 @@ dayjs.locale('fr')
 const { meetingId, date } = defineProps<{
   meetingId: string
   date?: Date
+  kind: 'ANIMAL' | 'INTERNAL'
 }>()
 const emit = defineEmits<{ close: [] }>()
 const { user } = useAuthStore()
@@ -100,13 +101,13 @@ const onEdit = async () => {
 
 const onSaveInternal = async (scope: 'single' | 'all' = 'single') => {
   if (meeting.kind !== 'INTERNAL') return
-
   await saveSchedule({
     meetingId: meeting.id,
     parentId: meeting.parentId ?? null,
-    date: dateForm.value.date,
+    targetDate: dateForm.value.date,
     startTime: dateForm.value.startTime,
     endTime: dateForm.value.endTime,
+    originDate: meeting.date,
     scope,
     onSuccess: () => {
       isEditing.value = false
@@ -141,6 +142,12 @@ const isUpcoming = computed(() => {
   if (!meeting.date || !meeting.startTime) return false
   return combineDateAndTime(meeting.date, meeting.startTime) > new Date()
 })
+
+function participantInitials(p: { firstname?: string; lastname?: string }) {
+  const first = p.firstname?.[0] ?? ''
+  const last = p.lastname?.[0] ?? ''
+  return `${first}${last}`.toUpperCase() || '?'
+}
 </script>
 
 <template>
@@ -199,13 +206,22 @@ const isUpcoming = computed(() => {
       <!-- INTERNAL -->
       <template v-if="meeting.kind === 'INTERNAL'">
         <div class="popup-participants">
-          <el-avatar
+          <el-tooltip
             v-for="p in meeting.participants?.slice(0, 5)"
             :key="p.id"
-            :size="32"
-            class="participant-avatar"
+            :content="participantInitials(p.user)"
+            placement="top"
           >
-            ?
+            <el-avatar :size="32" class="participant-avatar" :src="p.user.avatarUrl ?? undefined">
+              <template v-if="!p.user.avatarUrl">{{ participantInitials(p.user) }}</template>
+            </el-avatar>
+          </el-tooltip>
+          <el-avatar
+            v-if="(meeting.participants?.length ?? 0) > 5"
+            :size="32"
+            class="participant-avatar participant-avatar--more"
+          >
+            +{{ meeting.participants!.length - 5 }}
           </el-avatar>
         </div>
         <p v-if="meeting.description" class="popup-description">{{ meeting.description }}</p>
@@ -346,5 +362,27 @@ const isUpcoming = computed(() => {
   gap: var(--spacing-sm);
   margin-top: var(--spacing-xs);
   justify-content: space-between;
+}
+// ── Participants ──────────────────────────────────────────────────────────────
+.popup-participants {
+  display: flex;
+  align-items: center;
+}
+
+.participant-avatar {
+  background: var(--el-color-#{meeting-color('internal')});
+  border: 2px solid var(--el-bg-color);
+  margin-left: -6px;
+  flex-shrink: 0;
+
+  &:first-child {
+    margin-left: 0;
+  }
+}
+
+.participant-avatar--more {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  z-index: 1;
 }
 </style>

@@ -96,7 +96,9 @@ function hashClinicId(clinicId: string): number {
 
 export function getClinicColor(clinicId: string): string {
   const index = hashClinicId(clinicId) % CLINIC_COLOR_PALETTE.length
-  return CLINIC_COLOR_PALETTE[index]
+  const color = CLINIC_COLOR_PALETTE[index]
+  if (!color) throw new Error('color clinic not found')
+  return color
 }
 
 type BusinessHour = {

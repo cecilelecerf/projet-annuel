@@ -4,77 +4,46 @@ import {
   UpdateClinic,
   UserId,
 } from "@armali/schemas";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "@api/errors";
 import { ClinicRepository } from "./clinic.repository";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { STAFF_ROLES } from "@api/utils";
+import { CLINIC_STAFF_ROLES } from "@api/utils";
 import { Clinic } from "../../prisma/generated/prisma/client";
+import { withUserAvatar } from "@api/users/user.utils";
 
 export class ClinicService {
   constructor(private repository: ClinicRepository) {}
 
-  async getClinicByUser(userId: string): Promise<Clinic[]> {
+  async getClinicsByUser(userId: string): Promise<Clinic[]> {
     const clinics = await this.repository.findClinicByUserId(userId);
     if (!clinics) throw new NotFoundError("Clinique");
-    return clinics;
+    if (clinics.some((clinic) => !clinic)) throw new NotFoundError("Clinique");
+    return clinics as Clinic[];
   }
 
   async getClientsByClinic({
+    role,
     clinicId,
     authorId,
-    role,
   }: {
     clinicId: ClinicId;
     authorId: UserId;
     role: UserRole;
   }) {
-    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
-    const clinics = await this.getClinicByUser(authorId);
+    if (!CLINIC_STAFF_ROLES.includes(role)) throw new ForbiddenError();
+
+    const clinics = await this.getClinicsByUser(authorId);
     if (!clinics.some(({ id }) => id === clinicId)) {
       throw new ForbiddenError();
     }
-    const clinicWithClients = await this.repository.findClientsById(clinicId);
-    if (!clinicWithClients) throw new NotFoundError("Clients");
-    const clients = clinicWithClients.veterinarianClinics.flatMap(
-      ({ veterinarian }) =>
-        veterinarian.animals.flatMap((animal) => animal.client.user),
+    return (await this.repository.findClientsById(clinicId)).map(
+      withUserAvatar,
     );
-    return clients;
-  }
-
-  // ── Staff d'une clinique, filtré par rôle cible ─────────────────────────────
-  async getStaffByClinicRole({
-    role,
-    clinicId,
-    targetRoles,
-    authorId,
-  }: {
-    clinicId: ClinicId;
-    authorId: UserId;
-    role: UserRole;
-    targetRoles?: UserRole[];
-  }) {
-    if (!STAFF_ROLES.includes(role)) throw new ForbiddenError();
-
-    const clinics = await this.getClinicByUser(authorId);
-    if (!clinics.some(({ id }) => id === clinicId)) {
-      throw new ForbiddenError();
-    }
-    const clinicStaff = await this.repository.findStaff(clinicId);
-    if (!clinicStaff) throw new NotFoundError("Clinique");
-    if (!clinicStaff.director) throw new NotFoundError("Director clinique");
-
-    // Aucun filtre → tous les rôles inclus
-    const wantsRole = (r: UserRole) => !targetRoles || targetRoles.includes(r);
-
-    const staffs = [
-      ...(wantsRole("DIRECTOR") ? [clinicStaff.director] : []),
-      ...(wantsRole("REFERANT") ? clinicStaff.referents : []),
-      ...(wantsRole("SECRETARY") ? clinicStaff.secretaries : []),
-      ...(wantsRole("VETERINARIAN") ? clinicStaff.veterinarians : []),
-    ];
-
-    return staffs;
   }
   async getClinicIdsByUserId({
     userId,
@@ -90,12 +59,79 @@ export class ClinicService {
     if (!clinicIds) throw new ForbiddenError();
     return clinicIdSchema.array().parse(clinicIds);
   }
-  async updateClinic(userId: string, data: UpdateClinic) {
-    const profile = await this.repository.findDirectorProfile(userId);
-    if (!profile)
-      throw new BadRequestError(
-        "Aucune clinique associée à ce compte directeur",
+
+  async getClinicIdByUserId({
+    userId,
+    role,
+  }: {
+    userId: string;
+    role: UserRole;
+  }): Promise<ClinicId> {
+    if (role !== "DIRECTOR" && role !== "REFERENT" && role !== "SECRETARY")
+      throw new ForbiddenError();
+    const clinicIds = await this.repository.findClinicIdByUser({
+      userId,
+      role,
+    });
+    if (!clinicIds) throw new ForbiddenError();
+    if (clinicIds.length !== 1)
+      throw new ConflictError("Number of clinicId is not valid");
+    return clinicIdSchema.parse(clinicIds[0]);
+  }
+  async updateClinic({
+    userId,
+    role,
+    data,
+  }: {
+    userId: UserId;
+    role: UserRole;
+    data: UpdateClinic;
+  }) {
+    const clinicIds = await this.getClinicIdsByUserId({ userId, role });
+
+    if (!clinicIds) throw new NotFoundError("clinic");
+    if (clinicIds.length !== 1)
+      throw new ConflictError("Multiple clinics associated with the user");
+
+    return this.repository.update(clinicIds[0], data);
+  }
+
+  async getClinics() {
+    return this.repository.findAll();
+  }
+
+  async deleteClinic(clinicId: string) {
+    const clinic = await this.repository.findClinicById(clinicId);
+    if (!clinic) throw new NotFoundError("Clinique");
+
+    const { orderCount, meetingCount, appointmentCount, medicalHistoryCount } =
+      await this.repository.countClinicDependencies(clinicId);
+
+    const reasons: string[] = [];
+    if (orderCount > 0)
+      reasons.push(
+        `${orderCount} commande${orderCount > 1 ? "s" : ""} en cours ou passée${orderCount > 1 ? "s" : ""}`,
       );
-    return this.repository.update(profile.clinicId, data);
+    if (meetingCount > 0)
+      reasons.push(
+        `${meetingCount} réunion${meetingCount > 1 ? "s" : ""} interne${meetingCount > 1 ? "s" : ""}`,
+      );
+    if (appointmentCount > 0)
+      reasons.push(
+        `${appointmentCount} rendez-vous vétérinaire${appointmentCount > 1 ? "s" : ""}`,
+      );
+    if (medicalHistoryCount > 0)
+      reasons.push(
+        `${medicalHistoryCount} entrée${medicalHistoryCount > 1 ? "s" : ""} d'historique médical`,
+      );
+
+    if (reasons.length > 0) {
+      throw new BadRequestError(
+        `Impossible de supprimer la clinique « ${clinic.name} » car elle a encore : ${reasons.join(", ")}. Veuillez d'abord supprimer ou transférer ces éléments.`,
+      );
+    }
+
+    await this.repository.deleteClinicById(clinicId);
+    return { message: "Clinique supprimée" };
   }
 }

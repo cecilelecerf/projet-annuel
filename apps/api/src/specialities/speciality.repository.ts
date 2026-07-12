@@ -1,18 +1,26 @@
 import type { CreateSpeciality, UpdateSpeciality } from "@armali/schemas";
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "../../prisma/generated/prisma/client";
 
 export class SpecialityRepository {
   constructor(private prisma: PrismaClient) {}
 
-  async findAll() {
+  async findAll(search?: string) {
     return this.prisma.speciality.findMany({
+      where: search
+        ? { name: { contains: search, mode: "insensitive" } }
+        : undefined,
       orderBy: { name: "asc" },
+      take: 20,
     });
   }
 
   async findById(id: string) {
-    return this.prisma.speciality.findUnique({
-      where: { id },
+    return this.prisma.speciality.findUnique({ where: { id } });
+  }
+
+  async findByExactName(name: string) {
+    return this.prisma.speciality.findFirst({
+      where: { name: { equals: name, mode: "insensitive" } },
     });
   }
 
@@ -21,10 +29,7 @@ export class SpecialityRepository {
   }
 
   async update(id: string, data: UpdateSpeciality) {
-    return this.prisma.speciality.update({
-      where: { id },
-      data,
-    });
+    return this.prisma.speciality.update({ where: { id }, data });
   }
 
   async delete(id: string) {

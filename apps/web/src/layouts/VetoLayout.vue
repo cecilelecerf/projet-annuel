@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import FormError from '@/components/ui/FormError.vue'
 import Navbar from '@/components/ui/nav/NavbarComponent.vue'
-import type { MenuItem } from '@/components/ui/nav/SidebarComponent.vue'
-import { House, Calendar, User, SetUp } from '@element-plus/icons-vue'
+import type { NavNode } from '@/components/ui/nav/NaveNode'
+import { House, Calendar, ChatDotRound, User, SetUp } from '@element-plus/icons-vue'
 
-const menuItems: MenuItem[] = [
+const menuItems: NavNode[] = [
   {
     index: 'VETERINARIAN.Home',
     label: 'Accueil',
@@ -16,9 +16,35 @@ const menuItems: MenuItem[] = [
     icon: Calendar,
   },
   {
+    index: 'animaux',
+    label: 'Animaux',
+    icon: '🐻',
+    children: [{ index: 'VETERINARIAN.Animals.List', label: 'Mes animaux' }],
+  },
+  {
+    index: 'VETERINARIAN.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
+  },
+  {
     index: 'VETERINARIAN.Availability',
-    label: 'Disponibilité',
+    label: 'Paramètres',
     icon: SetUp,
+    children: [
+      {
+        index: 'VETERINARIAN.Availability',
+        label: 'Disponibilité',
+        icon: Calendar,
+      },
+      {
+        index: 'VETERINARIAN.Pets',
+        label: 'Pets',
+      },
+      {
+        index: 'VETERINARIAN.Specialities',
+        label: 'Specialités',
+      },
+    ],
   },
   {
     index: 'VETERINARIAN.Profil',

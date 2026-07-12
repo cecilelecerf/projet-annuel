@@ -18,6 +18,11 @@ import { seedMedicalVisits } from "./medical-visit";
 import { seedMeetings } from "./meetings";
 import { seedPrescriptions } from "./prescriptions";
 import { cleanup } from "./cleanup";
+import { seedClinicRequests } from "./clinic-requests";
+import { seedDirectors } from "./directors";
+import { seedReviews } from "./reviews";
+import { seedBudgetAndSuppliers } from "./budget";
+import { seedAnalyses, seedImaging } from "./files";
 
 config({ path: resolve(process.cwd(), ".env") });
 
@@ -26,9 +31,9 @@ export const prisma = new PrismaClient({ adapter });
 
 async function main() {
   await cleanup(prisma);
-  const existingUser = await prisma.user.findUnique({
-    where: { email: "admin@gmail.com" },
-  });
+  // const existingUser = await prisma.user.findUnique({
+  //   where: { email: "admin@gmail.com" },
+  // });
 
   // if (existingUser) {
   //   console.log("⏭️  Base de données déjà peuplée, seed ignoré.");
@@ -39,10 +44,14 @@ async function main() {
 
   const specialities = await seedSpecialities(prisma);
   const pets = await seedPets(prisma);
+  const directors = await seedDirectors(prisma);
+
+  await seedClinicRequests(prisma, { directors });
 
   const clinics = await seedClinics(prisma, {
     specialities,
     pets,
+    directors,
   });
   const users = await seedUsers(prisma, {
     clinics,
@@ -65,21 +74,45 @@ async function main() {
     specialities,
     healthConditions,
     pets,
+    directors,
   });
-  await seedActs(prisma, {
+  const acts = await seedActs(prisma, {
     petCat: pets.petCat,
     petDog: pets.petDog,
     clinics,
     meetings,
   });
+  const imagingActs = acts.allPerformedActs.filter(
+    (act) => act.type === "IMAGING",
+  );
+  const analysisActs = acts.allPerformedActs.filter(
+    (act) => act.type === "ANALYSIS",
+  );
+
+  Promise.all([
+    ...imagingActs.map(async (act, i) => {
+      await seedImaging(prisma, {
+        imagingIds: imagingActs.map((act) => act.id),
+        localImagePath: `assets/imagings/imagings-${i}.jpg`,
+      });
+    }),
+    ...analysisActs.map(async (act, i) => {
+      await seedAnalyses(prisma, {
+        analysisIds: analysisActs.map((act) => act.id),
+        localImagePath: `assets/analysiss/analyse-${i}.pdf`,
+      });
+    }),
+  ]);
+
   const products = await seedProducts(prisma, {
     clinics,
     healthConditions,
   });
   await seedPrescriptions(prisma, { meetings, products, users });
   await seedOrders(prisma, { users, clinics });
-  await seedMessaging(prisma, { users });
-
+  await seedMessaging(prisma, { users, clinics, directors });
+  await seedReviews(prisma, { users, veterinarianClinics: vetoClinic });
+  await seedBudgetAndSuppliers(prisma, { clinics });
   console.log("✅ Seed terminé avec succès !");
   console.log("\n📋 Comptes créés :");
   console.log("  Admin      : admin@gmail.com / Password123!");

@@ -1,4 +1,4 @@
-import type { PrismaClient, Clinic } from "../generated/prisma/client";
+import type { PrismaClient } from "../generated/prisma/client";
 
 export async function seedMeetings(
   prisma: PrismaClient,
@@ -9,6 +9,7 @@ export async function seedMeetings(
     specialities,
     healthConditions,
     pets,
+    directors,
   }: {
     users: ReturnType<typeof import("./users").seedUsers> extends Promise<
       infer T
@@ -38,6 +39,11 @@ export async function seedMeetings(
     pets: ReturnType<typeof import("./pets").seedPets> extends Promise<infer T>
       ? T
       : never;
+    directors: ReturnType<
+      typeof import("./directors").seedDirectors
+    > extends Promise<infer T>
+      ? T
+      : never;
   },
 ) {
   const {
@@ -47,9 +53,7 @@ export async function seedMeetings(
     clientUser1,
     clientUser2,
     vetProfile1,
-    vetProfile2,
     secretaryProfile,
-    directorUser1,
     referentUser1,
   } = users;
   const { vetoClinic1, vetoClinic2 } = veterinarianClinics;
@@ -64,7 +68,7 @@ export async function seedMeetings(
       activity: 8,
       clientId: clientUser1.id,
       raceId: raceLab.id,
-      attendingVeterinarianId: vetProfile1.id,
+      attendingVeterinarianClinicId: vetoClinic1.id,
     },
   });
   const animal2 = await prisma.animal.create({
@@ -83,7 +87,7 @@ export async function seedMeetings(
       activity: 6,
       clientId: clientUser2.id,
       raceId: raceGolden.id,
-      attendingVeterinarianId: vetProfile2.id,
+      attendingVeterinarianClinicId: vetoClinic2.id,
     },
   });
 
@@ -282,7 +286,7 @@ export async function seedMeetings(
       animalMeeting: true,
     },
   });
-  const animalMeeting3 = await prisma.meetingBase.create({
+  await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",
       kind: "ANIMAL",
@@ -376,6 +380,16 @@ export async function seedMeetings(
   // Occurrence spécifique avec contenu différent
   await prisma.meetingBase.create({
     data: {
+      type: "EXCEPTION",
+      kind: "INTERNAL",
+      date: new Date("2026-03-16"),
+      startTime: new Date("1970-01-01T10:00:00Z"),
+      endTime: new Date("1970-01-01T11:00:00Z"),
+      parentId: recurringInternal1.id,
+    },
+  });
+  await prisma.meetingBase.create({
+    data: {
       type: "SPECIFIED",
       kind: "INTERNAL",
       date: new Date("2026-03-16"),
@@ -434,7 +448,7 @@ export async function seedMeetings(
       },
       {
         meetingId: recurringInternal1.internalMeeting!.id,
-        userId: directorUser1.id,
+        userId: directors.directorUser1.id,
         status: "ACCEPTED",
       },
       {
@@ -461,7 +475,7 @@ export async function seedMeetings(
       },
       {
         meetingId: baseInternal2.internalMeeting!.id,
-        userId: directorUser1.id,
+        userId: directors.directorUser1.id,
         status: "PENDING",
       },
       {

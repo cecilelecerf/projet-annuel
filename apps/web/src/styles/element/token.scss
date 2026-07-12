@@ -1,4 +1,5 @@
 // ── Espacements ───────────────────────────────────────────────────────────────
+$spacing-2xs: 2px;
 $spacing-xs: 4px;
 $spacing-sm: 8px;
 $spacing-md: 16px;
@@ -21,9 +22,33 @@ $fw-regular: 400;
 $fw-medium: 500;
 $fw-semibold: 600;
 $fw-bold: 700;
+$fw-regular: 400;
+$fw-medium: 500;
+$fw-semibold: 600;
+$fw-bold: 700;
+
+// ── Tailles de police ─────────────────────────────────────────────────────────
+$fs-xs: 11px;
+$fs-sm: 12px;
+$fs-base: 13px;
+$fs-md: 14px;
+$fs-lg: 15px;
+$fs-xl: 16px;
+$fs-2xl: 18px;
+$fs-3xl: 20px;
+$fs-4xl: 22px;
+$fs-5xl: 28px;
+
+// ── Ombres ────────────────────────────────────────────────────────────────────
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+$shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+$shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.16);
 
 // ── Synchronisation avec les variables CSS ────────────────────────────────────
 :root {
+  --spacing-2xs: #{$spacing-2xs};
   --spacing-xs: #{$spacing-xs};
   --spacing-sm: #{$spacing-sm};
   --spacing-md: #{$spacing-md};
@@ -44,6 +69,27 @@ $fw-bold: 700;
   --fw-medium: #{$fw-medium};
   --fw-semibold: #{$fw-semibold};
   --fw-bold: #{$fw-bold};
+  --fw-regular: #{$fw-regular};
+  --fw-medium: #{$fw-medium};
+  --fw-semibold: #{$fw-semibold};
+  --fw-bold: #{$fw-bold};
+
+  --fs-xs: #{$fs-xs};
+  --fs-sm: #{$fs-sm};
+  --fs-base: #{$fs-base};
+  --fs-md: #{$fs-md};
+  --fs-lg: #{$fs-lg};
+  --fs-xl: #{$fs-xl};
+  --fs-2xl: #{$fs-2xl};
+  --fs-3xl: #{$fs-3xl};
+  --fs-4xl: #{$fs-4xl};
+  --fs-5xl: #{$fs-5xl};
+
+  --shadow-xs: #{$shadow-xs};
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+  --shadow-xl: #{$shadow-xl};
 
   --el-menu-item-height: 47px;
 }

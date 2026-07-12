@@ -1,126 +1,75 @@
 <script setup lang="ts">
-import { ArrowRight } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 import dayjs from 'dayjs'
-import type { AnimalMeetingMeta } from '@armali/schemas'
 import { useAuthStore } from '@/stores/authStore'
+import type { AnimalMeetingMeta } from '@armali/schemas'
+import VetoCard from './VetoCard.vue'
+import ContactCard from '@/components/ContactCard.vue'
+import { useBelowBreakpoint as useBreakpoint } from '@/composables/useBreakpoint.ts'
 
 const props = defineProps<{ meeting: AnimalMeetingMeta }>()
 const { user } = useAuthStore()
-const router = useRouter()
+const isBelowSm = useBreakpoint('lg')
+
 const petAge = computed(() => {
-  if (!props.meeting.animal?.dateOfBirth) return null
   const years = dayjs().diff(dayjs(props.meeting.animal.dateOfBirth), 'year')
   const months = dayjs().diff(dayjs(props.meeting.animal.dateOfBirth), 'month') % 12
   if (years === 0) return `${months} mois`
   if (months === 0) return `${years} an${years > 1 ? 's' : ''}`
   return `${years} an${years > 1 ? 's' : ''} et ${months} mois`
 })
+const cardDirection = computed(() => (isBelowSm.isAbove.value ? 'row' : 'column'))
 </script>
 
 <template>
-  <div class="pet-card">
-    <div class="pet-avatar">{{ meeting.animal?.name?.charAt(0) ?? '?' }}</div>
-    <div class="pet-section">
-      <p class="pet-info">
-        <span class="pet-name">{{ meeting.animal?.name }}</span>
-        <span class="pet-meta">
-          {{ meeting.animal?.race?.pet?.name }} · {{ meeting.animal?.race?.name }}
-        </span>
-        <span v-if="petAge" class="pet-meta">{{ petAge }}</span>
-      </p>
-      <el-button
-        text
-        size="small"
-        @click="
-          router.push({
-            name: `${user?.role.toUpperCase()}.Animals.Detail`,
-            params: { id: meeting.animal.id },
-          })
-        "
-      >
-        Voir la fiche <el-icon><ArrowRight /></el-icon>
-      </el-button>
-    </div>
-  </div>
-
-  <div class="pet-card" v-if="user?.role !== 'CLIENT'">
-    <div class="pet-avatar">
-      {{ meeting.animal?.client?.firstname?.charAt(0) ?? '?' }}
-    </div>
-    <p class="pet-info">
-      <span class="pet-name">
-        {{ meeting.animal?.client?.firstname }} {{ meeting.animal?.client?.lastname }}
-      </span>
-    </p>
-    <el-button
-      text
-      size="small"
-      @click="
-        router.push({
-          name: `${user?.role.toUpperCase()}.Clients.Detail`,
-          params: { id: meeting.animal.clientId },
-        })
-      "
-    >
-      Voir la fiche <el-icon><ArrowRight /></el-icon>
-    </el-button>
+  <div class="container">
+    <ContactCard
+      :initial="meeting.animal?.name?.charAt(0) ?? '?'"
+      :name="meeting.animal.name"
+      :route="{
+        name: `${user?.role.toUpperCase()}.Animals.Detail`,
+        params: { id: meeting.animal.id },
+      }"
+      :metas="[
+        `${meeting.animal.race.pet.name} ${meeting.animal.race.name}`,
+        petAge && `${petAge}`,
+      ]"
+      :direction="cardDirection"
+    />
+    <ContactCard
+      v-if="user?.role !== 'CLIENT'"
+      :initial="meeting.animal.client.user.firstname?.charAt(0) ?? '?'"
+      :name="`${meeting.animal.client.user.firstname} ${meeting.animal.client.user.lastname}`"
+      :route="{
+        name: `${user?.role.toUpperCase()}.Clients.Detail`,
+        params: { id: meeting.animal.clientId },
+      }"
+      :avatar-url="meeting.animal.client.user.avatarUrl"
+      :direction="cardDirection"
+    />
+    <VetoCard
+      v-if="user?.role === 'CLIENT' && meeting.veterinarianClinicId"
+      :veterinarian-clinic-id="meeting.veterinarianClinicId"
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.pet-card {
+.container {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
+  @include below('sm') {
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  gap: var(--spacing-md);
   width: 100%;
-  box-sizing: border-box;
-}
+  // height: 200px;
 
-.pet-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.pet-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--el-color-primary-light-7);
-  color: var(--el-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: var(--fw-bold);
-}
-
-.pet-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-}
-
-.pet-name {
-  font-size: 15px;
-  font-weight: var(--fw-semibold);
-  color: var(--el-text-color-primary);
-  text-align: center;
-}
-
-.pet-meta {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  text-align: center;
+  @include above('lg') {
+    flex-direction: column;
+    width: 300px;
+    height: 100%;
+  }
 }
 </style>

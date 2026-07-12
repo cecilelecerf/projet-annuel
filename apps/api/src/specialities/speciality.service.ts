@@ -1,12 +1,16 @@
-import { NotFoundError } from "@api/errors";
-import type { CreateSpeciality, UpdateSpeciality } from "@armali/schemas";
+import { NotFoundError, ForbiddenError, BadRequestError } from "@api/errors";
 import { SpecialityRepository } from "./speciality.repository";
+import type {
+  CreateSpeciality,
+  UpdateSpeciality,
+  UserRole,
+} from "@armali/schemas";
 
 export class SpecialityService {
-  constructor(private readonly repository: SpecialityRepository) {}
+  constructor(private repository: SpecialityRepository) {}
 
-  async getAll() {
-    return this.repository.findAll();
+  async getAll(search?: string) {
+    return this.repository.findAll(search);
   }
 
   async getById(id: string) {
@@ -15,17 +19,29 @@ export class SpecialityService {
     return speciality;
   }
 
-  async create(data: CreateSpeciality) {
+  async create(data: CreateSpeciality, role: UserRole) {
+    if (role !== "ADMIN") throw new ForbiddenError();
+    if (!data.description) {
+      throw new BadRequestError(
+        "La description est requise pour créer une spécialité",
+      );
+    }
+    const existing = await this.repository.findByExactName(data.name);
+    if (existing) return existing;
     return this.repository.create(data);
   }
 
-  async update(id: string, data: UpdateSpeciality) {
-    await this.getById(id);
+  async update(id: string, data: UpdateSpeciality, role: UserRole) {
+    if (role !== "ADMIN") throw new ForbiddenError();
+    const speciality = await this.repository.findById(id);
+    if (!speciality) throw new NotFoundError("Spécialité");
     return this.repository.update(id, data);
   }
 
-  async delete(id: string) {
-    await this.getById(id);
+  async delete(id: string, role: UserRole) {
+    if (role !== "ADMIN") throw new ForbiddenError();
+    const speciality = await this.repository.findById(id);
+    if (!speciality) throw new NotFoundError("Spécialité");
     return this.repository.delete(id);
   }
 }

@@ -240,4 +240,53 @@ describe("Referent staff routes", () => {
       expect(res.status).toBe(401);
     });
   });
+
+  // -----------------------------------------------------------------
+  describe("PATCH /api/referent/clinic", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app)
+        .patch("/api/referent/clinic")
+        .send({ name: "Nouveau nom" });
+      expect(res.status).toBe(401);
+    });
+
+    it("200 — modifie le nom, téléphone, site web, description et adresse", async () => {
+      const res = await request(app)
+        .patch("/api/referent/clinic")
+        .set("Authorization", `Bearer ${referentToken}`)
+        .send({
+          name: "Clinique renommée",
+          phone: "0198765432",
+          website: "https://renommee.fr",
+          description: "Nouvelle description",
+          street: "9 avenue Renommée",
+          postalCode: "75002",
+          city: "Paris",
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe("Clinique renommée");
+      expect(res.body.phone).toBe("0198765432");
+      expect(res.body.website).toBe("https://renommee.fr");
+      expect(res.body.description).toBe("Nouvelle description");
+      expect(res.body.street).toBe("9 avenue Renommée");
+
+      const updated = await getPrisma().clinic.findUnique({
+        where: { id: referentClinicId },
+      });
+      expect(updated!.name).toBe("Clinique renommée");
+    });
+
+    it("400 — refuse un SIRET dans le corps (champ non autorisé pour le référent)", async () => {
+      const res = await request(app)
+        .patch("/api/referent/clinic")
+        .set("Authorization", `Bearer ${referentToken}`)
+        .send({ siret: "11111111111111" });
+      // Le champ est silencieusement ignoré (schema strip), le SIRET ne doit pas changer.
+      expect(res.status).toBe(200);
+      const clinic = await getPrisma().clinic.findUnique({
+        where: { id: referentClinicId },
+      });
+      expect(clinic!.siret).toBe(clinicSiret);
+    });
+  });
 });

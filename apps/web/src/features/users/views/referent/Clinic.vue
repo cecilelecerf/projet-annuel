@@ -5,7 +5,7 @@ import { useNotify } from '@/composables/useNotify'
 import AddressFields from '@/components/AddressFields.vue'
 import OpeningHoursEditor from '@/components/OpeningHoursEditor.vue'
 import ClinicSpecialities from '@/components/ClinicSpecialities.vue'
-import { formatAddress, defaultOpeningHours, type OpeningHoursDay } from '@/utils/clinic.utils'
+import { defaultOpeningHours, type OpeningHoursDay } from '@/utils/clinic.utils'
 
 const notify = useNotify()
 
@@ -32,10 +32,14 @@ interface Clinic {
 
 const clinic = ref<Clinic | null>(null)
 const form = reactive({
+  name: '',
   street: '',
   postalCode: '',
   city: '',
   country: 'FR',
+  phone: '',
+  website: '',
+  description: '',
   openingHours: defaultOpeningHours(),
 })
 const loading = ref(false)
@@ -44,10 +48,14 @@ async function loadClinic() {
   try {
     const data = await http.get<Clinic>('/clinics/me')
     clinic.value = data
+    form.name = data.name ?? ''
     form.street = data.street ?? ''
     form.postalCode = data.postalCode ?? ''
     form.city = data.city ?? ''
     form.country = data.country ?? 'FR'
+    form.phone = data.phone ?? ''
+    form.website = data.website ?? ''
+    form.description = data.description ?? ''
     form.openingHours = data.openingHours?.length ? data.openingHours : defaultOpeningHours()
   } catch (err: unknown) {
     notify.error(err instanceof Error ? err.message : 'Impossible de charger la clinique')
@@ -119,8 +127,28 @@ async function onImageSelected(e: Event) {
     </div>
 
     <div class="form-card">
-      <h2>Adresse</h2>
+      <h2>Informations générales</h2>
       <el-form label-position="top" @submit.prevent="save">
+        <el-form-item label="Nom de la clinique">
+          <el-input v-model="form.name" placeholder="Clinique Vétérinaire du Centre" />
+        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="Téléphone">
+              <el-input v-model="form.phone" placeholder="0123456789" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Site web">
+              <el-input v-model="form.website" placeholder="https://ma-clinique.fr" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="Description (optionnel)">
+          <el-input v-model="form.description" type="textarea" :rows="3" />
+        </el-form-item>
+
+        <h2>Adresse</h2>
         <AddressFields v-model="form" />
       </el-form>
 
@@ -130,14 +158,6 @@ async function onImageSelected(e: Event) {
       <el-button type="primary" :loading="loading" style="margin-top: 20px" @click="save">
         Enregistrer
       </el-button>
-    </div>
-
-    <div v-if="clinic" class="info-card">
-      <h2>Informations actuelles</h2>
-      <p>
-        <strong>Adresse :</strong>
-        {{ formatAddress(clinic) }}
-      </p>
     </div>
 
     <div v-if="clinic" class="form-card">

@@ -55,6 +55,10 @@ export const updateClinicSchema = createClinicSchema.partial();
 export const updateClinicReferentSchema = clinicAddressSchema
   .partial()
   .extend({
+    name: z.string().min(1, "Nom requis").optional(),
+    phone: z.string().min(10, "Téléphone invalide").optional(),
+    website: z.string().min(1, "Site web requis").optional(),
+    description: z.string().max(500).nullable().optional(),
     openingHours: openingHoursSchema.optional(),
   });
 

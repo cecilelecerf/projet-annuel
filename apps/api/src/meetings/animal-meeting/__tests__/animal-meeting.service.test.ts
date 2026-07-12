@@ -540,8 +540,8 @@ describe("AnimalMeetingService.delete", () => {
         meeting: {
           id: "base-1",
           date: soonDate,
-          startTime: FAR_FUTURE_START,
-          endTime: FAR_FUTURE_END,
+          startTime: soonDate,
+          endTime: new Date(soonDate.getTime() + 30 * 60 * 1000),
         },
       }),
     );

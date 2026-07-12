@@ -56,7 +56,7 @@ pnpm install
 ### Développement
 
 Crée `.env.dev` à la **racine du projet** (copie depuis `.env.dev.sample`) :
-
+Crée `.env.dev` dans /apps/api/ (copie depuis `.env.dev.sample`) :
 ```env
 # Base de données
 DB_USER=user

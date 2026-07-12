@@ -22,6 +22,7 @@ const findByUserInclude = {
           user: { omit: { password: true }, include: { avatar: true } },
         },
       },
+      photo: true,
     },
   },
   meeting: true,

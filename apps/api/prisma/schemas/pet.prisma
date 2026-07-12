@@ -22,6 +22,8 @@ model Animal {
   insuranceProvider     String?
   insurancePolicyNumber String?
 
+  emergencyToken String @unique @default(uuid())
+
   attendingVeterinarianClinicId String?
   attendingVeterinarianClinic   VeterinarianClinic? @relation(fields: [attendingVeterinarianClinicId], references: [id])
 

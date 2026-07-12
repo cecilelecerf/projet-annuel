@@ -4,6 +4,7 @@ import {
   animalIdSchema,
   raceIdSchema,
   veterinarianClinicIdSchema,
+  fileIdSchema,
 } from "../ids";
 export const animalStatusSchema = z.enum(["ALIVE", "DECEASED"]);
 export type AnimalStatus = z.infer<typeof animalStatusSchema>;
@@ -23,7 +24,9 @@ export const animalSchema = z.object({
   hasInsurance: z.boolean(),
   insuranceProvider: z.string().max(100).nullable().optional(),
   insurancePolicyNumber: z.string().max(100).nullable().optional(),
-  //   picture: z.url().max(255).nullable().optional(),
+  photoId: fileIdSchema.nullable(),
+  photoUrl: z.url().max(255).nullable(),
+  emergencyToken: z.string(),
 });
 
 export const createAnimalSchema = animalSchema
@@ -32,6 +35,9 @@ export const createAnimalSchema = animalSchema
     clientId: true,
     attendingVeterinarianClinicId: true,
     status: true,
+    photoId: true,
+    photoUrl: true,
+    emergencyToken: true,
   })
   .extend({ clientId: clientIdSchema.optional() });
 export const updateAnimalSchema = createAnimalSchema

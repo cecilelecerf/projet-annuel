@@ -26,6 +26,10 @@ animalRouter.get(
   controller.getVaccines.bind(controller) as RequestHandler,
 );
 animalRouter.get(
+  "/:id/emergency-qr",
+  controller.getEmergencyQr.bind(controller) as RequestHandler,
+);
+animalRouter.get(
   "/:id/animal-meetings",
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
   animalMeetingController.getByAnimal.bind(
@@ -39,6 +43,15 @@ animalRouter.get(
   medicalHistoryController.getByAnimal.bind(
     medicalHistoryController,
   ) as RequestHandler,
+);
+
+animalRouter.post(
+  "/:id/photo/upload",
+  controller.uploadPhoto.bind(controller) as RequestHandler,
+);
+animalRouter.patch(
+  "/:id/photo/confirm",
+  controller.confirmPhoto.bind(controller) as RequestHandler,
 );
 
 animalRouter.post(

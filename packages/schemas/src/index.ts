@@ -20,6 +20,7 @@ export * from "./acts";
 export * from "./prescription.schema";
 export * from "./animals/index.schema";
 export * from "./animals/meta.schema";
+export * from "./animals/emergency.schema";
 
 export * from "./staffs";
 

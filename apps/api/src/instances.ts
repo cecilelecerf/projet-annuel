@@ -221,6 +221,7 @@ const animalService = new AnimalService(
   vaccineRepository,
   clinicService,
   veterinarianProfileRepository,
+  fileService,
 );
 const clinicPetService = new ClinicPetService(
   clinicRepository,

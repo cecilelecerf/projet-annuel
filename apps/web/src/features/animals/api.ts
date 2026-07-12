@@ -1,10 +1,11 @@
 import { http } from '@/lib/api'
 import {
   animalDetailSchema,
+  animalEmergencyCardSchema,
+  animalEmergencyQrSchema,
   animalMetaSchema,
   animalSchema,
   animalWithRaceMetaSchema,
-  baseUserSchema,
   confirmUploadSchema,
   initiateImageUploadSchema,
   uploadResponseSchema,
@@ -46,6 +47,14 @@ export const animalApi = {
     const data = await http.get(`/animals/${id}/vaccines`)
     return vaccineMetaSchema.array().parse(data)
   },
+  getEmergencyQr: async (id: AnimalId) => {
+    const data = await http.get(`/animals/${id}/emergency-qr`)
+    return animalEmergencyQrSchema.parse(data)
+  },
+  getEmergencyCard: async (token: string) => {
+    const data = await http.get(`/emergency/${token}`)
+    return animalEmergencyCardSchema.parse(data)
+  },
   create: async (payload: CreateAnimal) => {
     return http.post(`/animals`, payload).then((data) => animalWithRaceMetaSchema.parse(data))
   },
@@ -57,7 +66,7 @@ export const animalApi = {
   },
 
   picture: {
-    upload: async ({ file }: { file: File }) => {
+    upload: async ({ id, file }: { id: AnimalId; file: File }) => {
       const payload: InitiateImageUploadInput = initiateImageUploadSchema.parse({
         mimeType: file.type,
         size: file.size,
@@ -65,7 +74,7 @@ export const animalApi = {
 
       // 1. Demander une URL S3
       const { uploadUrl, fileId } = await http
-        .post('/users/me/avatar/upload', payload)
+        .post(`/animals/${id}/photo/upload`, payload)
         .then((data) => uploadResponseSchema.parse(data))
 
       // 2. Upload direct vers S3
@@ -78,10 +87,10 @@ export const animalApi = {
       return { fileId }
     },
 
-    confirm: async ({ fileId }: { fileId: string }) => {
+    confirm: async ({ id, fileId }: { id: AnimalId; fileId: string }) => {
       const body = confirmUploadSchema.parse({ fileId })
-      const data = await http.patch('/users/me/avatar/confirm', body)
-      return baseUserSchema.parse(data)
+      const data = await http.patch(`/animals/${id}/photo/confirm`, body)
+      return animalWithRaceMetaSchema.parse(data)
     },
   },
 }

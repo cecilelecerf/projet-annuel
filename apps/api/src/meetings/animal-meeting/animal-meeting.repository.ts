@@ -221,4 +221,24 @@ export class AnimalMeetingRepository {
       select: { petWeight: true },
     });
   }
+
+  async findReminderCandidates(rangeStart: Date, rangeEnd: Date) {
+    return this.prisma.animalMeeting.findMany({
+      where: {
+        reminderSentAt: null,
+        meeting: { date: { gte: rangeStart, lte: rangeEnd }, kind: "ANIMAL" },
+      },
+      include: {
+        meeting: true,
+        animal: { include: { client: { include: { user: true } } } },
+      },
+    });
+  }
+
+  async markReminderSent(id: string) {
+    return this.prisma.animalMeeting.update({
+      where: { id },
+      data: { reminderSentAt: new Date() },
+    });
+  }
 }

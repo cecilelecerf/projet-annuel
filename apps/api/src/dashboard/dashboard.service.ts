@@ -9,6 +9,9 @@ import { OrderRepository } from "@api/orders/order.repository";
 import { StaffService } from "@api/clinics/staffs/staff.service";
 import { AnimalRepository } from "@api/animals/animal.repository";
 import { AnimalMeetingService, AvailabilityService } from "@api/meetings";
+import { combineDateTime } from "@api/meetings/animal-meeting/animal-meeting.service";
+
+const ORDER_IN_PROGRESS_STATUSES = ["PENDING", "CONFIRMED", "READY"] as const;
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
@@ -382,6 +385,67 @@ export class DashboardService {
       rating: { average: rating.average, count: rating.count },
       recentReviews,
       patientsCount,
+    };
+  }
+
+  // ── Dashboard client ─────────────────────────────────────────────────────────
+
+  async getClientDashboard(userId: UserId) {
+    const now = new Date();
+
+    const [animals, animalMeetings, orders] = await Promise.all([
+      this.animalRepsository.findByClientId(userId),
+      this.animalMeetingService.getAllByClient({
+        id: userId,
+        userId,
+        role: "CLIENT",
+      }),
+      this.orderRepository.findByClient(userId),
+    ]);
+
+    const upcomingMeetings = animalMeetings
+      .filter((m) => m.meeting && combineDateTime(m.meeting.date, m.meeting.startTime).isAfter(now))
+      .sort(
+        (a, b) =>
+          combineDateTime(a.meeting!.date, a.meeting!.startTime).valueOf() -
+          combineDateTime(b.meeting!.date, b.meeting!.startTime).valueOf(),
+      )
+      .slice(0, 5)
+      .map((m) => ({
+        date: m.meeting!.date.toISOString(),
+        startTime: m.meeting!.startTime.toISOString(),
+        endTime: m.meeting!.endTime.toISOString(),
+        animalName: m.animal.name,
+        veterinarianName: m.veterinarianClinic?.veterinarian
+          ? `${m.veterinarianClinic.veterinarian.firstname} ${m.veterinarianClinic.veterinarian.lastname}`
+          : null,
+        clinicName: m.veterinarianClinic?.clinic?.name ?? null,
+      }));
+
+    const ordersInProgress = orders.filter((o) =>
+      (ORDER_IN_PROGRESS_STATUSES as readonly string[]).includes(o.status),
+    );
+
+    const mapOrder = (o: (typeof orders)[number]) => ({
+      id: o.id,
+      status: o.status,
+      items: o.orderItems
+        .map((i) => `${i.quantity}× ${i.productClinic.product.name}`)
+        .join(", "),
+      total: o.orderItems.reduce(
+        (sum, i) => sum + Number(i.unitPrice) * i.quantity,
+        0,
+      ),
+      createdAt: o.createdAt.toISOString(),
+    });
+
+    return {
+      role: "CLIENT" as const,
+      animalsCount: animals.length,
+      upcomingMeetingsCount: upcomingMeetings.length,
+      upcomingMeetings,
+      ordersInProgressCount: ordersInProgress.length,
+      recentOrders: orders.slice(0, 3).map(mapOrder),
     };
   }
 

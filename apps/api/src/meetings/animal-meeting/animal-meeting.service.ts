@@ -28,8 +28,7 @@ import { UserRepository } from "@api/users/user.repository";
 import { expandAll } from "../utils";
 import { MeetingBaseWithSpecific } from "../type";
 
-// ── Combine une date (jour) avec une heure (time) en un seul instant ──────────
-function combineDateTime(date: Date, time: Date) {
+export function combineDateTime(date: Date, time: Date) {
   return dayjs(date)
     .hour(dayjs(time).hour())
     .minute(dayjs(time).minute())
@@ -445,5 +444,37 @@ export class AnimalMeetingService {
       return [meeting as MeetingBaseWithSpecific];
     });
     return expandAll(flat, start, end);
+  }
+
+  async sendDueReminders() {
+    const now = dayjs();
+    const rangeStart = now.startOf("day").toDate();
+    const rangeEnd = now.add(2, "day").endOf("day").toDate();
+    const candidates = await this.repository.findReminderCandidates(
+      rangeStart,
+      rangeEnd,
+    );
+
+    for (const candidate of candidates) {
+      if (!candidate.meeting) continue;
+
+      const meetingDateTime = combineDateTime(
+        candidate.meeting.date,
+        candidate.meeting.startTime,
+      );
+      const hoursUntil = meetingDateTime.diff(now, "hour", true);
+      if (hoursUntil > 24 || hoursUntil <= 0) continue;
+
+      const clientUser = candidate.animal.client.user;
+      await this.emailService
+        .sendAppointmentEmail("reminder", clientUser.email, {
+          firstname: clientUser.firstname,
+          animalName: candidate.animal.name,
+          date: candidate.meeting.date,
+          startTime: candidate.meeting.startTime,
+        })
+        .catch(() => {});
+      await this.repository.markReminderSent(candidate.id);
+    }
   }
 }

@@ -14,6 +14,7 @@ import {
   type AnimalWithRaceMeta,
   type ClinicId,
   type CreateAnimal,
+  type DeleteAnimal,
   type InitiateImageUploadInput,
   type UserId,
   type VeterinarianId,
@@ -50,6 +51,9 @@ export const animalApi = {
   },
   createByUser: async (userId: UserId, payload: CreateAnimal) => {
     return http.post(`/users/${userId}/animal`, payload).then((data) => animalSchema.parse(data))
+  },
+  delete: async (id: AnimalId, payload: DeleteAnimal) => {
+    return http.delete(`/animals/${id}`, payload)
   },
 
   picture: {

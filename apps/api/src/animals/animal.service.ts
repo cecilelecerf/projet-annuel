@@ -1,6 +1,7 @@
 import { ForbiddenError, NotFoundError } from "@api/errors";
 import { AnimalRepository, AnimalWithMeta } from "./animal.repository";
 import type {
+  AnimalDeletionReason,
   ClinicId,
   CreateAnimal,
   UpdateAnimal,
@@ -138,8 +139,22 @@ export class AnimalService {
     return this.repository.update(pet.id, data);
   }
 
-  async delete({ id, userId }: { id: string; userId: string }) {
+  async delete({
+    id,
+    userId,
+    reasons,
+  }: {
+    id: string;
+    userId: string;
+    reasons: AnimalDeletionReason[];
+  }) {
     await this.assertOwner({ petId: id, userId });
+
+    // Décès : on garde la fiche (historique médical) plutôt que de la supprimer.
+    if (reasons.includes("DECEASED")) {
+      return this.repository.markDeceased(id);
+    }
+
     return this.repository.delete(id);
   }
 

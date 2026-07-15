@@ -68,19 +68,27 @@ export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem('accessToken'))
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
   const isAuthenticated = computed(() => !!accessToken.value)
+  const passwordExpired = ref(false)
 
   const clearAuth = () => {
     user.value = null
     accessToken.value = null
     refreshToken.value = null
+    passwordExpired.value = false
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
   }
 
-  const setAuth = (userData: UserStore, access: string, refresh: string) => {
+  const setAuth = (
+    userData: UserStore,
+    access: string,
+    refresh: string,
+    expired = false,
+  ) => {
     user.value = userData
     accessToken.value = access
     refreshToken.value = refresh
+    passwordExpired.value = expired
     localStorage.setItem('accessToken', access)
     localStorage.setItem('refreshToken', refresh)
   }
@@ -88,8 +96,9 @@ export const useAuthStore = defineStore('auth', () => {
   const init = async () => {
     if (!isAuthenticated.value) return
     try {
-      const data = await http.get<UserStore>('/auth/me')
+      const data = await http.get<UserStore & { passwordExpired?: boolean }>('/auth/me')
       user.value = toUserStore(data)
+      passwordExpired.value = !!data.passwordExpired
     } catch {
       clearAuth()
     }
@@ -97,7 +106,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   type LoginResponse =
     | { twoFactorRequired: true; email: string }
-    | { user: UserStore; accessToken: string; refreshToken: string }
+    | {
+        user: UserStore
+        accessToken: string
+        refreshToken: string
+        passwordExpired?: boolean
+      }
 
   const login = async (
     email: string,
@@ -109,16 +123,18 @@ export const useAuthStore = defineStore('auth', () => {
       return { twoFactorRequired: true, email: data.email }
     }
 
-    setAuth(data.user, data.accessToken, data.refreshToken)
+    setAuth(data.user, data.accessToken, data.refreshToken, !!data.passwordExpired)
     return { twoFactorRequired: false }
   }
 
   const verifyTwoFactor = async (email: string, code: string) => {
-    const data = await http.post<{ user: UserStore; accessToken: string; refreshToken: string }>(
-      '/auth/login/verify-2fa',
-      { email, code },
-    )
-    setAuth(data.user, data.accessToken, data.refreshToken)
+    const data = await http.post<{
+      user: UserStore
+      accessToken: string
+      refreshToken: string
+      passwordExpired?: boolean
+    }>('/auth/login/verify-2fa', { email, code })
+    setAuth(data.user, data.accessToken, data.refreshToken, !!data.passwordExpired)
   }
 
   const logout = async () => {
@@ -137,11 +153,16 @@ export const useAuthStore = defineStore('auth', () => {
     await http.post('/auth/reset-password', { email, code, newPassword })
   }
 
+  const completePasswordChange = () => {
+    passwordExpired.value = false
+  }
+
   return {
     user,
     accessToken,
     refreshToken,
     isAuthenticated,
+    passwordExpired,
     login,
     verifyTwoFactor,
     logout,
@@ -150,5 +171,6 @@ export const useAuthStore = defineStore('auth', () => {
     setAuth,
     forgotPassword,
     resetPassword,
+    completePasswordChange,
   }
 })

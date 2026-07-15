@@ -37,6 +37,10 @@ function generateOtp(): string {
 }
 
 const isTwoFactorEnabled = process.env.NODE_ENV === "production";
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const ACCOUNT_LOCKED_MESSAGE =
+  "Compte bloqué après plusieurs tentatives échouées. Réinitialisez votre mot de passe pour le débloquer.";
+const PASSWORD_EXPIRY_DAYS = 60;
 
 const loginUserInclude = {
   avatar: true,
@@ -76,7 +80,17 @@ export class AuthService {
       },
     });
 
-    return { user: { ...parsedUser, clinicId }, accessToken, refreshToken };
+    return {
+      user: { ...parsedUser, clinicId },
+      accessToken,
+      refreshToken,
+      passwordExpired: this.isPasswordExpired(user.passwordChangedAt),
+    };
+  }
+
+  private isPasswordExpired(passwordChangedAt: Date): boolean {
+    const expiryMs = PASSWORD_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    return Date.now() - passwordChangedAt.getTime() > expiryMs;
   }
 
   private getClinicId(user: {
@@ -218,9 +232,30 @@ export class AuthService {
     });
     if (!user) throw new UnauthorizedError("Email ou mot de passe incorrect");
 
+    if (user.lockedAt) throw new UnauthorizedError(ACCOUNT_LOCKED_MESSAGE);
+
     const isPasswordValid = await compare(data.password, user.password);
-    if (!isPasswordValid)
-      throw new UnauthorizedError("Email ou mot de passe incorrect");
+    if (!isPasswordValid) {
+      const attempts = user.failedLoginAttempts + 1;
+      const shouldLock = attempts >= MAX_FAILED_LOGIN_ATTEMPTS;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: attempts,
+          ...(shouldLock && { lockedAt: new Date() }),
+        },
+      });
+      throw new UnauthorizedError(
+        shouldLock ? ACCOUNT_LOCKED_MESSAGE : "Email ou mot de passe incorrect",
+      );
+    }
+
+    if (user.failedLoginAttempts > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0 },
+      });
+    }
 
     if (!isTwoFactorEnabled) return this.issueLoginSession(user);
 
@@ -340,8 +375,9 @@ export class AuthService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     const clinicId = this.getClinicId(user);
+    const passwordExpired = this.isPasswordExpired(user.passwordChangedAt);
 
-    return { ...user, clinicId };
+    return { ...user, clinicId, passwordExpired };
   }
 
   async updateAccount(userId: string, data: UpdateAccount) {
@@ -371,7 +407,10 @@ export class AuthService {
         ...(data.firstname && { firstname: data.firstname }),
         ...(data.lastname && { lastname: data.lastname }),
         ...(data.email && { email: data.email }),
-        ...(hashedPassword && { password: hashedPassword }),
+        ...(hashedPassword && {
+          password: hashedPassword,
+          passwordChangedAt: new Date(),
+        }),
       },
     });
 
@@ -463,7 +502,12 @@ export class AuthService {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: user.id },
-        data: { password: hashedPassword },
+        data: {
+          password: hashedPassword,
+          failedLoginAttempts: 0,
+          lockedAt: null,
+          passwordChangedAt: new Date(),
+        },
       }),
       prisma.otpCode.delete({ where: { id: otp.id } }),
       prisma.refreshToken.deleteMany({ where: { userId: user.id } }),

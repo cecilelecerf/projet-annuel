@@ -17,6 +17,10 @@ model User {
   lastname  String
   password  String
 
+  failedLoginAttempts Int       @default(0)
+  lockedAt            DateTime?
+  passwordChangedAt   DateTime  @default(now())
+
   clientProfile         ClientProfile?
   veterinarianProfile   VeterinarianProfile?
   secretaryProfile      SecretaryProfile?

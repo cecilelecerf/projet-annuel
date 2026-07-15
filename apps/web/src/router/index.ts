@@ -7,6 +7,7 @@ import { secretaryRouter } from './secretaryRouter'
 import { referentRouter } from './referentRouter'
 import { adminRouter } from './adminRouter'
 import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
+import { registerPasswordExpiredGuard } from './guards/passwordExpired.guard'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
   DIRECTOR: '/director',
@@ -70,6 +71,11 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
+    path: '/change-password-expired',
+    name: 'ChangePasswordExpired',
+    component: () => import('@/features/auth/views/ChangeExpiredPasswordView.vue'),
+  },
+  {
     path: '/unauthorized',
     name: 'Unauthorized',
     component: () => import('@/features/auth/views/UnauthorizedView.vue'),
@@ -87,6 +93,7 @@ const router = createRouter({
   routes,
 })
 registerClinicStatusGuard(router)
+registerPasswordExpiredGuard(router)
 
 let authInitialized = false
 

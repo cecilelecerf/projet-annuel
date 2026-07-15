@@ -53,7 +53,9 @@ function validateUserForm(): string | null {
   if (!form.value.firstname.trim()) return 'Le prénom est requis'
   if (!form.value.lastname.trim()) return 'Le nom est requis'
   if (!form.value.email.includes('@')) return 'Email invalide'
-  if (form.value.password.length < 8) return 'Mot de passe : minimum 8 caractères'
+  if (form.value.password.length < 12) return 'Mot de passe : minimum 12 caractères'
+  if (!/[A-Za-z]/.test(form.value.password) || !/[0-9]/.test(form.value.password) || !/[^A-Za-z0-9]/.test(form.value.password))
+    return 'Mot de passe : au moins une lettre, un chiffre et un symbole'
   if (form.value.password !== form.value.passwordConfirm)
     return 'Les mots de passe ne correspondent pas'
   return null
@@ -191,7 +193,7 @@ async function handleSubmit() {
               v-model="form.password"
               type="password"
               show-password
-              placeholder="Minimum 8 caractères"
+              placeholder="Min. 12 caractères, avec lettres, chiffres et symboles"
               size="large"
             />
           </el-form-item>

@@ -3,7 +3,11 @@ import { clientSchema } from "./client.schema";
 import { secretarySchema } from "./secretary.schema";
 import { referentSchema } from "./referent.schema";
 import { veterinarianSchema } from "./veterinarian.schema";
-import { baseUserSchema, userPasswordSchema } from "./base-user.schema";
+import {
+  baseUserSchema,
+  userPasswordSchema,
+  loginPasswordSchema,
+} from "./base-user.schema";
 import { directorClinicSchema } from "./director.schema";
 
 export const adminSchema = baseUserSchema.extend({
@@ -25,7 +29,7 @@ export type Admin = z.infer<typeof adminSchema>;
 
 export const loginSchema = baseUserSchema
   .pick({ email: true })
-  .extend({ password: userPasswordSchema });
+  .extend({ password: loginPasswordSchema });
 
 export type Login = z.infer<typeof loginSchema>;
 

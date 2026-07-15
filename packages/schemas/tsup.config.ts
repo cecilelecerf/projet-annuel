@@ -7,4 +7,5 @@ export default defineConfig({
   outDir: "dist",
   clean: true,
   dts: true,
+  ignoreWatch: ["**/dist/**", "**/node_modules/**", "**/.git/**"],
 });

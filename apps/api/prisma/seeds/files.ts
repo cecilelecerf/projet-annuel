@@ -87,6 +87,56 @@ export async function seedAvatar(
   return file;
 }
 
+export async function seedAnimalPhoto(
+  prisma: PrismaClient,
+  {
+    animalId,
+    localImagePath,
+    mimeType = "image/jpeg",
+  }: {
+    animalId: string;
+    localImagePath: string;
+    mimeType?: string;
+  },
+) {
+  const s3 = getS3Client();
+  if (!s3) {
+    console.log(`⏭️  S3 non configuré, photo ignorée pour l'animal ${animalId}`);
+    return null;
+  }
+
+  const absolutePath = path.resolve(__dirname, localImagePath);
+  const buffer = await readFile(absolutePath);
+  const key = `animals/${animalId}/${crypto.randomUUID()}`;
+
+  await s3.client.send(
+    new PutObjectCommand({
+      Bucket: s3.bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: mimeType,
+    }),
+  );
+
+  const file = await prisma.file.create({
+    data: {
+      storageKey: key,
+      mimeType,
+      size: buffer.byteLength,
+      type: "IMAGE",
+      entityType: "ANIMAL",
+      entityId: animalId,
+    },
+  });
+
+  await prisma.animal.update({
+    where: { id: animalId },
+    data: { photoId: file.id },
+  });
+
+  return file;
+}
+
 export async function seedImaging(
   prisma: PrismaClient,
   {

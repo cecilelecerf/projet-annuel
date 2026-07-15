@@ -41,6 +41,9 @@ export async function setup() {
   process.env.STRIPE_SECRET_KEY = "sk_test_dummy_for_tests";
   process.env.STRIPE_WEBHOOK_SECRET = "whsec_dummy_for_tests";
 
+  process.env.JWT_ACCESS_SECRET = "test_access_secret";
+  process.env.JWT_REFRESH_SECRET = "test_refresh_secret";
+
   // Créer le bucket + policy publique en lecture, équivalent au minio-init de dev
   const s3 = new S3Client({
     endpoint: process.env.S3_ENDPOINT,

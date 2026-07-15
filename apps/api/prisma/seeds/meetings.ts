@@ -1,4 +1,5 @@
 import type { PrismaClient } from "../generated/prisma/client";
+import { seedAnimalPhoto } from "./files";
 
 export async function seedMeetings(
   prisma: PrismaClient,
@@ -90,6 +91,22 @@ export async function seedMeetings(
       attendingVeterinarianClinicId: vetoClinic2.id,
     },
   });
+
+  // ── Photos des animaux ──────────────────────────────────────────────────────
+  await Promise.all([
+    seedAnimalPhoto(prisma, {
+      animalId: animal1.id,
+      localImagePath: "assets/pets/dog_1.jpg",
+    }),
+    seedAnimalPhoto(prisma, {
+      animalId: animal2.id,
+      localImagePath: "assets/pets/cat_1.jpg",
+    }),
+    seedAnimalPhoto(prisma, {
+      animalId: animal3.id,
+      localImagePath: "assets/pets/dog_2.jpg",
+    }),
+  ]);
 
   // ── Disponibilités véto ─────────────────────────────────────────────────────
   const recurringAvail1 = await prisma.meetingReccuring.create({

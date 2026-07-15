@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 import type { NextFunction, Request, Response } from "express";
 import { AppError, ValidationError } from "@api/errors";
+import { Sentry } from "@api/lib/sentry";
 
 const PRISMA_UNIQUE_MESSAGES: Record<string, string> = {
   email: "Cet email est déjà utilisé",
@@ -60,6 +61,7 @@ export function errorHandler(
     }
   }
 
+  Sentry.captureException(err);
   console.error(err);
   return res.status(500).json({ error: "Erreur interne du serveur" });
 }

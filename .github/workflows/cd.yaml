@@ -86,6 +86,7 @@ jobs:
           build-args: |
             VITE_MATOMO_URL=${{ vars.VITE_MATOMO_URL }}
             VITE_MATOMO_SITE_ID=${{ vars.VITE_MATOMO_SITE_ID }}
+            VITE_SENTRY_DSN=https://705048e760c7779c861e6e7e95c0ee36@o4509694057971712.ingest.de.sentry.io/4511741123100752
 
       - name: Build & Push Nginx
         uses: docker/build-push-action@v5

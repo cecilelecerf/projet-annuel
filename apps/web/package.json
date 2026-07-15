@@ -24,6 +24,7 @@
     "@fullcalendar/interaction": "6.1.20",
     "@fullcalendar/timegrid": "6.1.20",
     "@fullcalendar/vue3": "6.1.20",
+    "@sentry/vue": "10.65.0",
     "@vue-leaflet/vue-leaflet": "0.10.1",
     "chart.js": "4.5.1",
     "dayjs": "1.11.19",

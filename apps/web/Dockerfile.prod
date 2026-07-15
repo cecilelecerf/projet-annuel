@@ -20,9 +20,11 @@ COPY tsconfig.base.json ./
 ARG VITE_API_URL=/api
 ARG VITE_MATOMO_URL=""
 ARG VITE_MATOMO_SITE_ID=""
+ARG VITE_SENTRY_DSN=""
 RUN echo "VITE_API_URL=${VITE_API_URL}" > /app/.env.prod && \
     echo "VITE_MATOMO_URL=${VITE_MATOMO_URL}" >> /app/.env.prod && \
-    echo "VITE_MATOMO_SITE_ID=${VITE_MATOMO_SITE_ID}" >> /app/.env.prod
+    echo "VITE_MATOMO_SITE_ID=${VITE_MATOMO_SITE_ID}" >> /app/.env.prod && \
+    echo "VITE_SENTRY_DSN=${VITE_SENTRY_DSN}" >> /app/.env.prod
 
 WORKDIR /app/packages/schemas
 RUN pnpm build

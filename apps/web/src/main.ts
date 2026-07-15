@@ -11,6 +11,7 @@ import './styles/layout.scss'
 import router from './router/index'
 import { useAuthStore } from './stores/authStore'
 import { initMatomo } from './lib/matomo'
+import { initSentry } from './lib/sentry'
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 import { clickOutside } from './directives/clickOutside'
@@ -24,6 +25,7 @@ import 'leaflet/dist/leaflet.css'
 initMatomo()
 
 const app = createApp(App)
+initSentry(app, router)
 app.use(createPinia())
 app.directive('click-outside', clickOutside)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

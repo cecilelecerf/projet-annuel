@@ -16,7 +16,7 @@ describe("POST /api/auth/register", () => {
   it("201 — crée un utilisateur", async () => {
     const res = await request(app).post("/api/auth/register").send({
       email: "nouveau@test.com",
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Alice",
       lastname: "Dupont",
     });
@@ -27,14 +27,14 @@ describe("POST /api/auth/register", () => {
       where: { email: "nouveau@test.com" },
     });
     expect(user).not.toBeNull();
-    expect(user!.password).not.toBe("Password1!");
+    expect(user!.password).not.toBe("Password1234!");
   });
 
   it("409 — email déjà utilisé", async () => {
     // Crée l'utilisateur une première fois
     await request(app).post("/api/auth/register").send({
       email: "nouveau@test.com",
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Alice",
       lastname: "Dupont",
     });
@@ -42,7 +42,7 @@ describe("POST /api/auth/register", () => {
     // Retente avec le même email
     const res = await request(app).post("/api/auth/register").send({
       email: "nouveau@test.com",
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Alice",
       lastname: "Dupont",
     });
@@ -87,7 +87,7 @@ describe("POST /api/auth/login", () => {
   it("401 — utilisateur introuvable", async () => {
     const res = await request(app).post("/api/auth/login").send({
       email: "ghost@test.com",
-      password: "Password1!",
+      password: "Password1234!",
     });
 
     expect(res.status).toBe(401);
@@ -151,7 +151,7 @@ describe("POST /api/auth/register-director", () => {
 
   const validPayload = {
     email: directorEmail,
-    password: "Password1!",
+    password: "Password1234!",
     firstname: "Jean",
     lastname: "Directeur",
     clinic: {
@@ -204,7 +204,7 @@ describe("POST /api/auth/register-director", () => {
   it("400 — clinic manquante", async () => {
     const res = await request(app).post("/api/auth/register-director").send({
       email: directorEmail,
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Jean",
       lastname: "Directeur",
     });
@@ -357,14 +357,14 @@ describe("Suppression de compte", () => {
 
     await request(app).post("/api/auth/register").send({
       email: deleteEmail,
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Test",
       lastname: "Suppression",
     });
 
     const login = await request(app).post("/api/auth/login").send({
       email: deleteEmail,
-      password: "Password1!",
+      password: "Password1234!",
     });
     accessToken = login.body.accessToken;
   });
@@ -545,7 +545,7 @@ describe("POST /api/auth/forgot-password", () => {
 // -------------------------------------------------------------------
 describe("POST /api/auth/reset-password", () => {
   const email = "reset-pw@test.com";
-  const originalPassword = "Password1!";
+  const originalPassword = "Password123!";
   const newPassword = "NewPassword1!";
 
   beforeEach(async () => {
@@ -618,7 +618,7 @@ describe("POST /api/auth/reset-password", () => {
 // -------------------------------------------------------------------
 describe("PATCH /api/auth/me", () => {
   const email = "update-account@test.com";
-  const password = "Password1!";
+  const password = "Password123!";
   let accessToken: string;
 
   beforeEach(async () => {

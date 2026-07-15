@@ -747,6 +747,9 @@ CREATE TABLE "users" (
     "firstname" TEXT NOT NULL,
     "lastname" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "failedLoginAttempts" INTEGER NOT NULL DEFAULT 0,
+    "lockedAt" TIMESTAMP(3),
+    "passwordChangedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "avatarId" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")

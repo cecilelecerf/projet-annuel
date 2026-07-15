@@ -55,6 +55,10 @@ function goToProduct(productId: string) {
   router.push({ name: 'CLIENT.Shop.Detail', params: { id: productId } })
 }
 
+function goToAnimalDetail(animalId: string) {
+  router.push({ name: 'CLIENT.Animals.Detail', params: { id: animalId } })
+}
+
 const readyOrders = computed(() => dashboard.value?.ordersReadyForPickup ?? [])
 
 const nextMeeting = computed(() => dashboard.value?.upcomingMeetings?.[0] ?? null)
@@ -155,7 +159,7 @@ function formatCurrency(value: number) {
           :key="animal.id"
           class="pet-card"
           :style="{ '--pet-accent': speciesAccent(animal.species) }"
-          @click="goToAnimals"
+          @click="goToAnimalDetail(animal.id)"
         >
           <span class="pet-card__tab">{{ animal.species }}</span>
           <div class="pet-card__photo">

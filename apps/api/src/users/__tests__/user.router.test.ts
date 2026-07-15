@@ -41,7 +41,7 @@ describe("GET /api/users?role=:role", () => {
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
-    res.body.forEach((user) => {
+    res.body.forEach((user: { role: string }) => {
       expect(user.role).toBe("VETERINARIAN");
     });
   });
@@ -54,7 +54,7 @@ describe("GET /api/users?role=:role", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
-    res.body.forEach((user) => {
+    res.body.forEach((user: { role: string }) => {
       expect(user.role).toBe("CLIENT");
     });
   });
@@ -287,7 +287,7 @@ describe("DELETE /api/users/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toContain("rendez-vous");
+    expect(res.body.error).toContain("rendez-vous");
   });
 
   it("200 — supprime un utilisateur sans dépendances", async () => {

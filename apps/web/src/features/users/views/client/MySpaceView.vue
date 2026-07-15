@@ -32,6 +32,29 @@ function goToCreate() {
   router.push({ name: `${authStore.user?.role.toUpperCase()}.Animals.Create` })
 }
 
+function goToBooking() {
+  router.push({ name: 'CLIENT.Booking' })
+}
+
+function goToMeetings() {
+  router.push({ name: 'CLIENT.Meetings' })
+}
+
+function goToAnimals() {
+  router.push({ name: 'CLIENT.Animals' })
+}
+
+function goToShop() {
+  router.push({ name: 'CLIENT.Shop' })
+}
+function goToOrders() {
+  router.push({ name: 'CLIENT.Orders' })
+}
+
+function goToProduct(productId: string) {
+  router.push({ name: 'CLIENT.Shop.Detail', params: { id: productId } })
+}
+
 const readyOrders = computed(() => dashboard.value?.ordersReadyForPickup ?? [])
 
 const nextMeeting = computed(() => dashboard.value?.upcomingMeetings?.[0] ?? null)
@@ -108,13 +131,13 @@ function formatCurrency(value: number) {
             {{ nextMeeting.veterinarianName ? `Dr. ${nextMeeting.veterinarianName}` : nextMeeting.clinicName ?? '—' }}
           </p>
         </div>
-        <el-button class="hero-meeting__action" round @click.stop="router.push({ name: 'CLIENT.Meetings' })">
+        <el-button class="hero-meeting__action" round @click.stop="goToMeetings">
           Voir le détail
         </el-button>
       </template>
       <template v-else>
         <p class="hero-meeting__empty-text">Aucun rendez-vous prévu pour le moment</p>
-        <el-button type="primary" round @click.stop="router.push({ name: 'CLIENT.Booking' })">
+        <el-button type="primary" round @click.stop="goToBooking">
           Prendre rendez-vous
         </el-button>
       </template>
@@ -124,7 +147,7 @@ function formatCurrency(value: number) {
     <section class="pets-section">
       <div class="section-header">
         <h2 class="section-title">Mes animaux</h2>
-        <el-button text @click="router.push({ name: 'CLIENT.Animals' })">Tout voir</el-button>
+        <el-button text @click="goToAnimals">Tout voir</el-button>
       </div>
       <div class="pet-cards">
         <article
@@ -132,7 +155,7 @@ function formatCurrency(value: number) {
           :key="animal.id"
           class="pet-card"
           :style="{ '--pet-accent': speciesAccent(animal.species) }"
-          @click="router.push({ name: 'CLIENT.Animals' })"
+          @click="goToAnimals"
         >
           <span class="pet-card__tab">{{ animal.species }}</span>
           <div class="pet-card__photo">
@@ -178,7 +201,7 @@ function formatCurrency(value: number) {
             v-for="(meeting, i) in otherMeetings"
             :key="i"
             class="meeting-item"
-            @click="router.push({ name: 'CLIENT.Meetings' })"
+            @click="goToMeetings"
           >
             <div class="meeting-time">{{ formatDateTime(meeting.date) }}</div>
             <div class="meeting-info">
@@ -196,14 +219,14 @@ function formatCurrency(value: number) {
     <section class="products-section" v-if="dashboard.products.length">
       <div class="section-header">
         <h2 class="section-title">Disponible dans votre boutique</h2>
-        <el-button text @click="router.push({ name: 'CLIENT.Shop' })">Voir la boutique</el-button>
+        <el-button text @click="goToShop()">Voir la boutique</el-button>
       </div>
       <div class="product-cards">
         <article
           v-for="product in dashboard.products"
           :key="product.id"
           class="product-card"
-          @click="router.push({ name: 'CLIENT.Shop' })"
+          @click="goToProduct(product.id)"
         >
           <div class="product-card__image">
             <img v-if="product.picture" :src="product.picture" :alt="product.name" />
@@ -228,7 +251,7 @@ function formatCurrency(value: number) {
           {{ readyOrders.map((o) => o.items).join(' · ') }}
         </p>
       </div>
-      <el-button round @click="router.push({ name: 'CLIENT.Orders' })">Voir</el-button>
+      <el-button round @click="goToOrders()">Voir</el-button>
     </section>
   </template>
 </template>

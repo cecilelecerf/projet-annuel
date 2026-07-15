@@ -42,6 +42,7 @@ jobs:
           OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.OVH_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.OVH_S3_SECRET_KEY }}
+
   build-and-push:
     name: Build & Push images
     runs-on: ubuntu-latest

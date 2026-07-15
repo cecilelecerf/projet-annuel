@@ -82,6 +82,36 @@ const routes: RouteRecordRaw[] = [
     meta: { public: true },
   },
   {
+    path: '/mentions-legales',
+    name: 'MentionsLegales',
+    component: () => import('@/views/legal/MentionsLegalesView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/confidentialite',
+    name: 'PrivacyPolicy',
+    component: () => import('@/views/legal/PrivacyPolicyView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/cgu',
+    name: 'Cgu',
+    component: () => import('@/views/legal/CguView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/cgv',
+    name: 'Cgv',
+    component: () => import('@/views/legal/CgvView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/contact',
+    name: 'Contact',
+    component: () => import('@/views/legal/ContactView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/views/NotFoundView.vue'),
@@ -91,6 +121,11 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
 })
 registerClinicStatusGuard(router)
 registerPasswordExpiredGuard(router)

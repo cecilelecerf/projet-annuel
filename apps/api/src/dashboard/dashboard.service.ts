@@ -396,7 +396,7 @@ export class DashboardService {
   async getClientDashboard(userId: UserId) {
     const now = new Date();
 
-    const [animals, animalMeetings, orders] = await Promise.all([
+    const [animals, animalMeetings, orders, clinicIdsFromAnimals] = await Promise.all([
       this.animalRepsository.findByClientId(userId),
       this.animalMeetingService.getAllByClient({
         id: userId,
@@ -404,6 +404,7 @@ export class DashboardService {
         role: "CLIENT",
       }),
       this.orderRepository.findByClient(userId),
+      this.animalRepsository.findClinicIdsForClient(userId),
     ]);
 
     const upcomingMeetings = animalMeetings
@@ -442,13 +443,67 @@ export class DashboardService {
       createdAt: o.createdAt.toISOString(),
     });
 
+    const readyOrders = orders.filter((o) => o.status === "READY");
+
+    // ── Cliniques du client : déduites des animaux suivis + des commandes ──
+    const clinicIds = new Set(clinicIdsFromAnimals);
+    for (const o of orders) clinicIds.add(o.clinicId);
+
+    const [clinics, clinicProducts] = await Promise.all([
+      clinicIds.size
+        ? prisma.clinic.findMany({
+            where: { id: { in: [...clinicIds] } },
+            select: {
+              id: true,
+              name: true,
+              street: true,
+              postalCode: true,
+              city: true,
+              phone: true,
+              image: true,
+            },
+          })
+        : Promise.resolve([]),
+      clinicIds.size
+        ? prisma.clinicProduct.findMany({
+            where: { clinicId: { in: [...clinicIds] }, stock: { gt: 0 } },
+            take: 8,
+            orderBy: { updatedAt: "desc" },
+            include: { product: { select: { name: true, picture: true } } },
+          })
+        : Promise.resolve([]),
+    ]);
+
     return {
       role: "CLIENT" as const,
-      animalsCount: animals.length,
+      animals: animals.map((a) => ({
+        id: a.id,
+        name: a.name,
+        species: a.race.pet.name,
+        breed: a.race.name,
+        dateOfBirth: a.dateOfBirth.toISOString(),
+        photoUrl: a.photo ? `${process.env.ASSETS_BASE_URL}/${a.photo.storageKey}` : null,
+      })),
+      clinics: clinics.map((c) => ({
+        id: c.id,
+        name: c.name,
+        address: `${c.street}, ${c.postalCode} ${c.city}`,
+        phone: c.phone,
+        image: c.image,
+      })),
       upcomingMeetingsCount: upcomingMeetings.length,
       upcomingMeetings,
       ordersInProgressCount: ordersInProgress.length,
+      ordersReadyForPickupCount: readyOrders.length,
+      ordersReadyForPickup: readyOrders.map(mapOrder),
       recentOrders: orders.slice(0, 3).map(mapOrder),
+      products: clinicProducts.map((cp) => ({
+        id: cp.id,
+        name: cp.product.name,
+        picture: cp.product.picture,
+        price: Number(cp.price),
+        clinicId: cp.clinicId,
+      })),
     };
   }
 

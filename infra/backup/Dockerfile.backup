@@ -28,7 +28,7 @@ RUN curl -fsSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-am
     && chmod +x /usr/local/bin/mc \
     && /usr/local/bin/mc --version
 
-COPY backup.sh /opt/armali/backup.sh
+COPY infra/backup/backup.sh /opt/armali/backup.sh
 RUN chmod +x /opt/armali/backup.sh
 
 # Cron : tous les jours à 3h du matin

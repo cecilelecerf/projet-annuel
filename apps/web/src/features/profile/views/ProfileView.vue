@@ -11,6 +11,7 @@ import ClinicInfoCard from '../components/ClinicInfoCard.vue'
 import { useProfileClinicData } from '../composables/useProfileClinicData'
 import StaffList from '@/features/staffs/components/StaffList.vue'
 import ReviewComponent from '@/features/reviews/components/ReviewComponent.vue'
+import { http } from '@/lib/api'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -20,20 +21,36 @@ const deleteDialog = ref<InstanceType<typeof DeleteAccountDialog> | null>(null)
 const editDialog = ref<InstanceType<typeof EditAccountDialog> | null>(null)
 const loggingOut = ref(false)
 
+const clientProfile = ref<{
+  phone: string | null
+  address: string | null
+  dateOfBirth: string | null
+} | null>(null)
+
 // DIRECTOR n'affiche que l'email ; les autres rôles affichent aussi prénom/nom
 const infoRows = computed(() => {
   if (user?.role === 'DIRECTOR') {
     return [{ label: 'Email', value: user.email }]
   }
-  return [
+  const rows = [
     { label: 'Email', value: user?.email ?? '' },
     { label: 'Prénom', value: user?.firstname ?? '' },
     { label: 'Nom', value: user?.lastname ?? '' },
   ]
+  if (user?.role === 'CLIENT') {
+    rows.push(
+      { label: 'Téléphone', value: clientProfile.value?.phone ?? '—' },
+      { label: 'Adresse', value: clientProfile.value?.address ?? '—' },
+      {
+        label: 'Date de naissance',
+        value: clientProfile.value?.dateOfBirth
+          ? new Date(clientProfile.value.dateOfBirth).toLocaleDateString('fr-FR')
+          : '—',
+      },
+    )
+  }
+  return rows
 })
-
-// CLIENT n'a pas de bouton "Modifier"
-const showEdit = computed(() => user?.role !== 'CLIENT')
 
 // Seuls véto/secrétaire voient les infos de clinique + l'équipe
 const showClinicSections = computed(
@@ -46,8 +63,16 @@ const showClinicSections = computed(
 
 const { clinics, staffByClinic, load: loadClinicData } = useProfileClinicData()
 
+async function loadClientProfile() {
+  const me = await http.get<{
+    clientProfile?: { phone: string | null; address: string | null; dateOfBirth: string | null }
+  }>('/auth/me')
+  clientProfile.value = me.clientProfile ?? null
+}
+
 onMounted(() => {
   if (showClinicSections.value) loadClinicData()
+  if (user?.role === 'CLIENT') loadClientProfile()
 })
 
 async function handleLogout() {
@@ -78,7 +103,6 @@ async function handleLogout() {
     <el-divider />
 
     <ProfileActions
-      :show-edit="showEdit"
       :loading="loggingOut"
       @edit="editDialog?.open()"
       @logout="handleLogout"
@@ -97,7 +121,7 @@ async function handleLogout() {
     </template>
   </template>
 
-  <EditAccountDialog ref="editDialog" />
+  <EditAccountDialog ref="editDialog" @updated="user?.role === 'CLIENT' && loadClientProfile()" />
   <DeleteAccountDialog ref="deleteDialog" />
 </template>
 

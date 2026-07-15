@@ -7,9 +7,13 @@ import { useNotify } from '@/composables/useNotify'
 const notify = useNotify()
 const authStore = useAuthStore()
 
+const emit = defineEmits<{ updated: [] }>()
+
 const visible = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
+
+const isClient = authStore.user?.role === 'CLIENT'
 
 const form = reactive({
   firstname: '',
@@ -17,15 +21,31 @@ const form = reactive({
   email: '',
   currentPassword: '',
   newPassword: '',
+  phone: '',
+  address: '',
+  dateOfBirth: '',
 })
 
-function open() {
+async function open() {
   form.firstname = authStore.user?.firstname ?? ''
   form.lastname = authStore.user?.lastname ?? ''
   form.email = authStore.user?.email ?? ''
   form.currentPassword = ''
   form.newPassword = ''
+  form.phone = ''
+  form.address = ''
+  form.dateOfBirth = ''
   errorMsg.value = ''
+
+  if (isClient) {
+    const me = await http.get<{
+      clientProfile?: { phone: string | null; address: string | null; dateOfBirth: string | null }
+    }>('/auth/me')
+    form.phone = me.clientProfile?.phone ?? ''
+    form.address = me.clientProfile?.address ?? ''
+    form.dateOfBirth = me.clientProfile?.dateOfBirth?.slice(0, 10) ?? ''
+  }
+
   visible.value = true
 }
 
@@ -33,7 +53,7 @@ async function submit() {
   loading.value = true
   errorMsg.value = ''
   try {
-    const payload: Record<string, string> = {
+    const payload: Record<string, string | null> = {
       firstname: form.firstname,
       lastname: form.lastname,
       email: form.email,
@@ -41,6 +61,11 @@ async function submit() {
     if (form.newPassword) {
       payload.currentPassword = form.currentPassword
       payload.newPassword = form.newPassword
+    }
+    if (isClient) {
+      payload.phone = form.phone || null
+      payload.address = form.address || null
+      payload.dateOfBirth = form.dateOfBirth || null
     }
 
     const updated = await http.patch<{ firstname: string; lastname: string; email: string }>(
@@ -56,6 +81,7 @@ async function submit() {
 
     notify.success('Profil mis à jour')
     visible.value = false
+    emit('updated')
   } catch (err: unknown) {
     errorMsg.value = err instanceof Error ? err.message : 'Erreur'
   } finally {
@@ -83,6 +109,18 @@ defineExpose({ open })
       <el-form-item label="Email">
         <el-input v-model="form.email" />
       </el-form-item>
+
+      <template v-if="isClient">
+        <el-form-item label="Téléphone">
+          <el-input v-model="form.phone" />
+        </el-form-item>
+        <el-form-item label="Adresse">
+          <el-input v-model="form.address" />
+        </el-form-item>
+        <el-form-item label="Date de naissance">
+          <el-date-picker v-model="form.dateOfBirth" type="date" value-format="YYYY-MM-DD" />
+        </el-form-item>
+      </template>
 
       <el-divider>Changer le mot de passe (optionnel)</el-divider>
 

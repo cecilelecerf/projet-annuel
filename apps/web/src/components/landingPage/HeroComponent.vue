@@ -44,8 +44,12 @@ function goToMySpace() {
         Simple, rapide, pour tous vos compagnons.
       </p>
       <div class="hero__cta">
-        <el-button type="primary" size="large" round>Prendre rendez-vous</el-button>
-        <el-button size="large" round plain>Trouver un vétérinaire</el-button>
+        <el-button type="primary" size="large" round @click="router.push('/register')">
+          Prendre rendez-vous
+        </el-button>
+        <el-button size="large" round plain @click="router.push('/register')">
+          Trouver un vétérinaire
+        </el-button>
       </div>
 
       <div class="hero__stats">

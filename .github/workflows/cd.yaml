@@ -105,7 +105,7 @@ jobs:
       - name: Build & Push Backup
         uses: docker/build-push-action@v5
         with:
-          context: infra/backup
+          context: .
           file: infra/backup/Dockerfile.backup
           push: true
           tags: ${{ env.IMAGE_BACKUP }}:latest

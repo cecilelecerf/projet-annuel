@@ -20,3 +20,15 @@ variable "bucket_name" {
   type        = string
   default     = "armali-backups-local"
 }
+
+variable "aws_admin_access_key" {
+  description = "Clé d'accès terraform-admin pour créer les ressources AWS"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_admin_secret_key" {
+  description = "Secret terraform-admin pour créer les ressources AWS"
+  type        = string
+  sensitive   = true
+}

@@ -22,6 +22,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1080.0",
     "@prisma/adapter-pg": "7.4.0",
     "@prisma/client": "7.4.0",
+    "@sentry/node": "10.65.0",
     "bcryptjs": "3.0.3",
     "cors": "2.8.6",
     "dayjs": "1.11.20",

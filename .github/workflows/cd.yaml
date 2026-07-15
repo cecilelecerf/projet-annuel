@@ -34,7 +34,11 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra/backup
-        run: terraform apply -auto-approve -var="ovh_project_id=${{ secrets.OVH_PROJECT_ID }}"
+        run: |
+          terraform apply -auto-approve \
+            -var="ovh_project_id=${{ secrets.OVH_PROJECT_ID }}" \
+            -var="aws_admin_access_key=${{ secrets.AWS_ADMIN_ACCESS_KEY_ID }}" \
+            -var="aws_admin_secret_key=${{ secrets.AWS_ADMIN_SECRET_ACCESS_KEY }}"
         env:
           OVH_ENDPOINT: ovh-eu
           OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}

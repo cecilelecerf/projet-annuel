@@ -8,7 +8,6 @@ function uniqueEmail(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@gmail.com`;
 }
 
-// ── POST /api/clinics/:clinicId/staffs/veterinarian ──────────────────────────────────────────────
 describe("StaffRouter", async () => {
   let adminToken: string;
   let directorToken: string;
@@ -269,6 +268,202 @@ describe("StaffRouter", async () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty("id", vetUser!.id);
       expect(res.body).not.toHaveProperty("password");
+    });
+  });
+
+  // ── GET /api/clinics/:clinicId/staffs/veterinarians/search ──────────────────
+
+  describe("GET .../staffs/veterinarians/search", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get(
+        `/api/clinics/${clinicId}/staffs/veterinarians/search?q=test`,
+      );
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle SECRETARY non autorisé", async () => {
+      const res = await request(app)
+        .get(`/api/clinics/${clinicId}/staffs/veterinarians/search?q=test`)
+        .set("Authorization", `Bearer ${secretaryToken}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("400 — requête vide", async () => {
+      const res = await request(app)
+        .get(`/api/clinics/${clinicId}/staffs/veterinarians/search?q=`)
+        .set("Authorization", `Bearer ${directorToken}`);
+      expect(res.status).toBe(400);
+    });
+
+    it("200 — DIRECTOR trouve un vétérinaire par email", async () => {
+      const res = await request(app)
+        .get(
+          `/api/clinics/${clinicId}/staffs/veterinarians/search?q=dr.moreau@vetparc.fr`,
+        )
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  // ── POST /api/clinics/:clinicId/staffs/veterinarians/link ───────────────────
+
+  describe("POST .../staffs/veterinarians/link", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/veterinarians/link`)
+        .send({});
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle VETERINARIAN non autorisé", async () => {
+      const res = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/veterinarians/link`)
+        .set("Authorization", `Bearer ${vetToken}`)
+        .send({ veterinarianId: "00000000-0000-4000-8000-000000000000" });
+      expect(res.status).toBe(403);
+    });
+
+    it("400 — body invalide", async () => {
+      const res = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/veterinarians/link`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({});
+      expect(res.status).toBe(400);
+    });
+
+    it("404 — vétérinaire introuvable", async () => {
+      const res = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/veterinarians/link`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ veterinarianId: "00000000-0000-4000-8000-000000000000" });
+      expect(res.status).toBe(404);
+    });
+
+    it("201 — DIRECTOR rattache un vétérinaire existant d'une autre clinique", async () => {
+      const moreau = await getPrisma().user.findUnique({
+        where: { email: "dr.moreau@vetparc.fr" },
+      });
+
+      const res = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/veterinarians/link`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ veterinarianId: moreau!.id });
+
+      expect(res.status).toBe(201);
+    });
+  });
+
+  // ── DELETE /api/clinics/:clinicId/staffs/:id ─────────────────────────────────
+
+  describe("DELETE .../staffs/:id", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).delete(
+        `/api/clinics/${clinicId}/staffs/some-id`,
+      );
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle VETERINARIAN non autorisé", async () => {
+      const res = await request(app)
+        .delete(`/api/clinics/${clinicId}/staffs/some-id`)
+        .set("Authorization", `Bearer ${vetToken}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — DIRECTOR retire un vétérinaire de sa clinique (sans supprimer son compte)", async () => {
+      const createRes = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/veterinarian`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({
+          firstname: "A retirer",
+          lastname: "Veto",
+          email: uniqueEmail("a-retirer-veto"),
+          password: "Password123!",
+          licenseNumber: `LIC-DEL-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        });
+      expect(createRes.status).toBe(201);
+
+      const res = await request(app)
+        .delete(`/api/clinics/${clinicId}/staffs/${createRes.body.id}`)
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("message");
+    });
+
+    it("200 — DIRECTOR supprime une secrétaire", async () => {
+      const createRes = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/secretary`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({
+          firstname: "A supprimer",
+          lastname: "Secretaire",
+          email: uniqueEmail("a-supprimer-sec"),
+          password: "Password123!",
+        });
+      expect(createRes.status).toBe(201);
+
+      const res = await request(app)
+        .delete(`/api/clinics/${clinicId}/staffs/${createRes.body.id}`)
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("message");
+    });
+
+    it("403 — un REFERENT ne peut pas supprimer un autre REFERENT", async () => {
+      const createRes = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/referent`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({
+          firstname: "Cible",
+          lastname: "Referent",
+          email: uniqueEmail("cible-ref"),
+          password: "Password123!",
+        });
+      expect(createRes.status).toBe(201);
+
+      const res = await request(app)
+        .delete(`/api/clinics/${clinicId}/staffs/${createRes.body.id}`)
+        .set("Authorization", `Bearer ${referentToken}`);
+
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — DIRECTOR peut supprimer un REFERENT", async () => {
+      const createRes = await request(app)
+        .post(`/api/clinics/${clinicId}/staffs/referent`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({
+          firstname: "Cible2",
+          lastname: "Referent",
+          email: uniqueEmail("cible2-ref"),
+          password: "Password123!",
+        });
+      expect(createRes.status).toBe(201);
+
+      const res = await request(app)
+        .delete(`/api/clinics/${clinicId}/staffs/${createRes.body.id}`)
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(res.status).toBe(200);
+    });
+  });
+
+  // ── GET /api/clinics/:clinicId/staffs — filtrage par rôle ────────────────────
+
+  describe("GET .../staffs?roles=...", () => {
+    it("200 — filtre uniquement les vétérinaires", async () => {
+      const res = await request(app)
+        .get(`/api/clinics/${clinicId}/staffs?roles=VETERINARIAN`)
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(res.status).toBe(200);
+      expect(
+        res.body.every((s: any) => s.role === "VETERINARIAN"),
+      ).toBe(true);
     });
   });
 });

@@ -346,4 +346,60 @@ describe("Animal router", () => {
       expect(res.status).toBe(403);
     });
   });
+
+  // ── GET /api/animals/:id/emergency-qr ─────────────────────────────────────────
+
+  describe("GET /api/animals/:id/emergency-qr", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get("/api/animals/some-id/emergency-qr");
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — CLIENT demande le QR d'un animal d'un autre client", async () => {
+      const token = await loginAs("client@gmail.com");
+      const client = await getPrisma().user.findUnique({
+        where: { email: "client@gmail.com" },
+        include: { clientProfile: true },
+      });
+      const otherAnimal = await getPrisma().animal.findFirst({
+        where: { clientId: { not: client!.clientProfile!.id } },
+      });
+
+      const res = await request(app)
+        .get(`/api/animals/${otherAnimal!.id}/emergency-qr`)
+        .set("Authorization", `Bearer ${token}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — CLIENT récupère le QR code de son animal", async () => {
+      const token = await loginAs("client@gmail.com");
+      const client = await getPrisma().user.findUnique({
+        where: { email: "client@gmail.com" },
+        include: { clientProfile: true },
+      });
+      const animal = await getPrisma().animal.findFirst({
+        where: { clientId: client!.clientProfile!.id },
+      });
+
+      const res = await request(app)
+        .get(`/api/animals/${animal!.id}/emergency-qr`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("url");
+      expect(res.body).toHaveProperty("qrCodeDataUrl");
+      expect(res.body.qrCodeDataUrl).toMatch(/^data:image\/png/);
+    });
+
+    it("200 — STAFF récupère le QR code de n'importe quel animal", async () => {
+      const token = await loginAs("veto@gmail.com");
+      const animal = await getPrisma().animal.findFirst();
+
+      const res = await request(app)
+        .get(`/api/animals/${animal!.id}/emergency-qr`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).toBe(200);
+    });
+  });
 });

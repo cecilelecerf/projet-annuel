@@ -56,6 +56,9 @@ export const updateAccountSchema = baseUserSchema
   .extend({
     currentPassword: z.string().min(1).optional(),
     newPassword: userPasswordSchema.optional(),
+    phone: z.string().max(20).nullable().optional(),
+    address: z.string().max(500).nullable().optional(),
+    dateOfBirth: z.coerce.date().nullable().optional(),
   })
   .refine((data) => !data.newPassword || !!data.currentPassword, {
     message: "Mot de passe actuel requis pour changer de mot de passe",

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 defineProps<{
-  showEdit: boolean
   loading?: boolean
 }>()
 
@@ -13,9 +12,7 @@ const emit = defineEmits<{
 
 <template>
   <div class="profil-actions">
-    <el-button v-if="showEdit" type="primary" size="large" @click="emit('edit')">
-      Modifier mon profil
-    </el-button>
+    <el-button type="primary" size="large" @click="emit('edit')"> Modifier mon profil </el-button>
     <el-button size="large" :loading="loading" @click="emit('logout')"> Se déconnecter </el-button>
     <el-button type="danger" size="large" plain @click="emit('delete')">
       Supprimer mon compte

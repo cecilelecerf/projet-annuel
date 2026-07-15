@@ -555,6 +555,7 @@ secrets:
   aws_dr_access_key_id:
     external: true
   aws_dr_secret_access_key:
+    external: true
   matomo_db_user:
     external: true
   matomo_db_password:

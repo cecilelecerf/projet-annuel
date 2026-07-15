@@ -11,6 +11,7 @@ import dayjs from 'dayjs'
 import { raceApi } from '@/features/races/api'
 import { useNotify } from '@/composables/useNotify'
 import { useAuthStore } from '@/stores/authStore'
+import { trackEvent } from '@/lib/matomo'
 
 const router = useRouter()
 const formError = useFormErrorStore()
@@ -79,9 +80,11 @@ async function onSubmit() {
   submitting.value = true
   try {
     const created = await animalApi.create(form)
+    trackEvent('animal', 'create_success')
     ElMessage.success(`${form.name} a bien été ajouté.`)
     router.push({ name: `${user?.role.toUpperCase()}.Animals.Detail`, params: { id: created.id } })
   } catch (err) {
+    trackEvent('animal', 'create_failure')
     console.log(err)
     formError.handle(err)
   } finally {

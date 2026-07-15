@@ -15,6 +15,7 @@ import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
 import { formatDate, subtractTime } from '../utils'
 import { formatAddress } from '@/utils/clinic.utils'
+import { trackEvent } from '@/lib/matomo'
 
 dayjs.locale('fr')
 
@@ -48,9 +49,11 @@ async function confirm() {
       description: props.reason || null,
       clinicId: props.clinic.id,
     })
+    trackEvent('meeting', 'booking_confirmed')
     confirmed.value = true
     emit('confirmed')
   } catch (err) {
+    trackEvent('meeting', 'booking_failure')
     formError.handle(err)
   } finally {
     confirming.value = false

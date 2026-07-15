@@ -6,6 +6,7 @@ import { useFormErrorStore } from '@/stores/formErrorStore'
 import { meetingApi } from '../api/meeting.api'
 import type { MeetingId, MeetingRecurringId, UserId, MeetingKind } from '@armali/schemas'
 import { timeStringToDate } from '../components/utils'
+import { trackEvent } from '@/lib/matomo'
 
 dayjs.extend(utc)
 
@@ -77,7 +78,9 @@ export function useMeetingActions() {
         if (!id) throw new Error('Id not found')
         onSuccess(id)
       }
+      trackEvent('meeting', 'reschedule_success', scope)
     } catch (err) {
+      trackEvent('meeting', 'reschedule_failure', scope)
       handle(err)
       throw err
     } finally {
@@ -112,9 +115,11 @@ export function useMeetingActions() {
       } else if (kind === 'ANIMAL') {
         await meetingApi.animal.delete({ meetingId })
       }
+      trackEvent('meeting', 'cancel_success', kind)
       ElMessage.success('Rendez-vous supprimé')
       onSuccess()
     } catch {
+      trackEvent('meeting', 'cancel_failure', kind)
       ElMessage.error('Erreur lors de la suppression')
     } finally {
       deleting.value = false

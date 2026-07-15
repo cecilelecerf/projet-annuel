@@ -6,6 +6,10 @@ terraform {
       source  = "ovh/ovh"
       version = "~> 2.1"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 
   backend "s3" {
@@ -16,8 +20,8 @@ terraform {
     skip_credentials_validation = true
     skip_region_validation      = true
     skip_requesting_account_id  = true
-    skip_s3_checksum             = true  
-    use_path_style               = true 
+    skip_s3_checksum             = true
+    use_path_style               = true
   }
 }
 

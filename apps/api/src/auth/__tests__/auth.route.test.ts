@@ -545,7 +545,7 @@ describe("POST /api/auth/forgot-password", () => {
 // -------------------------------------------------------------------
 describe("POST /api/auth/reset-password", () => {
   const email = "reset-pw@test.com";
-  const originalPassword = "Password1!";
+  const originalPassword = "Password123!";
   const newPassword = "NewPassword1!";
 
   beforeEach(async () => {
@@ -618,7 +618,7 @@ describe("POST /api/auth/reset-password", () => {
 // -------------------------------------------------------------------
 describe("PATCH /api/auth/me", () => {
   const email = "update-account@test.com";
-  const password = "Password1!";
+  const password = "Password123!";
   let accessToken: string;
 
   beforeEach(async () => {

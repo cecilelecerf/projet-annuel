@@ -332,7 +332,7 @@ export class AnimalService {
         ? {
             name: animal.attendingVeterinarianClinic.clinic.name,
             phone: animal.attendingVeterinarianClinic.clinic.phone,
-            address: animal.attendingVeterinarianClinic.clinic.address,
+            address: `${animal.attendingVeterinarianClinic.clinic.street}, ${animal.attendingVeterinarianClinic.clinic.postalCode} ${animal.attendingVeterinarianClinic.clinic.city}`,
           }
         : null,
     };

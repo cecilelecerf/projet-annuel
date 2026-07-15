@@ -32,29 +32,7 @@ function goToCreate() {
   router.push({ name: `${authStore.user?.role.toUpperCase()}.Animals.Create` })
 }
 
-const statusLabel: Record<ClientDashboard['recentOrders'][number]['status'], string> = {
-  PENDING: 'En attente de paiement',
-  CONFIRMED: 'Confirmée',
-  READY: 'Prête à récupérer',
-  PICKED_UP: 'Récupérée',
-  CANCELLED: 'Annulée',
-}
-const statusTag: Record<ClientDashboard['recentOrders'][number]['status'], string> = {
-  PENDING: 'warning',
-  CONFIRMED: 'primary',
-  READY: 'success',
-  PICKED_UP: 'info',
-  CANCELLED: 'danger',
-}
-
 const readyOrders = computed(() => dashboard.value?.ordersReadyForPickup ?? [])
-
-const dayGreeting = computed(() => {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Bonjour'
-  if (hour < 18) return 'Bon après-midi'
-  return 'Bonsoir'
-})
 
 const nextMeeting = computed(() => dashboard.value?.upcomingMeetings?.[0] ?? null)
 const otherMeetings = computed(() => dashboard.value?.upcomingMeetings?.slice(1) ?? [])
@@ -252,31 +230,6 @@ function formatCurrency(value: number) {
       </div>
       <el-button round @click="router.push({ name: 'CLIENT.Orders' })">Voir</el-button>
     </section>
-
-    <!-- Commandes récentes : discret, en bas -->
-    <!-- <section class="card orders-card" v-if="dashboard.recentOrders.length">
-      <h2>Commandes récentes</h2>
-      <div class="order-list">
-        <div
-          v-for="order in dashboard.recentOrders"
-          :key="order.id"
-          class="order-item"
-          @click="router.push({ name: 'CLIENT.Orders' })"
-        >
-          <div class="order-info">
-            <span class="order-items">{{ order.items }}</span>
-            <span class="order-date">{{ formatDate(order.createdAt) }}</span>
-          </div>
-          <div class="order-side">
-            <span class="order-total">{{ formatCurrency(order.total) }}</span>
-            <el-tag :type="statusTag[order.status] as any" size="small">
-              {{ statusLabel[order.status] }}
-            </el-tag>
-          </div>
-        </div>
-      </div>
-    </section> -->
-
   </template>
 </template>
 

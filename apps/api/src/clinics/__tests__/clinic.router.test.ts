@@ -33,7 +33,10 @@ async function createDisposableDirectorWithClinic() {
   const clinic = await prisma.clinic.create({
     data: {
       name: "Clinique jetable",
-      address: "1 rue du Test",
+      street: "1 rue du Test",
+      postalCode: "75001",
+      city: "Paris",
+      country: "FR",
       siret: `9${Date.now()}`.slice(0, 14),
       phone: "0102030405",
       website: "https://jetable.fr",

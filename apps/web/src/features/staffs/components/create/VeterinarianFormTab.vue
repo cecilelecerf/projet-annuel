@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useVeterinarianForm } from '../../composables/useVeterinarianForm'
 import type { ClinicId } from '@armali/schemas'
 const { user } = useAuthStore()
-
+if (!(user && 'clinicId' in user && typeof user.clinicId === 'string')) throw new Error()
 const {
   form,
   selectedSpecialityIds,

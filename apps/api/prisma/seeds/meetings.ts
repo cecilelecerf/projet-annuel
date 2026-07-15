@@ -1,4 +1,5 @@
 import type { PrismaClient } from "../generated/prisma/client";
+import { seedAnimalPhoto } from "./files";
 
 export async function seedMeetings(
   prisma: PrismaClient,
@@ -90,6 +91,22 @@ export async function seedMeetings(
       attendingVeterinarianClinicId: vetoClinic2.id,
     },
   });
+
+  // ── Photos des animaux ──────────────────────────────────────────────────────
+  await Promise.all([
+    seedAnimalPhoto(prisma, {
+      animalId: animal1.id,
+      localImagePath: "assets/pets/dog_1.jpg",
+    }),
+    seedAnimalPhoto(prisma, {
+      animalId: animal2.id,
+      localImagePath: "assets/pets/cat_1.jpg",
+    }),
+    seedAnimalPhoto(prisma, {
+      animalId: animal3.id,
+      localImagePath: "assets/pets/dog_2.jpg",
+    }),
+  ]);
 
   // ── Disponibilités véto ─────────────────────────────────────────────────────
   const recurringAvail1 = await prisma.meetingReccuring.create({
@@ -378,6 +395,16 @@ export async function seedMeetings(
   });
 
   // Occurrence spécifique avec contenu différent
+  await prisma.meetingBase.create({
+    data: {
+      type: "EXCEPTION",
+      kind: "INTERNAL",
+      date: new Date("2026-03-16"),
+      startTime: new Date("1970-01-01T10:00:00Z"),
+      endTime: new Date("1970-01-01T11:00:00Z"),
+      parentId: recurringInternal1.id,
+    },
+  });
   await prisma.meetingBase.create({
     data: {
       type: "SPECIFIED",

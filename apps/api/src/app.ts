@@ -1,4 +1,5 @@
 import express, { type Express } from "express";
+import { resolve } from "path";
 import { handleStripeWebhook } from "./orders/order-webhook.controller";
 import { prisma } from "./lib/prisma";
 import cors from "cors";
@@ -7,11 +8,13 @@ import reviewRouter from "./reviews/review.router";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
 import { default as authRouter } from "./auth/auth.router";
+import contactRouter from "./contact/contact.router";
 import { default as userRouter } from "./users/user.router";
 import { errorHandler } from "./middlewares";
 import actRouter from "./acts/act.router";
 import { default as meetingRouter } from "./meetings/meeting.router";
 import animalRouter from "./animals/animal.router";
+import animalEmergencyRouter from "./animals/animal-emergency.router";
 import prescriptionRouter from "./prescriptions/prescription.router";
 import animalMedicalHistoryRouter from "./medical-histories/medical-history.router";
 import productRouter from "./products/product.router";
@@ -63,6 +66,7 @@ app.post(
 );
 
 app.use(express.json());
+app.use("/uploads", express.static(resolve(process.cwd(), "uploads")));
 
 app.get("/api/test", async (req, res) => {
   const users = await prisma.user.findMany({
@@ -75,11 +79,13 @@ app.get("/api/test", async (req, res) => {
   res.json(users);
 });
 app.use("/api/auth", authRouter);
+app.use("/api/contact", contactRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/clinics", clinicRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/animals", animalRouter);
+app.use("/api/emergency", animalEmergencyRouter);
 app.use("/api/prescriptions", prescriptionRouter);
 app.use("/api/medical-histories", animalMedicalHistoryRouter);
 app.use("/api/acts", actRouter);

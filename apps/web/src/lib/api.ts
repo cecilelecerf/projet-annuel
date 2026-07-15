@@ -11,6 +11,10 @@ export class ApiError extends Error {
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
+// Origine du serveur API (sans le suffixe /api), pour construire les URLs
+// de fichiers statiques servis par l'API (ex: images de clinique uploadées).
+export const API_ORIGIN = BASE_URL.replace(/\/api\/?$/, '')
+
 let isRefreshing = false
 let refreshQueue: ((token: string) => void)[] = []
 
@@ -31,13 +35,17 @@ const refreshAccessToken = async (): Promise<string> => {
   localStorage.setItem('refreshToken', data.refreshToken)
   return data.accessToken
 }
-const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+
+type ApiOptions = RequestInit & {
+  responseType?: 'json' | 'blob' | 'text'
+}
+const api = async <T = unknown>(endpoint: string, options: ApiOptions = {}): Promise<T> => {
   const token = localStorage.getItem('accessToken')
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -83,18 +91,49 @@ const api = async <T = unknown>(endpoint: string, options: RequestInit = {}): Pr
     }
   }
 
-  const data = await response.json().catch(() => ({}))
-
   if (!response.ok) {
-    throw new Error(data?.error ?? data?.message ?? 'Erreur serveur')
+    const data = await response.json().catch(() => ({}))
+    // Le middleware `validate` renvoie déjà { message, errors: Record<string,string[]> }
+    // Le handler d'erreurs global renvoie { error, issues: ZodIssue[] } pour les ZodError non interceptées
+    const fieldErrors: Record<string, string[]> | undefined =
+      data?.errors && typeof data.errors === 'object'
+        ? data.errors
+        : Array.isArray(data?.issues)
+          ? data.issues.reduce(
+              (acc: Record<string, string[]>, issue: { path: (string | number)[]; message: string }) => {
+                const key = issue.path.join('.') || '_'
+                acc[key] = [...(acc[key] ?? []), issue.message]
+                return acc
+              },
+              {},
+            )
+          : undefined
+
+    const detail = fieldErrors ? Object.values(fieldErrors).flat().join(' — ') : undefined
+    const baseMessage = data?.error ?? data?.message ?? 'Erreur serveur'
+    const message = detail ? `${baseMessage} : ${detail}` : baseMessage
+
+    throw new ApiError(response.status, message, fieldErrors)
   }
 
-  return data as T
+  const responseType = options.responseType ?? 'json'
+
+  switch (responseType) {
+    case 'blob':
+      return (await response.blob()) as T
+
+    case 'text':
+      return (await response.text()) as T
+
+    default:
+      return (await response.json().catch(() => null)) as T
+  }
 }
 
 export const http = {
   get: <T>(endpoint: string) => api<T>(endpoint),
 
+  getBlob: (endpoint: string) => api<Blob>(endpoint, { responseType: 'blob' }),
   post: <T>(endpoint: string, body: unknown) =>
     api<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
 
@@ -106,4 +145,22 @@ export const http = {
 
   delete: <T>(endpoint: string, body?: unknown) =>
     api<T>(endpoint, { method: 'DELETE', body: JSON.stringify(body) }),
+
+  upload: async <T>(endpoint: string, fieldName: string, file: File): Promise<T> => {
+    const token = localStorage.getItem('accessToken')
+    const formData = new FormData()
+    formData.append(fieldName, file)
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: formData,
+    })
+
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new ApiError(response.status, data?.error ?? data?.message ?? 'Erreur serveur')
+    }
+    return data as T
+  },
 }

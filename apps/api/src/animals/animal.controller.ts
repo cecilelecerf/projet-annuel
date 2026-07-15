@@ -1,13 +1,23 @@
 import type { NextFunction, Response } from "express";
+import { z } from "zod";
 import type { AuthenticatedRequest, RequestWithParams } from "@api/middlewares";
 import {
   animalDetailSchema,
+  AnimalId,
+  animalEmergencyCardSchema,
+  animalEmergencyQrSchema,
+  animalMetaSchema,
   animalWithRaceMetaSchema,
+  ClinicId,
+  fileIdSchema,
+  uploadResponseSchema,
+  UserId,
   vaccineMetaSchema,
   type CreateAnimal,
   type UpdateAnimal,
 } from "@armali/schemas";
 import { AnimalService } from "./animal.service";
+import { paginationQuerySchema } from "../../../../packages/schemas/src/pagination.schema";
 
 export class AnimalController {
   constructor(private service: AnimalService) {}
@@ -85,6 +95,7 @@ export class AnimalController {
       await this.service.delete({
         id: req.params.id,
         userId: req.user.id,
+        reasons: req.body.reasons,
       });
       res.status(204).send();
     } catch (err) {
@@ -92,7 +103,7 @@ export class AnimalController {
     }
   }
 
-  async getByUser(
+  async getAllByUser(
     req: RequestWithParams<{ id: string }>,
     res: Response,
     next: NextFunction,
@@ -103,14 +114,14 @@ export class AnimalController {
         requesterId: req.user.id,
         role: req.user.role,
       });
-      res.status(200).json(animalWithRaceMetaSchema.array().parse(pets));
+      res.status(200).json(animalMetaSchema.array().parse(pets));
     } catch (err) {
       next(err);
     }
   }
 
   async getVaccines(
-    req: RequestWithParams<{ id: string }>,
+    req: RequestWithParams<{ id: AnimalId }>,
     res: Response,
     next: NextFunction,
   ) {
@@ -118,6 +129,115 @@ export class AnimalController {
       const vaccines = await this.service.getVaccinesByAnimal(req.params.id);
 
       res.status(200).json(vaccineMetaSchema.array().parse(vaccines));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByClinic(
+    req: RequestWithParams<{ id: ClinicId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const paginations = paginationQuerySchema.parse(req.query);
+
+      const animals = await this.service.getAnimalByClinic(
+        req.user.role,
+        req.user.id,
+        req.params.id,
+        paginations,
+      );
+
+      res.status(200).json(animalMetaSchema.array().parse(animals));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async uploadPhoto(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { mimeType } = req.body;
+      const result = await this.service.uploadPhoto({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+        mimeType,
+      });
+      res.json(uploadResponseSchema.parse(result));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async confirmPhoto(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const { fileId } = z.object({ fileId: fileIdSchema }).parse(req.body);
+      const animal = await this.service.confirmPhotoUpload({
+        animalId: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+        fileId,
+      });
+      res.json(animalWithRaceMetaSchema.parse(animal));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getEmergencyCard(
+    req: RequestWithParams<{ token: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const card = await this.service.getEmergencyCard(req.params.token);
+      res.status(200).json(animalEmergencyCardSchema.parse(card));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getEmergencyQr(
+    req: RequestWithParams<{ id: string }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const qr = await this.service.getEmergencyQr({
+        id: req.params.id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
+      res.status(200).json(animalEmergencyQrSchema.parse(qr));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getByVeterinarian(
+    req: RequestWithParams<{ id: UserId }>,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const paginations = paginationQuerySchema.parse(req.query);
+
+      const animals = await this.service.getAnimalByVeterinarian(
+        req.params.id ?? req.user.id,
+        req.user.role,
+        req.user.id,
+        paginations,
+      );
+      res.status(200).json(animalMetaSchema.array().parse(animals));
     } catch (err) {
       next(err);
     }

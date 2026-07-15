@@ -22,9 +22,10 @@ const menuItems: NavNode[] = [
     icon: Calendar,
   },
   {
-    index: 'SECRETARY.Messagerie',
-    label: 'Messagerie',
-    icon: ChatDotRound,
+    index: 'SECRETARY.Animals.List',
+    label: 'Animaux suivis',
+    query: { role: 'VETERINARIAN' },
+    icon: Calendar,
   },
   {
     index: 'SECRETARY.Avaibality',
@@ -35,6 +36,11 @@ const menuItems: NavNode[] = [
     index: 'SECRETARY.Orders',
     label: 'Retrait commandes',
     icon: Box,
+  },
+  {
+    index: 'SECRETARY.Messagerie',
+    label: 'Messagerie',
+    icon: ChatDotRound,
   },
   {
     index: 'SECRETARY.Profil',

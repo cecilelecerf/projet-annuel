@@ -39,9 +39,9 @@ export class VeterinarianClinicRepository {
     });
   }
 
-  async findByVeterinarianAndClinic(veterinarianId: string, clinicId: string) {
-    return this.prisma.veterinarianClinic.findFirst({
-      where: { veterinarianId, clinicId },
+  async findByKeys(veterinarianId: string, clinicId: string) {
+    return this.prisma.veterinarianClinic.findUnique({
+      where: { veterinarianId_clinicId: { veterinarianId, clinicId } },
       include: veterinarianClinicInclude,
     });
   }

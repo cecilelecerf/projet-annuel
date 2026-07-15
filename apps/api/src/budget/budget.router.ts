@@ -6,19 +6,17 @@ import { budgetController } from "@api/instances";
 const budgetRouter: Router = Router();
 const controller = budgetController;
 
-const BUDGET_MANAGER_ROLES = ["REFERENT", "DIRECTOR"] as const;
-
 budgetRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware([...BUDGET_MANAGER_ROLES]),
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
   controller.getSummary.bind(controller) as RequestHandler,
 );
 
 budgetRouter.post(
   "/credit",
   authMiddleware,
-  roleMiddleware([...BUDGET_MANAGER_ROLES]),
+  roleMiddleware(["DIRECTOR"]),
   controller.credit.bind(controller) as RequestHandler,
 );
 

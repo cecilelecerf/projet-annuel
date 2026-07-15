@@ -7,6 +7,7 @@ import { MEETING_COLORS } from '@/utils/meetingColor.ts'
 import dayjs from 'dayjs'
 import { geocodeAddress } from '../utils.ts'
 import { meetingApi } from '../../api/meeting.api.ts'
+import { formatAddress } from '@/utils/clinic.utils'
 
 const props = defineProps<{
   animal: BookingAnimal
@@ -205,7 +206,7 @@ if (!filters.value.address && !filters.value.lat) {
             <div class="clinic-card-info">
               <span class="clinic-name">{{ clinic.name }}</span>
               <span class="clinic-address">
-                <el-icon><Location /></el-icon>{{ clinic.address }}
+                <el-icon><Location /></el-icon>{{ formatAddress(clinic) }}
               </span>
             </div>
             <div class="clinic-meta">

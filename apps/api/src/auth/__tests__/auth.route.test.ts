@@ -16,7 +16,7 @@ describe("POST /api/auth/register", () => {
   it("201 — crée un utilisateur", async () => {
     const res = await request(app).post("/api/auth/register").send({
       email: "nouveau@test.com",
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Alice",
       lastname: "Dupont",
     });
@@ -27,14 +27,14 @@ describe("POST /api/auth/register", () => {
       where: { email: "nouveau@test.com" },
     });
     expect(user).not.toBeNull();
-    expect(user!.password).not.toBe("Password1!");
+    expect(user!.password).not.toBe("Password1234!");
   });
 
   it("409 — email déjà utilisé", async () => {
     // Crée l'utilisateur une première fois
     await request(app).post("/api/auth/register").send({
       email: "nouveau@test.com",
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Alice",
       lastname: "Dupont",
     });
@@ -42,7 +42,7 @@ describe("POST /api/auth/register", () => {
     // Retente avec le même email
     const res = await request(app).post("/api/auth/register").send({
       email: "nouveau@test.com",
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Alice",
       lastname: "Dupont",
     });
@@ -87,7 +87,7 @@ describe("POST /api/auth/login", () => {
   it("401 — utilisateur introuvable", async () => {
     const res = await request(app).post("/api/auth/login").send({
       email: "ghost@test.com",
-      password: "Password1!",
+      password: "Password1234!",
     });
 
     expect(res.status).toBe(401);
@@ -151,12 +151,15 @@ describe("POST /api/auth/register-director", () => {
 
   const validPayload = {
     email: directorEmail,
-    password: "Password1!",
+    password: "Password1234!",
     firstname: "Jean",
     lastname: "Directeur",
     clinic: {
       name: "Clinique Vétérinaire du Centre",
-      address: "12 rue de la Paix, 75001 Paris",
+      street: "12 rue de la Paix",
+      postalCode: "75001",
+      city: "Paris",
+      country: "FR",
       siret,
       phone: "0102030405",
       website: "https://clinique-centre.fr",
@@ -201,7 +204,7 @@ describe("POST /api/auth/register-director", () => {
   it("400 — clinic manquante", async () => {
     const res = await request(app).post("/api/auth/register-director").send({
       email: directorEmail,
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Jean",
       lastname: "Directeur",
     });
@@ -248,12 +251,13 @@ describe("POST /api/auth/register-director", () => {
     await getPrisma().clinic.create({
       data: {
         name: "Clinique existante",
-        address: "1 rue Test",
+        street: "1 rue Test",
+        postalCode: "75001",
+        city: "Paris",
         siret,
         phone: "0102030405",
         website: "https://existant.fr",
         description: null,
-        openingHours: "09:00",
         lat: 42,
         lng: 2,
         directorId: existingDirector.id,
@@ -353,14 +357,14 @@ describe("Suppression de compte", () => {
 
     await request(app).post("/api/auth/register").send({
       email: deleteEmail,
-      password: "Password1!",
+      password: "Password1234!",
       firstname: "Test",
       lastname: "Suppression",
     });
 
     const login = await request(app).post("/api/auth/login").send({
       email: deleteEmail,
-      password: "Password1!",
+      password: "Password1234!",
     });
     accessToken = login.body.accessToken;
   });
@@ -438,5 +442,261 @@ describe("Suppression de compte", () => {
 
       expect(res.status).toBe(401);
     });
+  });
+});
+
+// -------------------------------------------------------------------
+describe("GET /api/auth/login — clinicId selon le rôle", () => {
+  it("SECRETARY — clinicId résolu depuis secretaryProfile", async () => {
+    const res = await request(app).post("/api/auth/login").send({
+      email: "secretaire@gmail.com",
+      password: "Password123!",
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user.clinicId).toBeTruthy();
+  });
+
+  it("DIRECTOR — clinicId résolu depuis directorClinicProfile", async () => {
+    const res = await request(app).post("/api/auth/login").send({
+      email: "directeur@gmail.com",
+      password: "Password123!",
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user.clinicId).toBeTruthy();
+  });
+
+  it("REFERENT — clinicId résolu depuis referentClinicProfile", async () => {
+    const res = await request(app).post("/api/auth/login").send({
+      email: "referent@gmail.com",
+      password: "Password123!",
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user.clinicId).toBeTruthy();
+  });
+
+  it("CLIENT — clinicId null (aucun profil clinique)", async () => {
+    const res = await request(app).post("/api/auth/login").send({
+      email: "client@gmail.com",
+      password: "Password123!",
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.user.clinicId).toBeNull();
+  });
+});
+
+// -------------------------------------------------------------------
+describe("POST /api/auth/login/verify-2fa", () => {
+  it("400 — body invalide", async () => {
+    const res = await request(app)
+      .post("/api/auth/login/verify-2fa")
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it("401 — code invalide (aucun OTP en base en environnement de test)", async () => {
+    const res = await request(app)
+      .post("/api/auth/login/verify-2fa")
+      .send({ email: "veto@gmail.com", code: "000000" });
+    expect(res.status).toBe(401);
+  });
+});
+
+// -------------------------------------------------------------------
+describe("POST /api/auth/forgot-password", () => {
+  const email = "veto@gmail.com";
+
+  afterEach(async () => {
+    await getPrisma().otpCode.deleteMany({
+      where: { user: { email }, action: "RESET_PASSWORD" },
+    });
+  });
+
+  it("200 — utilisateur existant : crée un OTP", async () => {
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("message");
+
+    const otp = await getPrisma().otpCode.findFirst({
+      where: { user: { email }, action: "RESET_PASSWORD" },
+    });
+    expect(otp).not.toBeNull();
+  });
+
+  it("200 — utilisateur inconnu : même réponse générique, aucun OTP créé", async () => {
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "inconnu-forgot@test.com" });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("message");
+  });
+
+  it("400 — email invalide", async () => {
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: "not-an-email" });
+    expect(res.status).toBe(400);
+  });
+});
+
+// -------------------------------------------------------------------
+describe("POST /api/auth/reset-password", () => {
+  const email = "reset-pw@test.com";
+  const originalPassword = "Password123!";
+  const newPassword = "NewPassword1!";
+
+  beforeEach(async () => {
+    await getPrisma().otpCode.deleteMany({ where: { user: { email } } });
+    await getPrisma().refreshToken.deleteMany({
+      where: { user: { email } },
+    });
+    await getPrisma().user.deleteMany({ where: { email } });
+
+    await request(app).post("/api/auth/register").send({
+      email,
+      password: originalPassword,
+      firstname: "Reset",
+      lastname: "Password",
+    });
+  });
+
+  it("400 — body invalide", async () => {
+    const res = await request(app)
+      .post("/api/auth/reset-password")
+      .send({ email });
+    expect(res.status).toBe(400);
+  });
+
+  it("401 — email inconnu", async () => {
+    const res = await request(app).post("/api/auth/reset-password").send({
+      email: "inconnu-reset@test.com",
+      code: "123456",
+      newPassword,
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("401 — code invalide", async () => {
+    const res = await request(app).post("/api/auth/reset-password").send({
+      email,
+      code: "000000",
+      newPassword,
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("204 — réinitialise le mot de passe avec un code valide, puis permet la connexion avec le nouveau mot de passe", async () => {
+    await request(app).post("/api/auth/forgot-password").send({ email });
+    const otp = await getPrisma().otpCode.findFirst({
+      where: { user: { email }, action: "RESET_PASSWORD" },
+    });
+
+    const res = await request(app).post("/api/auth/reset-password").send({
+      email,
+      code: otp!.code,
+      newPassword,
+    });
+    expect(res.status).toBe(204);
+
+    const loginOld = await request(app).post("/api/auth/login").send({
+      email,
+      password: originalPassword,
+    });
+    expect(loginOld.status).toBe(401);
+
+    const loginNew = await request(app).post("/api/auth/login").send({
+      email,
+      password: newPassword,
+    });
+    expect(loginNew.status).toBe(200);
+  });
+});
+
+// -------------------------------------------------------------------
+describe("PATCH /api/auth/me", () => {
+  const email = "update-account@test.com";
+  const password = "Password123!";
+  let accessToken: string;
+
+  beforeEach(async () => {
+    await getPrisma().refreshToken.deleteMany({ where: { user: { email } } });
+    await getPrisma().user.deleteMany({ where: { email } });
+
+    await request(app).post("/api/auth/register").send({
+      email,
+      password,
+      firstname: "Update",
+      lastname: "Account",
+    });
+
+    const login = await request(app).post("/api/auth/login").send({
+      email,
+      password,
+    });
+    accessToken = login.body.accessToken;
+  });
+
+  it("401 — sans token", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .send({ firstname: "Nouveau" });
+    expect(res.status).toBe(401);
+  });
+
+  it("200 — met à jour le prénom et le nom", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ firstname: "Nouveau", lastname: "Nom" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.firstname).toBe("Nouveau");
+    expect(res.body.lastname).toBe("Nom");
+    expect(res.body).not.toHaveProperty("password");
+  });
+
+  it("409 — email déjà utilisé par un autre compte", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ email: "veto@gmail.com" });
+
+    expect(res.status).toBe(409);
+  });
+
+  it("400 — nouveau mot de passe sans mot de passe actuel", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ newPassword: "AutrePassword1!" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("401 — mot de passe actuel incorrect", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ currentPassword: "MauvaisMdp1!", newPassword: "AutrePassword1!" });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("200 — change le mot de passe avec le mot de passe actuel correct", async () => {
+    const res = await request(app)
+      .patch("/api/auth/me")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ currentPassword: password, newPassword: "AutrePassword1!" });
+
+    expect(res.status).toBe(200);
+
+    const login = await request(app).post("/api/auth/login").send({
+      email,
+      password: "AutrePassword1!",
+    });
+    expect(login.status).toBe(200);
   });
 });

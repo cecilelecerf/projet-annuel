@@ -5,7 +5,7 @@ import { prisma } from "@api/lib/prisma";
 import dayjs from "dayjs";
 import { ClinicRepository } from "@api/clinics/clinic.repository";
 import { haversineKm } from "@api/utils/distance";
-import { MeetingService } from "@api/meetings";
+import { AvailabilityService } from "@api/meetings";
 import {
   Availability,
   MeetingBase,
@@ -19,7 +19,7 @@ export class BookingService {
   constructor(
     private repository: BookingRepository,
     private clinicRepository: ClinicRepository,
-    private meetingService: MeetingService,
+    private availabilityService: AvailabilityService,
   ) {}
   // ── Recherche de cliniques ─────────────────────────────────────────────────
   async searchClinics(query: BookingSearchQuery) {
@@ -41,11 +41,12 @@ export class BookingService {
       candidates.map(async (clinic) => {
         const vetsWithAvailability = await Promise.all(
           clinic.veterinarianClinics.map(async (vc) => {
-            const availabilities = await this.meetingService.getAvailabilities({
-              userId: vc.veterinarian.user.id,
-              start: startOfDay,
-              end: endOfDay,
-            });
+            const availabilities =
+              await this.availabilityService.getAvailabilities({
+                userId: vc.veterinarian.user.id,
+                start: startOfDay,
+                end: endOfDay,
+              });
             return availabilities.length > 0 ? vc : null;
           }),
         );
@@ -82,7 +83,10 @@ export class BookingService {
         return {
           id: clinic.id,
           name: clinic.name,
-          address: clinic.address,
+          street: clinic.street,
+          postalCode: clinic.postalCode,
+          city: clinic.city,
+          country: clinic.country,
           phone: clinic.phone,
           description: clinic.description,
           openingHours: clinic.openingHours,
@@ -204,7 +208,10 @@ export class BookingService {
       clinic: {
         id: am.veterinarianClinic?.clinic.id,
         name: am.veterinarianClinic?.clinic.name,
-        address: am.veterinarianClinic?.clinic.address,
+        street: am.veterinarianClinic?.clinic.street,
+        postalCode: am.veterinarianClinic?.clinic.postalCode,
+        city: am.veterinarianClinic?.clinic.city,
+        country: am.veterinarianClinic?.clinic.country,
       },
       vet: {
         id: am.veterinarianClinic?.veterinarian.id,

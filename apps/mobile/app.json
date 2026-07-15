@@ -39,6 +39,20 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Autorisez l'accès à vos photos pour choisir une photo de profil."
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Autorisez l'accès à votre position pour trouver les cliniques proches de vous."
+        }
       ]
     ],
     "experiments": {

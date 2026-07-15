@@ -7,18 +7,27 @@ import type {
 } from "@armali/schemas";
 import { ConversationRepository } from "./conversation.repository";
 import { MessageRepository } from "./message.repository";
-import { ContactsRepository } from "./contacts.repository";
+import { UserRepository } from "@api/users/user.repository";
+import { VeterinarianProfileRepository } from "@api/veterinarians/veterinarian-profile.repository";
 import { withAvatarUrl, withUsersAvatar } from "@api/users/user.utils";
 
 export class MessagingService {
   constructor(
     private repository: MessageRepository,
     private conversationRepository: ConversationRepository,
-    private contactsRepository: ContactsRepository,
+    private userRepository: UserRepository,
+    private veterinarianProfileRepository: VeterinarianProfileRepository,
   ) {}
 
+  private async resolveActorClinicIds(actor: JwtPayload): Promise<string[]> {
+    if (actor.role === "VETERINARIAN") {
+      return this.veterinarianProfileRepository.findClinicIds(actor.id);
+    }
+    return actor.clinicId ? [actor.clinicId] : [];
+  }
+
   private async resolveClinicSets(userIds: string[]) {
-    const users = await this.contactsRepository.findUsersWithClinicIds(userIds);
+    const users = await this.userRepository.findWithClinicIds(userIds);
     if (users.length !== userIds.length) throw new NotFoundError("Utilisateur");
     return users;
   }
@@ -26,19 +35,28 @@ export class MessagingService {
   private async assertMembersEligible({
     scope,
     clinicId,
+    actorClinicIds,
     memberIds,
   }: {
     scope: ConversationScope;
     clinicId: string | null;
+    actorClinicIds: string[];
     memberIds: string[];
   }) {
     const members = await this.resolveClinicSets(memberIds);
+
     const eligible =
       scope === "DIRECTOR_NETWORK"
         ? members.every((m) => m.role === "DIRECTOR")
-        : members.every(
-            (m) => clinicId !== null && m.clinicIds.includes(clinicId),
-          );
+        : scope === "VETERINARIAN_NETWORK"
+          ? members.every(
+              (m) =>
+                m.role === "VETERINARIAN" &&
+                m.clinicIds.some((id) => actorClinicIds.includes(id)),
+            )
+          : members.every(
+              (m) => clinicId !== null && m.clinicIds.includes(clinicId),
+            );
     if (!eligible) throw new ForbiddenError();
   }
 
@@ -72,14 +90,27 @@ export class MessagingService {
     return conversation;
   }
 
+  private formatConversation<
+    T extends { conversationMembers: Parameters<typeof withUsersAvatar>[0] },
+  >(conversation: T) {
+    return {
+      ...conversation,
+      conversationMembers: withUsersAvatar(conversation.conversationMembers),
+    };
+  }
+
+  // ── Contacts disponibles pour démarrer une conversation ─────────────────────
   async getContacts(actor: JwtPayload) {
-    if (!actor.clinicId) throw new ForbiddenError();
-    const clinic = await this.contactsRepository.listClinicColleagues(
-      actor.clinicId,
-      actor.id,
-    );
+    const clinicIds = await this.resolveActorClinicIds(actor);
+    if (clinicIds.length === 0) throw new ForbiddenError();
+
+    const clinic = (
+      await this.userRepository.findClinicColleagues(clinicIds, actor.id)
+    ).map(withAvatarUrl);
     if (actor.role !== "DIRECTOR") return { clinic };
-    const directors = await this.contactsRepository.listDirectors(actor.id);
+    const directors = (await this.userRepository.findDirectors(actor.id)).map(
+      withAvatarUrl,
+    );
     return { clinic, directors };
   }
 
@@ -92,6 +123,7 @@ export class MessagingService {
         );
         const unreadCount = await this.repository.countUnread(
           conversation.id,
+          userId,
           me?.lastReadAt ?? null,
         );
         const { messages, ...rest } = conversation;
@@ -123,52 +155,80 @@ export class MessagingService {
         actor.id,
         data.userId,
       );
-      if (existing) return existing;
+      if (existing) return this.formatConversation(existing);
 
-      const [target] = await this.contactsRepository.findUsersWithClinicIds([
+      const [target] = await this.userRepository.findWithClinicIds([
         data.userId,
       ]);
       if (!target) throw new NotFoundError("Utilisateur");
 
+      const actorClinicIds = await this.resolveActorClinicIds(actor);
+      const sharedClinicId =
+        actorClinicIds.find((id) => target.clinicIds.includes(id)) ?? null;
+
       let scope: ConversationScope;
       let clinicId: string | null = null;
-      if (actor.clinicId && target.clinicIds.includes(actor.clinicId)) {
+      if (sharedClinicId) {
         scope = "CLINIC";
-        clinicId = actor.clinicId;
+        clinicId = sharedClinicId;
       } else if (actor.role === "DIRECTOR" && target.role === "DIRECTOR") {
         scope = "DIRECTOR_NETWORK";
+      } else if (
+        actor.role === "VETERINARIAN" &&
+        target.role === "VETERINARIAN"
+      ) {
+        scope = "VETERINARIAN_NETWORK";
       } else {
         throw new ForbiddenError();
       }
 
-      return this.conversationRepository.createDirect({
-        createdById: actor.id,
-        otherUserId: data.userId,
-        scope,
-        clinicId,
-      });
+      return this.formatConversation(
+        await this.conversationRepository.createDirect({
+          createdById: actor.id,
+          otherUserId: data.userId,
+          scope,
+          clinicId,
+        }),
+      );
     }
 
+    // ── Groupe ──────────────────────────────────────────────────────────────
     if (data.scope === "DIRECTOR_NETWORK" && actor.role !== "DIRECTOR") {
       throw new ForbiddenError();
     }
-    if (data.scope === "CLINIC" && !actor.clinicId) throw new ForbiddenError();
+    if (
+      data.scope === "VETERINARIAN_NETWORK" &&
+      actor.role !== "VETERINARIAN"
+    ) {
+      throw new ForbiddenError();
+    }
 
-    const clinicId =
-      data.scope === "CLINIC" ? (actor.clinicId as string) : null;
+    const actorClinicIds = await this.resolveActorClinicIds(actor);
+
+    let clinicId: string | null = null;
+    if (data.scope === "CLINIC") {
+      if (!data.clinicId || !actorClinicIds.includes(data.clinicId)) {
+        throw new ForbiddenError();
+      }
+      clinicId = data.clinicId;
+    }
+
     await this.assertMembersEligible({
       scope: data.scope,
       clinicId,
+      actorClinicIds,
       memberIds: data.memberIds,
     });
 
-    return this.conversationRepository.createGroup({
-      createdById: actor.id,
-      name: data.name,
-      scope: data.scope,
-      clinicId,
-      memberIds: data.memberIds,
-    });
+    return this.formatConversation(
+      await this.conversationRepository.createGroup({
+        createdById: actor.id,
+        name: data.name,
+        scope: data.scope,
+        clinicId,
+        memberIds: data.memberIds,
+      }),
+    );
   }
 
   async getConversation(
@@ -209,6 +269,11 @@ export class MessagingService {
       conversationId,
       message.createdAt,
     );
+    await this.conversationRepository.updateLastReadAt(
+      conversationId,
+      actor.id,
+      message.createdAt,
+    );
     return message;
   }
 
@@ -232,6 +297,7 @@ export class MessagingService {
   async addMembers(
     conversationId: string,
     actorId: string,
+    actorRole: JwtPayload["role"],
     memberIds: string[],
   ) {
     const conversation = await this.assertIsAdmin(conversationId, actorId);
@@ -240,12 +306,21 @@ export class MessagingService {
         "Impossible d'ajouter des membres à une discussion privée",
       );
     }
+    const actorClinicIds = await this.resolveActorClinicIds({
+      id: actorId,
+      role: actorRole,
+    } as JwtPayload);
     await this.assertMembersEligible({
       scope: conversation.scope,
       clinicId: conversation.clinicId,
+      actorClinicIds,
       memberIds,
     });
-    return this.conversationRepository.addMembers(conversationId, memberIds);
+    const updated = await this.conversationRepository.addMembers(
+      conversationId,
+      memberIds,
+    );
+    return updated ? this.formatConversation(updated) : null;
   }
 
   async removeMember(

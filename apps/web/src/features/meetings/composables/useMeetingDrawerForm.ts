@@ -14,7 +14,7 @@ import {
   staffRoleSchema,
   type StaffRole,
 } from '@armali/schemas'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore, type UserStore } from '@/stores/authStore'
 import { animalApi } from '@/features/animals/api'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { toUserId } from '@/features/users/utils'
@@ -23,12 +23,15 @@ import { meetingApi } from '../api/meeting.api'
 import { usersApi } from '@/features/users/user.api'
 import { http } from '@/lib/api'
 import { staffApi } from '@/features/staffs/staff.api'
+import { trackEvent } from '@/lib/matomo'
 
 export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'close') => void) {
   const route = useRoute()
+
   const id = route.params.id as UserId | undefined
   const formErrorStore = useFormErrorStore()
   const { user } = useAuthStore()
+
   const role = user?.role
 
   const veterinarianPromise = async () => {
@@ -36,6 +39,13 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
     if (role === 'VETERINARIAN')
       return http.get('/auth/me').then((data) => baseUserSchema.parse(data))
     return Promise.resolve(null)
+  }
+
+  function getInitialClinicId(user: UserStore | null): ClinicId | undefined {
+    if (!user) return undefined
+    if (user.role === 'VETERINARIAN') return undefined
+    if (user.role === 'CLIENT' || user.role === 'ADMIN') return undefined // n'ont pas de clinique
+    return user.clinicId // ici TS sait que c'est StaffStore
   }
   let veterinarian: BaseUser | null = null
 
@@ -49,9 +59,7 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
   const type = ref<Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>>('INTERNAL')
   const title = ref('')
   const location = ref('')
-  const clinicId = ref<ClinicId | undefined>(
-    user?.role === 'VETERINARIAN' ? undefined : user?.clinicId,
-  )
+  const clinicId = ref<ClinicId | undefined>(getInitialClinicId(user))
   const myClinics = ref<Clinic[]>([])
   const participants = ref<StaffMember[]>([])
   const selectedClient = ref<User | null>(null)
@@ -121,19 +129,20 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
   async function handleSubmit() {
     formErrorStore.clear()
     try {
+      if (!user) return
       if (type.value === 'INTERNAL') {
-        if (!user?.clinicId) return
         const participantIds: UserId[] = [
           ...participants.value.map(({ id }) => toUserId(id)),
           veterinarian ? toUserId(veterinarian.id) : toUserId(user.id),
         ]
+        if (!clinicId.value) return
         await meetingApi.internal.new({
           title: title.value,
           userIds: participantIds,
           date: date.value,
           startTime: new Date(`1970-01-01T${start.value}`),
           endTime: new Date(`1970-01-01T${end.value}`),
-          clinicId: user?.clinicId,
+          clinicId: clinicId.value,
         })
       } else {
         if (!selectedVet.value || !selectedClient.value || !selectAnimal.value || !clinicId.value)
@@ -147,8 +156,10 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
           clinicId: clinicId.value,
         })
       }
+      trackEvent('meeting', 'create_success', type.value)
       emit('close')
     } catch (err) {
+      trackEvent('meeting', 'create_failure', type.value)
       formErrorStore.handle(err)
     }
   }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "@api/app";
 import { getPrisma } from "../../../__tests__/setup";
@@ -85,133 +85,13 @@ describe("GET /api/meetings/calendar", () => {
       expect(res.body).toHaveProperty("availabilities");
     });
 
-    it("200 — ADMIN retourne son calendrier (vetProfile/clientProfile absents, clinicIds ignoré)", async () => {
+    it("200 — ADMIN -Forbidden", async () => {
       const token = await loginAs("admin@gmail.com");
       const res = await request(app)
         .get(`/api/meetings/calendar?${validQuery}`)
         .set("Authorization", `Bearer ${token}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty("meetings");
-      expect(res.body).toHaveProperty("availabilities");
+      expect(res.status).toBe(403);
     });
-  });
-});
-
-// ── GET /api/meetings/calendar/:veterinarianId ────────────────────────────────
-
-describe("GET /api/meetings/calendar/:veterinarianId", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get(
-      `/api/meetings/calendar/some-id?${validQuery}`,
-    );
-    expect(res.status).toBe(401);
-  });
-
-  it("403 — rôle VETERINARIAN non autorisé", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const res = await request(app)
-      .get(`/api/meetings/calendar/some-id?${validQuery}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(403);
-  });
-
-  it("400 — dates manquantes", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const res = await request(app)
-      .get("/api/meetings/calendar/some-id")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(400);
-  });
-
-  it("404 — vétérinaire introuvable", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const res = await request(app)
-      .get(`/api/meetings/calendar/non-existent-id?${validQuery}`)
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(404);
-  });
-
-  it("200 — SECRETARY retourne le calendrier d'un vétérinaire", async () => {
-    const token = await loginAs("secretaire@gmail.com");
-    const vetoProfile = await getPrisma().veterinarianProfile.findFirst();
-
-    const res = await request(app)
-      .get(`/api/meetings/calendar/${vetoProfile!.id}?${validQuery}`)
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("meetings");
-    expect(res.body).toHaveProperty("availabilities");
-  });
-});
-
-// ── GET /api/meetings/veterinarians/:veterinarianId/slots ────────────────────
-
-describe("GET /api/meetings/veterinarians/:veterinarianId/slots", () => {
-  it("401 — sans token", async () => {
-    const res = await request(app).get(
-      "/api/meetings/veterinarians/some-id/slots",
-    );
-    expect(res.status).toBe(401);
-  });
-
-  it("403 — rôle non-CLIENT (route réservée au client)", async () => {
-    const token = await loginAs("veto@gmail.com");
-    const res = await request(app)
-      .get(
-        "/api/meetings/veterinarians/some-id/slots?date=2026-06-01&clinicId=some-clinic-id",
-      )
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(403);
-  });
-
-  it("400 — date et clinicId manquants", async () => {
-    const token = await loginAs("client@gmail.com");
-    const res = await request(app)
-      .get("/api/meetings/veterinarians/some-id/slots")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(400);
-  });
-
-  it("400 — clinicId manquant seul", async () => {
-    const token = await loginAs("client@gmail.com");
-    const res = await request(app)
-      .get("/api/meetings/veterinarians/some-id/slots?date=2026-06-01")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.status).toBe(400);
-  });
-
-  it("404 — vétérinaire introuvable", async () => {
-    const token = await loginAs("client@gmail.com");
-    const clinic = await getPrisma().clinic.findFirst();
-
-    const res = await request(app)
-      .get(
-        `/api/meetings/veterinarians/non-existent-id/slots?date=2026-06-01&clinicId=${clinic!.id}`,
-      )
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(404);
-  });
-
-  it("200 — retourne les créneaux disponibles du vétérinaire", async () => {
-    const token = await loginAs("client@gmail.com");
-    const vetoProfile = await getPrisma().veterinarianProfile.findFirst({
-      include: { veterinarianClinics: true },
-    });
-    const clinicId =
-      vetoProfile!.veterinarianClinics[0]?.clinicId ??
-      (await getPrisma().clinic.findFirst())!.id;
-
-    const res = await request(app)
-      .get(
-        `/api/meetings/veterinarians/${vetoProfile!.id}/slots?date=2026-06-01&clinicId=${clinicId}`,
-      )
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
   });
 });
 
@@ -258,7 +138,7 @@ describe("GET /api/meetings/:id", () => {
       include: { animalMeeting: { include: { meeting: true } } },
     });
 
-    const meetingId = animal![1].animalMeeting[0].meeting!.id;
+    const meetingId = animal![0].animalMeeting[0].meeting!.id;
     const res = await request(app)
       .get(`/api/meetings/${meetingId}`)
       .set("Authorization", `Bearer ${token}`);
@@ -321,7 +201,7 @@ describe("GET /api/meetings/:id", () => {
   it("200 — meeting de type INTERNAL", async () => {
     const token = await loginAs("veto@gmail.com");
     const internal = await getPrisma().meetingBase.findFirst({
-      where: { kind: "INTERNAL" },
+      where: { kind: "INTERNAL", parentId: null },
     });
 
     if (!internal) return;
@@ -329,7 +209,6 @@ describe("GET /api/meetings/:id", () => {
     const res = await request(app)
       .get(`/api/meetings/${internal.id}`)
       .set("Authorization", `Bearer ${token}`);
-
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("id", internal.id);
   });

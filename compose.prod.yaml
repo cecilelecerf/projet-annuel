@@ -322,8 +322,10 @@ services:
       - minio_root_user
       - minio_root_password
     networks:
-      - backend
-      - frontend
+      backend:
+        aliases:
+          - miniostorage
+      frontend: {}
     deploy:
       replicas: 1
       placement:
@@ -359,6 +361,99 @@ services:
     networks:
       - backend
 
+  backup:
+    image: ${DOCKER_HUB_USERNAME}/pa-backup:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - minio_root_user
+      - minio_root_password
+      - ovh_s3_access_key
+      - ovh_s3_secret_key
+      - aws_dr_access_key_id
+      - aws_dr_secret_access_key
+    environment:
+      DB_HOST: cecoule_postgres
+      MINIO_ENDPOINT: http://cecoule_minio:9000
+  matomo-db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE_FILE: /run/secrets/matomo_db_name
+      MARIADB_USER_FILE: /run/secrets/matomo_db_user
+      MARIADB_PASSWORD_FILE: /run/secrets/matomo_db_password
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/matomo_db_root_password
+    volumes:
+      - matomo_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    secrets:
+      - matomo_db_name
+      - matomo_db_user
+      - matomo_db_password
+      - matomo_db_root_password
+    networks:
+      - backend
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+
+  matomo:
+    image: matomo:latest
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_DBNAME_FILE: /run/secrets/matomo_db_name
+      MATOMO_DATABASE_USERNAME_FILE: /run/secrets/matomo_db_user
+      MATOMO_DATABASE_PASSWORD_FILE: /run/secrets/matomo_db_password
+    volumes:
+      - matomo_data:/var/www/html
+    secrets:
+      - matomo_db_name
+      - matomo_db_user
+      - matomo_db_password
+    networks:
+      - backend
+      - frontend
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=cecoule_frontend"
+        - "traefik.http.routers.matomo.rule=Host(`matomo.armali.online`)"
+        - "traefik.http.routers.matomo.entrypoints=websecure"
+        - "traefik.http.routers.matomo.tls.certresolver=myresolver"
+        - "traefik.http.services.matomo.loadbalancer.server.port=80"
+
 volumes:
   prometheus-data:
     driver: local
@@ -369,6 +464,10 @@ volumes:
   grafana-data:
     driver: local
   minio_data:
+    driver: local
+  matomo_data:
+    driver: local
+  matomo_db_data:
     driver: local
 
 networks:
@@ -409,6 +508,21 @@ secrets:
   stripe_webhook_secret_v2:
     external: true
   resend_api_key:
+    external: true
+  ovh_s3_access_key:
+    external: true
+  ovh_s3_secret_key:
+    external: true
+  aws_dr_access_key_id:
+    external: true
+  aws_dr_secret_access_key:
+  matomo_db_user:
+    external: true
+  matomo_db_password:
+    external: true
+  matomo_db_name:
+    external: true
+  matomo_db_root_password:
     external: true
 
 configs:

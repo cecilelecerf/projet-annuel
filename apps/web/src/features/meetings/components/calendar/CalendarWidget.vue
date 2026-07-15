@@ -6,6 +6,7 @@ import { computed, ref } from 'vue'
 import EventPopup from '../EventPopup.vue'
 import type { UserId } from '@armali/schemas'
 import BaseComponent from '../NewEventDrawer/BaseComponent.vue'
+import { meetingApi } from '../../api/meeting.api.ts'
 const { userId } = defineProps<{
   userId?: UserId
 }>()
@@ -16,7 +17,8 @@ const {
   selectedMeeting,
   availableClinics,
   selectedClinicIds,
-} = useCalendar(userId)
+  refetchEvents,
+} = useCalendar()
 const newEventDate = ref<Date | null>(null)
 
 const isDateDrawerOpen = computed({
@@ -29,12 +31,21 @@ const isDateDrawerOpen = computed({
 const onNewEventDrawerClose = () => {
   openNewEvent.value = false
   newEventDate.value = null
+  refetchEvents()
+}
+
+const onMeetingPopupClose = () => {
+  selectedMeeting.value = null
+  refetchEvents()
+}
+const onDowload = async () => {
+  await meetingApi.download()
 }
 </script>
 
 <template>
   <div class="calendar-container">
-    <div v-if="availableClinics.length > 1" class="clinic-filter">
+    <div class="clinic-filter">
       <el-select
         v-model="selectedClinicIds"
         multiple
@@ -42,9 +53,11 @@ const onNewEventDrawerClose = () => {
         placeholder="Toutes les cliniques"
         clearable
         style="width: 280px"
+        v-if="availableClinics.length > 1"
       >
         <el-option v-for="c in availableClinics" :key="c.id" :label="c.name" :value="c.id" />
       </el-select>
+      <el-button @click="onDowload">Download</el-button>
     </div>
     <FullCalendar :options="calendarOptions"> </FullCalendar>
   </div>
@@ -87,7 +100,8 @@ const onNewEventDrawerClose = () => {
     v-if="selectedMeeting"
     :meetingId="selectedMeeting.id"
     :date="selectedMeeting.date"
-    @close="selectedMeeting = null"
+    @close="onMeetingPopupClose"
+    :kind="selectedMeeting.kind"
   />
 </template>
 
@@ -229,6 +243,13 @@ const onNewEventDrawerClose = () => {
   }
   & .fc-event-title {
     color: var(--el-color-#{meeting-color('internal')}-dark-5);
+  }
+}
+:deep(.kind-AVAILABILITY) {
+  background: color-mix(in srgb, var(--el-color-amber-light) 25%, transparent) !important;
+  backdrop-filter: blur(1px);
+  & .fc-event-title {
+    color: var(--el-color-amber-dark);
   }
 }
 

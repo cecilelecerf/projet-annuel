@@ -9,6 +9,8 @@ const mockUserRepository = vi.hoisted(() => ({
   getAllUsersByRole: vi.fn(),
   getUserById: vi.fn(),
   updateAvatar: vi.fn(),
+  countUserDependencies: vi.fn(),
+  deleteUserById: vi.fn(),
 }));
 
 const mockClinicRepository = vi.hoisted(() => ({
@@ -68,6 +70,7 @@ const mockUser = {
   role: "VETERINARIAN",
   createdAt: new Date(),
   updatedAt: new Date(),
+  avatarUrl: null,
 };
 
 const { UserRepository } = await import("@api/users/user.repository");
@@ -369,5 +372,95 @@ describe("UserService.confirmAvatarUpload", () => {
     });
 
     expect(mockFileService.deleteFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("UserService.getUsersByRoles — restriction ADMIN", () => {
+  it("VETERINARIAN/SECRETARY — FORBIDDEN si la cible inclut ADMIN", async () => {
+    const { ForbiddenError } = await import("@api/errors");
+
+    await expect(
+      userService.getUsersByRoles("veto-1" as UserId, "VETERINARIAN", [
+        "ADMIN",
+      ]),
+    ).rejects.toThrow(ForbiddenError);
+
+    expect(mockUserRepository.getAllUsersByRole).not.toHaveBeenCalled();
+  });
+
+  it("ADMIN — peut cibler ADMIN sans restriction", async () => {
+    mockUserRepository.getAllUsersByRole.mockResolvedValue([mockUser]);
+
+    const result = await userService.getUsersByRoles(
+      ADMIN_ID as UserId,
+      "ADMIN",
+      ["ADMIN"],
+    );
+
+    expect(mockUserRepository.getAllUsersByRole).toHaveBeenCalledWith({
+      roles: ["ADMIN"],
+    });
+    expect(result).toHaveLength(1);
+  });
+});
+
+// ── deleteUser ────────────────────────────────────────────────────────────────
+
+describe("UserService.deleteUser", () => {
+  it("BadRequestError si l'utilisateur tente de supprimer son propre compte", async () => {
+    const { BadRequestError } = await import("@api/errors");
+
+    await expect(
+      userService.deleteUser("user-1" as UserId, "user-1"),
+    ).rejects.toThrow(BadRequestError);
+
+    expect(mockUserRepository.getUserById).not.toHaveBeenCalled();
+  });
+
+  it("NotFoundError si l'utilisateur cible n'existe pas", async () => {
+    const { NotFoundError } = await import("@api/errors");
+    mockUserRepository.getUserById.mockResolvedValue(null);
+
+    await expect(
+      userService.deleteUser(ADMIN_ID as UserId, "unknown"),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("BadRequestError listant les dépendances si l'utilisateur est encore lié à des données", async () => {
+    const { BadRequestError } = await import("@api/errors");
+    mockUserRepository.getUserById.mockResolvedValue(mockUser);
+    mockUserRepository.countUserDependencies = vi.fn().mockResolvedValue({
+      conversationCount: 2,
+      internalMeetingParticipationCount: 0,
+      organizedMeetingCount: 0,
+      healthConditionCount: 0,
+      appointmentCount: 3,
+    });
+
+    await expect(
+      userService.deleteUser(ADMIN_ID as UserId, "user-1"),
+    ).rejects.toThrow(BadRequestError);
+
+    expect(mockUserRepository.deleteUserById).not.toHaveBeenCalled();
+  });
+
+  it("supprime l'utilisateur si aucune dépendance ne bloque", async () => {
+    mockUserRepository.getUserById.mockResolvedValue(mockUser);
+    mockUserRepository.countUserDependencies = vi.fn().mockResolvedValue({
+      conversationCount: 0,
+      internalMeetingParticipationCount: 0,
+      organizedMeetingCount: 0,
+      healthConditionCount: 0,
+      appointmentCount: 0,
+    });
+    mockUserRepository.deleteUserById = vi.fn().mockResolvedValue(undefined);
+
+    const result = await userService.deleteUser(
+      ADMIN_ID as UserId,
+      "user-1",
+    );
+
+    expect(mockUserRepository.deleteUserById).toHaveBeenCalledWith("user-1");
+    expect(result).toEqual({ message: "Compte supprimé" });
   });
 });

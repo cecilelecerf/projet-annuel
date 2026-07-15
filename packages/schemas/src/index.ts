@@ -13,15 +13,18 @@ export * from "./dashboard.schema";
 export * from "./budget.schema";
 export * from "./supplier.schema";
 export * from "./supplier-order.schema";
+export * from "./product-recommendation.schema";
 
 export * from "./requests";
 export * from "./acts";
 export * from "./prescription.schema";
 export * from "./animals/index.schema";
 export * from "./animals/meta.schema";
+export * from "./animals/emergency.schema";
 
 export * from "./staffs";
 
 export * from "./specilities.schema";
 export * from "./file.schema";
 export * from "./upload.schema";
+export * from "./contact.schema";

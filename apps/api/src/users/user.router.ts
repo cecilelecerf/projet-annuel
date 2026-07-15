@@ -14,7 +14,7 @@ const controller = userController;
 userRouter.get(
   "/",
   authMiddleware,
-  roleMiddleware(["ADMIN", "DIRECTOR", "REFERENT"]),
+  roleMiddleware(["ADMIN", "SECRETARY", "VETERINARIAN"]),
   controller.getUsers.bind(controller) as RequestHandler,
 );
 userRouter.post(
@@ -32,7 +32,7 @@ userRouter.get(
   "/:id/animals",
   authMiddleware,
   roleMiddleware(["VETERINARIAN", "SECRETARY", "CLIENT"]),
-  animalController.getByUser.bind(animalController) as RequestHandler,
+  animalController.getAllByUser.bind(animalController) as RequestHandler,
 );
 
 userRouter.get(
@@ -48,6 +48,13 @@ userRouter.get(
   "/:id",
   authMiddleware,
   controller.getUserById.bind(controller) as RequestHandler,
+);
+
+userRouter.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware(["ADMIN"]),
+  controller.deleteUser.bind(controller) as RequestHandler,
 );
 
 export default userRouter;

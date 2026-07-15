@@ -90,7 +90,12 @@ defineExpose({ open })
         <el-input v-model="form.currentPassword" type="password" show-password />
       </el-form-item>
       <el-form-item label="Nouveau mot de passe">
-        <el-input v-model="form.newPassword" type="password" show-password />
+        <el-input
+          v-model="form.newPassword"
+          type="password"
+          show-password
+          placeholder="Min. 12 caractères, avec lettres, chiffres et symboles"
+        />
       </el-form-item>
 
       <el-alert

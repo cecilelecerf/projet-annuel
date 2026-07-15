@@ -6,6 +6,7 @@ import { useFormErrorStore } from '@/stores/formErrorStore'
 import { meetingApi } from '../api/meeting.api'
 import type { MeetingId, MeetingRecurringId, UserId, MeetingKind } from '@armali/schemas'
 import { timeStringToDate } from '../components/utils'
+import { trackEvent } from '@/lib/matomo'
 
 dayjs.extend(utc)
 
@@ -24,33 +25,36 @@ export function useMeetingActions() {
   async function saveSchedule({
     meetingId,
     parentId,
-    date,
+    originDate,
     startTime,
     endTime,
     scope,
     internal,
     onSuccess,
+    targetDate,
   }: {
     meetingId: MeetingId
     parentId: MeetingRecurringId | null
-    date: Date
+    originDate: Date
     startTime: string
     endTime: string
     scope: 'single' | 'all'
     internal?: InternalFields
     onSuccess: (resultId: string) => void
+    targetDate: Date
   }) {
     saving.value = true
     try {
       if (scope === 'all' && parentId) {
         const result = await meetingApi.internal.update({
+          ...internal,
           meetingId,
           scope: 'all',
-          date: dayjs(date).toISOString(),
+          date: dayjs(originDate).toISOString(),
           meeting: {
+            date: targetDate,
             startTime: timeStringToDate(startTime),
             endTime: timeStringToDate(endTime),
-            ...internal,
           },
         })
         const id = result.meeting?.id ?? result.recurring?.id
@@ -60,11 +64,13 @@ export function useMeetingActions() {
         const result = await meetingApi.internal.update({
           meetingId,
           scope: 'single',
-          date: dayjs(date).toISOString(),
+          date: dayjs(originDate).toISOString(),
           meeting: {
+            ...internal,
+
             startTime: timeStringToDate(startTime),
             endTime: timeStringToDate(endTime),
-            ...internal,
+            date: targetDate,
           },
         })
 
@@ -72,7 +78,9 @@ export function useMeetingActions() {
         if (!id) throw new Error('Id not found')
         onSuccess(id)
       }
+      trackEvent('meeting', 'reschedule_success', scope)
     } catch (err) {
+      trackEvent('meeting', 'reschedule_failure', scope)
       handle(err)
       throw err
     } finally {
@@ -107,9 +115,11 @@ export function useMeetingActions() {
       } else if (kind === 'ANIMAL') {
         await meetingApi.animal.delete({ meetingId })
       }
+      trackEvent('meeting', 'cancel_success', kind)
       ElMessage.success('Rendez-vous supprimé')
       onSuccess()
     } catch {
+      trackEvent('meeting', 'cancel_failure', kind)
       ElMessage.error('Erreur lors de la suppression')
     } finally {
       deleting.value = false

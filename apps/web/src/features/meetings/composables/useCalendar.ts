@@ -19,9 +19,12 @@ import type {
   EventInput,
 } from '@fullcalendar/core/index.js'
 import type { VerboseFormattingArg } from '@fullcalendar/core/internal'
+import { useRoute } from 'vue-router'
 dayjs.locale('fr')
 
-export function useCalendar(userId?: UserId) {
+export function useCalendar() {
+  const route = useRoute()
+
   const calendarData = ref<Calendar | null>(null)
   const dateSelect = ref<Date | null>(null)
   const openNewEvent = ref(false)
@@ -31,16 +34,25 @@ export function useCalendar(userId?: UserId) {
     date: Date
     kind: Extract<MeetingKind, 'INTERNAL' | 'ANIMAL'>
   } | null>(null)
+  const lastRange = ref<{ startStr: string; endStr: string } | null>(null)
 
   // Filtre multi-cliniques : vide = toutes les cliniques affichées
   const selectedClinicIds = ref<string[]>([])
 
   const availableClinics = computed(() => extractDistinctClinics(calendarData.value))
+  const id = computed(() => {
+    const value = route.params.id
+    return typeof value === 'string' ? value : undefined
+  })
 
-  const fetchMeetings = (startStr: string, endStr: string) => {
+  const fetchMeetings = async (startStr: string, endStr: string) => {
     const start = dayjs(startStr).format('YYYY-MM-DD')
     const end = dayjs(endStr).format('YYYY-MM-DD')
-    return meetingApi.getCalendar({ start, end, userId })
+    if (id.value) {
+      return await meetingApi.getVeterinarianCalendar({ start, end, userId: id.value as UserId })
+    }
+
+    return await meetingApi.getCalendar({ start, end })
   }
 
   function refreshDisplayedEvents() {
@@ -62,6 +74,13 @@ export function useCalendar(userId?: UserId) {
   // Recalcule l'affichage localement quand le filtre change,
   // sans refetch réseau (les données sont déjà toutes en mémoire)
   watch(selectedClinicIds, refreshDisplayedEvents)
+
+  const refetchEvents = async () => {
+    if (!lastRange.value) return
+    const meetings = await fetchMeetings(lastRange.value.startStr, lastRange.value.endStr)
+    calendarData.value = meetings
+    refreshDisplayedEvents()
+  }
 
   const calendarOptions = ref<CalendarOptions>({
     plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -111,6 +130,7 @@ export function useCalendar(userId?: UserId) {
       }
     },
     datesSet: async (info: DatesSetArg) => {
+      lastRange.value = { startStr: info.startStr, endStr: info.endStr }
       const meetings = await fetchMeetings(info.startStr, info.endStr)
       calendarData.value = meetings
       refreshDisplayedEvents()
@@ -124,5 +144,6 @@ export function useCalendar(userId?: UserId) {
     selectedMeeting,
     selectedClinicIds,
     availableClinics,
+    refetchEvents,
   }
 }

@@ -24,12 +24,7 @@ export class SalesService {
     throw new ForbiddenError();
   }
 
-  async getReport(
-    userId: string,
-    role: UserRole,
-    from?: string,
-    to?: string,
-  ) {
+  async getReport(userId: string, role: UserRole, from?: string, to?: string) {
     const clinicId = await this.getClinicId(userId, role);
 
     const dateFilter =

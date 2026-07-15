@@ -16,9 +16,16 @@ import {
   Wallet,
   Box,
   List,
+  Shop,
+  Setting,
+  Tickets,
+  Collection,
+  Star,
+  DataAnalysis,
 } from '@element-plus/icons-vue'
 
 const { user } = useAuthStore()
+if (user?.role !== 'DIRECTOR') throw new Error()
 const clinicId = clinicIdSchema.parse(user?.clinicId)
 
 const menuItems: NavNode[] = [
@@ -40,6 +47,7 @@ const menuItems: NavNode[] = [
       {
         index: 'DIRECTOR.Clinic',
         label: 'Général',
+        icon: Setting,
       },
       {
         index: 'DIRECTOR.Staff',
@@ -48,18 +56,58 @@ const menuItems: NavNode[] = [
       },
       {
         index: 'DIRECTOR.Acts',
-        label: 'Acts',
+        label: 'Actes',
+        icon: Tickets,
         params: { id: clinicId },
       },
       {
         index: 'DIRECTOR.Pets',
-        label: 'Pets',
+        label: 'Animaux',
+        icon: Collection,
         params: { id: clinicId },
       },
       {
         index: 'DIRECTOR.Specialities',
         label: 'Spécialités',
+        icon: Star,
         params: { id: clinicId },
+      },
+    ],
+  },
+  {
+    index: 'DIRECTOR.Analytics',
+    label: 'Statistiques',
+    icon: DataAnalysis,
+  },
+  {
+    index: 'DIRECTOR.Commerce',
+    label: 'Commerce',
+    icon: Shop,
+    children: [
+      {
+        index: 'DIRECTOR.Boutique',
+        label: 'Boutique',
+        icon: ShoppingCart,
+      },
+      {
+        index: 'DIRECTOR.Sales',
+        label: 'Ventes',
+        icon: TrendCharts,
+      },
+      {
+        index: 'DIRECTOR.Budget',
+        label: 'Budget',
+        icon: Wallet,
+      },
+      {
+        index: 'DIRECTOR.Suppliers',
+        label: 'Fournisseurs',
+        icon: Box,
+      },
+      {
+        index: 'DIRECTOR.SupplierOrders',
+        label: 'Commandes Fournisseurs',
+        icon: List,
       },
     ],
   },
@@ -67,31 +115,6 @@ const menuItems: NavNode[] = [
     index: 'DIRECTOR.Messagerie',
     label: 'Messagerie',
     icon: ChatDotRound,
-  },
-  {
-    index: 'DIRECTOR.Boutique',
-    label: 'Boutique',
-    icon: ShoppingCart,
-  },
-  {
-    index: 'DIRECTOR.Sales',
-    label: 'Ventes',
-    icon: TrendCharts,
-  },
-  {
-    index: 'DIRECTOR.Budget',
-    label: 'Budget',
-    icon: Wallet,
-  },
-  {
-    index: 'DIRECTOR.Suppliers',
-    label: 'Fournisseurs',
-    icon: Box,
-  },
-  {
-    index: 'DIRECTOR.SupplierOrders',
-    label: 'Commandes Fournisseurs',
-    icon: List,
   },
   {
     index: 'DIRECTOR.Profil',

@@ -45,7 +45,10 @@ export const bookingClinicSchema = clinicSchema
   .pick({
     id: true,
     name: true,
-    address: true,
+    street: true,
+    postalCode: true,
+    city: true,
+    country: true,
     phone: true,
     description: true,
     openingHours: true,
@@ -103,7 +106,14 @@ export type CreateBooking = z.infer<typeof createBookingSchema>;
 // ── Confirmation après création ───────────────────────────────────────────────
 export const bookingConfirmationSchema = z.object({
   meetingId: meetingIdSchema,
-  clinic: clinicSchema.pick({ id: true, name: true, address: true }),
+  clinic: clinicSchema.pick({
+    id: true,
+    name: true,
+    street: true,
+    postalCode: true,
+    city: true,
+    country: true,
+  }),
   vet: bookingVetSchema.pick({ id: true, user: true }),
   animal: bookingAnimalSchema.pick({ id: true, name: true }),
   slot: bookingSlotSchema,

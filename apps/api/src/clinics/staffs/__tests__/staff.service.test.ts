@@ -19,6 +19,14 @@ const mockClinicService = vi.hoisted(() => ({
   getClinicIdByUserId: vi.fn(),
 }));
 
+const mockVeterinarianClinicService = vi.hoisted(() => ({
+  create: vi.fn(),
+}));
+
+const mockEmailService = vi.hoisted(() => ({
+  sendClinicLinked: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("../staff.repository", () => ({
   StaffRepository: vi.fn(function () {
     return mockStaffRepository;
@@ -31,17 +39,35 @@ vi.mock("@api/clinics/clinic.service", () => ({
   }),
 }));
 
+vi.mock("@api/clinics/veterinarian-clinics/veterinarian-clinic.service", () => ({
+  VeterinarianClinicService: vi.fn(function () {
+    return mockVeterinarianClinicService;
+  }),
+}));
+
+vi.mock("@api/emails/email.service", () => ({
+  EmailService: vi.fn(function () {
+    return mockEmailService;
+  }),
+}));
+
 vi.mock("bcryptjs", () => ({
   hash: vi.fn().mockResolvedValue("hashed_password"),
 }));
 
 const { StaffRepository } = await import("../staff.repository");
 const { ClinicService } = await import("@api/clinics/clinic.service");
+const { VeterinarianClinicService } = await import(
+  "@api/clinics/veterinarian-clinics/veterinarian-clinic.service"
+);
+const { EmailService } = await import("@api/emails/email.service");
 const { StaffService } = await import("../staff.service");
 
 const staffService = new StaffService(
   new StaffRepository({} as any),
   new ClinicService({} as any),
+  new VeterinarianClinicService({} as any),
+  new EmailService(),
 );
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

@@ -32,7 +32,7 @@ export const useMessagingStore = defineStore('messaging', () => {
   let typingTimeout: ReturnType<typeof setTimeout> | null = null
 
   const sortedConversations = computed(() =>
-    [...conversations.value].sort((a, b) => {
+    [...conversations.value].sort((a: Conversation, b: Conversation) => {
       const dateA = a.lastMessageAt ?? a.createdAt
       const dateB = b.lastMessageAt ?? b.createdAt
       return new Date(dateB).getTime() - new Date(dateA).getTime()
@@ -40,32 +40,42 @@ export const useMessagingStore = defineStore('messaging', () => {
   )
 
   const totalUnread = computed(() =>
-    conversations.value.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0),
+    conversations.value.reduce(
+      (sum: number, c: Conversation) => sum + (c.unreadCount ?? 0),
+      0,
+    ),
   )
 
-  const activeConversation = computed(() =>
-    conversations.value.find((c) => c.id === activeConversationId.value) ?? null,
+  const activeConversation = computed(
+    () =>
+      conversations.value.find(
+        (c: Conversation) => c.id === activeConversationId.value,
+      ) ?? null,
   )
 
   function upsertConversation(conversation: Conversation) {
-    const idx = conversations.value.findIndex((c) => c.id === conversation.id)
+    const idx = conversations.value.findIndex(
+      (c: Conversation) => c.id === conversation.id,
+    )
     if (idx === -1) conversations.value.unshift(conversation)
     else conversations.value[idx] = { ...conversations.value[idx], ...conversation }
   }
 
   function updateMembers(conversationId: string, members: ConversationMember[]) {
-    const conv = conversations.value.find((c) => c.id === conversationId)
+    const conv = conversations.value.find((c: Conversation) => c.id === conversationId)
     if (conv) conv.conversationMembers = members
   }
 
   function handleIncomingMessage(message: Message) {
     const authStore = useAuthStore()
     const isActive = activeConversationId.value === message.conversationId
-    if (isActive && !messages.value.some((m) => m.id === message.id)) {
+    if (isActive && !messages.value.some((m: Message) => m.id === message.id)) {
       messages.value.push(message)
     }
 
-    const conv = conversations.value.find((c) => c.id === message.conversationId)
+    const conv = conversations.value.find(
+      (c: Conversation) => c.id === message.conversationId,
+    )
     const isOwn = message.senderId === authStore.user?.id
     if (conv) {
       conv.lastMessage = message
@@ -108,21 +118,31 @@ export const useMessagingStore = defineStore('messaging', () => {
       ({ conversationId, userId }: { conversationId: string; userId: string }) => {
         const authStore = useAuthStore()
         if (userId === authStore.user?.id) {
-          conversations.value = conversations.value.filter((c) => c.id !== conversationId)
+          conversations.value = conversations.value.filter(
+            (c: Conversation) => c.id !== conversationId,
+          )
           if (activeConversationId.value === conversationId) activeConversationId.value = null
           return
         }
-        const conv = conversations.value.find((c) => c.id === conversationId)
+        const conv = conversations.value.find(
+          (c: Conversation) => c.id === conversationId,
+        )
         if (conv?.conversationMembers) {
-          conv.conversationMembers = conv.conversationMembers.filter((m) => m.userId !== userId)
+          conv.conversationMembers = conv.conversationMembers.filter(
+            (m: ConversationMember) => m.userId !== userId,
+          )
         }
       },
     )
 
     socket.on('conversation:member-updated', (member: ConversationMember) => {
-      const conv = conversations.value.find((c) => c.id === member.conversationId)
+      const conv = conversations.value.find(
+        (c: Conversation) => c.id === member.conversationId,
+      )
       if (!conv?.conversationMembers) return
-      const idx = conv.conversationMembers.findIndex((m) => m.userId === member.userId)
+      const idx = conv.conversationMembers.findIndex(
+        (m: ConversationMember) => m.userId === member.userId,
+      )
       if (idx !== -1) conv.conversationMembers[idx] = member
     })
 
@@ -137,8 +157,12 @@ export const useMessagingStore = defineStore('messaging', () => {
         userId: string
         readAt: string
       }) => {
-        const conv = conversations.value.find((c) => c.id === conversationId)
-        const member = conv?.conversationMembers?.find((m) => m.userId === userId)
+        const conv = conversations.value.find(
+          (c: Conversation) => c.id === conversationId,
+        )
+        const member = conv?.conversationMembers?.find(
+          (m: ConversationMember) => m.userId === userId,
+        )
         if (member) member.lastReadAt = new Date(readAt)
       },
     )
@@ -239,7 +263,7 @@ export const useMessagingStore = defineStore('messaging', () => {
   }
 
   async function markRead(id: ConversationId) {
-    const conv = conversations.value.find((c) => c.id === id)
+    const conv = conversations.value.find((c: Conversation) => c.id === id)
     if (conv) conv.unreadCount = 0
     const socket = getMessagingSocket()
     if (socket?.connected) socket.emit('conversation:read', { conversationId: id })
@@ -272,12 +296,14 @@ export const useMessagingStore = defineStore('messaging', () => {
     await messagingApi.removeMember(id, userId)
     const authStore = useAuthStore()
     if (userId === authStore.user?.id) {
-      conversations.value = conversations.value.filter((c) => c.id !== id)
+      conversations.value = conversations.value.filter((c: Conversation) => c.id !== id)
       if (activeConversationId.value === id) activeConversationId.value = null
     } else {
-      const conv = conversations.value.find((c) => c.id === id)
+      const conv = conversations.value.find((c: Conversation) => c.id === id)
       if (conv?.conversationMembers) {
-        conv.conversationMembers = conv.conversationMembers.filter((m) => m.userId !== userId)
+        conv.conversationMembers = conv.conversationMembers.filter(
+          (m: ConversationMember) => m.userId !== userId,
+        )
       }
     }
   }
@@ -288,9 +314,11 @@ export const useMessagingStore = defineStore('messaging', () => {
     role: ConversationMember['role'],
   ) {
     const member = await messagingApi.updateMemberRole(id, userId, role)
-    const conv = conversations.value.find((c) => c.id === id)
+    const conv = conversations.value.find((c: Conversation) => c.id === id)
     if (conv?.conversationMembers) {
-      const idx = conv.conversationMembers.findIndex((m) => m.userId === userId)
+      const idx = conv.conversationMembers.findIndex(
+        (m: ConversationMember) => m.userId === userId,
+      )
       if (idx !== -1) conv.conversationMembers[idx] = member
     }
   }

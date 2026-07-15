@@ -6,7 +6,7 @@
     "docker:dev:build": "docker compose -f compose.dev.yaml --env-file .env.dev build",
     "docker:dev:up": "docker compose -f compose.dev.yaml --env-file .env.dev up -d --build",
     "docker:dev:down": "docker compose -f compose.dev.yaml --env-file .env.dev down",
-    "docker:dev:reset": "docker compose -f compose.dev.yaml --env-file .env.dev down && docker volume rm armali-dev_api_node_modules armali-dev_api_workspace_modules armali-dev_web_node_modules armali-dev_web_workspace_modules armali-dev_schemas_node_modules ; docker compose -f compose.dev.yaml --env-file .env.dev up -d --build",
+    "docker:dev:reset": "docker compose -f compose.dev.yaml --env-file .env.dev down && docker volume rm armali-dev_api_node_modules armali-dev_api_workspace_modules armali-dev_web_node_modules armali-dev_web_workspace_modules armali-dev_schemas_node_modules || exit 0 && docker compose -f compose.dev.yaml --env-file .env.dev up -d --build",
     "docker:dev:ps": "docker compose -f compose.dev.yaml --env-file .env.dev ps",
     "docker:dev:logs": "docker compose -f compose.dev.yaml --env-file .env.dev logs -f",
     "log:api": "pnpm docker:dev:logs api",
@@ -30,5 +30,14 @@
   ],
   "devDependencies": {
     "typescript": "5.9.3"
-  }
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/node": "22.18.12"
+    }
+  },
+  "packageManager": "pnpm@10.34.5+sha512.a4ee05f2f73658255bd6a89859c065a45c28a57daefae2c893a168ee2b73168c37b91e83e57ea67654ad03f03031746430e8bce38e362e042605fb8abc80192e"
 }

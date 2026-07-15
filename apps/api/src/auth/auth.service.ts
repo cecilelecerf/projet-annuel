@@ -5,6 +5,12 @@ import {
   Login,
   Register,
   UpdateAccount,
+  RegisterDirectorSchema,
+} from "@armali/schemas";
+import type {
+  ForgotPassword,
+  ResetPassword,
+  VerifyLoginTwoFactor,
 } from "@armali/schemas";
 import {
   generateAccessToken,
@@ -13,6 +19,7 @@ import {
   verifyRefreshToken,
 } from "@api/utils";
 import { prisma } from "@api/lib/prisma";
+import { Prisma } from "../../prisma/generated/prisma/client";
 import {
   BadRequestError,
   ConflictError,
@@ -29,7 +36,63 @@ function generateOtp(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+const isTwoFactorEnabled = process.env.NODE_ENV === "production";
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const ACCOUNT_LOCKED_MESSAGE =
+  "Compte bloqué après plusieurs tentatives échouées. Réinitialisez votre mot de passe pour le débloquer.";
+const PASSWORD_EXPIRY_DAYS = 60;
+
+const loginUserInclude = {
+  avatar: true,
+  secretaryProfile: true,
+  directorClinicProfile: {
+    select: { clinic: { select: { id: true } } },
+  },
+  referentClinicProfile: true,
+  veterinarianProfile: {
+    include: {
+      veterinarianClinics: true,
+    },
+  },
+} satisfies Prisma.UserInclude;
+
+type LoginUser = Prisma.UserGetPayload<{ include: typeof loginUserInclude }>;
+
 export class AuthService {
+  private async issueLoginSession(user: LoginUser) {
+    const clinicId = this.getClinicId(user);
+    const withAvatar = withAvatarUrl(user);
+    const parsedUser = baseUserSchema.parse(withAvatar);
+    const accessToken = generateAccessToken({
+      ...parsedUser,
+      clinicId: clinicId ?? undefined,
+    });
+    const refreshToken = generateRefreshToken({
+      ...parsedUser,
+      clinicId: clinicId ?? undefined,
+    });
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    return {
+      user: { ...parsedUser, clinicId },
+      accessToken,
+      refreshToken,
+      passwordExpired: this.isPasswordExpired(user.passwordChangedAt),
+    };
+  }
+
+  private isPasswordExpired(passwordChangedAt: Date): boolean {
+    const expiryMs = PASSWORD_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    return Date.now() - passwordChangedAt.getTime() > expiryMs;
+  }
+
   private getClinicId(user: {
     role: string;
     secretaryProfile?: { clinicId: string } | null;
@@ -88,7 +151,7 @@ export class AuthService {
     return { user: userWithoutPassword, accessToken, refreshToken };
   }
 
-  async registerDirector(data: RegisterDirector) {
+  async registerDirector(data: RegisterDirectorSchema) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -128,7 +191,10 @@ export class AuthService {
       await tx.clinicRequest.create({
         data: {
           name: clinic.name,
-          address: clinic.address,
+          street: clinic.street,
+          postalCode: clinic.postalCode,
+          city: clinic.city,
+          country: clinic.country,
           siret: clinic.siret,
           phone: clinic.phone,
           website: clinic.website,
@@ -162,45 +228,76 @@ export class AuthService {
   async login(data: Login) {
     const user = await prisma.user.findUnique({
       where: { email: data.email },
-      include: {
-        avatar: true,
-        secretaryProfile: true,
-        directorClinicProfile: {
-          select: { clinic: { select: { id: true } } },
-        },
-        referentClinicProfile: true,
-        veterinarianProfile: {
-          include: {
-            veterinarianClinics: true,
-          },
-        },
-      },
+      include: loginUserInclude,
     });
     if (!user) throw new UnauthorizedError("Email ou mot de passe incorrect");
 
+    if (user.lockedAt) throw new UnauthorizedError(ACCOUNT_LOCKED_MESSAGE);
+
     const isPasswordValid = await compare(data.password, user.password);
-    if (!isPasswordValid)
-      throw new UnauthorizedError("Email ou mot de passe incorrect");
-    const clinicId = this.getClinicId(user);
-    const withAvatar = withAvatarUrl(user);
-    const parsedUser = baseUserSchema.parse(withAvatar);
-    const accessToken = generateAccessToken({
-      ...parsedUser,
-      clinicId: clinicId ?? undefined,
-    });
-    const refreshToken = generateRefreshToken({
-      ...parsedUser,
-      clinicId: clinicId ?? undefined,
+    if (!isPasswordValid) {
+      const attempts = user.failedLoginAttempts + 1;
+      const shouldLock = attempts >= MAX_FAILED_LOGIN_ATTEMPTS;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: attempts,
+          ...(shouldLock && { lockedAt: new Date() }),
+        },
+      });
+      throw new UnauthorizedError(
+        shouldLock ? ACCOUNT_LOCKED_MESSAGE : "Email ou mot de passe incorrect",
+      );
+    }
+
+    if (user.failedLoginAttempts > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0 },
+      });
+    }
+
+    if (!isTwoFactorEnabled) return this.issueLoginSession(user);
+
+    await prisma.otpCode.deleteMany({
+      where: { userId: user.id, action: "LOGIN_2FA" },
     });
 
-    await prisma.refreshToken.create({
+    const code = generateOtp();
+    await prisma.otpCode.create({
       data: {
-        token: refreshToken,
+        code,
+        action: "LOGIN_2FA",
         userId: user.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       },
     });
-    return { user: { ...parsedUser, clinicId }, accessToken, refreshToken };
+
+    await emailService.sendLoginTwoFactorCode(user.email, code);
+
+    return { twoFactorRequired: true as const, email: user.email };
+  }
+
+  async verifyLoginTwoFactor(data: VerifyLoginTwoFactor) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+      include: loginUserInclude,
+    });
+    if (!user) throw new UnauthorizedError("Code invalide");
+
+    const otp = await prisma.otpCode.findFirst({
+      where: { userId: user.id, action: "LOGIN_2FA", code: data.code },
+    });
+    if (!otp) throw new UnauthorizedError("Code invalide");
+
+    if (otp.expiresAt < new Date()) {
+      await prisma.otpCode.delete({ where: { id: otp.id } });
+      throw new UnauthorizedError("Code expiré");
+    }
+
+    await prisma.otpCode.delete({ where: { id: otp.id } });
+
+    return this.issueLoginSession(user);
   }
 
   async refresh(refreshToken: string) {
@@ -278,8 +375,9 @@ export class AuthService {
     if (!user) throw new NotFoundError("Utilisateur");
 
     const clinicId = this.getClinicId(user);
+    const passwordExpired = this.isPasswordExpired(user.passwordChangedAt);
 
-    return { ...user, clinicId };
+    return { ...user, clinicId, passwordExpired };
   }
 
   async updateAccount(userId: string, data: UpdateAccount) {
@@ -309,7 +407,10 @@ export class AuthService {
         ...(data.firstname && { firstname: data.firstname }),
         ...(data.lastname && { lastname: data.lastname }),
         ...(data.email && { email: data.email }),
-        ...(hashedPassword && { password: hashedPassword }),
+        ...(hashedPassword && {
+          password: hashedPassword,
+          passwordChangedAt: new Date(),
+        }),
       },
     });
 
@@ -352,5 +453,64 @@ export class AuthService {
     }
 
     await prisma.user.delete({ where: { id: userId } });
+  }
+
+  async forgotPassword(data: ForgotPassword) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (user) {
+      await prisma.otpCode.deleteMany({
+        where: { userId: user.id, action: "RESET_PASSWORD" },
+      });
+
+      const code = generateOtp();
+      await prisma.otpCode.create({
+        data: {
+          code,
+          action: "RESET_PASSWORD",
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+      });
+
+      await emailService.sendResetPassword(user.email, code);
+    }
+
+    return { message: "Si un compte existe, un email a été envoyé" };
+  }
+
+  async resetPassword(data: ResetPassword) {
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (!user) throw new UnauthorizedError("Code invalide");
+
+    const otp = await prisma.otpCode.findFirst({
+      where: { userId: user.id, action: "RESET_PASSWORD", code: data.code },
+    });
+    if (!otp) throw new UnauthorizedError("Code invalide");
+
+    if (otp.expiresAt < new Date()) {
+      await prisma.otpCode.delete({ where: { id: otp.id } });
+      throw new UnauthorizedError("Code expiré");
+    }
+
+    const hashedPassword = await hash(data.newPassword, 10);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          failedLoginAttempts: 0,
+          lockedAt: null,
+          passwordChangedAt: new Date(),
+        },
+      }),
+      prisma.otpCode.delete({ where: { id: otp.id } }),
+      prisma.refreshToken.deleteMany({ where: { userId: user.id } }),
+    ]);
   }
 }

@@ -11,8 +11,8 @@ const menuItems: NavNode[] = [
     icon: House,
   },
   {
-    index: 'CLIENT.Profil',
-    label: 'Profil',
+    index: 'CLIENT.Animals',
+    label: 'Mes animaux',
     icon: User,
   },
   {
@@ -29,6 +29,11 @@ const menuItems: NavNode[] = [
     index: 'CLIENT.Orders',
     label: 'Mes commandes',
     icon: Box,
+  },
+  {
+    index: 'CLIENT.Profil',
+    label: 'Profil',
+    icon: User,
   },
 ]
 </script>

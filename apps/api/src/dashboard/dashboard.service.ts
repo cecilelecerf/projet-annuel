@@ -5,13 +5,19 @@ import { ReviewService } from "@api/reviews/review.service";
 import { ReviewRepository } from "@api/reviews/review.repository";
 import { UserService } from "@api/users";
 import { ClinicService } from "@api/clinics/clinic.service";
-import { MeetingService } from "@api/meetings/meeting.service";
 import { OrderRepository } from "@api/orders/order.repository";
-import { withAvatarUrl } from "@api/users/user.utils";
 import { StaffService } from "@api/clinics/staffs/staff.service";
+import { AnimalRepository } from "@api/animals/animal.repository";
+import { AnimalMeetingService, AvailabilityService } from "@api/meetings";
+import { combineDateTime } from "@api/meetings/animal-meeting/animal-meeting.service";
+import { computeVisitsForecast } from "./visits-forecast.util";
+
+const ORDER_IN_PROGRESS_STATUSES = ["PENDING", "CONFIRMED", "READY"] as const;
 
 // Statuts de commande considérés comme des ventes effectives (exclut PENDING et CANCELLED)
 const REVENUE_STATUSES = ["CONFIRMED", "READY", "PICKED_UP"] as const;
+const VISITS_WEEKS_HISTORY = 16;
+const VISITS_WEEKS_FORECAST = 4;
 
 export class DashboardService {
   constructor(
@@ -19,9 +25,11 @@ export class DashboardService {
     private staffService: StaffService,
     private userService: UserService,
     private clinicService: ClinicService,
-    private meetingService: MeetingService,
     private orderRepository: OrderRepository,
     private reviewRepository: ReviewRepository,
+    private animalRepsository: AnimalRepository,
+    private animalMeetingService: AnimalMeetingService,
+    private availabilityService: AvailabilityService,
   ) {}
 
   // ── Dashboard "gestion de clinique" (référent + directeur, contenu identique) ──
@@ -81,13 +89,12 @@ export class DashboardService {
 
     const reviews = await Promise.all(
       vetoIds.map(async (id) => ({
-        veterinarian: withAvatarUrl(
-          await this.userService.getUserById({
-            requesterId: userId,
-            requesterRole: role,
-            targetId: id,
-          }),
-        ),
+        veterinarian: await this.userService.getUserById({
+          requesterId: userId,
+          requesterRole: role,
+          targetId: id,
+        }),
+
         stat: await this.reviewService.getStats({
           veterinarianId: id,
           userId,
@@ -161,7 +168,7 @@ export class DashboardService {
       vetIds,
     ] = await Promise.all([
       this.orderRepository.findPendingPickupByClinic(clinicId),
-      this.meetingService.getAnimalMeetingsByClinic(
+      this.animalMeetingService.getAnimalMeetingsByClinic(
         clinicId,
         startOfDay,
         endOfDay,
@@ -186,7 +193,7 @@ export class DashboardService {
     // ── Vétérinaires présents aujourd'hui (disponibilité, pas juste RDV) ─────
     const presenceChecks = await Promise.all(
       vetIds.map(async (vetId) => {
-        const avails = await this.meetingService.getAvailabilities({
+        const avails = await this.availabilityService.getAvailabilities({
           userId: vetId,
           start: startOfDay,
           end: endOfDay,
@@ -309,7 +316,11 @@ export class DashboardService {
 
     const [weekMeetings, rating, recentReviewsRaw, patientsCount] =
       await Promise.all([
-        this.meetingService.getAnimalMeetingsAsVet(userId, now, inSevenDays),
+        this.animalMeetingService.getAnimalMeetingsAsVet(
+          userId,
+          now,
+          inSevenDays,
+        ),
         this.reviewService.getStats({
           veterinarianId: userId,
           userId,
@@ -318,9 +329,7 @@ export class DashboardService {
         this.reviewRepository.findReviewsByVeterinarian(
           userId as unknown as VeterinarianId,
         ),
-        prisma.animal.count({
-          where: { attendingVeterinarianClinic: { veterinarianId: userId } },
-        }),
+        this.animalRepsository.countByAttendingVeterinarian(userId),
       ]);
 
     const todaysMeetingsCount = weekMeetings.filter(
@@ -379,6 +388,222 @@ export class DashboardService {
       rating: { average: rating.average, count: rating.count },
       recentReviews,
       patientsCount,
+    };
+  }
+
+  // ── Dashboard client ─────────────────────────────────────────────────────────
+
+  async getClientDashboard(userId: UserId) {
+    const now = new Date();
+
+    const [animals, animalMeetings, orders, clinicIdsFromAnimals] = await Promise.all([
+      this.animalRepsository.findByClientId(userId),
+      this.animalMeetingService.getAllByClient({
+        id: userId,
+        userId,
+        role: "CLIENT",
+      }),
+      this.orderRepository.findByClient(userId),
+      this.animalRepsository.findClinicIdsForClient(userId),
+    ]);
+
+    const upcomingMeetings = animalMeetings
+      .filter((m) => m.meeting && combineDateTime(m.meeting.date, m.meeting.startTime).isAfter(now))
+      .sort(
+        (a, b) =>
+          combineDateTime(a.meeting!.date, a.meeting!.startTime).valueOf() -
+          combineDateTime(b.meeting!.date, b.meeting!.startTime).valueOf(),
+      )
+      .slice(0, 5)
+      .map((m) => ({
+        date: m.meeting!.date.toISOString(),
+        startTime: m.meeting!.startTime.toISOString(),
+        endTime: m.meeting!.endTime.toISOString(),
+        animalName: m.animal.name,
+        veterinarianName: m.veterinarianClinic?.veterinarian
+          ? `${m.veterinarianClinic.veterinarian.firstname} ${m.veterinarianClinic.veterinarian.lastname}`
+          : null,
+        clinicName: m.veterinarianClinic?.clinic?.name ?? null,
+      }));
+
+    const ordersInProgress = orders.filter((o) =>
+      (ORDER_IN_PROGRESS_STATUSES as readonly string[]).includes(o.status),
+    );
+
+    const mapOrder = (o: (typeof orders)[number]) => ({
+      id: o.id,
+      status: o.status,
+      items: o.orderItems
+        .map((i) => `${i.quantity}× ${i.productClinic.product.name}`)
+        .join(", "),
+      total: o.orderItems.reduce(
+        (sum, i) => sum + Number(i.unitPrice) * i.quantity,
+        0,
+      ),
+      createdAt: o.createdAt.toISOString(),
+    });
+
+    const readyOrders = orders.filter((o) => o.status === "READY");
+
+    // ── Cliniques du client : déduites des animaux suivis + des commandes ──
+    const clinicIds = new Set(clinicIdsFromAnimals);
+    for (const o of orders) clinicIds.add(o.clinicId);
+
+    const [clinics, clinicProducts] = await Promise.all([
+      clinicIds.size
+        ? prisma.clinic.findMany({
+            where: { id: { in: [...clinicIds] } },
+            select: {
+              id: true,
+              name: true,
+              street: true,
+              postalCode: true,
+              city: true,
+              phone: true,
+              image: true,
+            },
+          })
+        : Promise.resolve([]),
+      clinicIds.size
+        ? prisma.clinicProduct.findMany({
+            where: { clinicId: { in: [...clinicIds] }, stock: { gt: 0 } },
+            take: 8,
+            orderBy: { updatedAt: "desc" },
+            include: { product: { select: { name: true, picture: true } } },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    return {
+      role: "CLIENT" as const,
+      animals: animals.map((a) => ({
+        id: a.id,
+        name: a.name,
+        species: a.race.pet.name,
+        breed: a.race.name,
+        dateOfBirth: a.dateOfBirth.toISOString(),
+        photoUrl: a.photo ? `${process.env.ASSETS_BASE_URL}/${a.photo.storageKey}` : null,
+      })),
+      clinics: clinics.map((c) => ({
+        id: c.id,
+        name: c.name,
+        address: `${c.street}, ${c.postalCode} ${c.city}`,
+        phone: c.phone,
+        image: c.image,
+      })),
+      upcomingMeetingsCount: upcomingMeetings.length,
+      upcomingMeetings,
+      ordersInProgressCount: ordersInProgress.length,
+      ordersReadyForPickupCount: readyOrders.length,
+      ordersReadyForPickup: readyOrders.map(mapOrder),
+      recentOrders: orders.slice(0, 3).map(mapOrder),
+      products: clinicProducts.map((cp) => ({
+        id: cp.id,
+        name: cp.product.name,
+        picture: cp.product.picture,
+        price: Number(cp.price),
+        clinicId: cp.clinicId,
+      })),
+    };
+  }
+
+  async getVisitsForecast(userId: UserId, role: "REFERENT" | "DIRECTOR") {
+    const clinicId = await this.clinicService.getClinicIdByUserId({
+      userId,
+      role,
+    });
+
+    const now = new Date();
+    const start = new Date(now);
+    start.setUTCDate(start.getUTCDate() - VISITS_WEEKS_HISTORY * 7);
+
+    const meetings = await this.animalMeetingService.getAnimalMeetingsByClinic(
+      clinicId,
+      start,
+      now,
+    );
+
+    return computeVisitsForecast(
+      meetings.map((m) => new Date(m.date)),
+      VISITS_WEEKS_HISTORY,
+      VISITS_WEEKS_FORECAST,
+    );
+  }
+
+  async getAnalyticsOverview(userId: UserId, role: "REFERENT" | "DIRECTOR") {
+    const clinicId = await this.clinicService.getClinicIdByUserId({
+      userId,
+      role,
+    });
+
+    const meetings = await prisma.animalMeeting.findMany({
+      where: { veterinarianClinic: { clinicId } },
+      select: { animal: { select: { clientId: true } } },
+    });
+
+    const visitCountByClient = new Map<string, number>();
+    for (const m of meetings) {
+      visitCountByClient.set(
+        m.animal.clientId,
+        (visitCountByClient.get(m.animal.clientId) ?? 0) + 1,
+      );
+    }
+    const totalClients = visitCountByClient.size;
+    const returningClients = Array.from(visitCountByClient.values()).filter(
+      (count) => count >= 2,
+    ).length;
+    const retentionRate =
+      totalClients > 0 ? (returningClients / totalClients) * 100 : 0;
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setUTCMonth(twelveMonthsAgo.getUTCMonth() - 12);
+
+    const [vets, histories] = await Promise.all([
+      prisma.veterinarianClinic.findMany({
+        where: { clinicId },
+        include: {
+          veterinarian: {
+            include: {
+              user: { select: { firstname: true, lastname: true } },
+            },
+          },
+        },
+      }),
+      prisma.animalMedicalHistory.findMany({
+        where: {
+          performedAt: { gte: twelveMonthsAgo },
+          performedById: { not: null },
+          clinicAct: { clinicId },
+        },
+        select: {
+          priceApplied: true,
+          performedById: true,
+        },
+      }),
+    ]);
+
+    const revenueByVet = new Map<string, number>();
+    for (const h of histories) {
+      const price = h.priceApplied ? Number(h.priceApplied) : 0;
+      if (!h.performedById) continue;
+      revenueByVet.set(
+        h.performedById,
+        (revenueByVet.get(h.performedById) ?? 0) + price,
+      );
+    }
+
+    const profitabilityByVeterinarian = vets
+      .map((vc) => ({
+        veterinarianId: vc.veterinarianId,
+        firstname: vc.veterinarian.user.firstname,
+        lastname: vc.veterinarian.user.lastname,
+        revenue: revenueByVet.get(vc.veterinarianId) ?? 0,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+
+    return {
+      retention: { totalClients, returningClients, retentionRate },
+      profitabilityByVeterinarian,
     };
   }
 

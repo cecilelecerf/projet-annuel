@@ -26,11 +26,22 @@ describe("Dashboard router", () => {
       expect(res.status).toBe(401);
     });
 
-    it("403 — CLIENT n'a pas de dashboard dédié", async () => {
+    it("200 — CLIENT reçoit ses animaux, cliniques, RDV à venir et commandes", async () => {
       const res = await request(app)
         .get("/api/dashboard")
         .set("Authorization", `Bearer ${clientToken}`);
-      expect(res.status).toBe(403);
+
+      expect(res.status).toBe(200);
+      expect(res.body.role).toBe("CLIENT");
+      expect(Array.isArray(res.body.animals)).toBe(true);
+      expect(Array.isArray(res.body.clinics)).toBe(true);
+      expect(res.body).toHaveProperty("upcomingMeetingsCount");
+      expect(Array.isArray(res.body.upcomingMeetings)).toBe(true);
+      expect(res.body).toHaveProperty("ordersInProgressCount");
+      expect(Array.isArray(res.body.recentOrders)).toBe(true);
+      expect(res.body).toHaveProperty("ordersReadyForPickupCount");
+      expect(Array.isArray(res.body.ordersReadyForPickup)).toBe(true);
+      expect(Array.isArray(res.body.products)).toBe(true);
     });
 
     it("200 — REFERENT reçoit la variante clinique (role: REFERENT)", async () => {
@@ -104,6 +115,66 @@ describe("Dashboard router", () => {
       expect(res.body).toHaveProperty("usersCount");
       expect(res.body).toHaveProperty("pendingClinicRequestsCount");
       expect(res.body).toHaveProperty("pendingProductRequestsCount");
+    });
+  });
+
+  describe("GET /api/dashboard/visits-forecast", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get("/api/dashboard/visits-forecast");
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle CLIENT non autorisé", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/visits-forecast")
+        .set("Authorization", `Bearer ${clientToken}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — REFERENT reçoit la prévision de visites", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/visits-forecast")
+        .set("Authorization", `Bearer ${referentToken}`);
+      expect(res.status).toBe(200);
+    });
+
+    it("200 — DIRECTOR reçoit la prévision de visites", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/visits-forecast")
+        .set("Authorization", `Bearer ${directorToken}`);
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe("GET /api/dashboard/analytics-overview", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get("/api/dashboard/analytics-overview");
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle CLIENT non autorisé", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/analytics-overview")
+        .set("Authorization", `Bearer ${clientToken}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — REFERENT reçoit le résumé rétention + rentabilité", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/analytics-overview")
+        .set("Authorization", `Bearer ${referentToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("retention");
+      expect(res.body).toHaveProperty("profitabilityByVeterinarian");
+    });
+
+    it("200 — DIRECTOR reçoit le résumé rétention + rentabilité", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/analytics-overview")
+        .set("Authorization", `Bearer ${directorToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("retention");
+      expect(res.body).toHaveProperty("profitabilityByVeterinarian");
     });
   });
 });

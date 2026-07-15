@@ -14,6 +14,9 @@ import { AnimalRepository } from "./animals/animal.repository";
 // ── Medical histories ─────────────────────────────────────────
 import { AnimalMedicalHistoryRepository } from "./medical-histories/medical-history.repository";
 
+// ── Health condition ─────────────────────────────────────────
+import { AnimalHealthConditionRepository } from "./health-conditions/health-condition.repository";
+
 // ── Meetings ──────────────────────────────────────────────────
 import { MeetingRepository } from "./meetings/meeting.repository";
 import { AnimalMeetingRepository } from "./meetings/animal-meeting/animal-meeting.repository";
@@ -33,6 +36,7 @@ import { VaccineRepository } from "./vaccines/vaccine.repository";
 
 // ── Veterinarian-clinics ──────────────────────────────────────
 import { VeterinarianClinicRepository } from "./clinics/veterinarian-clinics/veterinarian-clinic.repository";
+import { VeterinarianClinicService } from "./clinics/veterinarian-clinics/veterinarian-clinic.service";
 
 // ── Product ──────────────────────────────────────
 import { ProductRepository } from "./products/product.repository";
@@ -43,10 +47,9 @@ import { OrderRepository } from "./orders/order.repository";
 
 // ── Clinic ──────────────────────────────────────
 import { SpecialityRepository } from "./specialities/speciality.repository";
-import { ClinicRequestRepository } from "./clinics/requests/request.repository";
+import { ClinicRequestRepository } from "./clinics/clinic-requests/request.repository";
 
 // Chat
-import { ContactsRepository } from "./messaging/contacts.repository";
 import { MessageRepository } from "./messaging/message.repository";
 import { ConversationRepository } from "./messaging/conversation.repository";
 
@@ -57,6 +60,7 @@ import { StaffRepository } from "./clinics/staffs/staff.repository";
 import { BudgetRepository } from "./budget/budget.repository";
 import { SupplierRepository } from "./suppliers/supplier.repository";
 import { SupplierOrderRepository } from "./supplier-orders/supplier-order.repository";
+import { SupplierProductRepository } from "./suppliers/supplier-product.repository";
 
 // ═══════════════════════════════════════════════════════════════
 // Services
@@ -65,6 +69,7 @@ import { SupplierOrderRepository } from "./supplier-orders/supplier-order.reposi
 import { ActService } from "./acts/act.service";
 import { AnimalService } from "./animals/animal.service";
 import { AuthService } from "./auth/auth.service";
+import { ContactService } from "./contact/contact.service";
 import { ClinicService } from "./clinics/clinic.service";
 import { EmailService } from "./emails/email.service";
 import { MeetingService } from "./meetings/meeting.service";
@@ -85,7 +90,7 @@ import { ClientShopService } from "./shop/shop.service";
 import { OrderService } from "./orders/order.service";
 import { SalesService } from "./sales/sales.service";
 import { StaffService } from "./clinics/staffs/staff.service";
-import { ClinicRequestService } from "./clinics/requests/request.service";
+import { ClinicRequestService } from "./clinics/clinic-requests/request.service";
 import { DashboardService } from "./dashboard/dashboard.service";
 import { BudgetService } from "./budget/budget.service";
 import { SupplierService } from "./suppliers/supplier.service";
@@ -98,6 +103,7 @@ import { SupplierOrderService } from "./supplier-orders/supplier-order.service";
 import { ActController } from "./acts/act.controller";
 import { AnimalController } from "./animals/animal.controller";
 import { AuthController } from "./auth/auth.controller";
+import { ContactController } from "./contact/contact.controller";
 import { ClinicController } from "./clinics/clinic.controller";
 import { MeetingController } from "./meetings/meeting.controller";
 import { AnimalMeetingController } from "./meetings/animal-meeting/animal-meeting.controller";
@@ -125,7 +131,7 @@ import { BudgetController } from "./budget/budget.controller";
 import { SupplierController } from "./suppliers/supplier.controller";
 import { SupplierOrderController } from "./supplier-orders/supplier-order.controller";
 import { StaffController } from "./clinics/staffs/staff.controller";
-import { ClinicRequestController } from "./clinics/requests/request.controller";
+import { ClinicRequestController } from "./clinics/clinic-requests/request.controller";
 import { FileRepository } from "./files/file.repository";
 import { FileService } from "./files/file.service";
 import { ClinicActService } from "./clinics/clinic-acts/clinic-act.service";
@@ -147,6 +153,7 @@ import { VeterinarianProfileRepository } from "./veterinarians/veterinarian-prof
 import { VeterinarianPetService } from "./veterinarians/veterinarian-pets/veterinarian-pet.service";
 import { VeterinarianPetController } from "./veterinarians/veterinarian-pets/veterinarian-pet.controller";
 import { VeterinarianSpecialityController } from "./veterinarians/veterinarian-specialities/veterinarian-speciality.controller";
+import { InternalMeetingParticipantRepository } from "./meetings/internal-meeting/participant.repository";
 // ═══════════════════════════════════════════════════════════════
 // ── Repositories (instanciation) ──────────────────────────────
 // ═══════════════════════════════════════════════════════════════
@@ -177,7 +184,6 @@ const specialityRepository = new SpecialityRepository(prisma);
 
 const clinicRepository = new ClinicRepository(prisma);
 const messageRepository = new MessageRepository(prisma);
-const contactsRepository = new ContactsRepository(prisma);
 const conversationRepository = new ConversationRepository(prisma);
 const reviewRepository = new ReviewRepository(prisma);
 const staffRepository = new StaffRepository(prisma);
@@ -185,8 +191,15 @@ const clinicRequestRepository = new ClinicRequestRepository(prisma);
 const budgetRepository = new BudgetRepository(prisma);
 const supplierRepository = new SupplierRepository(prisma);
 const supplierOrderRepository = new SupplierOrderRepository(prisma);
+const supplierProductRepository = new SupplierProductRepository(prisma);
 const raceRepository = new RaceRepository(prisma);
 const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
+const internalMeetingParticipantRepository =
+  new InternalMeetingParticipantRepository(prisma);
+
+const animalHealthConditionRepository = new AnimalHealthConditionRepository(
+  prisma,
+);
 
 // ═══════════════════════════════════════════════════════════════
 // ── Services (instanciation) ──────────────────────────────────
@@ -194,7 +207,15 @@ const veterinarianProfileRepository = new VeterinarianProfileRepository(prisma);
 
 const emailService = new EmailService();
 const clinicService = new ClinicService(clinicRepository);
-const staffService = new StaffService(staffRepository, clinicService);
+const veterinarianClinicService = new VeterinarianClinicService(
+  veterinarianClinicRepository,
+);
+const staffService = new StaffService(
+  staffRepository,
+  clinicService,
+  veterinarianClinicService,
+  emailService,
+);
 const fileService = new FileService(fileRepository);
 const userService = new UserService(userRepository, clinicService, fileService);
 
@@ -206,7 +227,13 @@ const clinicActService = new ClinicActService(
 const actService = new ActService(actRepository);
 
 const petService = new PetService(petRepository);
-const animalService = new AnimalService(animalRepository, vaccineRepository);
+const animalService = new AnimalService(
+  animalRepository,
+  vaccineRepository,
+  clinicService,
+  veterinarianProfileRepository,
+  fileService,
+);
 const clinicPetService = new ClinicPetService(
   clinicRepository,
   petRepository,
@@ -220,6 +247,7 @@ const medicalHistoryService = new AnimalMedicalHistoryService(
   vaccineRepository,
   veterinarianClinicRepository,
   clinicActRepository,
+  clinicService,
   fileService,
 );
 
@@ -230,29 +258,41 @@ const reviewService = new ReviewService(reviewRepository, clinicService);
 const recurringService = new RecurringService(
   recurringRepository,
   internalMeetingRepository,
+  availabilityRepository,
 );
 
 const internalMeetingService = new InternalMeetingService(
   internalMeetingRepository,
+  internalMeetingParticipantRepository,
   recurringService,
+  clinicService,
 );
-
-const availabilityService = new AvailabilityService(
-  availabilityRepository,
-  recurringService,
-);
-
-const animalMeetingService = new AnimalMeetingService(
+export const animalMeetingService = new AnimalMeetingService(
   animalMeetingRepository,
   userRepository,
   emailService,
 );
-const meetingService = new MeetingService(meetingRepository);
+const availabilityService = new AvailabilityService(
+  availabilityRepository,
+  recurringService,
+  internalMeetingService,
+  animalMeetingService,
+  veterinarianProfileRepository,
+);
+
+const meetingService = new MeetingService(
+  meetingRepository,
+  animalMeetingService,
+  internalMeetingService,
+  availabilityService,
+  clinicService,
+  veterinarianProfileRepository,
+);
 
 const bookingService = new BookingService(
   bookingRepository,
   clinicRepository,
-  meetingService,
+  availabilityService,
 );
 const vaccineService = new VaccineService(vaccineRepository, petRepository);
 const productService = new ProductService(
@@ -265,7 +305,8 @@ const specialityService = new SpecialityService(specialityRepository);
 export const messagingService = new MessagingService(
   messageRepository,
   conversationRepository,
-  contactsRepository,
+  userRepository,
+  veterinarianProfileRepository,
 );
 const clinicRequestService = new ClinicRequestService(clinicRequestRepository);
 const raceService = new RaceService(raceRepository, petRepository);
@@ -281,9 +322,18 @@ const productRequestService = new ProductRequestService(
   brandRepository,
 );
 
-const clientShopService = new ClientShopService();
+const clientShopService = new ClientShopService(
+  animalRepository,
+  animalMeetingRepository,
+  productClinicRepository,
+  animalHealthConditionRepository,
+);
 
-export const orderService = new OrderService(orderRepository, emailService);
+export const orderService = new OrderService(
+  orderRepository,
+  emailService,
+  animalRepository,
+);
 export const salesService = new SalesService();
 
 export const dashboardService = new DashboardService(
@@ -291,18 +341,25 @@ export const dashboardService = new DashboardService(
   staffService,
   userService,
   clinicService,
-  meetingService,
   orderRepository,
   reviewRepository,
+  animalRepository,
+  animalMeetingService,
+  availabilityService,
 );
 
 export const budgetService = new BudgetService(budgetRepository, clinicService);
-export const supplierService = new SupplierService(supplierRepository);
+
+export const supplierService = new SupplierService(
+  supplierRepository,
+  supplierProductRepository,
+);
 export const supplierOrderService = new SupplierOrderService(
   supplierOrderRepository,
   supplierRepository,
   budgetRepository,
   clinicService,
+  productClinicRepository,
 );
 
 const veterinarianPetService = new VeterinarianPetService(
@@ -321,17 +378,18 @@ export const specialityController = new SpecialityController(specialityService);
 export const actController = new ActController(actService);
 export const animalController = new AnimalController(animalService);
 export const authController = new AuthController(authService);
+const contactService = new ContactService();
+export const contactController = new ContactController(contactService);
 export const clinicController = new ClinicController(clinicService);
 export const medicalHistoryController = new AnimalMedicalHistoryController(
   medicalHistoryService,
 );
 export const meetingController = new MeetingController(
   meetingService,
-  userService,
-  clinicService,
   animalMeetingService,
   availabilityService,
   internalMeetingService,
+  recurringService,
 );
 export const clinicActController = new ClinicActController(clinicActService);
 export const animalMeetingController = new AnimalMeetingController(

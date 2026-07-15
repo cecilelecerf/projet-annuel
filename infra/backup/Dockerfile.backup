@@ -1,0 +1,38 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    unzip \
+    cron \
+    ca-certificates \
+    gzip \
+    gnupg \
+    lsb-release \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+    > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-16 \
+    && rm -rf /var/lib/apt/lists/*
+
+# AWS CLI (utilisé pour OVH S3-compatible ET AWS S3)
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip \
+    && unzip awscliv2.zip \
+    && ./aws/install \
+    && rm -rf awscliv2.zip aws
+
+# MinIO client
+RUN curl -fsSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc \
+    && chmod +x /usr/local/bin/mc \
+    && /usr/local/bin/mc --version
+
+COPY backup.sh /opt/armali/backup.sh
+RUN chmod +x /opt/armali/backup.sh
+
+# Cron : tous les jours à 3h du matin
+RUN echo "0 3 * * * root /opt/armali/backup.sh >> /var/log/backup.log 2>&1" > /etc/cron.d/armali-backup \
+    && chmod 0644 /etc/cron.d/armali-backup
+
+CMD ["sh", "-c", "cron -f"]

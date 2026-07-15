@@ -19,11 +19,44 @@ export class DashboardController {
           this.service.getVeterinarianDashboard(userId),
         )
         .with("ADMIN", () => this.service.getAdminDashboard())
+        .with("CLIENT", () => this.service.getClientDashboard(userId))
         .otherwise(() => {
           throw new ForbiddenError();
         });
 
       res.status(200).json(dashboardSchema.parse(dashboard));
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getVisitsForecast(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id: userId, role } = req.user!;
+      const forecast = await match(role)
+        .with("REFERENT", (r) => this.service.getVisitsForecast(userId, r))
+        .with("DIRECTOR", (r) => this.service.getVisitsForecast(userId, r))
+        .otherwise(() => {
+          throw new ForbiddenError();
+        });
+
+      res.status(200).json(forecast);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getAnalyticsOverview(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id: userId, role } = req.user!;
+      const overview = await match(role)
+        .with("REFERENT", (r) => this.service.getAnalyticsOverview(userId, r))
+        .with("DIRECTOR", (r) => this.service.getAnalyticsOverview(userId, r))
+        .otherwise(() => {
+          throw new ForbiddenError();
+        });
+
+      res.status(200).json(overview);
     } catch (err) {
       next(err);
     }

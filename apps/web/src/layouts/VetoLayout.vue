@@ -19,10 +19,7 @@ const menuItems: NavNode[] = [
     index: 'animaux',
     label: 'Animaux',
     icon: '🐻',
-    children: [
-      { index: 'VETERINARIAN.Animaux.MesAnimaux', label: 'Mes animaux' },
-      { index: 'VETERINARIAN.Animaux.Derniers', label: 'Derniers traités' },
-    ],
+    children: [{ index: 'VETERINARIAN.Animals.List', label: 'Mes animaux' }],
   },
   {
     index: 'VETERINARIAN.Messagerie',

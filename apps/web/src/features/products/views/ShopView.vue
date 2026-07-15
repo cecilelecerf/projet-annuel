@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { http } from '@/lib/api'
 import { useNotify } from '@/composables/useNotify'
+import { useAuthStore } from '@/stores/authStore'
 import { productsApi } from '@/features/products/api/products.api'
 import { brandsApi } from '@/features/products/api/brands.api'
 import { productRequestsApi } from '@/features/products/api/product-requests.api'
@@ -15,6 +17,14 @@ import type {
 } from '@armali/schemas'
 
 const notify = useNotify()
+const router = useRouter()
+const authStore = useAuthStore()
+
+// La page est partagée référent/directeur — le lien vers Fournisseurs doit
+// pointer vers le bon router selon le rôle connecté.
+const suppliersRouteName = computed(() =>
+  authStore.user?.role === 'DIRECTOR' ? 'DIRECTOR.Suppliers' : 'REFERENT.Suppliers',
+)
 
 interface Clinic {
   id: string
@@ -61,7 +71,7 @@ const catalogLoading = ref(false)
 
 // IDs déjà présents dans la boutique de la clinique, pour ne pas proposer de doublon
 const alreadyLinkedProductIds = computed(
-  () => new Set(clinicProducts.value.map((cp) => cp.productId)),
+  () => new Set(clinicProducts.value.map((cp: ProductClinicWithProduct) => cp.productId)),
 )
 
 async function openAddDialog() {
@@ -81,7 +91,7 @@ async function openAddDialog() {
 }
 
 const availableCatalogProducts = computed(() =>
-  catalogProducts.value.filter((p) => !alreadyLinkedProductIds.value.has(p.id)),
+  catalogProducts.value.filter((p: ProductWithBrand) => !alreadyLinkedProductIds.value.has(p.id)),
 )
 
 const addForm = reactive({
@@ -151,7 +161,7 @@ async function searchRequestBrands(query: string) {
 const showNewBrandOption = computed(() => {
   const query = requestBrandQuery.value.trim()
   if (!query) return false
-  return !requestBrandOptions.value.some((b) => b.name.toLowerCase() === query.toLowerCase())
+  return !requestBrandOptions.value.some((b: Brand) => b.name.toLowerCase() === query.toLowerCase())
 })
 
 // Sélection d'une marque existante OU indication d'un nom de marque libre
@@ -205,37 +215,6 @@ async function submitRequest() {
   }
 }
 
-// ── Réapprovisionnement ──────────────────────────────────────────────────
-
-const restockDialog = ref(false)
-const restockTarget = ref<ProductClinicWithProduct | null>(null)
-const restockQuantity = ref(1)
-const restockLoading = ref(false)
-
-function openRestock(item: ProductClinicWithProduct) {
-  restockTarget.value = item
-  restockQuantity.value = 1
-  restockDialog.value = true
-}
-
-async function submitRestock() {
-  if (!restockTarget.value) return
-  restockLoading.value = true
-  try {
-    const updated = await productsApi.restock(restockTarget.value.id, {
-      quantity: restockQuantity.value,
-    })
-    const index = clinicProducts.value.findIndex((p) => p.id === updated.id)
-    if (index !== -1) clinicProducts.value[index] = updated
-    notify.success('Stock mis à jour')
-    restockDialog.value = false
-  } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors du réapprovisionnement')
-  } finally {
-    restockLoading.value = false
-  }
-}
-
 // ── Modification du minimum requis / prix (le nom et la marque du produit ──
 // ── appartiennent au catalogue global, géré par l'admin uniquement) ────────
 
@@ -259,7 +238,7 @@ async function submitEdit() {
       minimumRequired: editForm.minimumRequired,
       price: editForm.price,
     })
-    const index = clinicProducts.value.findIndex((p) => p.id === updated.id)
+    const index = clinicProducts.value.findIndex((p: ProductClinicWithProduct) => p.id === updated.id)
     if (index !== -1) clinicProducts.value[index] = updated
     notify.success('Produit mis à jour')
     editDialog.value = false
@@ -283,12 +262,16 @@ async function submitEdit() {
 
     <el-alert
       v-if="lowStockCount > 0"
-      :title="`${lowStockCount} produit(s) sous le seuil minimum`"
       type="warning"
       show-icon
       :closable="false"
       style="margin-bottom: 20px"
-    />
+    >
+      <template #title>
+        {{ lowStockCount }} produit(s) sous le seuil minimum —
+        <RouterLink :to="{ name: suppliersRouteName }">passer une commande fournisseur</RouterLink>
+      </template>
+    </el-alert>
 
     <el-table v-loading="loading" :data="clinicProducts" style="width: 100%">
       <el-table-column label="Produit" min-width="200">
@@ -320,9 +303,15 @@ async function submitEdit() {
         </template>
       </el-table-column>
 
-      <el-table-column label="Actions" width="240">
+      <el-table-column label="Actions" width="260">
         <template #default="{ row }: { row: ProductClinicWithProduct }">
-          <el-button size="small" @click="openRestock(row)">Réapprovisionner</el-button>
+          <el-button
+            size="small"
+            :type="isLowStock(row) ? 'warning' : 'default'"
+            @click="router.push({ name: suppliersRouteName })"
+          >
+            Commander
+          </el-button>
           <el-button size="small" @click="openEdit(row)">Modifier</el-button>
         </template>
       </el-table-column>
@@ -419,22 +408,6 @@ async function submitEdit() {
         <el-button @click="requestDialog = false">Annuler</el-button>
         <el-button type="primary" :loading="requestLoading" @click="submitRequest">
           Envoyer la demande
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Dialog : réapprovisionnement -->
-    <el-dialog v-model="restockDialog" title="Réapprovisionner" width="360px">
-      <p v-if="restockTarget">{{ restockTarget.product.name }}</p>
-      <el-form label-position="top" @submit.prevent="submitRestock">
-        <el-form-item label="Quantité à ajouter">
-          <el-input-number v-model="restockQuantity" :min="1" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="restockDialog = false">Annuler</el-button>
-        <el-button type="primary" :loading="restockLoading" @click="submitRestock">
-          Valider
         </el-button>
       </template>
     </el-dialog>

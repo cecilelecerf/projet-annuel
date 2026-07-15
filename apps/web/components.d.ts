@@ -11,6 +11,8 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AddressFields: typeof import('./src/components/AddressFields.vue')['default']
+    ClinicSpecialities: typeof import('./src/components/ClinicSpecialities.vue')['default']
     ConfirmDeleteDialog: typeof import('./src/components/ui/ConfirmDeleteDialog.vue')['default']
     ContactCard: typeof import('./src/components/ContactCard.vue')['default']
     DeleteAccountDialog: typeof import('./src/components/profile/DeleteAccountDialog.vue')['default']
@@ -45,10 +47,12 @@ declare module 'vue' {
     ElRadioButton: typeof import('element-plus/es')['ElRadioButton']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElRate: typeof import('element-plus/es')['ElRate']
+    ElResult: typeof import('element-plus/es')['ElResult']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElScrollbar: typeof import('element-plus/es')['ElScrollbar']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
+    ElSlider: typeof import('element-plus/es')['ElSlider']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
@@ -61,13 +65,18 @@ declare module 'vue' {
     ElTooltip: typeof import('element-plus/es')['ElTooltip']
     FormError: typeof import('./src/components/ui/FormError.vue')['default']
     HeroComponent: typeof import('./src/components/landingPage/HeroComponent.vue')['default']
+    LegalLayout: typeof import('./src/components/landingPage/LegalLayout.vue')['default']
     NavbarComponent: typeof import('./src/components/ui/nav/NavbarComponent.vue')['default']
     NotificationMessageItem: typeof import('./src/components/ui/nav/clocks/NotificationMessageItem.vue')['default']
     NotificationStockItem: typeof import('./src/components/ui/nav/clocks/NotificationStockItem.vue')['default']
+    OpeningHoursEditor: typeof import('./src/components/OpeningHoursEditor.vue')['default']
     RecursiveSideBarItem: typeof import('./src/components/ui/nav/RecursiveSideBarItem.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SearchSelectMultiple: typeof import('./src/components/ui/SearchSelectMultiple.vue')['default']
+    SearchSelectSingle: typeof import('./src/components/ui/SearchSelectSingle.vue')['default']
     SidebarComponent: typeof import('./src/components/ui/nav/SidebarComponent.vue')['default']
+    SiteFooter: typeof import('./src/components/landingPage/SiteFooter.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

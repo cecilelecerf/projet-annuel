@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useNotify } from '@/composables/useNotify'
+import { useAuthStore } from '@/stores/authStore'
 import { budgetApi } from '../api/budget.api'
 import type { BudgetSummary } from '@armali/schemas'
 
 const notify = useNotify()
+const authStore = useAuthStore()
+
+// Seul le directeur peut créditer le budget — le référent ne fait que le dépenser
+const canCredit = computed(() => authStore.user?.role === 'DIRECTOR')
 
 const summary = ref<BudgetSummary | null>(null)
 const loading = ref(false)
@@ -77,9 +82,9 @@ const typeConfig = {
   <div class="page-header">
     <div>
       <h1>Budget clinique</h1>
-      <p>Suivi des fonds disponibles de votre clinique.</p>
+      <p>Suivi des fonds disponibles pour vos commandes fournisseurs</p>
     </div>
-    <el-button type="primary" @click="openCreditDialog">Créditer le budget</el-button>
+    <el-button v-if="canCredit" type="primary" @click="openCreditDialog">Créditer le budget</el-button>
   </div>
 
   <el-skeleton v-if="loading" :rows="4" animated />
@@ -117,7 +122,7 @@ const typeConfig = {
     </div>
   </template>
 
-  <el-dialog v-model="creditDialogOpen" title="Créditer le budget" width="420px">
+  <el-dialog v-if="canCredit" v-model="creditDialogOpen" title="Créditer le budget" width="420px">
     <el-form label-position="top">
       <el-form-item label="Montant (€)">
         <el-input-number v-model="form.amount" :min="0.01" :step="10" :precision="2" style="width: 100%" />

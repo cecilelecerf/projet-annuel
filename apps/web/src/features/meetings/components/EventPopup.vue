@@ -19,6 +19,7 @@ dayjs.locale('fr')
 const { meetingId, date } = defineProps<{
   meetingId: string
   date?: Date
+  kind: 'ANIMAL' | 'INTERNAL'
 }>()
 const emit = defineEmits<{ close: [] }>()
 const { user } = useAuthStore()
@@ -100,13 +101,13 @@ const onEdit = async () => {
 
 const onSaveInternal = async (scope: 'single' | 'all' = 'single') => {
   if (meeting.kind !== 'INTERNAL') return
-
   await saveSchedule({
     meetingId: meeting.id,
     parentId: meeting.parentId ?? null,
-    date: dateForm.value.date,
+    targetDate: dateForm.value.date,
     startTime: dateForm.value.startTime,
     endTime: dateForm.value.endTime,
+    originDate: meeting.date,
     scope,
     onSuccess: () => {
       isEditing.value = false

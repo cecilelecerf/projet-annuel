@@ -6,6 +6,7 @@ import 'dayjs/locale/fr'
 import type { BookingClinic, BookingVet, BookingSlot } from '@armali/schemas'
 import { meetingApi } from '@/features/meetings/api/meeting.api'
 import { MEETING_COLORS } from '@/utils/meetingColor'
+import { formatAddress } from '@/utils/clinic.utils'
 
 dayjs.locale('fr')
 
@@ -81,7 +82,7 @@ const afternoonSlots = computed(() => slots.value.filter((s) => dayjs(s.startTim
       <h2 class="step-title">Choisissez un vétérinaire</h2>
       <p class="step-desc">
         <el-icon><Location /></el-icon>
-        {{ clinic.name }} — {{ clinic.address }}
+        {{ clinic.name }} — {{ formatAddress(clinic) }}
       </p>
     </div>
 

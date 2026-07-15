@@ -7,7 +7,11 @@ import type {
   SpecialityId,
 } from "@armali/schemas";
 import { UserRole } from "../../prisma/generated/prisma/enums";
-import { Clinic, PrismaClient } from "../../prisma/generated/prisma/client";
+import {
+  Clinic,
+  Prisma,
+  PrismaClient,
+} from "../../prisma/generated/prisma/client";
 
 const futureAvailabilityWhere = () => ({
   OR: [
@@ -120,7 +124,16 @@ export class ClinicRepository {
 
   // ── Update clinic ─────────────────────────────────────────────────────────
   async update(clinicId: string, data: UpdateClinic) {
-    return prisma.clinic.update({ where: { id: clinicId }, data });
+    return prisma.clinic.update({
+      where: { id: clinicId },
+      data: {
+        ...data,
+        openingHours:
+          data.openingHours === null
+            ? Prisma.JsonNull
+            : (data.openingHours as Prisma.InputJsonValue | undefined),
+      },
+    });
   }
 
   // ── Recherche de cliniques pour le booking ────────────────────────────────
@@ -133,13 +146,13 @@ export class ClinicRepository {
     return prisma.clinic.findMany({
       where: {
         ...(petId && {
-          clinicPet: { some: { id: petId } },
+          pets: { some: { id: petId } },
         }),
         veterinarianClinics: {
           some: {
             veterinarian: {
               ...(petId && {
-                pet: { some: { id: petId } },
+                pets: { some: { id: petId } },
               }),
               ...(specialityId && {
                 specialities: { some: { id: specialityId } },

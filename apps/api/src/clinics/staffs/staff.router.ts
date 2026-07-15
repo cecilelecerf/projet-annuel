@@ -7,6 +7,7 @@ import {
   createReferentStaffSchema,
   createSecretaryStaffSchema,
   createVeterinarianStaffSchema,
+  linkVeterinarianStaffSchema,
 } from "@armali/schemas";
 import { staffController } from "@api/instances";
 import { requireApprovedClinic } from "@api/middlewares/clinic-guard.middleware";
@@ -23,6 +24,19 @@ staffRouter.get(
   requireApprovedClinic,
   roleMiddleware(CLINIC_STAFF_ROLES),
   staffController.getStaffByClinic.bind(staffController) as RequestHandler,
+);
+
+staffRouter.get(
+  "/veterinarians/search",
+  roleMiddleware(["DIRECTOR", "REFERENT"]),
+  controller.searchVeterinarian.bind(controller) as RequestHandler,
+);
+
+staffRouter.post(
+  "/veterinarians/link",
+  roleMiddleware(["DIRECTOR", "REFERENT"]),
+  validate(linkVeterinarianStaffSchema),
+  controller.linkVeterinarian.bind(controller) as RequestHandler,
 );
 
 staffRouter.post(
@@ -49,6 +63,12 @@ staffRouter.get(
   "/:id",
   roleMiddleware(["REFERENT", "DIRECTOR"]),
   controller.getStaffMemberDetail.bind(controller) as RequestHandler,
+);
+
+staffRouter.delete(
+  "/:id",
+  roleMiddleware(["REFERENT", "DIRECTOR"]),
+  controller.deleteStaffMember.bind(controller) as RequestHandler,
 );
 
 export default staffRouter;

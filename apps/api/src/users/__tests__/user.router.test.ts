@@ -10,18 +10,18 @@ const loginAs = async (email: string, password = "Password123!") => {
   return res.body.accessToken as string;
 };
 
-// ── GET /api/users?roles=:role ─────────────────────────────────────────────────
+// ── GET /api/users?role=:role ─────────────────────────────────────────────────
 
-describe("GET /api/users?roles=:role", () => {
+describe("GET /api/users?role=:role", () => {
   it("401 — sans token", async () => {
-    const res = await request(app).get("/api/users?roles=veterinarian");
+    const res = await request(app).get("/api/users?role=veterinarian");
     expect(res.status).toBe(401);
   });
 
   it("403 — rôle CLIENT non autorisé", async () => {
     const token = await loginAs("client@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=veterinarian")
+      .get("/api/users?role=veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });
@@ -29,7 +29,7 @@ describe("GET /api/users?roles=:role", () => {
   it("400 — rôle invalide", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=INVALID_ROLE")
+      .get("/api/users?role=INVALID_ROLE")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(400);
   });
@@ -37,11 +37,11 @@ describe("GET /api/users?roles=:role", () => {
   it("200 — ADMIN retourne les vétérinaires", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=veterinarian")
+      .get("/api/users?role=veterinarian")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
-    res.body.forEach((user) => {
+    res.body.forEach((user: { role: string }) => {
       expect(user.role).toBe("VETERINARIAN");
     });
   });
@@ -49,12 +49,12 @@ describe("GET /api/users?roles=:role", () => {
   it("200 — ADMIN retourne les clients", async () => {
     const token = await loginAs("admin@gmail.com");
     const res = await request(app)
-      .get("/api/users?roles=client")
+      .get("/api/users?role=client")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThanOrEqual(1);
-    res.body.forEach((user) => {
+    res.body.forEach((user: { role: string }) => {
       expect(user.role).toBe("CLIENT");
     });
   });
@@ -221,5 +221,92 @@ describe("GET /api/users/:id/animals", () => {
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+// ── GET /api/users?role=STAFF ─────────────────────────────────────────────────
+
+describe("GET /api/users?role=STAFF", () => {
+  it("200 — ADMIN retourne tout le personnel (alias STAFF)", async () => {
+    const token = await loginAs("admin@gmail.com");
+    const res = await request(app)
+      .get("/api/users?role=STAFF")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    const staffRoles = ["DIRECTOR", "REFERENT", "SECRETARY", "VETERINARIAN"];
+    res.body.forEach((user: { role: string }) => {
+      expect(staffRoles).toContain(user.role);
+    });
+  });
+});
+
+// ── DELETE /api/users/:id ────────────────────────────────────────────────────
+
+describe("DELETE /api/users/:id", () => {
+  it("401 — sans token", async () => {
+    const res = await request(app).delete("/api/users/some-id");
+    expect(res.status).toBe(401);
+  });
+
+  it("403 — rôle non-ADMIN non autorisé", async () => {
+    const token = await loginAs("directeur@gmail.com");
+    const res = await request(app)
+      .delete("/api/users/some-id")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("400 — un ADMIN ne peut pas supprimer son propre compte via cette route", async () => {
+    const token = await loginAs("admin@gmail.com");
+    const admin = await getPrisma().user.findFirst({ where: { role: "ADMIN" } });
+
+    const res = await request(app)
+      .delete(`/api/users/${admin!.id}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it("404 — utilisateur introuvable", async () => {
+    const token = await loginAs("admin@gmail.com");
+    const res = await request(app)
+      .delete("/api/users/00000000-0000-4000-8000-000000000000")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("400 — refuse la suppression d'un utilisateur ayant des rendez-vous liés", async () => {
+    const token = await loginAs("admin@gmail.com");
+    const veto = await getPrisma().user.findUnique({
+      where: { email: "veto@gmail.com" },
+    });
+
+    const res = await request(app)
+      .delete(`/api/users/${veto!.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("rendez-vous");
+  });
+
+  it("200 — supprime un utilisateur sans dépendances", async () => {
+    const token = await loginAs("admin@gmail.com");
+    const created = await getPrisma().user.create({
+      data: {
+        email: `a-supprimer-${Date.now()}@gmail.com`,
+        firstname: "A",
+        lastname: "Supprimer",
+        password: "irrelevant",
+        role: "CLIENT",
+      },
+    });
+
+    const res = await request(app)
+      .delete(`/api/users/${created.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("message", "Compte supprimé");
   });
 });

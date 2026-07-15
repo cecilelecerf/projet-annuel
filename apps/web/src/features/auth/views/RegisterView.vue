@@ -5,6 +5,8 @@ import { useAuthStore, type UserStore } from '@/stores/authStore'
 import { http } from '@/lib/api'
 import { roleHomeMap } from '@/router/index'
 import { useNotify } from '@/composables/useNotify'
+import { trackEvent } from '@/lib/matomo'
+import AddressFields from '@/components/AddressFields.vue'
 
 const notify = useNotify()
 
@@ -26,7 +28,10 @@ const form = ref({
 
 const clinic = ref({
   name: '',
-  address: '',
+  street: '',
+  postalCode: '',
+  city: '',
+  country: 'FR',
   siret: '',
   phone: '',
   website: '',
@@ -49,7 +54,9 @@ function validateUserForm(): string | null {
   if (!form.value.firstname.trim()) return 'Le prénom est requis'
   if (!form.value.lastname.trim()) return 'Le nom est requis'
   if (!form.value.email.includes('@')) return 'Email invalide'
-  if (form.value.password.length < 8) return 'Mot de passe : minimum 8 caractères'
+  if (form.value.password.length < 12) return 'Mot de passe : minimum 12 caractères'
+  if (!/[A-Za-z]/.test(form.value.password) || !/[0-9]/.test(form.value.password) || !/[^A-Za-z0-9]/.test(form.value.password))
+    return 'Mot de passe : au moins une lettre, un chiffre et un symbole'
   if (form.value.password !== form.value.passwordConfirm)
     return 'Les mots de passe ne correspondent pas'
   return null
@@ -57,7 +64,8 @@ function validateUserForm(): string | null {
 
 function validateClinicForm(): string | null {
   if (!clinic.value.name.trim()) return 'Le nom de la clinique est requis'
-  if (!clinic.value.address.trim()) return "L'adresse est requise"
+  if (!clinic.value.street.trim() || !clinic.value.postalCode.trim() || !clinic.value.city.trim())
+    return "L'adresse est requise"
   if (clinic.value.siret.replace(/\s/g, '').length !== 14)
     return 'Le SIRET doit contenir 14 chiffres'
   if (clinic.value.phone.replace(/\s/g, '').length < 10) return 'Téléphone invalide'
@@ -101,7 +109,10 @@ async function handleSubmit() {
         lastname: form.value.lastname,
         clinic: {
           name: clinic.value.name,
-          address: clinic.value.address,
+          street: clinic.value.street,
+          postalCode: clinic.value.postalCode,
+          city: clinic.value.city,
+          country: clinic.value.country,
           siret: clinic.value.siret.replace(/\s/g, ''),
           phone: clinic.value.phone.replace(/\s/g, ''),
           website: clinic.value.website,
@@ -118,10 +129,12 @@ async function handleSubmit() {
     }
 
     authStore.setAuth(data.user as UserStore, data.accessToken, data.refreshToken)
+    trackEvent('auth', 'register_success', selectedRole.value)
     notify.success('Compte créé avec succès !')
     const role = authStore.user?.role
     router.push(role && roleHomeMap[role] ? roleHomeMap[role] : '/')
   } catch (err: unknown) {
+    trackEvent('auth', 'register_failure', selectedRole.value)
     notify.error(err instanceof Error ? err.message : "Erreur lors de l'inscription")
   } finally {
     loading.value = false
@@ -183,7 +196,7 @@ async function handleSubmit() {
               v-model="form.password"
               type="password"
               show-password
-              placeholder="Minimum 8 caractères"
+              placeholder="Min. 12 caractères, avec lettres, chiffres et symboles"
               size="large"
             />
           </el-form-item>
@@ -224,13 +237,7 @@ async function handleSubmit() {
             />
           </el-form-item>
 
-          <el-form-item label="Adresse">
-            <el-input
-              v-model="clinic.address"
-              placeholder="12 rue de la Paix, 75001 Paris"
-              size="large"
-            />
-          </el-form-item>
+          <AddressFields v-model="clinic" size="large" />
 
           <div class="form-row">
             <el-form-item label="SIRET (14 chiffres)">

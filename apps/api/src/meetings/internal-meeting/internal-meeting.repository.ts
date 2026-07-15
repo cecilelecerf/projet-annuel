@@ -1,9 +1,11 @@
 import { userWithProfileAndClinicIdInclude } from "@api/users/user.types";
 import type {
+  ClinicId,
   CreateInternalMeeting,
   MeetingParticipantStatus,
   MeetingRecurringId,
   UpdateInternalMeeting,
+  UserId,
 } from "@armali/schemas";
 import {
   InternalMeeting,
@@ -11,7 +13,7 @@ import {
   MeetingReccuring,
   PrismaClient,
 } from "../../../prisma/generated/prisma/client";
-
+import { buildInternalMeetingCreate } from "../recurring-meeting/utils";
 export class InternalMeetingRepository {
   constructor(private prisma: PrismaClient) {}
 
@@ -28,15 +30,16 @@ export class InternalMeetingRepository {
     });
   }
 
-  async create({
+  // C'est le meeting qui porte la fk donc pas le choix du sens
+  async createPunctual({
     data,
     authorId,
     clinicId,
     parentId,
   }: {
     data: CreateInternalMeeting;
-    authorId: string;
-    clinicId: string;
+    authorId: UserId;
+    clinicId?: ClinicId;
     parentId?: MeetingRecurringId;
   }) {
     return this.prisma.meetingBase.create({
@@ -47,20 +50,16 @@ export class InternalMeetingRepository {
         endTime: data.endTime,
         type: "SPECIFIED",
         parentId: parentId,
-        internalMeeting: {
-          create: {
-            title: data.title,
-            description: data.description,
-            clinicId: data.clinicId ?? clinicId,
-            adminId: authorId,
-            participants: {
-              create: data.userIds?.map((userId) => ({
-                userId,
-                status: "PENDING",
-              })),
-            },
-          },
-        },
+        internalMeeting: buildInternalMeetingCreate({
+          title: data.title,
+          description: data.description,
+          adminId: authorId,
+          clinicId: data.clinicId ?? clinicId,
+          participants: (data.userIds ?? []).map((userId) => ({
+            userId,
+            status: "PENDING",
+          })),
+        }),
       },
       include: {
         internalMeeting: {
@@ -97,42 +96,8 @@ export class InternalMeetingRepository {
   async delete(id: string) {
     return this.prisma.internalMeeting.delete({ where: { id } });
   }
-  async findParticipant(internalMeetingId: string, userId: string) {
-    return this.prisma.internalMeetingParticipant.findFirst({
-      where: { meetingId: internalMeetingId, userId },
-    });
-  }
-  async updateParticipantStatus({
-    internalMeetingId,
-    userId,
-    status,
-  }: {
-    internalMeetingId: string;
-    userId: string;
-    status: MeetingParticipantStatus;
-  }) {
-    return this.prisma.internalMeetingParticipant.updateMany({
-      where: { meetingId: internalMeetingId, userId },
-      data: { status },
-    });
-  }
-  async copyParticipantStatuses({
-    targetInternalMeetingId,
-    sourceParticipants,
-  }: {
-    targetInternalMeetingId: string;
-    sourceParticipants: InternalMeetingParticipant[];
-  }) {
-    await this.prisma.$transaction(
-      sourceParticipants.map((p) =>
-        this.prisma.internalMeetingParticipant.updateMany({
-          where: { meetingId: targetInternalMeetingId, userId: p.userId },
-          data: { status: p.status },
-        }),
-      ),
-    );
-  }
 
+  // Même principe de fk
   async createOccurrenceOverride({
     internalMeeting,
     date,
@@ -211,6 +176,24 @@ export class InternalMeetingRepository {
   async deleteFutureChildren(recurringId: string, fromDate: Date) {
     return this.prisma.meetingBase.deleteMany({
       where: { parentId: recurringId, date: { gte: fromDate } },
+    });
+  }
+
+  async findByUser(userId: UserId) {
+    return this.prisma.internalMeeting.findMany({
+      where: {
+        OR: [
+          { adminId: userId },
+          {
+            participants: {
+              some: {
+                userId,
+              },
+            },
+          },
+        ],
+      },
+      include: { meeting: true, recurring: true },
     });
   }
 }

@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useRouter } from 'vue-router'
 import { roleHomeMap } from '@/router/index'
 import HeroComponent from '@/components/landingPage/HeroComponent.vue'
+import SiteFooter from '@/components/landingPage/SiteFooter.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -182,18 +183,7 @@ const testimonials = [
       </div>
     </section>
 
-    <!-- ── Footer ────────────────────────────────────────────────────────────── -->
-    <footer class="footer">
-      <div class="container footer__inner">
-        <span class="brand footer__brand">Armali</span>
-        <span class="footer__copy">© 2026 Armali — La santé animale, réinventée</span>
-        <div class="footer__links">
-          <a href="#">Mentions légales</a>
-          <a href="#">Confidentialité</a>
-          <a href="#">Contact</a>
-        </div>
-      </div>
-    </footer>
+    <SiteFooter />
   </div>
 </template>
 
@@ -479,47 +469,6 @@ const testimonials = [
   justify-content: center;
 }
 
-// ── Footer ────────────────────────────────────────────────────────────────────
-.footer {
-  padding: $spacing-xl 0;
-  border-top: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.footer__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-}
-
-.footer__brand {
-  font-size: 1.25rem;
-  color: var(--el-color-primary);
-}
-
-.footer__copy {
-  font-size: 12px;
-  color: var(--el-text-color-placeholder);
-}
-
-.footer__links {
-  display: flex;
-  gap: $spacing-lg;
-
-  a {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    text-decoration: none;
-    transition: color 0.15s;
-
-    &:hover {
-      color: var(--el-color-primary);
-    }
-  }
-}
-
 // ── Responsive ────────────────────────────────────────────────────────────────
 @include below('md') {
   .container {
@@ -535,11 +484,6 @@ const testimonials = [
     width: auto;
     text-align: left;
     font-size: 2rem;
-  }
-
-  .footer__inner {
-    flex-direction: column;
-    text-align: center;
   }
 }
 </style>

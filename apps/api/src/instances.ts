@@ -69,6 +69,7 @@ import { SupplierProductRepository } from "./suppliers/supplier-product.reposito
 import { ActService } from "./acts/act.service";
 import { AnimalService } from "./animals/animal.service";
 import { AuthService } from "./auth/auth.service";
+import { ContactService } from "./contact/contact.service";
 import { ClinicService } from "./clinics/clinic.service";
 import { EmailService } from "./emails/email.service";
 import { MeetingService } from "./meetings/meeting.service";
@@ -102,6 +103,7 @@ import { SupplierOrderService } from "./supplier-orders/supplier-order.service";
 import { ActController } from "./acts/act.controller";
 import { AnimalController } from "./animals/animal.controller";
 import { AuthController } from "./auth/auth.controller";
+import { ContactController } from "./contact/contact.controller";
 import { ClinicController } from "./clinics/clinic.controller";
 import { MeetingController } from "./meetings/meeting.controller";
 import { AnimalMeetingController } from "./meetings/animal-meeting/animal-meeting.controller";
@@ -376,6 +378,8 @@ export const specialityController = new SpecialityController(specialityService);
 export const actController = new ActController(actService);
 export const animalController = new AnimalController(animalService);
 export const authController = new AuthController(authService);
+const contactService = new ContactService();
+export const contactController = new ContactController(contactService);
 export const clinicController = new ClinicController(clinicService);
 export const medicalHistoryController = new AnimalMedicalHistoryController(
   medicalHistoryService,

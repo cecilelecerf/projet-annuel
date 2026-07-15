@@ -5,6 +5,15 @@ import {
 } from "./templates/appointment.templates";
 import { emailLayout } from "./templates/layout";
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export class EmailService {
   private from = process.env.MAIL_FROM || "noreply@armali.fr";
 
@@ -106,6 +115,26 @@ export class EmailService {
           <h2 style="color:#2ecc71;">Bonjour ${firstname}</h2>
           <p>Votre compte vétérinaire a été rattaché à la clinique <strong>${clinicName}</strong> sur Armali.</p>
           <p>Vous pouvez dès maintenant y exercer avec votre compte existant.</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendContactMessage(
+    to: string,
+    data: { name: string; email: string; subject: string; message: string },
+  ) {
+    await transporter.sendMail({
+      from: this.from,
+      to,
+      replyTo: data.email,
+      subject: `[Contact] ${escapeHtml(data.subject)}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px;">
+          <h2 style="color:#409eff;">Nouveau message de contact</h2>
+          <p><strong>De :</strong> ${escapeHtml(data.name)} (${escapeHtml(data.email)})</p>
+          <p><strong>Sujet :</strong> ${escapeHtml(data.subject)}</p>
+          <p style="white-space: pre-wrap; background: #f4f4f4; border-radius: 8px; padding: 16px;">${escapeHtml(data.message)}</p>
         </div>
       `,
     });

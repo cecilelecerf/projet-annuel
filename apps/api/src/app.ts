@@ -8,6 +8,7 @@ import reviewRouter from "./reviews/review.router";
 import { collectDefaultMetrics } from "prom-client";
 import express_prom_bundle from "express-prom-bundle";
 import { default as authRouter } from "./auth/auth.router";
+import contactRouter from "./contact/contact.router";
 import { default as userRouter } from "./users/user.router";
 import { errorHandler } from "./middlewares";
 import actRouter from "./acts/act.router";
@@ -78,6 +79,7 @@ app.get("/api/test", async (req, res) => {
   res.json(users);
 });
 app.use("/api/auth", authRouter);
+app.use("/api/contact", contactRouter);
 app.use("/api/meetings", meetingRouter);
 app.use("/api/users", userRouter);
 app.use("/api/clinics", clinicRouter);

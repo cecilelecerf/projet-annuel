@@ -27,3 +27,4 @@ export * from "./staffs";
 export * from "./specilities.schema";
 export * from "./file.schema";
 export * from "./upload.schema";
+export * from "./contact.schema";

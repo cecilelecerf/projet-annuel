@@ -28,6 +28,9 @@ jobs:
       - name: Terraform Init
         working-directory: infra/backup
         run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.OVH_S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OVH_S3_SECRET_KEY }}
 
       - name: Terraform Apply
         working-directory: infra/backup
@@ -37,6 +40,9 @@ jobs:
           OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
           OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
           OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.OVH_S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.OVH_S3_SECRET_KEY }}
+
   build-and-push:
     name: Build & Push images
     runs-on: ubuntu-latest
@@ -86,6 +92,7 @@ jobs:
           build-args: |
             VITE_MATOMO_URL=${{ vars.VITE_MATOMO_URL }}
             VITE_MATOMO_SITE_ID=${{ vars.VITE_MATOMO_SITE_ID }}
+            VITE_SENTRY_DSN=https://705048e760c7779c861e6e7e95c0ee36@o4509694057971712.ingest.de.sentry.io/4511741123100752
 
       - name: Build & Push Nginx
         uses: docker/build-push-action@v5
@@ -100,7 +107,7 @@ jobs:
       - name: Build & Push Backup
         uses: docker/build-push-action@v5
         with:
-          context: infra/backup
+          context: .
           file: infra/backup/Dockerfile.backup
           push: true
           tags: ${{ env.IMAGE_BACKUP }}:latest

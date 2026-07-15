@@ -322,8 +322,10 @@ services:
       - minio_root_user
       - minio_root_password
     networks:
-      - backend
-      - frontend
+      backend:
+        aliases:
+          - miniostorage
+      frontend: {}
     deploy:
       replicas: 1
       placement:
@@ -359,6 +361,27 @@ services:
     networks:
       - backend
 
+  backup:
+    image: ${DOCKER_HUB_USERNAME}/pa-backup:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - backend
+    secrets:
+      - db_user
+      - db_password
+      - db_name
+      - minio_root_user
+      - minio_root_password
+      - ovh_s3_access_key
+      - ovh_s3_secret_key
+      - aws_dr_access_key_id
+      - aws_dr_secret_access_key
+    environment:
+      DB_HOST: cecoule_postgres
+      MINIO_ENDPOINT: http://cecoule_minio:9000
   matomo-db:
     image: mariadb:11
     environment:
@@ -486,6 +509,13 @@ secrets:
     external: true
   resend_api_key:
     external: true
+  ovh_s3_access_key:
+    external: true
+  ovh_s3_secret_key:
+    external: true
+  aws_dr_access_key_id:
+    external: true
+  aws_dr_secret_access_key:
   matomo_db_user:
     external: true
   matomo_db_password:

@@ -11,8 +11,32 @@ env:
   IMAGE_WEB: ${{ secrets.DOCKER_HUB_USERNAME }}/pa-web
   IMAGE_SEED: ${{ secrets.DOCKER_HUB_USERNAME }}/pa-seed
   IMAGE_NGINX: ${{ secrets.DOCKER_HUB_USERNAME }}/pa-nginx
+  IMAGE_BACKUP: ${{ secrets.DOCKER_HUB_USERNAME }}/pa-backup
 
 jobs:
+  terraform-backup-infra:
+    name: Provision backup infra (Terraform)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra/backup
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: infra/backup
+        run: terraform apply -auto-approve -var="ovh_project_id=${{ secrets.OVH_PROJECT_ID }}"
+        env:
+          OVH_ENDPOINT: ovh-eu
+          OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
+          OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
+          OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
   build-and-push:
     name: Build & Push images
     runs-on: ubuntu-latest
@@ -73,6 +97,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build & Push Backup
+        uses: docker/build-push-action@v5
+        with:
+          context: infra/backup
+          file: infra/backup/Dockerfile.backup
+          push: true
+          tags: ${{ env.IMAGE_BACKUP }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
@@ -114,6 +148,7 @@ jobs:
             docker pull $DOCKER_HUB_USERNAME/pa-web:latest
             docker pull $DOCKER_HUB_USERNAME/pa-nginx:latest
             docker pull $DOCKER_HUB_USERNAME/pa-seed:latest
+            docker pull $DOCKER_HUB_USERNAME/pa-backup:latest
 
             DOCKER_HUB_USERNAME=$DOCKER_HUB_USERNAME docker stack deploy \
               --with-registry-auth \

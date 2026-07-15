@@ -21,6 +21,8 @@ L'infrastructure repose sur un cluster Swarm composé de **3 nœuds** (1 Manager
 - **Grafana :** Visualisation des métriques (1 réplicas).
 - **Minio :** Stockage des images (1 réplicas).
 - **Minio Init :** Inititalisation de minio.
+- **Matomo :** Analytics web auto-hébergé (1 réplica), tracking des pages vues côté frontend.
+- **Matomo DB (MariaDB) :** Base de données dédiée à Matomo, isolée du Postgres applicatif (1 réplica).
 - **Api - Seed :** Pas up, utile seulement pour le workflow de seeds.
 - **Api - Migration :** Pas up, utile seulement pour le workflow de migration.
 
@@ -65,6 +67,10 @@ echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create minio_root_password -
 echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create aws_access_key_id_v2 -
 echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create aws_region -
 echo "VOTRE_MOT_DE_PASSE_GRAFANA" | docker secret create aws_secret_access_key_v2 -
+echo "matomo" | docker secret create matomo_db_user -
+echo "VOTRE_MOT_DE_PASSE_MATOMO" | docker secret create matomo_db_password -
+echo "matomo" | docker secret create matomo_db_name -
+echo "VOTRE_MOT_DE_PASSE_MATOMO_ROOT" | docker secret create matomo_db_root_password -
 ```
 
 ## Étape 2.3 : Docker Configs (Configurations Swarm)
@@ -193,6 +199,14 @@ API (prom-client) → Prometheus (scrape /metrics toutes les 15s) → Grafana (d
 
 - **Grafana** : `https://grafana.armali.online` (admin / mot de passe du secret `grafana_admin_password`)
 - **Prometheus** : `http://151.80.232.199:9090`
+
+### Matomo (Analytics web)
+
+- **Accès** : `https://matomo.armali.online`
+
+Après le premier déploiement, il faut effectuer une seule fois l'assistant d'installation Matomo (création du compte admin, du site à suivre, choix du fuseau horaire). Il fournit un **Site ID** (généralement `1` pour le premier site créé) à renseigner dans `VITE_MATOMO_SITE_ID` avant de builder/déployer l'image `web`, ainsi que l'URL publique de Matomo dans `VITE_MATOMO_URL` (`https://matomo.armali.online/`). Le frontend envoie ensuite un événement de vue de page à chaque changement de route (SPA), visible en temps réel dans Matomo (`Visiteurs > Visites en temps réel`).
+
+> Ces deux valeurs sont injectées au build de l'image `web` via des **build-args Docker** (voir `apps/web/Dockerfile.prod`) et sont passées par la CI/CD depuis les **repository variables** GitHub `VITE_MATOMO_URL` et `VITE_MATOMO_SITE_ID` (Settings → Secrets and variables → Actions → Variables). Tant qu'elles ne sont pas configurées, le tracker Matomo reste inactif (no-op) côté frontend.
 
 ---
 

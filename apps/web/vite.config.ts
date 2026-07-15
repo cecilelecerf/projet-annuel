@@ -17,6 +17,7 @@ export default defineConfig({
     watch: {
       usePolling: true,
       interval: 300,
+      ignored: ['**/packages/schemas/dist/**'],
     },
     hmr: {
       clientPort: 5173,

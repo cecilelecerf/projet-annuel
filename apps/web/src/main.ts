@@ -10,6 +10,7 @@ import 'element-plus/theme-chalk/src/message-box.scss'
 import './styles/layout.scss'
 import router from './router/index'
 import { useAuthStore } from './stores/authStore'
+import { initMatomo } from './lib/matomo'
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 import { clickOutside } from './directives/clickOutside'
@@ -19,6 +20,8 @@ import 'element-plus/es/components/notification/style/css'
 import 'element-plus/es/components/loading/style/css'
 
 import 'leaflet/dist/leaflet.css'
+
+initMatomo()
 
 const app = createApp(App)
 app.use(createPinia())

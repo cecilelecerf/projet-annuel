@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotify } from '@/composables/useNotify'
 import { roleHomeMap } from '@/router/index'
+import { trackEvent } from '@/lib/matomo'
 import DevLoginSection from '../components/DevLoginSection.vue'
 
 const notify = useNotify()
@@ -30,10 +31,12 @@ async function handleLogin() {
       step.value = 'code'
       notify.info('Un code de vérification vous a été envoyé par email')
     } else {
+      trackEvent('auth', 'login_success')
       notify.success('Connexion réussie !')
       goToHome()
     }
   } catch (err: unknown) {
+    trackEvent('auth', 'login_failure')
     notify.error(err instanceof Error ? err.message : 'Erreur de connexion')
   } finally {
     loading.value = false
@@ -44,9 +47,11 @@ async function handleVerify() {
   loading.value = true
   try {
     await authStore.verifyTwoFactor(email.value, code.value)
+    trackEvent('auth', 'login_success', '2fa')
     notify.success('Connexion réussie !')
     goToHome()
   } catch (err: unknown) {
+    trackEvent('auth', 'login_failure', '2fa')
     notify.error(err instanceof Error ? err.message : 'Code invalide')
   } finally {
     loading.value = false

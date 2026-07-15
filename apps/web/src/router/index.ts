@@ -7,6 +7,7 @@ import { secretaryRouter } from './secretaryRouter'
 import { referentRouter } from './referentRouter'
 import { adminRouter } from './adminRouter'
 import { registerClinicStatusGuard } from './guards/clinicStatus.guard'
+import { trackPageView } from '@/lib/matomo'
 
 export const roleHomeMap: Record<UserStore['role'], string> = {
   DIRECTOR: '/director',
@@ -151,6 +152,10 @@ router.beforeEach(async (to) => {
   if (!role) return { name: 'Login' }
 
   return true
+})
+
+router.afterEach((to) => {
+  trackPageView(to.fullPath, to.name ? String(to.name) : undefined)
 })
 
 export default router

@@ -48,6 +48,7 @@ const mockUser = {
   role: UserRole.CLIENT,
   createdAt: new Date(),
   updatedAt: new Date(),
+  passwordChangedAt: new Date(),
 };
 
 const mockRefreshToken = {
@@ -182,6 +183,9 @@ describe("AuthService.refresh", () => {
       ...mockRefreshToken,
       expiresAt: new Date(Date.now() - 1000),
     });
+    // clearAllMocks ne réinitialise pas de façon fiable les appels enregistrés
+    // sur ce mock profond (mockDeep) d'un test au suivant — reset explicite.
+    prisma.refreshToken.delete.mockClear();
     prisma.refreshToken.delete.mockResolvedValue(mockRefreshToken);
 
     await expect(authService.refresh("refresh_token")).rejects.toThrow(
@@ -252,7 +256,7 @@ describe("AuthService.me", () => {
     prisma.user.findUnique.mockResolvedValue(mockUser);
 
     const result = await authService.me("access_token");
-    expect(result).toEqual(mockUser);
+    expect(result).toEqual({ ...mockUser, passwordExpired: false });
   });
 
   it("lève UnauthorizedError si le token est invalide", async () => {

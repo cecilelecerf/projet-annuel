@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { http } from '../lib/api'
+import { trackEvent } from '../lib/matomo'
 import { type ClinicId, type User } from '@armali/schemas'
 import { match } from 'ts-pattern'
 type StaffRole = Exclude<User['role'], 'CLIENT' | 'ADMIN' | 'VETERINARIAN'>
@@ -141,6 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await http.post('/auth/logout', { refreshToken: refreshToken.value })
     } finally {
+      trackEvent('auth', 'logout')
       clearAuth()
     }
   }

@@ -5,6 +5,7 @@ import { useAuthStore, type UserStore } from '@/stores/authStore'
 import { http } from '@/lib/api'
 import { roleHomeMap } from '@/router/index'
 import { useNotify } from '@/composables/useNotify'
+import { trackEvent } from '@/lib/matomo'
 import AddressFields from '@/components/AddressFields.vue'
 
 const notify = useNotify()
@@ -128,10 +129,12 @@ async function handleSubmit() {
     }
 
     authStore.setAuth(data.user as UserStore, data.accessToken, data.refreshToken)
+    trackEvent('auth', 'register_success', selectedRole.value)
     notify.success('Compte créé avec succès !')
     const role = authStore.user?.role
     router.push(role && roleHomeMap[role] ? roleHomeMap[role] : '/')
   } catch (err: unknown) {
+    trackEvent('auth', 'register_failure', selectedRole.value)
     notify.error(err instanceof Error ? err.message : "Erreur lors de l'inscription")
   } finally {
     loading.value = false

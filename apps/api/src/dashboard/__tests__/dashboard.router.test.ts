@@ -117,4 +117,64 @@ describe("Dashboard router", () => {
       expect(res.body).toHaveProperty("pendingProductRequestsCount");
     });
   });
+
+  describe("GET /api/dashboard/visits-forecast", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get("/api/dashboard/visits-forecast");
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle CLIENT non autorisé", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/visits-forecast")
+        .set("Authorization", `Bearer ${clientToken}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — REFERENT reçoit la prévision de visites", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/visits-forecast")
+        .set("Authorization", `Bearer ${referentToken}`);
+      expect(res.status).toBe(200);
+    });
+
+    it("200 — DIRECTOR reçoit la prévision de visites", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/visits-forecast")
+        .set("Authorization", `Bearer ${directorToken}`);
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe("GET /api/dashboard/analytics-overview", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get("/api/dashboard/analytics-overview");
+      expect(res.status).toBe(401);
+    });
+
+    it("403 — rôle CLIENT non autorisé", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/analytics-overview")
+        .set("Authorization", `Bearer ${clientToken}`);
+      expect(res.status).toBe(403);
+    });
+
+    it("200 — REFERENT reçoit le résumé rétention + rentabilité", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/analytics-overview")
+        .set("Authorization", `Bearer ${referentToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("retention");
+      expect(res.body).toHaveProperty("profitabilityByVeterinarian");
+    });
+
+    it("200 — DIRECTOR reçoit le résumé rétention + rentabilité", async () => {
+      const res = await request(app)
+        .get("/api/dashboard/analytics-overview")
+        .set("Authorization", `Bearer ${directorToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("retention");
+      expect(res.body).toHaveProperty("profitabilityByVeterinarian");
+    });
+  });
 });

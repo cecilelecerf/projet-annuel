@@ -23,6 +23,7 @@ import { meetingApi } from '../api/meeting.api'
 import { usersApi } from '@/features/users/user.api'
 import { http } from '@/lib/api'
 import { staffApi } from '@/features/staffs/staff.api'
+import { trackEvent } from '@/lib/matomo'
 
 export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'close') => void) {
   const route = useRoute()
@@ -155,8 +156,10 @@ export function useMeetingDrawerForm(initialDate: Date | null, emit: (event: 'cl
           clinicId: clinicId.value,
         })
       }
+      trackEvent('meeting', 'create_success', type.value)
       emit('close')
     } catch (err) {
+      trackEvent('meeting', 'create_failure', type.value)
       formErrorStore.handle(err)
     }
   }

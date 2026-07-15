@@ -26,18 +26,22 @@ describe("Dashboard router", () => {
       expect(res.status).toBe(401);
     });
 
-    it("200 — CLIENT reçoit ses animaux, RDV à venir et commandes", async () => {
+    it("200 — CLIENT reçoit ses animaux, cliniques, RDV à venir et commandes", async () => {
       const res = await request(app)
         .get("/api/dashboard")
         .set("Authorization", `Bearer ${clientToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.role).toBe("CLIENT");
-      expect(res.body).toHaveProperty("animalsCount");
+      expect(Array.isArray(res.body.animals)).toBe(true);
+      expect(Array.isArray(res.body.clinics)).toBe(true);
       expect(res.body).toHaveProperty("upcomingMeetingsCount");
       expect(Array.isArray(res.body.upcomingMeetings)).toBe(true);
       expect(res.body).toHaveProperty("ordersInProgressCount");
       expect(Array.isArray(res.body.recentOrders)).toBe(true);
+      expect(res.body).toHaveProperty("ordersReadyForPickupCount");
+      expect(Array.isArray(res.body.ordersReadyForPickup)).toBe(true);
+      expect(Array.isArray(res.body.products)).toBe(true);
     });
 
     it("200 — REFERENT reçoit la variante clinique (role: REFERENT)", async () => {

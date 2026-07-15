@@ -164,6 +164,47 @@ services:
     networks:
       - backend
 
+  matomo-db:
+    image: mariadb:11
+    restart: unless-stopped
+    env_file:
+      - .env.dev
+    environment:
+      MARIADB_DATABASE: ${MATOMO_DB_NAME}
+      MARIADB_USER: ${MATOMO_DB_USER}
+      MARIADB_PASSWORD: ${MATOMO_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MATOMO_DB_ROOT_PASSWORD}
+    volumes:
+      - matomo_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  matomo:
+    image: matomo:latest
+    restart: unless-stopped
+    depends_on:
+      matomo-db:
+        condition: service_healthy
+    env_file:
+      - .env.dev
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_DBNAME: ${MATOMO_DB_NAME}
+      MATOMO_DATABASE_USERNAME: ${MATOMO_DB_USER}
+      MATOMO_DATABASE_PASSWORD: ${MATOMO_DB_PASSWORD}
+    volumes:
+      - matomo_data:/var/www/html
+    ports:
+      - "8090:80"
+    networks:
+      - backend
+
 volumes:
   postgres_data:
   api_node_modules:
@@ -172,6 +213,8 @@ volumes:
   web_workspace_modules:
   schemas_node_modules:
   minio_data:
+  matomo_db_data:
+  matomo_data:
 
 networks:
   backend:

@@ -45,9 +45,11 @@ const mockUser = {
   lastname: "Dupont",
   password: "hashed_password",
   clinicId: null,
+  avatarId: null,
   role: UserRole.CLIENT,
   createdAt: new Date(),
   updatedAt: new Date(),
+  passwordChangedAt: new Date(),
 };
 
 const mockRefreshToken = {
@@ -61,7 +63,6 @@ const mockRefreshToken = {
 beforeEach(() => vi.clearAllMocks());
 
 // ── register ──────────────────────────────────────────────────────────────────
-
 describe("AuthService.register", () => {
   it("crée un utilisateur et retourne les tokens", async () => {
     const prisma = await getPrisma();
@@ -98,8 +99,7 @@ describe("AuthService.register", () => {
   });
 });
 
-// ── login ─────────────────────────────────────────────────────────────────────
-
+// ── login ────────────────────────────────────────────────────────────────────
 describe("AuthService.login", () => {
   it("retourne les tokens si les credentials sont valides", async () => {
     const prisma = await getPrisma();
@@ -113,6 +113,10 @@ describe("AuthService.login", () => {
       email: "test@test.com",
       password: "Password1!",
     });
+
+    if ("twoFactorRequired" in result) {
+      throw new Error("2FA ne devrait pas être requis dans ce test");
+    }
 
     expect(result.accessToken).toBe("access_token");
     expect(result.user).not.toHaveProperty("password");
@@ -182,6 +186,9 @@ describe("AuthService.refresh", () => {
       ...mockRefreshToken,
       expiresAt: new Date(Date.now() - 1000),
     });
+    // clearAllMocks ne réinitialise pas de façon fiable les appels enregistrés
+    // sur ce mock profond (mockDeep) d'un test au suivant — reset explicite.
+    prisma.refreshToken.delete.mockClear();
     prisma.refreshToken.delete.mockResolvedValue(mockRefreshToken);
 
     await expect(authService.refresh("refresh_token")).rejects.toThrow(
@@ -242,8 +249,8 @@ describe("AuthService.logout", () => {
     ).resolves.toBeUndefined();
   });
 });
-// ── me ────────────────────────────────────────────────────────────────────────
 
+// ── me ────────────────────────────────────────────────────────────────────────
 describe("AuthService.me", () => {
   it("retourne l'utilisateur si le token est valide", async () => {
     const prisma = await getPrisma();
@@ -252,7 +259,7 @@ describe("AuthService.me", () => {
     prisma.user.findUnique.mockResolvedValue(mockUser);
 
     const result = await authService.me("access_token");
-    expect(result).toEqual(mockUser);
+    expect(result).toEqual({ ...mockUser, passwordExpired: false });
   });
 
   it("lève UnauthorizedError si le token est invalide", async () => {
@@ -273,5 +280,84 @@ describe("AuthService.me", () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
     await expect(authService.me("access_token")).rejects.toThrow(NotFoundError);
+  });
+});
+
+// ── verifyLoginTwoFactor ──────────────────────────────────────────────────────
+describe("AuthService.verifyLoginTwoFactor", () => {
+  const mockOtp = {
+    id: "otp-1",
+    code: "123456",
+    action: "LOGIN_2FA",
+    userId: "user-1",
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  };
+
+  it("retourne une session complète si le code est valide", async () => {
+    const prisma = await getPrisma();
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+    prisma.otpCode.findFirst.mockResolvedValue(mockOtp);
+    prisma.otpCode.delete.mockResolvedValue(mockOtp);
+    prisma.refreshToken.create.mockResolvedValue(mockRefreshToken);
+
+    const result = await authService.verifyLoginTwoFactor({
+      email: "test@test.com",
+      code: "123456",
+    });
+
+    expect(result.accessToken).toBe("access_token");
+    expect(prisma.otpCode.delete).toHaveBeenCalledWith({
+      where: { id: "otp-1" },
+    });
+  });
+
+  it("lève UnauthorizedError si l'utilisateur n'existe pas", async () => {
+    const prisma = await getPrisma();
+    const { UnauthorizedError } = await import("@api/errors");
+    prisma.user.findUnique.mockResolvedValue(null);
+
+    await expect(
+      authService.verifyLoginTwoFactor({
+        email: "inconnu@test.com",
+        code: "123456",
+      }),
+    ).rejects.toThrow(UnauthorizedError);
+  });
+
+  it("lève UnauthorizedError si le code est invalide", async () => {
+    const prisma = await getPrisma();
+    const { UnauthorizedError } = await import("@api/errors");
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+    prisma.otpCode.findFirst.mockResolvedValue(null);
+
+    await expect(
+      authService.verifyLoginTwoFactor({
+        email: "test@test.com",
+        code: "000000",
+      }),
+    ).rejects.toThrow(UnauthorizedError);
+  });
+
+  it("lève UnauthorizedError et supprime l'OTP si le code est expiré", async () => {
+    const prisma = await getPrisma();
+    const { UnauthorizedError } = await import("@api/errors");
+    prisma.user.findUnique.mockResolvedValue(mockUser);
+    prisma.otpCode.findFirst.mockResolvedValue({
+      ...mockOtp,
+      expiresAt: new Date(Date.now() - 1000),
+    });
+    prisma.otpCode.delete.mockResolvedValue(mockOtp);
+
+    await expect(
+      authService.verifyLoginTwoFactor({
+        email: "test@test.com",
+        code: "123456",
+      }),
+    ).rejects.toThrow(UnauthorizedError);
+
+    expect(prisma.otpCode.delete).toHaveBeenCalledWith({
+      where: { id: "otp-1" },
+    });
   });
 });

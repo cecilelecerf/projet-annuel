@@ -168,4 +168,161 @@ describe("Messaging router", () => {
       expect(res.status).toBe(401);
     });
   });
+
+  describe("GET /api/conversations/:id", () => {
+    it("401 — sans token", async () => {
+      const res = await request(app).get(
+        "/api/conversations/00000000-0000-4000-8000-000000000000",
+      );
+      expect(res.status).toBe(401);
+    });
+
+    it("200 — retourne la conversation avec ses messages paginés", async () => {
+      const contactsRes = await request(app)
+        .get("/api/conversations/contacts")
+        .set("Authorization", `Bearer ${directorToken}`);
+      const target = contactsRes.body.clinic[0];
+      if (!target) return;
+
+      const createRes = await request(app)
+        .post("/api/conversations")
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ type: "DIRECT", userId: target.id });
+      const conversationId = createRes.body.id;
+
+      const res = await request(app)
+        .get(`/api/conversations/${conversationId}`)
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("conversation");
+      expect(res.body).toHaveProperty("messages");
+      expect(res.body).toHaveProperty("hasMore");
+    });
+  });
+
+  describe("PATCH /api/conversations/:id — renommer un groupe", () => {
+    it("200 — un ADMIN peut renommer un groupe", async () => {
+      const contactsRes = await request(app)
+        .get("/api/conversations/contacts")
+        .set("Authorization", `Bearer ${directorToken}`);
+      const target = contactsRes.body.clinic[0];
+      if (!target) return;
+
+      const createRes = await request(app)
+        .post("/api/conversations")
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({
+          type: "GROUP",
+          scope: "CLINIC",
+          clinicId: target.clinics?.[0]?.id ?? contactsRes.body.clinic[0].clinics?.[0]?.id,
+          name: "Groupe initial",
+          memberIds: [target.id],
+        });
+      if (createRes.status !== 201) return;
+      const conversationId = createRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/conversations/${conversationId}`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ name: "Nouveau nom" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe("Nouveau nom");
+    });
+
+    it("403 — un non-admin ne peut pas renommer", async () => {
+      const contactsRes = await request(app)
+        .get("/api/conversations/contacts")
+        .set("Authorization", `Bearer ${directorToken}`);
+      const target = contactsRes.body.clinic[0];
+      if (!target) return;
+
+      const createRes = await request(app)
+        .post("/api/conversations")
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ type: "DIRECT", userId: target.id });
+      const conversationId = createRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/conversations/${conversationId}`)
+        .set("Authorization", `Bearer ${veterinarianToken}`)
+        .send({ name: "Tentative" });
+
+      expect([403, 404]).toContain(res.status);
+    });
+  });
+
+  describe("Gestion des membres d'un groupe", () => {
+    it("ajoute, promeut puis retire un membre", async () => {
+      const contactsRes = await request(app)
+        .get("/api/conversations/contacts")
+        .set("Authorization", `Bearer ${directorToken}`);
+      const clinicContacts = contactsRes.body.clinic;
+      if (clinicContacts.length < 2) return;
+
+      const clinicId = clinicContacts[0].clinics?.[0]?.id;
+      if (!clinicId) return;
+
+      const createRes = await request(app)
+        .post("/api/conversations")
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({
+          type: "GROUP",
+          scope: "CLINIC",
+          clinicId,
+          name: "Groupe test membres",
+          memberIds: [clinicContacts[0].id],
+        });
+      if (createRes.status !== 201) return;
+      const conversationId = createRes.body.id;
+      const newMemberId = clinicContacts[1].id;
+
+      // ── Ajout ────────────────────────────────────────────────────────────
+      const addRes = await request(app)
+        .post(`/api/conversations/${conversationId}/members`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ memberIds: [newMemberId] });
+      expect(addRes.status).toBe(200);
+      expect(
+        addRes.body.conversationMembers.some((m: any) => m.userId === newMemberId),
+      ).toBe(true);
+
+      // ── Promotion ────────────────────────────────────────────────────────
+      const promoteRes = await request(app)
+        .patch(`/api/conversations/${conversationId}/members/${newMemberId}`)
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ role: "ADMIN" });
+      expect(promoteRes.status).toBe(200);
+      expect(promoteRes.body.role).toBe("ADMIN");
+
+      // ── Retrait ──────────────────────────────────────────────────────────
+      const removeRes = await request(app)
+        .delete(`/api/conversations/${conversationId}/members/${newMemberId}`)
+        .set("Authorization", `Bearer ${directorToken}`);
+      expect(removeRes.status).toBe(204);
+    });
+  });
+
+  describe("POST /api/conversations/:id/read", () => {
+    it("200 — marque la conversation comme lue après un message", async () => {
+      const contactsRes = await request(app)
+        .get("/api/conversations/contacts")
+        .set("Authorization", `Bearer ${directorToken}`);
+      const target = contactsRes.body.clinic[0];
+      if (!target) return;
+
+      const createRes = await request(app)
+        .post("/api/conversations")
+        .set("Authorization", `Bearer ${directorToken}`)
+        .send({ type: "DIRECT", userId: target.id });
+      const conversationId = createRes.body.id;
+
+      const readRes = await request(app)
+        .post(`/api/conversations/${conversationId}/read`)
+        .set("Authorization", `Bearer ${directorToken}`);
+
+      expect(readRes.status).toBe(204);
+    });
+  });
 });

@@ -1,25 +1,28 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { http } from '@/lib/api'
+import { roleHomeMap } from '@/router/index'
 import { useNotify } from '@/composables/useNotify'
 
 const notify = useNotify()
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
-const email = ref(typeof route.query.email === 'string' ? route.query.email : '')
-const code = ref('')
+const currentPassword = ref('')
 const newPassword = ref('')
 const newPasswordConfirm = ref('')
 const loading = ref(false)
 
 function validate(): string | null {
-  if (!email.value.includes('@')) return 'Email invalide'
-  if (code.value.length !== 6) return 'Le code doit contenir 6 chiffres'
+  if (!currentPassword.value) return 'Mot de passe actuel requis'
   if (newPassword.value.length < 12) return 'Mot de passe : minimum 12 caractères'
-  if (!/[A-Za-z]/.test(newPassword.value) || !/[0-9]/.test(newPassword.value) || !/[^A-Za-z0-9]/.test(newPassword.value))
+  if (
+    !/[A-Za-z]/.test(newPassword.value) ||
+    !/[0-9]/.test(newPassword.value) ||
+    !/[^A-Za-z0-9]/.test(newPassword.value)
+  )
     return 'Mot de passe : au moins une lettre, un chiffre et un symbole'
   if (newPassword.value !== newPasswordConfirm.value)
     return 'Les mots de passe ne correspondent pas'
@@ -35,11 +38,16 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await authStore.resetPassword(email.value, code.value, newPassword.value)
-    notify.success('Mot de passe réinitialisé avec succès')
-    router.push({ name: 'Login' })
+    await http.patch('/auth/me', {
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+    })
+    authStore.completePasswordChange()
+    notify.success('Mot de passe mis à jour avec succès')
+    const role = authStore.user?.role
+    router.push(role && roleHomeMap[role] ? roleHomeMap[role] : '/')
   } catch (err: unknown) {
-    notify.error(err instanceof Error ? err.message : 'Erreur lors de la réinitialisation')
+    notify.error(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
   } finally {
     loading.value = false
   }
@@ -49,24 +57,21 @@ async function handleSubmit() {
 <template>
   <div class="auth-page">
     <div class="auth-card">
-      <h1 class="auth-title">Réinitialiser le mot de passe</h1>
+      <h1 class="auth-title">Mot de passe expiré</h1>
       <p class="auth-subtitle">
-        Saisissez le code reçu par email ainsi que votre nouveau mot de passe.
+        Pour la sécurité de votre compte, votre mot de passe doit être renouvelé tous les 60
+        jours. Merci de définir un nouveau mot de passe pour continuer.
       </p>
 
       <el-form @submit.prevent="handleSubmit" label-position="top">
-        <el-form-item label="Email">
+        <el-form-item label="Mot de passe actuel">
           <el-input
-            v-model="email"
-            type="email"
-            placeholder="votre@email.fr"
-            autocomplete="email"
+            v-model="currentPassword"
+            type="password"
+            show-password
+            autocomplete="current-password"
             size="large"
           />
-        </el-form-item>
-
-        <el-form-item label="Code reçu par email">
-          <el-input v-model="code" placeholder="123456" maxlength="6" size="large" />
         </el-form-item>
 
         <el-form-item label="Nouveau mot de passe">
@@ -98,13 +103,9 @@ async function handleSubmit() {
           :loading="loading"
           style="width: 100%"
         >
-          Réinitialiser le mot de passe
+          Mettre à jour le mot de passe
         </el-button>
       </el-form>
-
-      <p class="auth-footer">
-        <router-link to="/login">Retour à la connexion</router-link>
-      </p>
     </div>
   </div>
 </template>
@@ -141,18 +142,5 @@ async function handleSubmit() {
   margin-bottom: 28px;
   font-size: 14px;
   line-height: 1.5;
-}
-
-.auth-footer {
-  margin-top: 20px;
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-}
-
-.auth-footer a {
-  color: #409eff;
-  text-decoration: none;
-  font-weight: 500;
 }
 </style>

@@ -83,6 +83,9 @@ jobs:
           tags: ${{ env.IMAGE_WEB }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            VITE_MATOMO_URL=${{ vars.VITE_MATOMO_URL }}
+            VITE_MATOMO_SITE_ID=${{ vars.VITE_MATOMO_SITE_ID }}
 
       - name: Build & Push Nginx
         uses: docker/build-push-action@v5

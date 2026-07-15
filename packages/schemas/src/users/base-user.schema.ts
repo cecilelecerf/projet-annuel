@@ -26,7 +26,15 @@ export const baseUserSchema = z.object({
 export type BaseUser = z.infer<typeof baseUserSchema>;
 export const userPasswordSchema = z
   .string()
-  .min(8, "Minimum 8 caractères")
+  .min(12, "Minimum 12 caractères")
+  .max(255)
+  .regex(/[A-Za-z]/, "Doit contenir au moins une lettre")
+  .regex(/[0-9]/, "Doit contenir au moins un chiffre")
+  .regex(/[^A-Za-z0-9]/, "Doit contenir au moins un symbole");
+
+export const loginPasswordSchema = z
+  .string()
+  .min(1, "Mot de passe requis")
   .max(255);
 
 export const registerSchema = baseUserSchema

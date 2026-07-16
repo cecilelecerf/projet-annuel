@@ -3,6 +3,7 @@
 Monorepo fullstack composé d'une application web (Vue), d'une API REST (Express + Prisma) et d'une application mobile.
 
 -> [Liste des fonctionnalités (PDF)](./docs/description.pdf)
+-> [Diapo de présentation (PDF)](./docs/slides.pdf)
 
 ---
 
@@ -57,6 +58,7 @@ pnpm install
 
 Crée `.env.dev` à la **racine du projet** (copie depuis `.env.dev.sample`) :
 Crée `.env.dev` dans /apps/api/ (copie depuis `.env.dev.sample`) :
+
 ```env
 # Base de données
 DB_USER=user
@@ -76,13 +78,27 @@ STRIPE_WEBHOOK_SECRET=change-me
 
 # Email (ENABLE_EMAIL=false pour log console sans envoyer)
 ENABLE_EMAIL=true
-MAIL_USER=...
+MAIL_USER=dev@armali.fr
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
-MAIL_PASS=...
+MAIL_PASS=changeme_app_password
+MAIL_REQUIRE_TLS=false
+
+
+# ── Matomo (analytics) ──────────────────────────────────────────────────────
+MATOMO_DB_USER=matomo
+MATOMO_DB_PASSWORD=changeme_matomo
+MATOMO_DB_NAME=matomo
+MATOMO_DB_ROOT_PASSWORD=changeme_matomo_root
 
 # Web / Vite (préfixe VITE_ obligatoire pour être exposé au navigateur)
 VITE_API_URL=http://localhost:3001/api
+VITE_MATOMO_URL=http://localhost:8090/
+VITE_MATOMO_SITE_ID=1
+
+# ── Sentry (signalement d'erreurs — laisser vide pour désactiver en local) ────
+SENTRY_DSN=
+VITE_SENTRY_DSN=
 
 # MINIO + S3
 MINIO_ROOT_USER=minioadmin

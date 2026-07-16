@@ -17,6 +17,7 @@ import {
   type CreateAnimal,
   type DeleteAnimal,
   type InitiateImageUploadInput,
+  type UpdateAnimal,
   type UserId,
   type VeterinarianId,
 } from '@armali/schemas'
@@ -60,6 +61,9 @@ export const animalApi = {
   },
   createByUser: async (userId: UserId, payload: CreateAnimal) => {
     return http.post(`/users/${userId}/animal`, payload).then((data) => animalSchema.parse(data))
+  },
+  update: async (id: AnimalId, payload: UpdateAnimal) => {
+    return http.patch(`/animals/${id}`, payload).then((data) => animalWithRaceMetaSchema.parse(data))
   },
   delete: async (id: AnimalId, payload: DeleteAnimal) => {
     return http.delete(`/animals/${id}`, payload)

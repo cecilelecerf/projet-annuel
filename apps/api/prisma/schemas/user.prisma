@@ -51,8 +51,8 @@ model User {
 }
 
 model ClientProfile {
-  id          String   @id @default(uuid())
-  dateOfBirth DateTime
+  id          String    @id @default(uuid())
+  dateOfBirth DateTime?
   address     String?
   phone       String?
 

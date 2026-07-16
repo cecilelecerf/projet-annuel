@@ -40,6 +40,11 @@ export const clientRouter: RouteRecordRaw[] = [
         name: 'CLIENT.Animals.Detail',
         component: () => import('@/features/animals/views/AnimalDetailView.vue'),
       },
+      {
+        path: 'animals/:id/edit',
+        name: 'CLIENT.Animals.Edit',
+        component: () => import('@/features/animals/views/AnimalCreateView.vue'),
+      },
       // {
       //   path: 'animaux/:id/regime-alimentaire',
       //   name: 'CLIENT.Animal.RegimeAlimentaire',

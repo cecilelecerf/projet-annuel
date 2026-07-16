@@ -38,6 +38,19 @@ function generateOtp(): string {
 
 const isTwoFactorEnabled = process.env.NODE_ENV === "production";
 const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+
+// Comptes de démo (seed) — exemptés de la 2FA en prod pour garder l'accès
+// rapide par rôle fonctionnel (démo/évaluation).
+const SEED_ACCOUNT_EMAILS = new Set([
+  "admin@gmail.com",
+  "directeur@gmail.com",
+  "referent@gmail.com",
+  "veto@gmail.com",
+  "secretaire@gmail.com",
+  "client@gmail.com",
+  "pending@gmail.fr",
+  "rejected@gmail.fr",
+]);
 const ACCOUNT_LOCKED_MESSAGE =
   "Compte bloqué après plusieurs tentatives échouées. Réinitialisez votre mot de passe pour le débloquer.";
 const PASSWORD_EXPIRY_DAYS = 60;
@@ -129,7 +142,7 @@ export class AuthService {
     const hashedPassword = await hash(data.password, 10);
 
     const user = await prisma.user.create({
-      data: { ...data, password: hashedPassword },
+      data: { ...data, password: hashedPassword, clientProfile: { create: {} } },
       include: { avatar: true },
     });
     const validUser = withAvatarUrl(user);
@@ -257,7 +270,9 @@ export class AuthService {
       });
     }
 
-    if (!isTwoFactorEnabled) return this.issueLoginSession(user);
+    if (!isTwoFactorEnabled || SEED_ACCOUNT_EMAILS.has(user.email)) {
+      return this.issueLoginSession(user);
+    }
 
     await prisma.otpCode.deleteMany({
       where: { userId: user.id, action: "LOGIN_2FA" },
@@ -368,6 +383,7 @@ export class AuthService {
             veterinarianClinics: true,
           },
         },
+        clientProfile: true,
         avatar: true,
       },
       omit: { password: true },
@@ -414,8 +430,27 @@ export class AuthService {
       },
     });
 
+    let clientProfile;
+    if (
+      user.role === "CLIENT" &&
+      (data.phone !== undefined ||
+        data.address !== undefined ||
+        data.dateOfBirth !== undefined)
+    ) {
+      clientProfile = await prisma.clientProfile.update({
+        where: { id: userId },
+        data: {
+          ...(data.phone !== undefined && { phone: data.phone }),
+          ...(data.address !== undefined && { address: data.address }),
+          ...(data.dateOfBirth !== undefined && {
+            dateOfBirth: data.dateOfBirth,
+          }),
+        },
+      });
+    }
+
     const { password: _, ...userWithoutPassword } = updatedUser;
-    return userWithoutPassword;
+    return { ...userWithoutPassword, ...(clientProfile && { clientProfile }) };
   }
 
   async requestDeleteAccount(userId: string) {

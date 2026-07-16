@@ -758,7 +758,7 @@ CREATE TABLE "users" (
 -- CreateTable
 CREATE TABLE "client_profiles" (
     "id" TEXT NOT NULL,
-    "dateOfBirth" TIMESTAMP(3) NOT NULL,
+    "dateOfBirth" TIMESTAMP(3),
     "address" TEXT,
     "phone" TEXT,
     "country" TEXT NOT NULL DEFAULT 'FR',

@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/fr'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Delete, Warning } from '@element-plus/icons-vue'
+import { ArrowLeft, Delete, Edit, Warning } from '@element-plus/icons-vue'
 import type { AnimalId } from '@armali/schemas'
 import { animalApi } from '../api'
 import { meetingApi } from '@/features/meetings/api/meeting.api.ts'
@@ -113,6 +113,10 @@ const weightData = computed(
       <el-button text @click="openEmergencyCard">
         <el-icon><Warning /></el-icon>
         Carte d'urgence
+      </el-button>
+      <el-button text @click="router.push({ name: 'CLIENT.Animals.Edit', params: { id: animal.id } })">
+        <el-icon><Edit /></el-icon>
+        Modifier
       </el-button>
       <el-button text type="danger" @click="deleteDialog?.open()">
         <el-icon><Delete /></el-icon>

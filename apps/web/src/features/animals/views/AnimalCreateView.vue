@@ -1,22 +1,26 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useFormErrorStore } from '@/stores/formErrorStore'
 import { petApi } from '@/features/pets/api'
 import { animalApi } from '../api'
-import type { CreateAnimal, PetId, RaceId } from '@armali/schemas'
+import type { AnimalId, CreateAnimal, PetId, RaceId } from '@armali/schemas'
 import dayjs from 'dayjs'
 import { raceApi } from '@/features/races/api'
 import { useNotify } from '@/composables/useNotify'
 import { useAuthStore } from '@/stores/authStore'
 import { trackEvent } from '@/lib/matomo'
 
+const route = useRoute()
 const router = useRouter()
 const formError = useFormErrorStore()
 const notify = useNotify()
 const { user } = useAuthStore()
+
+const editingId = computed(() => route.params.id as AnimalId | undefined)
+const isEdit = computed(() => !!editingId.value)
 
 // ── Référentiels (espèces / races / cliniques) ─────────────────────────────
 const pets = ref<{ id: PetId; name: string }[]>([])
@@ -27,6 +31,7 @@ async function loadReferentials() {
   loadingReferentials.value = true
   try {
     pets.value = await petApi.getAll()
+    if (editingId.value) await loadAnimalToEdit(editingId.value)
   } catch (err) {
     formError.handle(err)
   } finally {
@@ -54,6 +59,22 @@ const form = reactive<CreateAnimal & { petId: PetId }>({
   insurancePolicyNumber: undefined,
 })
 
+async function loadAnimalToEdit(id: AnimalId) {
+  const animal = await animalApi.get(id)
+  form.name = animal.name
+  form.petId = animal.race.pet.id as PetId
+  form.raceId = animal.raceId
+  form.dateOfBirth = new Date(animal.dateOfBirth)
+  form.description = animal.description ?? undefined
+  form.activity = animal.activity ?? 3
+  form.outdoorAccess = animal.outdoorAccess
+  form.animalContact = animal.animalContact
+  form.hasInsurance = animal.hasInsurance ?? false
+  form.insuranceProvider = animal.insuranceProvider ?? undefined
+  form.insurancePolicyNumber = animal.insurancePolicyNumber ?? undefined
+  await loadRacesForPet(form.petId)
+}
+
 function onPetChange() {
   loadRacesForPet(form.petId)
   // Réinitialise la race si elle n'appartient plus à l'espèce sélectionnée
@@ -79,12 +100,16 @@ async function onSubmit() {
 
   submitting.value = true
   try {
-    const created = await animalApi.create(form)
-    trackEvent('animal', 'create_success')
-    ElMessage.success(`${form.name} a bien été ajouté.`)
-    router.push({ name: `${user?.role.toUpperCase()}.Animals.Detail`, params: { id: created.id } })
+    const saved = isEdit.value
+      ? await animalApi.update(editingId.value!, form)
+      : await animalApi.create(form)
+    trackEvent('animal', isEdit.value ? 'edit_success' : 'create_success')
+    ElMessage.success(
+      isEdit.value ? `${form.name} a bien été modifié.` : `${form.name} a bien été ajouté.`,
+    )
+    router.push({ name: `${user?.role.toUpperCase()}.Animals.Detail`, params: { id: saved.id } })
   } catch (err) {
-    trackEvent('animal', 'create_failure')
+    trackEvent('animal', isEdit.value ? 'edit_failure' : 'create_failure')
     console.log(err)
     formError.handle(err)
   } finally {
@@ -121,8 +146,14 @@ const activityLabels: Record<number, string> = {
   <header class="aa-header">
     <div>
       <span class="aa-eyebrow">Mes animaux</span>
-      <h1 class="aa-title">Ajouter un animal</h1>
-      <p class="aa-sub">Renseigne les informations de ton compagnon pour créer sa fiche.</p>
+      <h1 class="aa-title">{{ isEdit ? "Modifier l'animal" : 'Ajouter un animal' }}</h1>
+      <p class="aa-sub">
+        {{
+          isEdit
+            ? 'Mets à jour les informations de ton compagnon.'
+            : 'Renseigne les informations de ton compagnon pour créer sa fiche.'
+        }}
+      </p>
     </div>
   </header>
 
@@ -261,8 +292,14 @@ const activityLabels: Record<number, string> = {
     <!-- Actions -->
     <footer class="aa-footer">
       <el-button size="large" @click="onCancel">Annuler</el-button>
-      <el-button size="large" type="primary" :icon="Plus" :loading="submitting" @click="onSubmit">
-        Ajouter l'animal
+      <el-button
+        size="large"
+        type="primary"
+        :icon="isEdit ? undefined : Plus"
+        :loading="submitting"
+        @click="onSubmit"
+      >
+        {{ isEdit ? 'Enregistrer les modifications' : "Ajouter l'animal" }}
       </el-button>
     </footer>
   </el-form>
